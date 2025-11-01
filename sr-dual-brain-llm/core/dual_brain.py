@@ -14,6 +14,11 @@ from .prefrontal_cortex import PrefrontalCortex, FocusSummary
 from .default_mode_network import DefaultModeNetwork
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
+from .coherence_resonator import (
+    CoherenceResonator,
+    CoherenceSignal,
+    HemisphericCoherence,
+)
 
 
 @dataclass
@@ -51,6 +56,7 @@ class DualBrainController:
         basal_ganglia: Optional[BasalGanglia] = None,
         default_mode_network: Optional[DefaultModeNetwork] = None,
         psychoid_attention_adapter: Optional[PsychoidAttentionAdapter] = None,
+        coherence_resonator: Optional[CoherenceResonator] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -70,6 +76,7 @@ class DualBrainController:
         self.basal_ganglia = basal_ganglia or BasalGanglia()
         self.default_mode_network = default_mode_network
         self.psychoid_adapter = psychoid_attention_adapter
+        self.coherence_resonator = coherence_resonator or CoherenceResonator()
 
     def _prepare_psychoid_projection(
         self, psychoid_signal: Optional[Dict[str, object]], *, seq_len: int = 8
@@ -216,8 +223,22 @@ class DualBrainController:
         focus_metric = 0.0
         if self.prefrontal_cortex is not None and focus is not None:
             focus_metric = self.prefrontal_cortex.focus_metric(focus)
-        hippocampal_density = len(self.hippocampus.episodes) if self.hippocampus is not None else 0
+        hippocampal_density = (
+            len(self.hippocampus.episodes) if self.hippocampus is not None else 0
+        )
+        focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         draft = await self.left_model.generate_answer(question, context)
+        left_coherence: Optional[HemisphericCoherence] = None
+        right_coherence: Optional[HemisphericCoherence] = None
+        coherence_signal: Optional[CoherenceSignal] = None
+        if self.coherence_resonator is not None:
+            left_coherence = self.coherence_resonator.capture_left(
+                question=question,
+                draft=draft,
+                context=context,
+                focus_keywords=focus_keywords or (),
+                focus_metric=focus_metric,
+            )
         confidence = self.left_model.estimate_confidence(draft)
         affect = self._sense_affect(question, draft)
         novelty = self.memory.novelty_score(question)
@@ -234,6 +255,8 @@ class DualBrainController:
             hippocampal_density,
             focus_metric,
         )
+        if left_coherence is not None:
+            decision.state["coherence_left"] = left_coherence.to_payload()
         basal_signal = getattr(self.basal_ganglia, "last_signal", None)
         if focus is not None:
             decision.state["prefrontal_keywords"] = list(focus.keywords)
@@ -375,6 +398,10 @@ class DualBrainController:
                         payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
                     if psychoid_projection:
                         payload["psychoid_attention_bias"] = psychoid_projection.to_payload()
+                if self.coherence_resonator is not None and left_coherence is not None:
+                    vectorised = self.coherence_resonator.vectorise_left()
+                    if vectorised:
+                        payload["coherence_vector"] = vectorised
                 if default_mode_reflections:
                     payload["default_mode_reflections"] = [
                         f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
@@ -420,6 +447,17 @@ class DualBrainController:
                     final_answer = self.left_model.integrate_info(draft, detail_notes)
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
+                if self.coherence_resonator is not None:
+                    right_coherence = self.coherence_resonator.capture_right(
+                        question=question,
+                        draft=draft,
+                        detail_notes=detail_notes,
+                        focus_keywords=focus_keywords or (),
+                        psychoid_signal=psychoid_signal,
+                        confidence=float(decision.state.get("right_conf", 0.0) or 0.0),
+                        source=response_source,
+                    )
+                    decision.state["coherence_right"] = right_coherence.to_payload()
         except asyncio.TimeoutError:
             final_answer = draft + "\n(Right brain timeout: continuing with draft)"
         finally:
@@ -527,6 +565,30 @@ class DualBrainController:
                 final_answer = (
                     f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
                 )
+        if self.coherence_resonator is not None:
+            projection_payload = (
+                psychoid_projection.to_payload() if psychoid_projection else None
+            )
+            coherence_signal = self.coherence_resonator.integrate(
+                final_answer=final_answer,
+                psychoid_projection=projection_payload,
+            )
+            if coherence_signal is not None:
+                decision.state["coherence_combined"] = coherence_signal.combined_score
+                decision.state["coherence_tension"] = coherence_signal.tension
+                decision.state["coherence_notes"] = coherence_signal.notes
+                decision.state["coherence_contributions"] = coherence_signal.contributions
+                self.telemetry.log(
+                    "coherence_signal",
+                    qid=decision.qid,
+                    signal=coherence_signal.to_payload(),
+                )
+                final_answer = self.coherence_resonator.annotate_answer(
+                    final_answer, coherence_signal
+                )
+                coherence_tags = set(coherence_signal.tags())
+                tags.update(coherence_tags)
+                decision.state["coherence_tags"] = list(coherence_tags)
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
