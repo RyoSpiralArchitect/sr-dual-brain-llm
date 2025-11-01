@@ -52,6 +52,15 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Deque, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .schema import (
+    ArchetypeActivation,
+    AttentionBiasEntry,
+    EmergentIdeaModel,
+    GeometryModel,
+    PsychoidSignalModel,
+    UnconsciousSummaryModel,
+)
+
 try:  # Optional imports (graceful)
     import numpy as np  # type: ignore
 
@@ -124,44 +133,6 @@ class LatentSeed:
         return base[:120]
 
 
-@dataclass
-class EmergentIdea:
-    """Representation of a cached seed that resurfaced with a new insight."""
-
-    archetype: str
-    label: str
-    intensity: float
-    incubation_rounds: int
-    trigger_similarity: float
-    origin: str
-
-    def as_dict(self) -> Dict[str, object]:
-        return {
-            "archetype": self.archetype,
-            "label": self.label,
-            "intensity": self.intensity,
-            "incubation_rounds": self.incubation_rounds,
-            "trigger_similarity": self.trigger_similarity,
-            "origin": self.origin,
-        }
-
-
-# ---------------------------------------------------------------------------
-# Psychoid archetype projection
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class PsychoidSignal:
-    """Latent projection describing psychoid archetype influences."""
-
-    attention_bias: List[Dict[str, object]]
-    bias_vector: List[float]
-    psychoid_tension: float
-    resonance: float
-    signifier_chain: List[str]
-
-
 class PsychoidArchetypeSampler:
     """Project archetypal intensities into an attention-bias style signal."""
 
@@ -200,7 +171,7 @@ class PsychoidArchetypeSampler:
         question: str,
         draft: Optional[str] = None,
         qkv_dim: Optional[int] = None,
-    ) -> PsychoidSignal:
+    ) -> PsychoidSignalModel:
         qkv = max(4, qkv_dim or self.qkv_dim)
         tokens = self._tokenize(f"{question} {draft or ''}")
         weighted: List[Tuple[ArchetypeScore, float, float]] = []
@@ -214,22 +185,22 @@ class PsychoidArchetypeSampler:
 
         weighted.sort(key=lambda item: item[1], reverse=True)
         total_weight = sum(item[1] for item in weighted) or 1.0
-        attention_bias: List[Dict[str, object]] = []
+        attention_bias: List[AttentionBiasEntry] = []
         bias_vector: List[float] = []
         top_entries = weighted[: max(1, min(4, len(weighted)))]
         for score, weight, resonance in top_entries:
             attention_bias.append(
-                {
-                    "archetype": score.id,
-                    "label": score.label,
-                    "weight": float(weight / total_weight),
-                    "resonance": float(resonance),
-                }
+                AttentionBiasEntry(
+                    archetype=score.id,
+                    label=score.label,
+                    weight=float(weight / total_weight),
+                    resonance=float(resonance),
+                )
             )
         if attention_bias:
             for idx in range(qkv):
                 entry = attention_bias[idx % len(attention_bias)]
-                bias_vector.append(float(entry["weight"]))
+                bias_vector.append(float(entry.weight))
         else:
             bias_vector = [0.0 for _ in range(qkv)]
 
@@ -253,7 +224,7 @@ class PsychoidArchetypeSampler:
             excerpt = overlap_tokens[0] if overlap_tokens else top_score.label
             self._chain.append(f"{top_score.id}:{excerpt}")
 
-        return PsychoidSignal(
+        return PsychoidSignalModel(
             attention_bias=attention_bias,
             bias_vector=bias_vector,
             psychoid_tension=psychoid_tension,
@@ -939,11 +910,11 @@ class UnconsciousField:
         self._seed_cache: List[LatentSeed] = []
         self._max_cache = 24
         self._pending_stress_release = 0.0
-        self._last_emergent: List[Dict[str, object]] = []
+        self._last_emergent: List[EmergentIdeaModel] = []
         self._last_stress_release = 0.0
         self._last_cache_depth = 0
         self._psychoid_sampler = PsychoidArchetypeSampler(self.prototypes)
-        self._last_psychoid_signal: Optional[PsychoidSignal] = None
+        self._last_psychoid_signal: Optional[PsychoidSignalModel] = None
 
     @staticmethod
     def _payload(question: str, draft: Optional[str]) -> str:
@@ -961,8 +932,8 @@ class UnconsciousField:
         self._seed_cache.sort(key=lambda seed: seed.created_at)
         self._seed_cache = self._seed_cache[-self._max_cache :]
 
-    def _harvest_emergent(self, vector: List[float]) -> List[EmergentIdea]:
-        ideas: List[EmergentIdea] = []
+    def _harvest_emergent(self, vector: List[float]) -> List[EmergentIdeaModel]:
+        ideas: List[EmergentIdeaModel] = []
         survivors: List[LatentSeed] = []
         for seed in self._seed_cache:
             similarity = cosine(vector, seed.vector)
@@ -970,7 +941,7 @@ class UnconsciousField:
             threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
             if similarity >= threshold and incubation >= 2 and seed.intensity >= 0.08:
                 ideas.append(
-                    EmergentIdea(
+                    EmergentIdeaModel(
                         archetype=seed.archetype_id,
                         label=seed.archetype_label,
                         intensity=round(seed.intensity, 4),
@@ -998,7 +969,7 @@ class UnconsciousField:
         payload = self._payload(question, draft)
         mapping = self.pipeline.map_events([payload])[0]
         vector = self._vectorize(payload)
-        emergent = [idea.as_dict() for idea in self._harvest_emergent(vector)]
+        emergent = self._harvest_emergent(vector)
         stress_release = self._pending_stress_release
         self._pending_stress_release = 0.0
         self._last_emergent = emergent
@@ -1087,38 +1058,41 @@ class UnconsciousField:
             "cache_depth": len(self._seed_cache),
         }
 
-    def summary(self, mapping: EventMapping, top_k: int = 3) -> Dict[str, object]:
-        return {
-            "top_k": list(mapping.top_k[:top_k]),
-            "geometry": dataclasses.asdict(mapping.geometry),
-            "archetype_map": [
-                {"id": score.id, "label": score.label, "intensity": score.intensity}
+    def summary(self, mapping: EventMapping, top_k: int = 3) -> UnconsciousSummaryModel:
+        return UnconsciousSummaryModel(
+            top_k=list(mapping.top_k[:top_k]),
+            geometry=GeometryModel(**dataclasses.asdict(mapping.geometry)),
+            archetype_map=[
+                ArchetypeActivation(
+                    id=score.id,
+                    label=score.label,
+                    intensity=score.intensity,
+                )
                 for score in mapping.archetype_map[:top_k]
             ],
-            "emergent_ideas": list(self._last_emergent),
-            "stress_released": self._last_stress_release,
-            "cache_depth": self._last_cache_depth,
-            "psychoid_signal": dataclasses.asdict(self._last_psychoid_signal)
-            if self._last_psychoid_signal
-            else None,
-        }
+            emergent_ideas=list(self._last_emergent),
+            stress_released=self._last_stress_release,
+            cache_depth=self._last_cache_depth,
+            psychoid_signal=self._last_psychoid_signal,
+        )
 
 
 __all__ = [
     "Archetopos",
     "ArchetypeScore",
     "DEMO_EVENTS",
-    "EmergentIdea",
+    "EmergentIdeaModel",
     "EventMapping",
     "Geometry",
     "HashEmbedder",
     "LatentSeed",
     "PsychoidArchetypeSampler",
-    "PsychoidSignal",
+    "PsychoidSignalModel",
     "PipelineConfig",
     "Prototype",
     "TextEmbedder",
     "UnconsciousField",
+    "UnconsciousSummaryModel",
     "build_parser",
     "cmd_demo",
     "cmd_map",
