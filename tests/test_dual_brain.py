@@ -15,6 +15,7 @@ from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
+from core.transport_models import DetailRequest, DetailResponse
 
 
 class DummyCallosum:
@@ -25,12 +26,16 @@ class DummyCallosum:
         self.omit_notes = omit_notes
 
     async def ask_detail(self, payload, timeout_ms=3000):
-        self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+        if isinstance(payload, DetailRequest):
+            request = payload
+        else:
+            request = DetailRequest.from_payload(payload)
+        self.payloads.append({"request": request, "timeout_ms": timeout_ms})
         if self.fail:
-            return {"error": "unavailable"}
+            return DetailResponse(qid=request.qid, error="unavailable")
         if self.omit_notes:
-            return {"confidence_r": 0.6}
-        return {"notes_sum": "補足メモ", "confidence_r": 0.82}
+            return DetailResponse(qid=request.qid, confidence=0.6)
+        return DetailResponse(qid=request.qid, notes_summary="補足メモ", confidence=0.82)
 
 
 class TrackingTelemetry:
@@ -72,7 +77,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "[Unconscious Linguistic Fabric]" in answer
     assert "[Linguistic Motifs]" in answer
     assert callosum.payloads, "Right brain should have been consulted"
-    sent_payload = callosum.payloads[0]["payload"]
+    sent_payload = callosum.payloads[0]["request"].to_payload()
     assert sent_payload["temperature"] > 0
     assert sent_payload["budget"] in {"small", "large"}
     assert "Hippocampal" in (sent_payload.get("context") or "")
@@ -295,7 +300,7 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert "[Linguistic Motifs]" in answer
     assert "mode: right" in answer.lower()
     assert callosum.payloads, "Right brain should have received enriched payload"
-    hint_payload = callosum.payloads[0]["payload"]
+    hint_payload = callosum.payloads[0]["request"].to_payload()
     assert "unconscious_hints" in hint_payload
     assert any("Hero" in hint for hint in hint_payload["unconscious_hints"])
     assert "default_mode_reflections" in hint_payload

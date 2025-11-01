@@ -20,6 +20,7 @@ from .coherence_resonator import (
     CoherenceSignal,
     HemisphericCoherence,
 )
+from .transport_models import DetailRequest
 
 
 _RIGHT_HEMISPHERE_KEYWORDS = {
@@ -622,56 +623,63 @@ class DualBrainController:
             if decision.action == 0:
                 success = True
             else:
-                payload = {
-                    "type": "ASK_DETAIL",
-                    "qid": decision.qid,
-                    "question": question,
-                    "draft_sum": draft if len(draft) < 280 else draft[:280],
-                    "temperature": decision.temperature,
-                    "budget": self.reasoning_dial.pick_budget(),
-                    "context": context,
-                    "hemisphere_mode": hemisphere_mode,
-                    "hemisphere_bias": hemisphere_bias,
-                }
+                request_budget = self.reasoning_dial.pick_budget()
+                extras: Dict[str, Any] = {}
                 if focus is not None and focus.keywords:
-                    payload["focus_keywords"] = list(focus.keywords[:5])
+                    extras["focus_keywords"] = list(focus.keywords[:5])
                 if unconscious_summary is not None:
                     ideas = unconscious_summary.get("emergent_ideas") or []
                     if ideas:
-                        payload["unconscious_hints"] = [
+                        extras["unconscious_hints"] = [
                             f"{idea.get('label')} ({idea.get('archetype')})"
                             for idea in ideas
                         ]
-                        payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
-                        payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
+                        extras["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
+                        extras["unconscious_stress_released"] = unconscious_summary.get(
+                            "stress_released", 0.0
+                        )
                 if psychoid_signal:
                     chain = psychoid_signal.get("signifier_chain") or []
                     if chain:
-                        payload["psychoid_signifiers"] = list(chain[-6:])
+                        extras["psychoid_signifiers"] = list(chain[-6:])
                     bias_vector = psychoid_signal.get("bias_vector")
                     if bias_vector:
-                        payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
+                        extras["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
                     if psychoid_projection:
-                        payload["psychoid_attention_bias"] = psychoid_projection.to_payload()
+                        extras["psychoid_attention_bias"] = psychoid_projection.to_payload()
                 if self.coherence_resonator is not None and left_coherence is not None:
                     vectorised = self.coherence_resonator.vectorise_left()
                     if vectorised:
-                        payload["coherence_vector"] = vectorised
+                        extras["coherence_vector"] = vectorised
                 if default_mode_reflections:
-                    payload["default_mode_reflections"] = [
+                    extras["default_mode_reflections"] = [
                         f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
                         for ref in default_mode_reflections
                     ]
+                detail_request = DetailRequest(
+                    qid=decision.qid,
+                    question=question,
+                    draft_summary=draft if len(draft) < 280 else draft[:280],
+                    temperature=decision.temperature,
+                    budget=request_budget,
+                    context=context,
+                    hemisphere_mode=hemisphere_mode,
+                    hemisphere_bias=hemisphere_bias,
+                    extras=extras,
+                )
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 try:
                     self.callosum.slot_ms = decision.slot_ms
-                    response = await self.callosum.ask_detail(payload, timeout_ms=timeout_ms)
+                    response = await self.callosum.ask_detail(
+                        detail_request,
+                        timeout_ms=timeout_ms,
+                    )
                 finally:
                     self.callosum.slot_ms = original_slot
                 response_source = "callosum"
-                detail_notes = response.get("notes_sum")
-                if response.get("error") or not detail_notes:
+                detail_notes = response.notes_summary
+                if response.error or not detail_notes:
                     response_source = "right_model_fallback"
                     try:
                         fallback = await self.right_model.deepen(
@@ -680,7 +688,7 @@ class DualBrainController:
                             draft,
                             self.memory,
                             temperature=decision.temperature,
-                            budget=payload["budget"],
+                            budget=detail_request.budget,
                             context=context,
                             psychoid_projection=(
                                 psychoid_projection.to_payload()
@@ -695,7 +703,8 @@ class DualBrainController:
                         decision.state["right_conf"] = fallback.get("confidence_r", 0.0)
                         success = True
                 else:
-                    decision.state["right_conf"] = response.get("confidence_r", 0.0)
+                    if response.confidence is not None:
+                        decision.state["right_conf"] = response.confidence
                     success = True
 
                 if detail_notes:

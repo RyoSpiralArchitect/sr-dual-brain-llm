@@ -28,6 +28,7 @@ from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
+from core.transport_models import DetailRequest, DetailResponse
 
 _BACKEND = os.environ.get("CALLOSUM_BACKEND", "memory")
 
@@ -45,20 +46,26 @@ async def right_worker(callosum, mem, right_model):
         while True:
             req = await callosum.recv_request()
             if req.get("type") == "ASK_DETAIL":
-                qid = req["qid"]
+                detail_req = DetailRequest.from_payload(req)
+                qid = detail_req.qid
                 try:
                     detail = await right_model.deepen(
                         qid,
-                        req["question"],
-                        req.get("draft_sum", ""),
+                        detail_req.question,
+                        detail_req.draft_summary,
                         mem,
-                        temperature=req.get("temperature", 0.7),
-                        budget=req.get("budget", "small"),
-                        context=req.get("context"),
+                        temperature=detail_req.temperature,
+                        budget=detail_req.budget,
+                        context=detail_req.context,
                     )
-                    await callosum.publish_response(qid, {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]})
+                    response = DetailResponse(
+                        qid=qid,
+                        notes_summary=detail.get("notes_sum"),
+                        confidence=detail.get("confidence_r"),
+                    )
                 except Exception as e:
-                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
+                    response = DetailResponse(qid=qid, error=str(e))
+                await callosum.publish_response(qid, response)
             elif req.get("type") == "ASK_LEAD":
                 qid = req.get("qid")
                 try:

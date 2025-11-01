@@ -16,9 +16,14 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import json, threading, uuid, asyncio
-from typing import Dict, Any
+import asyncio
+import json
+import threading
+import uuid
+from typing import Any, Dict, Mapping
 from kafka import KafkaProducer, KafkaConsumer
+
+from .transport_models import DetailRequest, DetailResponse, ensure_mapping
 
 class CallosumKafka:
     """Kafka-backed Callosum prototype."""
@@ -30,7 +35,7 @@ class CallosumKafka:
         self.res_topic = res_topic
         self.slot_ms = slot_ms
         self._loop = asyncio.get_event_loop()
-        self._response_futures: Dict[str, asyncio.Future] = {}
+        self._response_futures: Dict[str, asyncio.Future[DetailResponse]] = {}
 
         self.producer = KafkaProducer(bootstrap_servers=self.bootstrap_servers,
                                       value_serializer=lambda v: json.dumps(v).encode('utf-8'))
@@ -50,21 +55,31 @@ class CallosumKafka:
                 qid = payload.get('qid')
                 if qid and qid in self._response_futures:
                     fut = self._response_futures[qid]
-                    self._loop.call_soon_threadsafe(self._set_future_result, qid, fut, payload)
+                    try:
+                        detail = DetailResponse.from_payload(payload)
+                    except Exception:
+                        detail = DetailResponse(qid=str(qid), error='invalid response')
+                    self._loop.call_soon_threadsafe(self._set_future_result, qid, fut, detail)
             except Exception:
                 continue
 
-    def _set_future_result(self, qid, fut, payload):
+    def _set_future_result(self, qid, fut, detail):
         if fut and not fut.done():
-            fut.set_result(payload)
+            fut.set_result(detail)
             del self._response_futures[qid]
 
-    async def ask_detail(self, payload: Dict[str, Any], timeout_ms: int = 5000) -> Dict[str, Any]:
-        qid = payload.get("qid") or str(uuid.uuid4())
-        payload["qid"] = qid
-        fut = asyncio.get_event_loop().create_future()
+    async def ask_detail(
+        self,
+        payload: DetailRequest | Mapping[str, Any],
+        timeout_ms: int = 5000,
+    ) -> DetailResponse:
+        message = ensure_mapping(payload)
+        qid = message.get("qid") or str(uuid.uuid4())
+        message["qid"] = qid
+        message.setdefault("type", "ASK_DETAIL")
+        fut: asyncio.Future[DetailResponse] = asyncio.get_event_loop().create_future()
         self._response_futures[qid] = fut
-        self.producer.send(self.req_topic, payload); self.producer.flush()
+        self.producer.send(self.req_topic, message); self.producer.flush()
         await asyncio.sleep(self.slot_ms / 1000.0)
         try:
             return await asyncio.wait_for(fut, timeout=timeout_ms/1000.0)
@@ -73,5 +88,11 @@ class CallosumKafka:
                 del self._response_futures[qid]
             raise
 
-    async def publish_response(self, qid: str, response: Dict[str, Any]):
-        self.producer.send(self.res_topic, response); self.producer.flush()
+    async def publish_response(
+        self,
+        qid: str,
+        response: DetailResponse | Mapping[str, Any],
+    ) -> None:
+        payload = ensure_mapping(response)
+        payload.setdefault("qid", qid)
+        self.producer.send(self.res_topic, payload); self.producer.flush()

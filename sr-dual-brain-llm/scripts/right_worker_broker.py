@@ -19,6 +19,7 @@
 import os, json, asyncio
 from core.shared_memory import SharedMemory
 from core.models import RightBrainModel
+from core.transport_models import DetailRequest, DetailResponse
 
 # This worker listens on broker topics and replies.
 # Select backend with CALLOSUM_BACKEND=kafka|mqtt
@@ -41,10 +42,23 @@ async def run_kafka():
     for msg in consumer:
         payload = msg.value
         if payload.get("type")=="ASK_DETAIL":
-            qid = payload["qid"]
-            detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
-            resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
-            prod.send('callosum_responses', resp); prod.flush()
+            try:
+                detail_req = DetailRequest.from_payload(payload)
+            except Exception as exc:
+                prod.send('callosum_responses', DetailResponse(qid=str(payload.get("qid", "")), error=str(exc)).to_payload()); prod.flush()
+                continue
+            detail = await right.deepen(
+                detail_req.qid,
+                detail_req.question,
+                detail_req.draft_summary,
+                mem,
+            )
+            resp = DetailResponse(
+                qid=detail_req.qid,
+                notes_summary=detail.get("notes_sum"),
+                confidence=detail.get("confidence_r"),
+            )
+            prod.send('callosum_responses', resp.to_payload()); prod.flush()
         elif payload.get("type")=="ASK_LEAD":
             qid = payload.get("qid")
             lead = await right.generate_lead(
@@ -68,18 +82,30 @@ async def run_mqtt():
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
             if payload.get("type")=="ASK_DETAIL":
-                qid = payload["qid"]
-                # run coroutine in loop thread-safely
-                asyncio.run_coroutine_threadsafe(handle_mqtt_request(c, right, mem, qid, payload), asyncio.get_event_loop())
+                asyncio.run_coroutine_threadsafe(handle_mqtt_request(c, right, mem, payload), asyncio.get_event_loop())
             elif payload.get("type")=="ASK_LEAD":
                 qid = payload.get("qid")
                 asyncio.run_coroutine_threadsafe(handle_mqtt_lead(c, right, qid, payload), asyncio.get_event_loop())
         except Exception:
             pass
-    async def handle_mqtt_request(client, right, mem, qid, payload):
-        detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
-        resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
-        client.publish('callosum/responses', json.dumps(resp))
+    async def handle_mqtt_request(client, right, mem, payload):
+        try:
+            detail_req = DetailRequest.from_payload(payload)
+        except Exception as exc:
+            client.publish('callosum/responses', json.dumps(DetailResponse(qid=str(payload.get("qid", "")), error=str(exc)).to_payload()))
+            return
+        detail = await right.deepen(
+            detail_req.qid,
+            detail_req.question,
+            detail_req.draft_summary,
+            mem,
+        )
+        resp = DetailResponse(
+            qid=detail_req.qid,
+            notes_summary=detail.get("notes_sum"),
+            confidence=detail.get("confidence_r"),
+        )
+        client.publish('callosum/responses', json.dumps(resp.to_payload()))
 
     async def handle_mqtt_lead(client, right, qid, payload):
         lead = await right.generate_lead(
