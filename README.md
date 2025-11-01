@@ -4,7 +4,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 
 ## Key Ideas
 - **Dual-agent workflow** – the left brain triages requests and only escalates to the right brain when a domain-specific deep dive is warranted.
-- **Adaptive co-leading policy** – the controller senses hemispheric bias, rotates leadership when balanced, and preserves a conversational cadence that lets both sides initiate and hand off fluidly.
+- **Adaptive co-leading policy** – the controller senses hemispheric bias, rotates leadership when balanced, and now braids right-brain preludes with left-brain drafts when signals are in equilibrium.
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
@@ -17,15 +17,15 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
 - **Motif cadence analysis** – captures alliteration, motif density, and rhythmic cadence across hemispheres so a "[Linguistic Motifs]" block can surface how language form evolves beyond semantics.
 
-## Architecture Overview (Collaborative Flow)
+## Architecture Overview (Braided Co-Lead Flow)
 ```
                                     ┌────────────────────────┐
                                     │        User Input      │
                                     └────────────┬───────────┘
                                                  │
                           ┌──────────────────────▼──────────────────────┐
-                          │ Hemispheric Selector & Coherence Resonator  │
-                          │ (bias sensing, rotation, resonance feedback)│
+                          │ Hemispheric Selector & Resonance Weaving    │
+                          │ (bias sensing, rotation, co-lead cadence)   │
                           └──────────────┬──────────────┬───────────────┘
                                          │              │
                           ┌──────────────▼──────┐   ┌───▼───────────────┐
@@ -34,31 +34,37 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
                           │ structural drafting)│   │ imaginative scaff.)│
                           └──────────────┬──────┘   └────────────┬───────┘
                                          │                      │
-                        ┌────────────────▼────────────┐ ┌───────▼────────────┐
-                        │ Shared Memory & Hippocampus │ │ Basal Ganglia &    │
-                        │ (episodic recall, context)  │ │ Amygdala affect    │
-                        └──────────────┬──────────────┘ └────────┬───────────┘
-                                         │ context mix            │ go / inhibit
-                                         └──────────────┬─────────┘
-                                                        │
-                               ┌────────────────────────▼────────────────────┐
-                               │ Corpus Callosum Transport Layer             │
-                               │ (in-memory / Kafka / MQTT connective tissue)│
-                               └────────────────────────┬────────────────────┘
-                                                        │ enriched consult payloads
-                             ┌───────────────────────────▼────────────────────────┐
-                             │ Psychoid Attention + Default Mode Reflections      │
-                             │ (archetypal cues, unconscious summaries, biasing)  │
-                             └───────────────────────────┬────────────────────────┘
-                                                         │
-                                 ┌───────────────────────▼────────────────────┐
-                                 │ Coherence Resonator & Linguistic Brainstem │
-                                 │ (merge drafts, weave motifs, tag telemetry)│
-                                 └───────────────────────┬────────────────────┘
-                                                         │ annotated response
-                                    ┌────────────────────▼───────────────────┐
-                                    │         Final Response to User         │
-                                    └────────────────────────────────────────┘
+                                 ┌───────▼────────────┐ ┌───────▼────────────┐
+                                 │ Braided Prelude    │ │ Shared Memory &    │
+                                 │ (right prelude +   │ │ Hippocampus        │
+                                 │ left draft fusion) │ │ (episodic context) │
+                                 └──────────┬─────────┘ └────────┬───────────┘
+                                             │                    │
+                        ┌────────────────────▼────────────┐ ┌─────▼────────────┐
+                        │ Basal Ganglia & Amygdala Affect │ │ Corpus Callosum  │
+                        │ (go/inhibit, affective shaping) │ │ Transport Layer  │
+                        └──────────────┬──────────────┬───┘ │ (in-memory /     │
+                                         │              │     │ Kafka / MQTT)   │
+                                         │              └─────▼────────────┐
+                                         │                    │ enriched consult
+                                         │                    │ payloads        
+                                         │                    └────────┬────────┘
+                                         │                             │
+                             ┌───────────▼──────────────────────────┐
+                             │ Psychoid Attention + Default Mode    │
+                             │ Reflections (archetypal cues,        │
+                             │ unconscious summaries, biasing)      │
+                             └───────────┬──────────────────────────┘
+                                         │
+                                 ┌───────▼──────────────────────────┐
+                                 │ Coherence Resonator & Linguistic │
+                                 │ Brainstem (merge drafts, weave   │
+                                 │ motifs, annotate telemetry)      │
+                                 └──────────┬───────────────────────┘
+                                             │ annotated response
+                                    ┌────────▼──────────────────────┐
+                                    │      Final Response to User   │
+                                    └───────────────────────────────┘
 ```
 
 ## Repository Layout

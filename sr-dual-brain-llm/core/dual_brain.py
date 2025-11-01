@@ -424,17 +424,22 @@ class DualBrainController:
         context, focus = self._compose_context(question)
         hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
         auto_selected_leading = False
+        collaborative_lead = False
         selection_reason = "explicit_request"
+        leading_style = "explicit_request"
         if requested_leading in {"left", "right"}:
             leading = requested_leading
             selection_reason = f"explicit_request_{leading}"
+            leading_style = "explicit_request"
         else:
             if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
                 leading = "right"
                 selection_reason = "hemisphere_bias_right"
+                leading_style = "hemisphere_bias"
             elif hemisphere_mode == "left" and hemisphere_bias >= 0.35:
                 leading = "left"
                 selection_reason = "hemisphere_bias_left"
+                leading_style = "hemisphere_bias"
             else:
                 if self._last_leading_brain == "right":
                     leading = "left"
@@ -443,6 +448,11 @@ class DualBrainController:
                 else:
                     leading = "right"
                 selection_reason = "cooperative_rotation"
+                leading_style = "rotation"
+                if hemisphere_mode == "balanced" and hemisphere_bias < 0.25:
+                    collaborative_lead = True
+                    selection_reason = "cooperative_rotation_balanced"
+                    leading_style = "collaborative_braid"
             auto_selected_leading = True
         self._last_leading_brain = leading
         if self.coherence_resonator is not None:
@@ -455,7 +465,7 @@ class DualBrainController:
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         right_lead_notes: Optional[str] = None
-        if leading == "right":
+        if leading == "right" or collaborative_lead:
             try:
                 right_lead_notes = await self.right_model.generate_lead(
                     question,
@@ -463,7 +473,10 @@ class DualBrainController:
                 )
             except Exception:  # pragma: no cover - defensive guard
                 right_lead_notes = None
+        left_lead_preview: Optional[str] = None
         draft = await self.left_model.generate_answer(question, context)
+        if collaborative_lead:
+            left_lead_preview = draft.split("\n\n", 1)[0][:320]
         left_coherence: Optional[HemisphericCoherence] = None
         right_coherence: Optional[HemisphericCoherence] = None
         coherence_signal: Optional[CoherenceSignal] = None
@@ -511,6 +524,11 @@ class DualBrainController:
         if auto_selected_leading:
             decision.state["leading_autoselected"] = True
         decision.state["leading_selection_reason"] = selection_reason
+        decision.state["leading_style"] = leading_style
+        if collaborative_lead:
+            decision.state["leading_collaborative"] = True
+        if left_lead_preview:
+            decision.state["left_lead_preview"] = left_lead_preview
         if right_lead_notes:
             decision.state["right_lead_preview"] = right_lead_notes
         if left_coherence is not None:
@@ -642,6 +660,8 @@ class DualBrainController:
             forced=bool(decision.state.get("right_forced_lead", False)),
             auto=auto_selected_leading,
             reason=selection_reason,
+            collaborative=collaborative_lead,
+            style=leading_style,
         )
 
         if not self.orchestrator.register_request(decision.qid, leader=leading):
@@ -759,7 +779,18 @@ class DualBrainController:
             self.orchestrator.clear(decision.qid)
 
         integrated_answer = final_answer
-        if leading == "right":
+        if collaborative_lead:
+            right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
+            left_block = left_lead_preview or draft
+            final_answer = (
+                "[Right Brain Prelude]\n"
+                f"{right_block}\n\n"
+                "[Left Brain Prelude]\n"
+                f"{left_block}\n\n"
+                "[Integrated Response]\n"
+                f"{integrated_answer}"
+            )
+        elif leading == "right":
             lead_block = right_lead_notes or detail_notes or "(Right brain lead unavailable)"
             final_answer = (
                 "[Right Brain Lead]\n"
@@ -819,6 +850,8 @@ class DualBrainController:
         final_answer = f"{final_answer}\n\n" + "\n".join(tilt_lines)
         tags = set()
         tags.add(f"leading_{leading}")
+        if collaborative_lead:
+            tags.add("leading_collaborative")
         if leading == "right" and decision.action == 0:
             tags.add("right_lead_solo")
         if self.coherence_resonator is not None:
@@ -1031,7 +1064,9 @@ class DualBrainController:
             tags.update(self.basal_ganglia.tags(basal_signal))
 
         follow_brain: Optional[str] = None
-        if leading == "right":
+        if collaborative_lead:
+            follow_brain = "braided"
+        elif leading == "right":
             follow_brain = "left"
         elif detail_notes or decision.action != 0:
             follow_brain = "right"
