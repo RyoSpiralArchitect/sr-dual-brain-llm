@@ -6,7 +6,7 @@ import asyncio
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -36,6 +36,7 @@ class DualBrainController:
         auditor,
         orchestrator,
         default_timeout_ms: int = 6000,
+        telemetry: Optional[Any] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -47,6 +48,7 @@ class DualBrainController:
         self.auditor = auditor
         self.orchestrator = orchestrator
         self.default_timeout_ms = default_timeout_ms
+        self.telemetry = telemetry or _NullTelemetry()
 
     @staticmethod
     def _infer_question_type(question: str) -> str:
@@ -82,6 +84,14 @@ class DualBrainController:
         draft = await self.left_model.generate_answer(question, context)
         confidence = self.left_model.estimate_confidence(draft)
         decision = self.decide(question, draft, confidence)
+        self.telemetry.log(
+            "policy_decision",
+            qid=decision.qid,
+            state=decision.state,
+            action=decision.action,
+            temperature=decision.temperature,
+            slot_ms=decision.slot_ms,
+        )
 
         if not self.orchestrator.register_request(decision.qid):
             return "Loop-killed"
@@ -92,7 +102,7 @@ class DualBrainController:
         start = time.perf_counter()
         try:
             if decision.action == 0:
-                pass
+                success = True
             else:
                 payload = {
                     "type": "ASK_DETAIL",
@@ -110,12 +120,34 @@ class DualBrainController:
                     response = await self.callosum.ask_detail(payload, timeout_ms=timeout_ms)
                 finally:
                     self.callosum.slot_ms = original_slot
-                if response.get("error"):
-                    final_answer = draft + f"\n(Right brain error: {response['error']})"
+                response_source = "callosum"
+                detail_notes = response.get("notes_sum")
+                if response.get("error") or not detail_notes:
+                    response_source = "right_model_fallback"
+                    try:
+                        fallback = await self.right_model.deepen(
+                            decision.qid,
+                            question,
+                            draft,
+                            self.memory,
+                            temperature=decision.temperature,
+                            budget=payload["budget"],
+                            context=context,
+                        )
+                    except Exception as exc:  # pragma: no cover - defensive guard
+                        final_answer = draft + f"\n(Right brain error: {exc})"
+                    else:
+                        detail_notes = fallback.get("notes_sum")
+                        decision.state["right_conf"] = fallback.get("confidence_r", 0.0)
+                        success = True
                 else:
-                    final_answer = self.left_model.integrate_info(draft, response.get("notes_sum", ""))
                     decision.state["right_conf"] = response.get("confidence_r", 0.0)
                     success = True
+
+                if detail_notes:
+                    final_answer = self.left_model.integrate_info(draft, detail_notes)
+                if decision.state.get("right_conf"):
+                    decision.state["right_source"] = response_source
         except asyncio.TimeoutError:
             final_answer = draft + "\n(Right brain timeout: continuing with draft)"
         finally:
@@ -132,5 +164,26 @@ class DualBrainController:
             reward = min(reward, 0.25)
         self.hypothalamus.update_feedback(reward=reward, latency_ms=latency_ms)
 
-        self.memory.store({"Q": question, "A": final_answer})
+        tags = {decision.state.get("q_type", "unknown")}
+        if decision.state.get("novelty", 0.0) < 0.4:
+            tags.add("familiar")
+        if decision.state.get("right_source"):
+            tags.add(decision.state["right_source"])
+
+        self.memory.store({"Q": question, "A": final_answer}, tags=tags)
+        self.telemetry.log(
+            "interaction_complete",
+            qid=decision.qid,
+            success=success,
+            latency_ms=latency_ms,
+            reward=reward,
+            tags=list(tags),
+        )
         return final_answer
+
+
+class _NullTelemetry:
+    """Default telemetry sink used when no observer is provided."""
+
+    def log(self, *_: Any, **__: Any) -> None:  # pragma: no cover - trivial
+        pass
