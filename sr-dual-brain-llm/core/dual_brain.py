@@ -97,6 +97,15 @@ _LEFT_HEMISPHERE_PATTERNS = [
 ]
 
 
+def _semantic_tokens(*chunks: str) -> List[str]:
+    tokens: List[str] = []
+    for chunk in chunks:
+        if not chunk:
+            continue
+        tokens.extend(re.findall(r"[\w']+", chunk.lower()))
+    return tokens
+
+
 @dataclass
 class DecisionOutcome:
     """Details about a single orchestration decision."""
@@ -249,6 +258,69 @@ class DualBrainController:
         if diff < -0.8:
             return "left", intensity
         return "balanced", intensity
+
+    def _evaluate_semantic_tilt(
+        self,
+        *,
+        question: str,
+        final_answer: str,
+        detail_notes: Optional[str],
+    ) -> Dict[str, object]:
+        tokens = _semantic_tokens(question, final_answer, detail_notes or "")
+        token_set = set(tokens)
+        right_hits = sorted(tok for tok in token_set if tok in _RIGHT_HEMISPHERE_KEYWORDS)
+        left_hits = sorted(tok for tok in token_set if tok in _LEFT_HEMISPHERE_KEYWORDS)
+
+        right_score = float(len(right_hits))
+        left_score = float(len(left_hits))
+        notes: List[str] = []
+
+        combined_text = " ".join(chunk for chunk in [question, final_answer, detail_notes] if chunk)
+        for marker in _RIGHT_HEMISPHERE_MARKERS:
+            if marker and marker in combined_text:
+                right_score += 0.75
+                notes.append(f"right marker:{marker}")
+        for marker in _LEFT_HEMISPHERE_MARKERS:
+            if marker and marker in combined_text:
+                left_score += 0.75
+                notes.append(f"left marker:{marker}")
+
+        for pattern in _RIGHT_HEMISPHERE_PATTERNS:
+            if pattern.search(combined_text):
+                right_score += 0.9
+                notes.append(f"right pattern:{pattern.pattern}")
+        for pattern in _LEFT_HEMISPHERE_PATTERNS:
+            if pattern.search(combined_text):
+                left_score += 0.9
+                notes.append(f"left pattern:{pattern.pattern}")
+
+        total = right_score + left_score
+        if total <= 0.0:
+            return {
+                "mode": "balanced",
+                "intensity": 0.0,
+                "right_hits": right_hits,
+                "left_hits": left_hits,
+                "notes": notes,
+                "scores": {"left": left_score, "right": right_score},
+            }
+
+        diff = right_score - left_score
+        intensity = min(1.0, abs(diff) / max(total, 1.0))
+        if diff > 0.6:
+            mode = "right"
+        elif diff < -0.6:
+            mode = "left"
+        else:
+            mode = "balanced"
+        return {
+            "mode": mode,
+            "intensity": intensity,
+            "right_hits": right_hits,
+            "left_hits": left_hits,
+            "notes": notes,
+            "scores": {"left": left_score, "right": right_score},
+        }
 
     def _build_policy_state(
         self,
@@ -515,6 +587,7 @@ class DualBrainController:
             return "Loop-killed"
 
         final_answer = draft
+        detail_notes: Optional[str] = None
         success = False
         latency_ms = 0.0
         start = time.perf_counter()
@@ -619,6 +692,83 @@ class DualBrainController:
             latency_ms = (time.perf_counter() - start) * 1000.0
             self.orchestrator.clear(decision.qid)
 
+        routing_lines = [
+            "[Hemisphere Routing]",
+            f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
+            f"- policy action: {decision.action}",
+            f"- temperature: {decision.temperature:.2f}",
+        ]
+        if self.coherence_resonator is not None:
+            routing_lines.append(
+                "- coherence weights left {left:.2f} | right {right:.2f}".format(
+                    left=self.coherence_resonator.left_weight,
+                    right=self.coherence_resonator.right_weight,
+                )
+            )
+        final_answer = f"{final_answer}\n\n" + "\n".join(routing_lines)
+        semantic_tilt = self._evaluate_semantic_tilt(
+            question=question,
+            final_answer=final_answer,
+            detail_notes=detail_notes,
+        )
+        decision.state["hemisphere_semantic_tilt"] = semantic_tilt
+        self.telemetry.log(
+            "hemisphere_semantic_tilt",
+            qid=decision.qid,
+            mode=semantic_tilt["mode"],
+            intensity=semantic_tilt["intensity"],
+            scores=semantic_tilt["scores"],
+            right_hits=semantic_tilt["right_hits"],
+            left_hits=semantic_tilt["left_hits"],
+            initial_mode=hemisphere_mode,
+        )
+        tilt_lines = [
+            "[Hemisphere Semantic Tilt]",
+            "- semantic mode: {mode} (intensity {intensity:.2f})".format(
+                mode=semantic_tilt["mode"],
+                intensity=float(semantic_tilt["intensity"]),
+            ),
+            "- right hits: {hits}".format(
+                hits=", ".join(semantic_tilt["right_hits"]) or "none",
+            ),
+            "- left hits: {hits}".format(
+                hits=", ".join(semantic_tilt["left_hits"]) or "none",
+            ),
+        ]
+        if semantic_tilt["notes"]:
+            for note in semantic_tilt["notes"]:
+                tilt_lines.append(f"- note: {note}")
+        final_answer = f"{final_answer}\n\n" + "\n".join(tilt_lines)
+        tags = set()
+        if self.coherence_resonator is not None:
+            self.coherence_resonator.retune(
+                semantic_tilt["mode"],
+                intensity=float(semantic_tilt["intensity"]),
+            )
+            projection_payload = (
+                psychoid_projection.to_payload() if psychoid_projection else None
+            )
+            coherence_signal = self.coherence_resonator.integrate(
+                final_answer=final_answer,
+                psychoid_projection=projection_payload,
+            )
+            if coherence_signal is not None:
+                decision.state["coherence_combined"] = coherence_signal.combined_score
+                decision.state["coherence_tension"] = coherence_signal.tension
+                decision.state["coherence_notes"] = coherence_signal.notes
+                decision.state["coherence_contributions"] = coherence_signal.contributions
+                self.telemetry.log(
+                    "coherence_signal",
+                    qid=decision.qid,
+                    signal=coherence_signal.to_payload(),
+                )
+                final_answer = self.coherence_resonator.annotate_answer(
+                    final_answer, coherence_signal
+                )
+                coherence_tags = set(coherence_signal.tags())
+                tags.update(coherence_tags)
+                decision.state["coherence_tags"] = list(coherence_tags)
+
         audit_result = self.auditor.check(final_answer)
         if not audit_result.get("ok", True):
             final_answer = draft + f"\n(Auditor veto: {audit_result.get('reason', 'unknown')})"
@@ -629,9 +779,16 @@ class DualBrainController:
             reward = min(reward, 0.25)
         self.hypothalamus.update_feedback(reward=reward, latency_ms=latency_ms)
 
-        tags = {decision.state.get("q_type", "unknown")}
+        tags.add(decision.state.get("q_type", "unknown"))
         tags.add(f"hemisphere_{hemisphere_mode}")
         tags.add(f"hemisphere_bias_{int(hemisphere_bias * 100):02d}")
+        tilt_mode = semantic_tilt["mode"]
+        tags.add(f"hemisphere_tilt_{tilt_mode}")
+        tags.add(
+            f"hemisphere_tilt_bias_{int(float(semantic_tilt['intensity']) * 100):02d}"
+        )
+        if tilt_mode != hemisphere_mode:
+            tags.add("hemisphere_shifted")
         if decision.state.get("novelty", 0.0) < 0.4:
             tags.add("familiar")
         if decision.state.get("right_source"):
