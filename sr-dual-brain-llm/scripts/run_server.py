@@ -22,6 +22,9 @@ from core.models import LeftBrainModel, RightBrainModel
 from core.policy import RightBrainPolicy
 from core.orchestrator import Orchestrator
 from core.auditor import Auditor
+from core.hypothalamus import Hypothalamus
+from core.policy_modes import ReasoningDial
+from core.dual_brain import DualBrainController
 
 _BACKEND = os.environ.get("CALLOSUM_BACKEND", "memory")
 
@@ -41,46 +44,47 @@ async def right_worker(callosum, mem, right_model):
             if req.get("type") == "ASK_DETAIL":
                 qid = req["qid"]
                 try:
-                    detail = await right_model.deepen(qid, req["question"], req.get("draft_sum",""), mem)
+                    detail = await right_model.deepen(
+                        qid,
+                        req["question"],
+                        req.get("draft_sum", ""),
+                        mem,
+                        temperature=req.get("temperature", 0.7),
+                        budget=req.get("budget", "small"),
+                        context=req.get("context"),
+                    )
                     await callosum.publish_response(qid, {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]})
                 except Exception as e:
                     await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
     else:
         await asyncio.sleep(0.1)
 
-async def handle_query(question: str, callosum, mem, left, policy, auditor, orchestrator):
-    draft = await left.generate_answer(question, mem.get_context())
-    conf = left.estimate_confidence(draft)
-    state = {"left_conf": conf, "draft_len": len(draft), "novelty":0.0, "q_type": ("hard" if any(k in question for k in ['計算','分析','証拠']) else "medium")}
-    action = policy.decide(state)
-    qid = str(uuid.uuid4())
-    if not orchestrator.register_request(qid):
-        return "Loop-killed"
-    final_answer = draft
-    try:
-        if action == 0:
-            pass
-        else:
-            payload = {"type":"ASK_DETAIL","qid": qid, "question":question, "draft_sum": draft if len(draft)<160 else draft[:160]}
-            resp = await callosum.ask_detail(payload, timeout_ms=5000)
-            if resp.get("error"):
-                final_answer = draft + "\n(右脳応答エラー)"
-            else:
-                final_answer = left.integrate_info(draft, resp["notes_sum"])
-    except asyncio.TimeoutError:
-        final_answer = draft + "\n(右脳タイムアウト: 後で詳細を返します)"
-    finally:
-        auditor_res = auditor.check(final_answer)
-        if not auditor_res["ok"]:
-            final_answer = draft + f"\n(Auditor veto: {auditor_res['reason']})"
-        mem.store({"Q":question,"A":final_answer})
-        orchestrator.clear(qid)
-    return final_answer
-
 async def main():
     callosum = load_callosum(_BACKEND)
-    mem = SharedMemory(); left = LeftBrainModel(); right = RightBrainModel()
-    policy = RightBrainPolicy(); orchestrator = Orchestrator(2); auditor = Auditor()
+    mem = SharedMemory()
+    left = LeftBrainModel()
+    right = RightBrainModel()
+    policy = RightBrainPolicy()
+    orchestrator = Orchestrator(2)
+    auditor = Auditor()
+    hypothalamus = Hypothalamus()
+    dial_mode = os.environ.get("REASONING_DIAL", "evaluative")
+    try:
+        dial = ReasoningDial(mode=dial_mode)
+    except AssertionError:
+        print(f"Unknown reasoning dial '{dial_mode}', falling back to evaluative mode.")
+        dial = ReasoningDial(mode="evaluative")
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=mem,
+        left_model=left,
+        right_model=right,
+        policy=policy,
+        hypothalamus=hypothalamus,
+        reasoning_dial=dial,
+        auditor=auditor,
+        orchestrator=orchestrator,
+    )
     if _BACKEND == "memory":
         asyncio.create_task(right_worker(callosum, mem, right))
     print(f"Server ready (backend={_BACKEND}). Type questions (stdin). Ctrl-C to quit.")
@@ -89,7 +93,7 @@ async def main():
         question = await loop.run_in_executor(None, input, "Q> ")
         if not question.strip():
             continue
-        ans = await handle_query(question, callosum, mem, left, policy, auditor, orchestrator)
+        ans = await controller.process(question)
         print("A>", ans)
 
 if __name__ == "__main__":
