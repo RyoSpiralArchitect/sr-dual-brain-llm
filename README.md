@@ -7,6 +7,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
+- **Neuroscience-inspired control** – a lightweight amygdala watches for risk, a dorsolateral prefrontal cortex analogue gates right-brain consults, and hippocampal indexing feeds episodic context back into every exchange.
 
 ## Repository Layout
 ```
@@ -16,6 +17,9 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
     │   ├── callosum.py             # Default asyncio in-memory transport
     │   ├── callosum_kafka.py       # Kafka-based transport skeleton
     │   ├── callosum_mqtt.py        # MQTT-based transport skeleton
+    │   ├── amygdala.py             # Threat & affect heuristic (limbic system)
+    │   ├── prefrontal_cortex.py    # DLPFC-inspired control gating
+    │   ├── temporal_hippocampal_indexing.py  # Episodic vector store
     │   ├── orchestrator.py         # Left-brain coordinator
     │   ├── policy_ppo.py           # PPO policy over discrete actions
     │   └── shared_memory.py        # Persistent memory helpers

@@ -8,6 +8,10 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from .amygdala import Amygdala
+from .prefrontal_cortex import PrefrontalCortex
+from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
+
 
 @dataclass
 class DecisionOutcome:
@@ -18,6 +22,7 @@ class DecisionOutcome:
     temperature: float
     slot_ms: int
     state: Dict[str, Any]
+    signals: Dict[str, Any]
 
 
 class DualBrainController:
@@ -37,6 +42,9 @@ class DualBrainController:
         orchestrator,
         default_timeout_ms: int = 6000,
         telemetry: Optional[Any] = None,
+        amygdala: Optional[Amygdala] = None,
+        prefrontal: Optional[PrefrontalCortex] = None,
+        hippocampus: Optional[TemporalHippocampalIndexing] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -49,6 +57,9 @@ class DualBrainController:
         self.orchestrator = orchestrator
         self.default_timeout_ms = default_timeout_ms
         self.telemetry = telemetry or _NullTelemetry()
+        self.amygdala = amygdala or Amygdala()
+        self.prefrontal = prefrontal or PrefrontalCortex()
+        self.hippocampus = hippocampus or TemporalHippocampalIndexing()
 
     @staticmethod
     def _infer_question_type(question: str) -> str:
@@ -59,31 +70,87 @@ class DualBrainController:
             return "medium"
         return "easy"
 
-    def _build_policy_state(self, question: str, draft: str, confidence: float) -> Dict[str, Any]:
-        novelty = self.memory.novelty_score(question)
+    def _build_policy_state(
+        self,
+        question: str,
+        draft: str,
+        confidence: float,
+        *,
+        signals: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        novelty = signals.get("novelty", self.memory.novelty_score(question))
+        amygdala_signal = signals.get("amygdala", {})
         return {
             "left_conf": confidence,
             "draft_len": len(draft),
             "novelty": novelty,
             "risk": max(0.0, min(1.0, 1.0 - confidence)),
             "q_type": self._infer_question_type(question),
+            "amygdala_risk": float(amygdala_signal.get("risk", 0.0)),
+            "amygdala_valence": float(amygdala_signal.get("valence", 0.0)),
+            "amygdala_arousal": float(amygdala_signal.get("arousal", 0.0)),
+            "conflict_signal": float(signals.get("conflict", 0.0)),
+            "goal_focus": float(signals.get("goal_focus", 0.5)),
+            "hippocampal_hits": int(signals.get("hippocampal_hits", 0)),
         }
 
-    def decide(self, question: str, draft: str, confidence: float) -> DecisionOutcome:
-        state = self._build_policy_state(question, draft, confidence)
+    def decide(
+        self,
+        question: str,
+        draft: str,
+        confidence: float,
+        *,
+        signals: Dict[str, Any],
+    ) -> DecisionOutcome:
+        state = self._build_policy_state(question, draft, confidence, signals=signals)
         action = self.policy.decide(state)
         action = self.reasoning_dial.adjust_decision(state, action)
         base_temp = self.hypothalamus.recommend_temperature(confidence)
         temperature = self.reasoning_dial.scale_temperature(base_temp)
-        slot_ms = self.hypothalamus.recommend_slot_ms(state["risk"])
+        if self.prefrontal:
+            action = self.prefrontal.gate_consult(action, state)
+            temperature = self.prefrontal.modulate_temperature(temperature, state)
+        slot_ms = self.hypothalamus.recommend_slot_ms(
+            max(state["risk"], state.get("amygdala_risk", 0.0))
+        )
         qid = str(uuid.uuid4())
-        return DecisionOutcome(qid=qid, action=action, temperature=temperature, slot_ms=slot_ms, state=state)
+        return DecisionOutcome(
+            qid=qid,
+            action=action,
+            temperature=temperature,
+            slot_ms=slot_ms,
+            state=state,
+            signals=signals,
+        )
 
     async def process(self, question: str) -> str:
+        novelty = self.memory.novelty_score(question)
+        hippocampal_hits = self.hippocampus.retrieve(question, topk=3)
+        episodic_context = " | ".join(
+            f"(sim={score:.2f}) {ep['text'].splitlines()[0][:120]}"
+            for score, ep in hippocampal_hits
+        )
         context = self.memory.retrieve_related(question)
-        draft = await self.left_model.generate_answer(question, context)
+        combined_context = "\n".join(filter(None, [episodic_context, context]))
+        draft = await self.left_model.generate_answer(question, combined_context)
         confidence = self.left_model.estimate_confidence(draft)
-        decision = self.decide(question, draft, confidence)
+        amygdala_signal = self.amygdala.analyze(f"{question}\n{draft}")
+        prefrontal_metrics = self.prefrontal.update_goal_state(
+            question,
+            draft,
+            combined_context,
+            amygdala_signal=amygdala_signal,
+            novelty=novelty,
+        )
+        signals = {
+            "novelty": novelty,
+            "amygdala": amygdala_signal,
+            "conflict": prefrontal_metrics.get("conflict", 0.0),
+            "goal_focus": prefrontal_metrics.get("goal_focus", 0.5),
+            "hippocampal_hits": len(hippocampal_hits),
+            "control_tone": prefrontal_metrics.get("control_tone", 0.6),
+        }
+        decision = self.decide(question, draft, confidence, signals=signals)
         self.telemetry.log(
             "policy_decision",
             qid=decision.qid,
@@ -91,6 +158,7 @@ class DualBrainController:
             action=decision.action,
             temperature=decision.temperature,
             slot_ms=decision.slot_ms,
+            signals=decision.signals,
         )
 
         if not self.orchestrator.register_request(decision.qid):
@@ -111,7 +179,7 @@ class DualBrainController:
                     "draft_sum": draft if len(draft) < 280 else draft[:280],
                     "temperature": decision.temperature,
                     "budget": self.reasoning_dial.pick_budget(),
-                    "context": context,
+                    "context": combined_context,
                 }
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
@@ -132,7 +200,7 @@ class DualBrainController:
                             self.memory,
                             temperature=decision.temperature,
                             budget=payload["budget"],
-                            context=context,
+                            context=combined_context,
                         )
                     except Exception as exc:  # pragma: no cover - defensive guard
                         final_answer = draft + f"\n(Right brain error: {exc})"
@@ -169,8 +237,11 @@ class DualBrainController:
             tags.add("familiar")
         if decision.state.get("right_source"):
             tags.add(decision.state["right_source"])
+        if decision.state.get("amygdala_risk", 0.0) > 0.6:
+            tags.add("high_risk")
 
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
+        self.hippocampus.index_episode(decision.qid, question, final_answer)
         self.telemetry.log(
             "interaction_complete",
             qid=decision.qid,
@@ -178,7 +249,9 @@ class DualBrainController:
             latency_ms=latency_ms,
             reward=reward,
             tags=list(tags),
+            signals=decision.signals,
         )
+        self.prefrontal.integrate_feedback(reward, latency_ms, success=success)
         return final_answer
 
 
