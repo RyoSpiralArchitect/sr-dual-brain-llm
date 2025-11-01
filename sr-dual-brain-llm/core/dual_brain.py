@@ -671,14 +671,14 @@ class DualBrainController:
                 decision.state["unconscious_cache_depth"] = summary.cache_depth
                 if summary.emergent_ideas:
                     decision.state["unconscious_emergent"] = [
-                        idea.dict() for idea in summary.emergent_ideas
+                        idea.to_payload() for idea in summary.emergent_ideas
                     ]
                 if summary.stress_released:
                     decision.state["unconscious_stress_release"] = summary.stress_released
                 psychoid_signal = summary.psychoid_signal
                 if psychoid_signal:
                     decision.state["psychoid_bias"] = [
-                        entry.dict() for entry in psychoid_signal.attention_bias
+                        entry.to_payload() for entry in psychoid_signal.attention_bias
                     ]
                     decision.state["psychoid_tension"] = psychoid_signal.psychoid_tension
                     decision.state["psychoid_resonance"] = psychoid_signal.resonance
