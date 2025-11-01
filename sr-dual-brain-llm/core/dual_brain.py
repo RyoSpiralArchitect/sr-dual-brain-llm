@@ -107,6 +107,13 @@ def _semantic_tokens(*chunks: str) -> List[str]:
     return tokens
 
 
+def _format_section(title: str, lines: List[str]) -> str:
+    body = "\n".join(lines) if lines else ""
+    if body:
+        return f"[{title}]\n{body}"
+    return f"[{title}]"
+
+
 @dataclass
 class DecisionOutcome:
     """Details about a single orchestration decision."""
@@ -116,6 +123,50 @@ class DecisionOutcome:
     temperature: float
     slot_ms: int
     state: Dict[str, Any]
+
+
+@dataclass
+class HemisphericSignal:
+    """Raw hemisphere cue scoring derived from the question and focus."""
+
+    mode: str
+    bias: float
+    right_score: float
+    left_score: float
+    token_count: int
+
+    def to_payload(self) -> Dict[str, float]:
+        return {
+            "mode": self.mode,
+            "bias": float(self.bias),
+            "right_score": float(self.right_score),
+            "left_score": float(self.left_score),
+            "token_count": float(self.token_count),
+        }
+
+    @property
+    def total(self) -> float:
+        return self.right_score + self.left_score
+
+
+@dataclass
+class CollaborationProfile:
+    """Aggregated assessment of how strongly both hemispheres want to co-lead."""
+
+    strength: float
+    balance: float
+    density: float
+    focus_bonus: float
+    token_count: int
+
+    def to_payload(self) -> Dict[str, float]:
+        return {
+            "strength": float(self.strength),
+            "balance": float(self.balance),
+            "density": float(self.density),
+            "focus_bonus": float(self.focus_bonus),
+            "token_count": float(self.token_count),
+        }
 
 
 class DualBrainController:
@@ -163,6 +214,7 @@ class DualBrainController:
         self.default_mode_network = default_mode_network
         self.psychoid_adapter = psychoid_attention_adapter
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
+        self._last_leading_brain: Optional[str] = "right"
 
     def _prepare_psychoid_projection(
         self, psychoid_signal: Optional[PsychoidSignalModel], *, seq_len: int = 8
@@ -226,7 +278,7 @@ class DualBrainController:
 
     def _select_hemisphere_mode(
         self, question: str, focus: FocusSummary | None
-    ) -> Tuple[str, float]:
+    ) -> HemisphericSignal:
         tokens = {tok for tok in re.findall(r"[\w']+", question.lower())}
         if focus is not None and focus.keywords:
             tokens.update(tok.lower() for tok in focus.keywords)
@@ -250,15 +302,56 @@ class DualBrainController:
 
         total = right_score + left_score
         if total <= 0.0:
-            return "balanced", 0.0
+            return HemisphericSignal(
+                mode="balanced",
+                bias=0.0,
+                right_score=right_score,
+                left_score=left_score,
+                token_count=len(tokens),
+            )
 
         diff = right_score - left_score
         intensity = min(1.0, abs(diff) / max(total, 1.0))
         if diff > 0.8:
-            return "right", intensity
-        if diff < -0.8:
-            return "left", intensity
-        return "balanced", intensity
+            mode = "right"
+        elif diff < -0.8:
+            mode = "left"
+        else:
+            mode = "balanced"
+        return HemisphericSignal(
+            mode=mode,
+            bias=intensity,
+            right_score=right_score,
+            left_score=left_score,
+            token_count=len(tokens),
+        )
+
+    def _compute_collaboration_profile(
+        self, signal: HemisphericSignal, focus: FocusSummary | None
+    ) -> CollaborationProfile:
+        total = signal.total
+        if total <= 0.0:
+            return CollaborationProfile(
+                strength=0.0,
+                balance=0.0,
+                density=0.0,
+                focus_bonus=0.0,
+                token_count=signal.token_count,
+            )
+
+        balance = 1.0 - abs(signal.right_score - signal.left_score) / max(total, 1.0)
+        density = min(1.0, total / 6.0)
+        focus_bonus = 0.0
+        if focus is not None:
+            focus_bonus = 0.12 * focus.relevance + 0.08 * focus.hippocampal_overlap
+        strength = max(0.0, min(1.0, 0.55 * balance + 0.35 * density + focus_bonus))
+        return CollaborationProfile(
+            strength=strength,
+            balance=balance,
+            density=density,
+            focus_bonus=focus_bonus,
+            token_count=signal.token_count,
+        )
 
     def _evaluate_semantic_tilt(
         self,
@@ -419,11 +512,55 @@ class DualBrainController:
     async def process(self, question: str, *, leading_brain: Optional[str] = None) -> str:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
-        leading = (leading_brain or "left").lower()
-        if leading not in {"left", "right"}:
-            leading = "left"
+        requested_leading = (leading_brain or "").strip().lower()
         context, focus = self._compose_context(question)
-        hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
+        hemisphere_signal = self._select_hemisphere_mode(question, focus)
+        hemisphere_mode = hemisphere_signal.mode
+        hemisphere_bias = hemisphere_signal.bias
+        collaboration_profile = self._compute_collaboration_profile(
+            hemisphere_signal, focus
+        )
+        auto_selected_leading = False
+        collaborative_lead = False
+        selection_reason = "explicit_request"
+        leading_style = "explicit_request"
+        if requested_leading in {"left", "right"}:
+            leading = requested_leading
+            selection_reason = f"explicit_request_{leading}"
+            leading_style = "explicit_request"
+        else:
+            collaborative_hint = (
+                hemisphere_mode == "balanced"
+                and hemisphere_bias < 0.45
+                and collaboration_profile.strength >= 0.4
+            )
+            if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
+                leading = "right"
+                selection_reason = "hemisphere_bias_right"
+                leading_style = "hemisphere_bias"
+            elif hemisphere_mode == "left" and hemisphere_bias >= 0.35:
+                leading = "left"
+                selection_reason = "hemisphere_bias_left"
+                leading_style = "hemisphere_bias"
+            else:
+                if self._last_leading_brain == "right":
+                    leading = "left"
+                elif self._last_leading_brain == "left":
+                    leading = "right"
+                else:
+                    leading = "right"
+                selection_reason = "cooperative_rotation"
+                leading_style = "rotation"
+                if collaborative_hint:
+                    collaborative_lead = True
+                    selection_reason = "cooperative_rotation_balanced"
+                    leading_style = (
+                        "collaborative_braid_strong"
+                        if collaboration_profile.strength >= 0.7
+                        else "collaborative_braid"
+                    )
+            auto_selected_leading = True
+        self._last_leading_brain = leading
         if self.coherence_resonator is not None:
             self.coherence_resonator.retune(hemisphere_mode, intensity=hemisphere_bias)
         focus_metric = 0.0
@@ -434,7 +571,7 @@ class DualBrainController:
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         right_lead_notes: Optional[str] = None
-        if leading == "right":
+        if leading == "right" or collaborative_lead:
             try:
                 right_lead_notes = await self.right_model.generate_lead(
                     question,
@@ -442,7 +579,10 @@ class DualBrainController:
                 )
             except Exception:  # pragma: no cover - defensive guard
                 right_lead_notes = None
+        left_lead_preview: Optional[str] = None
         draft = await self.left_model.generate_answer(question, context)
+        if collaborative_lead:
+            left_lead_preview = draft.split("\n\n", 1)[0][:320]
         left_coherence: Optional[HemisphericCoherence] = None
         right_coherence: Optional[HemisphericCoherence] = None
         coherence_signal: Optional[CoherenceSignal] = None
@@ -486,7 +626,17 @@ class DualBrainController:
             decision.state["right_forced_lead"] = True
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
+        decision.state["hemisphere_signal"] = hemisphere_signal.to_payload()
         decision.state["leading_brain"] = leading
+        if auto_selected_leading:
+            decision.state["leading_autoselected"] = True
+        decision.state["leading_selection_reason"] = selection_reason
+        decision.state["leading_style"] = leading_style
+        if collaborative_lead:
+            decision.state["leading_collaborative"] = True
+        decision.state["collaboration_profile"] = collaboration_profile.to_payload()
+        if left_lead_preview:
+            decision.state["left_lead_preview"] = left_lead_preview
         if right_lead_notes:
             decision.state["right_lead_preview"] = right_lead_notes
         if left_coherence is not None:
@@ -603,6 +753,17 @@ class DualBrainController:
             intensity=hemisphere_bias,
         )
         self.telemetry.log(
+            "hemisphere_signal",
+            qid=decision.qid,
+            signal=hemisphere_signal.to_payload(),
+        )
+        self.telemetry.log(
+            "collaboration_signal",
+            qid=decision.qid,
+            profile=collaboration_profile.to_payload(),
+            collaborative=collaborative_lead,
+        )
+        self.telemetry.log(
             "policy_decision",
             qid=decision.qid,
             state=decision.state,
@@ -616,6 +777,11 @@ class DualBrainController:
             leading=leading,
             preview=bool(right_lead_notes),
             forced=bool(decision.state.get("right_forced_lead", False)),
+            auto=auto_selected_leading,
+            reason=selection_reason,
+            collaborative=collaborative_lead,
+            style=leading_style,
+            collaboration_strength=collaboration_profile.strength,
         )
 
         if not self.orchestrator.register_request(decision.qid, leader=leading):
@@ -733,7 +899,18 @@ class DualBrainController:
             self.orchestrator.clear(decision.qid)
 
         integrated_answer = final_answer
-        if leading == "right":
+        if collaborative_lead:
+            right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
+            left_block = left_lead_preview or draft
+            final_answer = (
+                "[Right Brain Prelude]\n"
+                f"{right_block}\n\n"
+                "[Left Brain Prelude]\n"
+                f"{left_block}\n\n"
+                "[Integrated Response]\n"
+                f"{integrated_answer}"
+            )
+        elif leading == "right":
             lead_block = right_lead_notes or detail_notes or "(Right brain lead unavailable)"
             final_answer = (
                 "[Right Brain Lead]\n"
@@ -744,20 +921,6 @@ class DualBrainController:
         else:
             final_answer = f"[Left Brain Lead]\n{integrated_answer}"
 
-        routing_lines = [
-            "[Hemisphere Routing]",
-            f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
-            f"- policy action: {decision.action}",
-            f"- temperature: {decision.temperature:.2f}",
-        ]
-        if self.coherence_resonator is not None:
-            routing_lines.append(
-                "- coherence weights left {left:.2f} | right {right:.2f}".format(
-                    left=self.coherence_resonator.left_weight,
-                    right=self.coherence_resonator.right_weight,
-                )
-            )
-        final_answer = f"{final_answer}\n\n" + "\n".join(routing_lines)
         semantic_tilt = self._evaluate_semantic_tilt(
             question=question,
             final_answer=final_answer,
@@ -774,25 +937,23 @@ class DualBrainController:
             left_hits=semantic_tilt["left_hits"],
             initial_mode=hemisphere_mode,
         )
-        tilt_lines = [
-            "[Hemisphere Semantic Tilt]",
-            "- semantic mode: {mode} (intensity {intensity:.2f})".format(
-                mode=semantic_tilt["mode"],
-                intensity=float(semantic_tilt["intensity"]),
-            ),
-            "- right hits: {hits}".format(
-                hits=", ".join(semantic_tilt["right_hits"]) or "none",
-            ),
-            "- left hits: {hits}".format(
-                hits=", ".join(semantic_tilt["left_hits"]) or "none",
-            ),
-        ]
-        if semantic_tilt["notes"]:
-            for note in semantic_tilt["notes"]:
-                tilt_lines.append(f"- note: {note}")
-        final_answer = f"{final_answer}\n\n" + "\n".join(tilt_lines)
         tags = set()
         tags.add(f"leading_{leading}")
+        if collaborative_lead:
+            tags.add("leading_collaborative")
+        strength = collaboration_profile.strength
+        if strength >= 0.7:
+            tags.add("collaboration_strong")
+        elif strength >= 0.45:
+            tags.add("collaboration_present")
+        if collaborative_lead:
+            tags.add("collaboration_braided")
+        tags.add(
+            f"collaboration_strength_{int(strength * 100):02d}"
+        )
+        tags.add(
+            f"collaboration_balance_{int(collaboration_profile.balance * 100):02d}"
+        )
         if leading == "right" and decision.action == 0:
             tags.add("right_lead_solo")
         if self.coherence_resonator is not None:
@@ -962,7 +1123,6 @@ class DualBrainController:
                     f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
                 )
         routing_lines = [
-            "[Hemisphere Routing]",
             f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
             f"- policy action: {decision.action}",
             f"- temperature: {decision.temperature:.2f}",
@@ -974,7 +1134,47 @@ class DualBrainController:
                     right=self.coherence_resonator.right_weight,
                 )
             )
-        final_answer = f"{final_answer}\n\n" + "\n".join(routing_lines)
+        tilt_lines = [
+            "- semantic mode: {mode} (intensity {intensity:.2f})".format(
+                mode=semantic_tilt["mode"],
+                intensity=float(semantic_tilt["intensity"]),
+            ),
+            "- right hits: {hits}".format(
+                hits=", ".join(semantic_tilt["right_hits"]) or "none",
+            ),
+            "- left hits: {hits}".format(
+                hits=", ".join(semantic_tilt["left_hits"]) or "none",
+            ),
+        ]
+        if semantic_tilt["notes"]:
+            for note in semantic_tilt["notes"]:
+                tilt_lines.append(f"- note: {note}")
+        collab_lines = [
+            "- strength: {strength:.2f}".format(
+                strength=collaboration_profile.strength,
+            ),
+            "- balance: {balance:.2f}".format(
+                balance=collaboration_profile.balance,
+            ),
+            "- density: {density:.2f}".format(
+                density=collaboration_profile.density,
+            ),
+            "- focus bonus: {bonus:.2f}".format(
+                bonus=collaboration_profile.focus_bonus,
+            ),
+            "- cue scores left {left:.2f} | right {right:.2f}".format(
+                left=hemisphere_signal.left_score,
+                right=hemisphere_signal.right_score,
+            ),
+            "- cue tokens: {count}".format(count=hemisphere_signal.token_count),
+            f"- collaborative rotation engaged: {collaborative_lead}",
+        ]
+        meta_sections = [
+            _format_section("Hemisphere Routing", routing_lines),
+            _format_section("Hemisphere Semantic Tilt", tilt_lines),
+            _format_section("Collaboration Profile", collab_lines),
+        ]
+        final_answer = f"{final_answer}\n\n" + "\n\n".join(meta_sections)
         if self.coherence_resonator is not None:
             projection_payload = (
                 psychoid_projection.to_payload() if psychoid_projection else None
@@ -1005,7 +1205,9 @@ class DualBrainController:
             tags.update(self.basal_ganglia.tags(basal_signal))
 
         follow_brain: Optional[str] = None
-        if leading == "right":
+        if collaborative_lead:
+            follow_brain = "braided"
+        elif leading == "right":
             follow_brain = "left"
         elif detail_notes or decision.action != 0:
             follow_brain = "right"
