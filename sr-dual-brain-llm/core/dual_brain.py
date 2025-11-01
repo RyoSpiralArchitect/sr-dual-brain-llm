@@ -162,6 +162,7 @@ class DualBrainController:
         self.default_mode_network = default_mode_network
         self.psychoid_adapter = psychoid_attention_adapter
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
+        self._last_leading_brain: Optional[str] = "right"
 
     def _prepare_psychoid_projection(
         self, psychoid_signal: Optional[Dict[str, object]], *, seq_len: int = 8
@@ -418,11 +419,31 @@ class DualBrainController:
     async def process(self, question: str, *, leading_brain: Optional[str] = None) -> str:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
-        leading = (leading_brain or "left").lower()
-        if leading not in {"left", "right"}:
-            leading = "left"
+        requested_leading = (leading_brain or "").strip().lower()
         context, focus = self._compose_context(question)
         hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
+        auto_selected_leading = False
+        selection_reason = "explicit_request"
+        if requested_leading in {"left", "right"}:
+            leading = requested_leading
+            selection_reason = f"explicit_request_{leading}"
+        else:
+            if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
+                leading = "right"
+                selection_reason = "hemisphere_bias_right"
+            elif hemisphere_mode == "left" and hemisphere_bias >= 0.35:
+                leading = "left"
+                selection_reason = "hemisphere_bias_left"
+            else:
+                if self._last_leading_brain == "right":
+                    leading = "left"
+                elif self._last_leading_brain == "left":
+                    leading = "right"
+                else:
+                    leading = "right"
+                selection_reason = "cooperative_rotation"
+            auto_selected_leading = True
+        self._last_leading_brain = leading
         if self.coherence_resonator is not None:
             self.coherence_resonator.retune(hemisphere_mode, intensity=hemisphere_bias)
         focus_metric = 0.0
@@ -486,6 +507,9 @@ class DualBrainController:
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
         decision.state["leading_brain"] = leading
+        if auto_selected_leading:
+            decision.state["leading_autoselected"] = True
+        decision.state["leading_selection_reason"] = selection_reason
         if right_lead_notes:
             decision.state["right_lead_preview"] = right_lead_notes
         if left_coherence is not None:
@@ -607,6 +631,8 @@ class DualBrainController:
             leading=leading,
             preview=bool(right_lead_notes),
             forced=bool(decision.state.get("right_forced_lead", False)),
+            auto=auto_selected_leading,
+            reason=selection_reason,
         )
 
         if not self.orchestrator.register_request(decision.qid, leader=leading):
