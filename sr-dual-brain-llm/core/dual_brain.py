@@ -418,11 +418,20 @@ class DualBrainController:
     async def process(self, question: str, *, leading_brain: Optional[str] = None) -> str:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
-        leading = (leading_brain or "left").lower()
-        if leading not in {"left", "right"}:
-            leading = "left"
+        requested_leading = (leading_brain or "").strip().lower()
         context, focus = self._compose_context(question)
         hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
+        auto_selected_leading = False
+        if requested_leading in {"left", "right"}:
+            leading = requested_leading
+        else:
+            if hemisphere_mode == "right" and hemisphere_bias > 0.4:
+                leading = "right"
+            elif hemisphere_mode == "left" and hemisphere_bias > 0.4:
+                leading = "left"
+            else:
+                leading = "left"
+            auto_selected_leading = True
         if self.coherence_resonator is not None:
             self.coherence_resonator.retune(hemisphere_mode, intensity=hemisphere_bias)
         focus_metric = 0.0
@@ -486,6 +495,8 @@ class DualBrainController:
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
         decision.state["leading_brain"] = leading
+        if auto_selected_leading:
+            decision.state["leading_autoselected"] = True
         if right_lead_notes:
             decision.state["right_lead_preview"] = right_lead_notes
         if left_coherence is not None:
