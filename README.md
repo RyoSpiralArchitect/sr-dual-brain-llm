@@ -11,6 +11,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Emergent unconscious incubation** – unresolved material is cached in the unconscious, resurfacing as archetypal insight hints while stress from noisy inputs is discharged for the next reasoning loop.
 - **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
 - **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
+- **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
 
 ## Repository Layout
 ```
@@ -24,6 +25,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
     │   ├── prefrontal_cortex.py    # Executive-focus heuristics and gating
     │   ├── basal_ganglia.py        # Striatal go/no-go heuristics for consult control
     │   ├── default_mode_network.py # Resting-state reflections from unconscious summaries
+    │   ├── psychoid_attention.py   # Project archetypal signals into QKV attention biases
     │   ├── policy_ppo.py           # PPO policy over discrete actions
     │   ├── shared_memory.py        # Persistent memory helpers
     │   └── unconscious_field.py    # Archetypal unconscious field integration

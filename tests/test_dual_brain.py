@@ -72,12 +72,15 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert sent_payload["temperature"] > 0
     assert sent_payload["budget"] in {"small", "large"}
     assert "Hippocampal" in (sent_payload.get("context") or "")
+    assert "psychoid_attention_bias" in sent_payload
+    assert sent_payload["psychoid_attention_bias"]["matrix"]
     assert memory.past_qas, "Answer should be stored back into shared memory"
     assert any(evt == "policy_decision" for evt, _ in telemetry.events)
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
     assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
+    assert any(evt == "psychoid_attention_projection" for evt, _ in telemetry.events)
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
@@ -86,8 +89,10 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(tag.startswith("archetype_") for tag in final_tags)
     assert any(tag.startswith("basal_") for tag in final_tags)
     assert "psychoid_projection" in final_tags
+    assert "psychoid_attention" in final_tags
     assert any(tag.startswith("psychoid_") for tag in final_tags if tag != "psychoid_projection")
     assert "[Psychoid Field Alignment]" in answer
+    assert "[Psychoid Attention Bias]" in answer
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -115,11 +120,13 @@ def test_controller_falls_back_to_local_right_model():
     answer = asyncio.run(controller.process("Provide an extended breakdown of quantum decoherence."))
 
     assert "Reference from RightBrain" in answer
+    assert "psychoid_norm=" in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
     assert any("right_model_fallback" == tag for tag in final_trace.tags)
     assert any("psychoid_projection" == tag for tag in final_trace.tags)
+    assert any("psychoid_attention" == tag for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
     assert len(hippocampus.episodes) >= 1
 

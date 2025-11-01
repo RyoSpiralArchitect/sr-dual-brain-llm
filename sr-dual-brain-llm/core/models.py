@@ -53,6 +53,7 @@ class RightBrainModel:
         temperature: float = 0.7,
         budget: str = "small",
         context: Optional[str] = None,
+        psychoid_projection: Optional[Dict[str, object]] = None,
     ) -> Dict[str, str]:
         await asyncio.sleep(0.35 + random.random()*0.3)
         context_text = context if context is not None else shared_memory.retrieve_related(question)
@@ -61,4 +62,7 @@ class RightBrainModel:
             f"Deep analysis for qid={qid}: insights about '{question[:50]}'"
             f" | temp={temperature:.2f} | budget={budget} | ctx=[{snippet}]"
         )
+        if psychoid_projection:
+            norm = float(psychoid_projection.get("norm", 0.0))
+            detail += f" | psychoid_norm={norm:.2f}"
         return {"qid": qid, "notes_sum": detail, "confidence_r": 0.85}

@@ -13,6 +13,7 @@ from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary
 from .default_mode_network import DefaultModeNetwork
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
+from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 
 
 @dataclass
@@ -49,6 +50,7 @@ class DualBrainController:
         prefrontal_cortex: Optional[PrefrontalCortex] = None,
         basal_ganglia: Optional[BasalGanglia] = None,
         default_mode_network: Optional[DefaultModeNetwork] = None,
+        psychoid_attention_adapter: Optional[PsychoidAttentionAdapter] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -67,6 +69,24 @@ class DualBrainController:
         self.prefrontal_cortex = prefrontal_cortex
         self.basal_ganglia = basal_ganglia or BasalGanglia()
         self.default_mode_network = default_mode_network
+        self.psychoid_adapter = psychoid_attention_adapter
+
+    def _prepare_psychoid_projection(
+        self, psychoid_signal: Optional[Dict[str, object]], *, seq_len: int = 8
+    ) -> Optional[PsychoidAttentionProjection]:
+        if not psychoid_signal:
+            return None
+        if self.psychoid_adapter is None:
+            try:
+                self.psychoid_adapter = PsychoidAttentionAdapter()
+            except Exception:  # pragma: no cover - defensive guard
+                return None
+        try:
+            return self.psychoid_adapter.build_projection(
+                psychoid_signal, seq_len=seq_len
+            )
+        except Exception:  # pragma: no cover - defensive guard
+            return None
 
     def _compose_context(self, question: str) -> Tuple[str, FocusSummary | None]:
         """Blend working-memory recall with hippocampal episodic cues."""
@@ -223,6 +243,7 @@ class DualBrainController:
         unconscious_summary: Optional[Dict[str, object]] = None
         default_mode_reflections: Optional[List[Dict[str, object]]] = None
         psychoid_signal: Optional[Dict[str, object]] = None
+        psychoid_projection: Optional[PsychoidAttentionProjection] = None
         if self.unconscious_field is not None:
             try:
                 unconscious_profile = self.unconscious_field.analyse(
@@ -243,6 +264,11 @@ class DualBrainController:
                     decision.state["psychoid_bias"] = psychoid_signal.get("attention_bias", [])
                     decision.state["psychoid_tension"] = psychoid_signal.get("psychoid_tension", 0.0)
                     decision.state["psychoid_resonance"] = psychoid_signal.get("resonance", 0.0)
+                    psychoid_projection = self._prepare_psychoid_projection(
+                        psychoid_signal
+                    )
+                    if psychoid_projection:
+                        decision.state["psychoid_attention_norm"] = psychoid_projection.norm
                 self.telemetry.log(
                     "unconscious_field",
                     qid=decision.qid,
@@ -254,6 +280,12 @@ class DualBrainController:
                         qid=decision.qid,
                         signal=psychoid_signal,
                     )
+                    if psychoid_projection:
+                        self.telemetry.log(
+                            "psychoid_attention_projection",
+                            qid=decision.qid,
+                            projection=psychoid_projection.to_payload(),
+                        )
                 unconscious_summary = summary
         if (
             self.default_mode_network is not None
@@ -341,6 +373,8 @@ class DualBrainController:
                     bias_vector = psychoid_signal.get("bias_vector")
                     if bias_vector:
                         payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
+                    if psychoid_projection:
+                        payload["psychoid_attention_bias"] = psychoid_projection.to_payload()
                 if default_mode_reflections:
                     payload["default_mode_reflections"] = [
                         f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
@@ -366,6 +400,11 @@ class DualBrainController:
                             temperature=decision.temperature,
                             budget=payload["budget"],
                             context=context,
+                            psychoid_projection=(
+                                psychoid_projection.to_payload()
+                                if psychoid_projection
+                                else None
+                            ),
                         )
                     except Exception as exc:  # pragma: no cover - defensive guard
                         final_answer = draft + f"\n(Right brain error: {exc})"
@@ -460,6 +499,15 @@ class DualBrainController:
             if chain:
                 final_answer = (
                     f"{final_answer}\n\n[Psychoid Signifiers]\n" + " -> ".join(chain[-6:])
+                )
+            if psychoid_projection:
+                tags.add("psychoid_attention")
+                bias_payload = psychoid_projection.to_payload()
+                final_answer = (
+                    f"{final_answer}\n\n[Psychoid Attention Bias]\n"
+                    f"- norm {bias_payload.get('norm', 0.0):.3f}"
+                    f" | temperature {bias_payload.get('temperature', 0.0):.2f}"
+                    f" | clamp {bias_payload.get('clamp', 0.0):.2f}"
                 )
         if default_mode_reflections:
             tags.add("default_mode_reflection")
