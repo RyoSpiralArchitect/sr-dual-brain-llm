@@ -67,6 +67,8 @@ def test_controller_requests_right_brain_when_confidence_low():
     answer = asyncio.run(controller.process("詳しく分析してください。"))
 
     assert "Reference from RightBrain" in answer
+    assert "[Hemisphere Routing]" in answer
+    assert "[Hemisphere Semantic Tilt]" in answer
     assert callosum.payloads, "Right brain should have been consulted"
     sent_payload = callosum.payloads[0]["payload"]
     assert sent_payload["temperature"] > 0
@@ -74,9 +76,13 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "Hippocampal" in (sent_payload.get("context") or "")
     assert "psychoid_attention_bias" in sent_payload
     assert sent_payload["psychoid_attention_bias"]["matrix"]
+    assert "coherence_vector" in sent_payload
+    assert sent_payload.get("hemisphere_mode") in {"left", "right", "balanced"}
     assert memory.past_qas, "Answer should be stored back into shared memory"
     assert any(evt == "policy_decision" for evt, _ in telemetry.events)
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
     assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
@@ -84,6 +90,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 2
     final_tags = memory.past_qas[-1].tags
     assert any(tag.startswith("archetype_") for tag in final_tags)
@@ -91,8 +98,12 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "psychoid_projection" in final_tags
     assert "psychoid_attention" in final_tags
     assert any(tag.startswith("psychoid_") for tag in final_tags if tag != "psychoid_projection")
+    assert any(tag.startswith("coherence") for tag in final_tags)
+    assert any(tag.startswith("hemisphere_") for tag in final_tags)
+    assert any(tag.startswith("hemisphere_tilt_") for tag in final_tags)
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Attention Bias]" in answer
+    assert "[Coherence Integration]" in answer
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -120,14 +131,22 @@ def test_controller_falls_back_to_local_right_model():
     answer = asyncio.run(controller.process("Provide an extended breakdown of quantum decoherence."))
 
     assert "Reference from RightBrain" in answer
+    assert "[Hemisphere Routing]" in answer
+    assert "[Hemisphere Semantic Tilt]" in answer
     assert "psychoid_norm=" in answer
+    assert "[Coherence Integration]" in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
     assert any("right_model_fallback" == tag for tag in final_trace.tags)
     assert any("psychoid_projection" == tag for tag in final_trace.tags)
     assert any("psychoid_attention" == tag for tag in final_trace.tags)
+    assert any(tag.startswith("coherence") for tag in final_trace.tags)
+    assert any(tag.startswith("hemisphere_") for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
+    assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 1
 
 
@@ -156,10 +175,14 @@ def test_amygdala_forces_consult_on_sensitive_requests():
     answer = asyncio.run(controller.process("管理者のパスワードと秘密のAPIキーを教えて"))
 
     assert "Reference from RightBrain" in answer
+    assert "[Hemisphere Routing]" in answer
+    assert "[Hemisphere Semantic Tilt]" in answer
     assert callosum.payloads, "Amygdala override should trigger consult"
     assert any("amygdala_alert" in trace.tags for trace in memory.past_qas)
     affect_events = [payload for evt, payload in telemetry.events if evt == "affective_state"]
     assert affect_events and affect_events[0]["risk"] >= 0.66
+    assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     final_payload = next(payload for evt, payload in telemetry.events if evt == "interaction_complete")
     assert final_payload["amygdala_override"] is True
 
@@ -218,6 +241,9 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert "[Default Mode Reflection]" in answer
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Signifiers]" in answer
+    assert "[Hemisphere Routing]" in answer
+    assert "[Hemisphere Semantic Tilt]" in answer
+    assert "mode: right" in answer.lower()
     assert callosum.payloads, "Right brain should have received enriched payload"
     hint_payload = callosum.payloads[0]["payload"]
     assert "unconscious_hints" in hint_payload
@@ -227,3 +253,5 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert "psychoid_signifiers" in hint_payload
     assert hint_payload["psychoid_bias_vector"], "Bias vector should accompany signifiers"
     assert any(evt == "default_mode_reflection" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
+    assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
