@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
 from .amygdala import Amygdala
+from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 
@@ -45,6 +46,7 @@ class DualBrainController:
         hippocampus: Optional[TemporalHippocampalIndexing] = None,
         unconscious_field: Optional[Any] = None,
         prefrontal_cortex: Optional[PrefrontalCortex] = None,
+        basal_ganglia: Optional[BasalGanglia] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -61,6 +63,7 @@ class DualBrainController:
         self.hippocampus = hippocampus
         self.unconscious_field = unconscious_field
         self.prefrontal_cortex = prefrontal_cortex
+        self.basal_ganglia = basal_ganglia or BasalGanglia()
 
     def _compose_context(self, question: str) -> Tuple[str, FocusSummary | None]:
         """Blend working-memory recall with hippocampal episodic cues."""
@@ -158,6 +161,22 @@ class DualBrainController:
         )
         action = self.policy.decide(state)
         action = self.reasoning_dial.adjust_decision(state, action)
+        basal_signal = None
+        if self.basal_ganglia is not None:
+            basal_signal = self.basal_ganglia.evaluate(
+                state=state,
+                affect=affect,
+                focus_metric=focus_metric,
+            )
+            state["basal_go"] = basal_signal.go_probability
+            state["basal_inhibition"] = basal_signal.inhibition
+            state["basal_dopamine"] = basal_signal.dopamine_level
+            if basal_signal.note:
+                state["basal_note"] = basal_signal.note
+            if basal_signal.recommended_action == 1:
+                action = max(action, 1)
+            elif basal_signal.recommended_action == 0:
+                action = min(action, 0)
         if state["amygdala_risk"] >= 0.66:
             action = max(action, 1)
             state["amygdala_override"] = True
@@ -192,6 +211,7 @@ class DualBrainController:
             hippocampal_density,
             focus_metric,
         )
+        basal_signal = getattr(self.basal_ganglia, "last_signal", None)
         if focus is not None:
             decision.state["prefrontal_keywords"] = list(focus.keywords)
             decision.state["prefrontal_relevance"] = focus.relevance
@@ -218,6 +238,12 @@ class DualBrainController:
                 qid=decision.qid,
                 focus=focus.to_dict(),
                 metric=focus_metric,
+            )
+        if basal_signal is not None:
+            self.telemetry.log(
+                "basal_ganglia",
+                qid=decision.qid,
+                signal=basal_signal.to_dict(),
             )
         self.telemetry.log(
             "affective_state",
@@ -325,6 +351,8 @@ class DualBrainController:
             tags.add(f"archetype_{unconscious_profile.top_k[0]}")
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
+        if basal_signal is not None:
+            tags.update(self.basal_ganglia.tags(basal_signal))
 
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
@@ -341,6 +369,8 @@ class DualBrainController:
             amygdala_override=decision.state.get("amygdala_override", False),
             hippocampal_total=episodic_total,
         )
+        if self.basal_ganglia is not None and basal_signal is not None:
+            self.basal_ganglia.integrate_feedback(reward=reward, latency_ms=latency_ms)
         return final_answer
 
 

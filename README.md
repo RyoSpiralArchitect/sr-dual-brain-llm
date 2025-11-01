@@ -8,6 +8,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
 - **Executive focus + unconscious cues** – a prefrontal-inspired module gates context while an unconscious field surfaces archetypal signals for tagging and auditing.
+- **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
 
 ## Repository Layout
 ```
@@ -19,6 +20,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
     │   ├── callosum_mqtt.py        # MQTT-based transport skeleton
     │   ├── orchestrator.py         # Left-brain coordinator
     │   ├── prefrontal_cortex.py    # Executive-focus heuristics and gating
+    │   ├── basal_ganglia.py        # Striatal go/no-go heuristics for consult control
     │   ├── policy_ppo.py           # PPO policy over discrete actions
     │   ├── shared_memory.py        # Persistent memory helpers
     │   └── unconscious_field.py    # Archetypal unconscious field integration
