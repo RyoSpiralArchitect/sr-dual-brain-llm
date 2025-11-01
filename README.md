@@ -12,6 +12,47 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
 - **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
 - **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
+- **Coherence resonance integration** – a brainstem-style resonator scores hemispheric coverage, cohesion, and resonance, logs tension, and annotates answers.
+
+## Architecture Overview
+```
+                    ┌────────────────────────────┐
+                    │        Shared Memory       │
+                    └─────────────┬──────────────┘
+                                  │ recall & tags
+         ┌────────────────────────┴─────────────────────────┐
+         │                                                  │
+┌────────▼────────┐    focus + affect    ┌──────────────┐   │  archetypal cues
+│  Prefrontal &   │◀────────────────────▶│   Amygdala   │   │  ┌──────────────────────┐
+│  Basal Control  │                      └──────────────┘   │  │  Unconscious Field   │
+└────────┬────────┘                              │          │  └──────────┬───────────┘
+         │                 executive gating      │          │             │ summaries
+         │                                        ▼          │             │
+┌────────▼────────┐  callosum payloads  ┌────────────────┐  │   ┌─────────▼─────────┐
+│  Left Brain LLM │────────────────────▶│ Corpus Callosum│──┼──▶│ Right Brain LLM   │
+│  (orchestrator) │◀────────────────────│  (memory/Kafka/│  │   │ (specialist detail)│
+└────────┬────────┘   draft integration  │     MQTT)     │  │   └─────────┬─────────┘
+         │                               └────────────────┘  │             │ detail notes
+         │                                        ▲           │             │
+         │                                        │           │             │
+         │                                        │           │   ┌─────────▼─────────┐
+         │                             psychoid attention     │   │ Default Mode Net  │
+         │                                        │           │   └─────────┬─────────┘
+         │                                        │           │             │ reflections
+         │                                        │           │             │
+         │                                        ▼           │             │
+         │                           ┌────────────────────┐   │             │
+         └──────────────────────────▶│  Coherence Resonator│◀─┴─────────────┘
+                                     │ (brainstem blend)  │
+                                     └─────────┬──────────┘
+                                               │ combined signal
+                                     ┌──────────▼──────────┐
+                                     │  Final Answer &     │
+                                     │  Telemetry Streams  │
+                                     └─────────────────────┘
+```
+
+The resonator captures the most recent left/right hemispheric signals, evaluates their coverage, cohesion, and resonance, and appends a brainstem-style annotation to the final answer while emitting telemetry about hemispheric tension.
 
 ## Repository Layout
 ```

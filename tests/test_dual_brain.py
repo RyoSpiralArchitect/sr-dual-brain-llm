@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from core.dual_brain import DualBrainController
 from core.shared_memory import SharedMemory
@@ -9,7 +10,6 @@ from core.policy_modes import ReasoningDial
 from core.auditor import Auditor
 from core.orchestrator import Orchestrator
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
-import time
 
 from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
@@ -74,6 +74,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "Hippocampal" in (sent_payload.get("context") or "")
     assert "psychoid_attention_bias" in sent_payload
     assert sent_payload["psychoid_attention_bias"]["matrix"]
+    assert "coherence_vector" in sent_payload
     assert memory.past_qas, "Answer should be stored back into shared memory"
     assert any(evt == "policy_decision" for evt, _ in telemetry.events)
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
@@ -84,6 +85,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 2
     final_tags = memory.past_qas[-1].tags
     assert any(tag.startswith("archetype_") for tag in final_tags)
@@ -91,8 +93,10 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "psychoid_projection" in final_tags
     assert "psychoid_attention" in final_tags
     assert any(tag.startswith("psychoid_") for tag in final_tags if tag != "psychoid_projection")
+    assert any(tag.startswith("coherence") for tag in final_tags)
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Attention Bias]" in answer
+    assert "[Coherence Integration]" in answer
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -121,13 +125,16 @@ def test_controller_falls_back_to_local_right_model():
 
     assert "Reference from RightBrain" in answer
     assert "psychoid_norm=" in answer
+    assert "[Coherence Integration]" in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
     assert any("right_model_fallback" == tag for tag in final_trace.tags)
     assert any("psychoid_projection" == tag for tag in final_trace.tags)
     assert any("psychoid_attention" == tag for tag in final_trace.tags)
+    assert any(tag.startswith("coherence") for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
+    assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 1
 
 
