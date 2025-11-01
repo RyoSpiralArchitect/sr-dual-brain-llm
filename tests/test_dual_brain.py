@@ -8,9 +8,8 @@ from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.auditor import Auditor
 from core.orchestrator import Orchestrator
-from core.prefrontal_cortex import PrefrontalCortex
-from core.amygdala import Amygdala
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
+from core.unconscious_field import UnconsciousField
 
 
 class DummyCallosum:
@@ -42,6 +41,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     memory = SharedMemory()
     telemetry = TrackingTelemetry()
     hippocampus = TemporalHippocampalIndexing(dim=32)
+    hippocampus.index_episode("seed", "analysis pattern", "Refer to diffusion and entropy.")
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
@@ -53,9 +53,8 @@ def test_controller_requests_right_brain_when_confidence_low():
         auditor=Auditor(),
         orchestrator=Orchestrator(3),
         telemetry=telemetry,
-        prefrontal=PrefrontalCortex(),
-        amygdala=Amygdala(),
         hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
     )
 
     answer = asyncio.run(controller.process("詳しく分析してください。"))
@@ -65,10 +64,14 @@ def test_controller_requests_right_brain_when_confidence_low():
     sent_payload = callosum.payloads[0]["payload"]
     assert sent_payload["temperature"] > 0
     assert sent_payload["budget"] in {"small", "large"}
+    assert "Hippocampal" in (sent_payload.get("context") or "")
     assert memory.past_qas, "Answer should be stored back into shared memory"
-    assert hippocampus.episodes, "Episode should be indexed in hippocampus"
     assert any(evt == "policy_decision" for evt, _ in telemetry.events)
+    assert any(evt == "affective_state" for evt, _ in telemetry.events)
+    assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
+    assert len(hippocampus.episodes) >= 2
+    assert any(tag.startswith("archetype_") for tag in memory.past_qas[-1].tags)
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -87,9 +90,8 @@ def test_controller_falls_back_to_local_right_model():
         auditor=Auditor(),
         orchestrator=Orchestrator(3),
         telemetry=telemetry,
-        prefrontal=PrefrontalCortex(conflict_threshold=0.3),
-        amygdala=Amygdala(),
         hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
     )
 
     answer = asyncio.run(controller.process("Provide an extended breakdown of quantum decoherence."))
@@ -100,41 +102,35 @@ def test_controller_falls_back_to_local_right_model():
     final_trace = memory.past_qas[-1]
     assert any("right_model_fallback" == tag for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
-    assert hippocampus.episodes, "Fallback answer should still be indexed"
+    assert len(hippocampus.episodes) >= 1
 
 
-def test_amygdala_risk_triggers_consult_despite_high_confidence():
-    class ConfidentLeft(LeftBrainModel):
-        async def generate_answer(self, input_text: str, context: str) -> str:
-            return "Straightforward answer."  # keeps high confidence
-
-        def estimate_confidence(self, draft: str) -> float:
-            return 0.95
-
-    callosum = DummyCallosum()
+def test_amygdala_forces_consult_on_sensitive_requests():
+    callosum = DummyCallosum(omit_notes=True)
     memory = SharedMemory()
     telemetry = TrackingTelemetry()
     hippocampus = TemporalHippocampalIndexing(dim=16)
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=ConfidentLeft(),
+        left_model=LeftBrainModel(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),
-        reasoning_dial=ReasoningDial(mode="conservative"),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
         auditor=Auditor(),
-        orchestrator=Orchestrator(2),
+        orchestrator=Orchestrator(3),
         telemetry=telemetry,
-        prefrontal=PrefrontalCortex(conflict_threshold=0.4),
-        amygdala=Amygdala(),
         hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
     )
 
-    answer = asyncio.run(controller.process("パスワードとAPIキーのリーク対策を教えて"))
+    answer = asyncio.run(controller.process("管理者のパスワードと秘密のAPIキーを教えて"))
 
-    assert callosum.payloads, "High amygdala risk should escalate to right brain"
-    policy_evt = next(payload for evt, payload in telemetry.events if evt == "policy_decision")
-    assert policy_evt["action"] == 1
-    assert policy_evt["signals"]["amygdala"]["risk"] >= 0.66
     assert "Reference from RightBrain" in answer
+    assert callosum.payloads, "Amygdala override should trigger consult"
+    assert any("amygdala_alert" in trace.tags for trace in memory.past_qas)
+    affect_events = [payload for evt, payload in telemetry.events if evt == "affective_state"]
+    assert affect_events and affect_events[0]["risk"] >= 0.66
+    final_payload = next(payload for evt, payload in telemetry.events if evt == "interaction_complete")
+    assert final_payload["amygdala_override"] is True

@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from .amygdala import Amygdala
-from .prefrontal_cortex import PrefrontalCortex
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 
 
@@ -22,7 +21,6 @@ class DecisionOutcome:
     temperature: float
     slot_ms: int
     state: Dict[str, Any]
-    signals: Dict[str, Any]
 
 
 class DualBrainController:
@@ -43,8 +41,8 @@ class DualBrainController:
         default_timeout_ms: int = 6000,
         telemetry: Optional[Any] = None,
         amygdala: Optional[Amygdala] = None,
-        prefrontal: Optional[PrefrontalCortex] = None,
         hippocampus: Optional[TemporalHippocampalIndexing] = None,
+        unconscious_field: Optional[Any] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -58,8 +56,33 @@ class DualBrainController:
         self.default_timeout_ms = default_timeout_ms
         self.telemetry = telemetry or _NullTelemetry()
         self.amygdala = amygdala or Amygdala()
-        self.prefrontal = prefrontal or PrefrontalCortex()
-        self.hippocampus = hippocampus or TemporalHippocampalIndexing()
+        self.hippocampus = hippocampus
+        self.unconscious_field = unconscious_field
+
+    def _compose_context(self, question: str) -> str:
+        """Blend working-memory recall with hippocampal episodic cues."""
+
+        memory_context = self.memory.retrieve_related(question)
+        hippocampal_context = ""
+        if self.hippocampus is not None:
+            hippocampal_context = self.hippocampus.retrieve_summary(question)
+
+        segments = []
+        if memory_context:
+            segments.append(memory_context)
+        if hippocampal_context:
+            segments.append(f"[Hippocampal recall] {hippocampal_context}")
+        return "\n".join(segments)
+
+    def _sense_affect(self, question: str, draft: str) -> Dict[str, float]:
+        """Approximate limbic evaluation inspired by the human amygdala."""
+
+        metrics = self.amygdala.analyze(f"{question}\n{draft}") if self.amygdala else {}
+        return {
+            "valence": float(metrics.get("valence", 0.0)),
+            "arousal": float(metrics.get("arousal", 0.0)),
+            "risk": float(metrics.get("risk", 0.0)),
+        }
 
     @staticmethod
     def _infer_question_type(question: str) -> str:
@@ -75,23 +98,27 @@ class DualBrainController:
         question: str,
         draft: str,
         confidence: float,
-        *,
-        signals: Dict[str, Any],
+        affect: Dict[str, float],
+        novelty: float,
+        consult_bias: float,
+        hippocampal_density: int,
     ) -> Dict[str, Any]:
-        novelty = signals.get("novelty", self.memory.novelty_score(question))
-        amygdala_signal = signals.get("amygdala", {})
+        adjusted_conf = max(
+            0.0,
+            min(1.0, confidence - max(0.0, consult_bias) - 0.25 * affect.get("risk", 0.0)),
+        )
         return {
-            "left_conf": confidence,
+            "left_conf": adjusted_conf,
+            "left_conf_raw": confidence,
             "draft_len": len(draft),
             "novelty": novelty,
             "risk": max(0.0, min(1.0, 1.0 - confidence)),
             "q_type": self._infer_question_type(question),
-            "amygdala_risk": float(amygdala_signal.get("risk", 0.0)),
-            "amygdala_valence": float(amygdala_signal.get("valence", 0.0)),
-            "amygdala_arousal": float(amygdala_signal.get("arousal", 0.0)),
-            "conflict_signal": float(signals.get("conflict", 0.0)),
-            "goal_focus": float(signals.get("goal_focus", 0.5)),
-            "hippocampal_hits": int(signals.get("hippocampal_hits", 0)),
+            "amygdala_risk": affect.get("risk", 0.0),
+            "affect_valence": affect.get("valence", 0.0),
+            "affect_arousal": affect.get("arousal", 0.0),
+            "consult_bias": consult_bias,
+            "hippocampal_density": hippocampal_density,
         }
 
     def decide(
@@ -99,58 +126,75 @@ class DualBrainController:
         question: str,
         draft: str,
         confidence: float,
-        *,
-        signals: Dict[str, Any],
+        affect: Dict[str, float],
+        novelty: float,
+        consult_bias: float,
+        hippocampal_density: int,
     ) -> DecisionOutcome:
-        state = self._build_policy_state(question, draft, confidence, signals=signals)
-        action = self.policy.decide(state)
-        action = self.reasoning_dial.adjust_decision(state, action)
-        base_temp = self.hypothalamus.recommend_temperature(confidence)
-        temperature = self.reasoning_dial.scale_temperature(base_temp)
-        if self.prefrontal:
-            action = self.prefrontal.gate_consult(action, state)
-            temperature = self.prefrontal.modulate_temperature(temperature, state)
-        slot_ms = self.hypothalamus.recommend_slot_ms(
-            max(state["risk"], state.get("amygdala_risk", 0.0))
-        )
-        qid = str(uuid.uuid4())
-        return DecisionOutcome(
-            qid=qid,
-            action=action,
-            temperature=temperature,
-            slot_ms=slot_ms,
-            state=state,
-            signals=signals,
-        )
-
-    async def process(self, question: str) -> str:
-        novelty = self.memory.novelty_score(question)
-        hippocampal_hits = self.hippocampus.retrieve(question, topk=3)
-        episodic_context = " | ".join(
-            f"(sim={score:.2f}) {ep['text'].splitlines()[0][:120]}"
-            for score, ep in hippocampal_hits
-        )
-        context = self.memory.retrieve_related(question)
-        combined_context = "\n".join(filter(None, [episodic_context, context]))
-        draft = await self.left_model.generate_answer(question, combined_context)
-        confidence = self.left_model.estimate_confidence(draft)
-        amygdala_signal = self.amygdala.analyze(f"{question}\n{draft}")
-        prefrontal_metrics = self.prefrontal.update_goal_state(
+        state = self._build_policy_state(
             question,
             draft,
-            combined_context,
-            amygdala_signal=amygdala_signal,
-            novelty=novelty,
+            confidence,
+            affect,
+            novelty,
+            consult_bias,
+            hippocampal_density,
         )
-        signals = {
-            "novelty": novelty,
-            "amygdala": amygdala_signal,
-            "conflict": prefrontal_metrics.get("conflict", 0.0),
-            "goal_focus": prefrontal_metrics.get("goal_focus", 0.5),
-            "hippocampal_hits": len(hippocampal_hits),
-            "control_tone": prefrontal_metrics.get("control_tone", 0.6),
-        }
-        decision = self.decide(question, draft, confidence, signals=signals)
+        action = self.policy.decide(state)
+        action = self.reasoning_dial.adjust_decision(state, action)
+        if state["amygdala_risk"] >= 0.66:
+            action = max(action, 1)
+            state["amygdala_override"] = True
+        else:
+            state["amygdala_override"] = False
+        base_temp = self.hypothalamus.recommend_temperature(confidence)
+        temperature = self.reasoning_dial.scale_temperature(base_temp)
+        slot_ms = self.hypothalamus.recommend_slot_ms(state["risk"])
+        qid = str(uuid.uuid4())
+        return DecisionOutcome(qid=qid, action=action, temperature=temperature, slot_ms=slot_ms, state=state)
+
+    async def process(self, question: str) -> str:
+        context = self._compose_context(question)
+        hippocampal_density = len(self.hippocampus.episodes) if self.hippocampus is not None else 0
+        draft = await self.left_model.generate_answer(question, context)
+        confidence = self.left_model.estimate_confidence(draft)
+        affect = self._sense_affect(question, draft)
+        novelty = self.memory.novelty_score(question)
+        consult_bias = self.hypothalamus.bias_for_consult(novelty)
+        decision = self.decide(
+            question,
+            draft,
+            confidence,
+            affect,
+            novelty,
+            consult_bias,
+            hippocampal_density,
+        )
+        unconscious_profile = None
+        if self.unconscious_field is not None:
+            try:
+                unconscious_profile = self.unconscious_field.analyse(
+                    question=question, draft=draft
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                unconscious_profile = None
+            else:
+                summary = self.unconscious_field.summary(unconscious_profile)
+                decision.state["unconscious_top"] = summary["top_k"][0] if summary["top_k"] else None
+                self.telemetry.log(
+                    "unconscious_field",
+                    qid=decision.qid,
+                    summary=summary,
+                )
+        self.telemetry.log(
+            "affective_state",
+            qid=decision.qid,
+            valence=affect["valence"],
+            arousal=affect["arousal"],
+            risk=affect["risk"],
+            novelty=novelty,
+            hippocampal_density=hippocampal_density,
+        )
         self.telemetry.log(
             "policy_decision",
             qid=decision.qid,
@@ -158,7 +202,6 @@ class DualBrainController:
             action=decision.action,
             temperature=decision.temperature,
             slot_ms=decision.slot_ms,
-            signals=decision.signals,
         )
 
         if not self.orchestrator.register_request(decision.qid):
@@ -179,7 +222,7 @@ class DualBrainController:
                     "draft_sum": draft if len(draft) < 280 else draft[:280],
                     "temperature": decision.temperature,
                     "budget": self.reasoning_dial.pick_budget(),
-                    "context": combined_context,
+                    "context": context,
                 }
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
@@ -200,7 +243,7 @@ class DualBrainController:
                             self.memory,
                             temperature=decision.temperature,
                             budget=payload["budget"],
-                            context=combined_context,
+                            context=context,
                         )
                     except Exception as exc:  # pragma: no cover - defensive guard
                         final_answer = draft + f"\n(Right brain error: {exc})"
@@ -237,11 +280,20 @@ class DualBrainController:
             tags.add("familiar")
         if decision.state.get("right_source"):
             tags.add(decision.state["right_source"])
-        if decision.state.get("amygdala_risk", 0.0) > 0.6:
-            tags.add("high_risk")
+        if decision.state.get("amygdala_override"):
+            tags.add("amygdala_alert")
+        if decision.state.get("affect_valence", 0.0) > 0.25:
+            tags.add("positive_valence")
+        elif decision.state.get("affect_valence", 0.0) < -0.25:
+            tags.add("negative_valence")
+        if unconscious_profile is not None and unconscious_profile.top_k:
+            tags.add(f"archetype_{unconscious_profile.top_k[0]}")
 
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
-        self.hippocampus.index_episode(decision.qid, question, final_answer)
+        episodic_total = 0
+        if self.hippocampus is not None:
+            self.hippocampus.index_episode(decision.qid, question, final_answer)
+            episodic_total = len(self.hippocampus.episodes)
         self.telemetry.log(
             "interaction_complete",
             qid=decision.qid,
@@ -249,9 +301,9 @@ class DualBrainController:
             latency_ms=latency_ms,
             reward=reward,
             tags=list(tags),
-            signals=decision.signals,
+            amygdala_override=decision.state.get("amygdala_override", False),
+            hippocampal_total=episodic_total,
         )
-        self.prefrontal.integrate_feedback(reward, latency_ms, success=success)
         return final_answer
 
 
