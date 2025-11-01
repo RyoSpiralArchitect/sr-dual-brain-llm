@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary
-from .default_mode_network import DefaultModeNetwork
+from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -20,6 +20,7 @@ from .coherence_resonator import (
     CoherenceSignal,
     HemisphericCoherence,
 )
+from .schema import PsychoidSignalModel, UnconsciousSummaryModel
 
 
 _RIGHT_HEMISPHERE_KEYWORDS = {
@@ -165,9 +166,9 @@ class DualBrainController:
         self._last_leading_brain: Optional[str] = "right"
 
     def _prepare_psychoid_projection(
-        self, psychoid_signal: Optional[Dict[str, object]], *, seq_len: int = 8
+        self, psychoid_signal: Optional[PsychoidSignalModel], *, seq_len: int = 8
     ) -> Optional[PsychoidAttentionProjection]:
-        if not psychoid_signal:
+        if psychoid_signal is None:
             return None
         if self.psychoid_adapter is None:
             try:
@@ -543,9 +544,9 @@ class DualBrainController:
             decision.state["prefrontal_relevance"] = focus.relevance
             decision.state["prefrontal_hippocampal_overlap"] = focus.hippocampal_overlap
         unconscious_profile = None
-        unconscious_summary: Optional[Dict[str, object]] = None
-        default_mode_reflections: Optional[List[Dict[str, object]]] = None
-        psychoid_signal: Optional[Dict[str, object]] = None
+        unconscious_summary: Optional[UnconsciousSummaryModel] = None
+        default_mode_reflections: Optional[List[DefaultModeReflection]] = None
+        psychoid_signal: Optional[PsychoidSignalModel] = None
         psychoid_projection: Optional[PsychoidAttentionProjection] = None
         if self.unconscious_field is not None:
             try:
@@ -556,17 +557,23 @@ class DualBrainController:
                 unconscious_profile = None
             else:
                 summary = self.unconscious_field.summary(unconscious_profile)
-                decision.state["unconscious_top"] = summary["top_k"][0] if summary["top_k"] else None
-                decision.state["unconscious_cache_depth"] = summary.get("cache_depth", 0)
-                if summary.get("emergent_ideas"):
-                    decision.state["unconscious_emergent"] = summary["emergent_ideas"]
-                if summary.get("stress_released"):
-                    decision.state["unconscious_stress_release"] = summary["stress_released"]
-                psychoid_signal = summary.get("psychoid_signal")
+                decision.state["unconscious_top"] = (
+                    summary.top_k[0] if summary.top_k else None
+                )
+                decision.state["unconscious_cache_depth"] = summary.cache_depth
+                if summary.emergent_ideas:
+                    decision.state["unconscious_emergent"] = [
+                        idea.dict() for idea in summary.emergent_ideas
+                    ]
+                if summary.stress_released:
+                    decision.state["unconscious_stress_release"] = summary.stress_released
+                psychoid_signal = summary.psychoid_signal
                 if psychoid_signal:
-                    decision.state["psychoid_bias"] = psychoid_signal.get("attention_bias", [])
-                    decision.state["psychoid_tension"] = psychoid_signal.get("psychoid_tension", 0.0)
-                    decision.state["psychoid_resonance"] = psychoid_signal.get("resonance", 0.0)
+                    decision.state["psychoid_bias"] = [
+                        entry.dict() for entry in psychoid_signal.attention_bias
+                    ]
+                    decision.state["psychoid_tension"] = psychoid_signal.psychoid_tension
+                    decision.state["psychoid_resonance"] = psychoid_signal.resonance
                     psychoid_projection = self._prepare_psychoid_projection(
                         psychoid_signal
                     )
@@ -575,13 +582,13 @@ class DualBrainController:
                 self.telemetry.log(
                     "unconscious_field",
                     qid=decision.qid,
-                    summary=summary,
+                    summary=summary.to_payload(),
                 )
                 if psychoid_signal:
                     self.telemetry.log(
                         "psychoid_signal",
                         qid=decision.qid,
-                        signal=psychoid_signal,
+                        signal=psychoid_signal.to_payload(),
                     )
                     if psychoid_projection:
                         self.telemetry.log(
@@ -601,11 +608,13 @@ class DualBrainController:
             else:
                 if reflections:
                     default_mode_reflections = reflections
-                    decision.state["default_mode_reflections"] = reflections
+                    decision.state["default_mode_reflections"] = [
+                        ref.as_dict() for ref in reflections
+                    ]
                     self.telemetry.log(
                         "default_mode_reflection",
                         qid=decision.qid,
-                        reflections=reflections,
+                        reflections=[ref.as_dict() for ref in reflections],
                     )
         if focus is not None:
             self.telemetry.log(
@@ -682,19 +691,18 @@ class DualBrainController:
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
                 if unconscious_summary is not None:
-                    ideas = unconscious_summary.get("emergent_ideas") or []
+                    ideas = unconscious_summary.emergent_ideas
                     if ideas:
                         payload["unconscious_hints"] = [
-                            f"{idea.get('label')} ({idea.get('archetype')})"
-                            for idea in ideas
+                            f"{idea.label} ({idea.archetype})" for idea in ideas
                         ]
-                        payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
-                        payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
+                        payload["unconscious_cache_depth"] = unconscious_summary.cache_depth
+                        payload["unconscious_stress_released"] = unconscious_summary.stress_released
                 if psychoid_signal:
-                    chain = psychoid_signal.get("signifier_chain") or []
+                    chain = psychoid_signal.signifier_chain
                     if chain:
                         payload["psychoid_signifiers"] = list(chain[-6:])
-                    bias_vector = psychoid_signal.get("bias_vector")
+                    bias_vector = psychoid_signal.bias_vector
                     if bias_vector:
                         payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
                     if psychoid_projection:
@@ -705,7 +713,7 @@ class DualBrainController:
                         payload["coherence_vector"] = vectorised
                 if default_mode_reflections:
                     payload["default_mode_reflections"] = [
-                        f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
+                        f"{ref.theme} (confidence {float(ref.confidence):.2f})"
                         for ref in default_mode_reflections
                     ]
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
@@ -938,52 +946,49 @@ class DualBrainController:
         if unconscious_profile is not None and unconscious_profile.top_k:
             tags.add(f"archetype_{unconscious_profile.top_k[0]}")
         if unconscious_summary is not None:
-            if unconscious_summary.get("emergent_ideas"):
+            if unconscious_summary.emergent_ideas:
                 tags.add("unconscious_emergent")
-                for idea in unconscious_summary["emergent_ideas"]:
-                    archetype = idea.get("archetype")
+                for idea in unconscious_summary.emergent_ideas:
+                    archetype = idea.archetype
                     if archetype:
                         tags.add(f"emergent_{archetype}")
-            if unconscious_summary.get("stress_released", 0.0):
+            if unconscious_summary.stress_released:
                 tags.add("unconscious_stress_release")
             insights = []
-            for idea in unconscious_summary.get("emergent_ideas", []):
-                label = idea.get("label") or idea.get("archetype") or "Insight"
-                archetype = idea.get("archetype", "unknown")
-                intensity = idea.get("intensity")
-                if intensity is not None:
-                    insights.append(
-                        f"- {label} (archetype {archetype}, intensity {float(intensity):.2f})"
-                    )
-                else:
-                    insights.append(f"- {label} (archetype {archetype})")
+            for idea in unconscious_summary.emergent_ideas:
+                label = idea.label or idea.archetype or "Insight"
+                archetype = idea.archetype or "unknown"
+                intensity = float(idea.intensity)
+                insights.append(
+                    f"- {label} (archetype {archetype}, intensity {intensity:.2f})"
+                )
             if insights:
                 final_answer = f"{final_answer}\n\n[Unconscious Insight]\n" + "\n".join(insights)
-            stress_value = float(unconscious_summary.get("stress_released", 0.0) or 0.0)
+            stress_value = float(unconscious_summary.stress_released or 0.0)
             if stress_value:
                 final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
         if psychoid_signal:
             tags.add("psychoid_projection")
-            bias_entries = psychoid_signal.get("attention_bias") or []
+            bias_entries = list(psychoid_signal.attention_bias)
             if bias_entries:
                 top_bias = bias_entries[0]
-                if isinstance(top_bias, dict) and top_bias.get("archetype"):
-                    tags.add(f"psychoid_{top_bias['archetype']}")
+                if top_bias.archetype:
+                    tags.add(f"psychoid_{top_bias.archetype}")
             projection_lines = []
             for entry in bias_entries:
                 projection_lines.append(
                     "- {label} ({archetype}) weight {weight:.2f} resonance {resonance:.2f}".format(
-                        label=entry.get("label", "Archetype"),
-                        archetype=entry.get("archetype", "unknown"),
-                        weight=float(entry.get("weight", 0.0)),
-                        resonance=float(entry.get("resonance", 0.0)),
+                        label=entry.label,
+                        archetype=entry.archetype,
+                        weight=float(entry.weight),
+                        resonance=float(entry.resonance),
                     )
                 )
             if projection_lines:
                 final_answer = (
                     f"{final_answer}\n\n[Psychoid Field Alignment]\n" + "\n".join(projection_lines)
                 )
-            chain = psychoid_signal.get("signifier_chain") or []
+            chain = psychoid_signal.signifier_chain
             if chain:
                 final_answer = (
                     f"{final_answer}\n\n[Psychoid Signifiers]\n" + " -> ".join(chain[-6:])
@@ -1001,14 +1006,14 @@ class DualBrainController:
             tags.add("default_mode_reflection")
             reflection_lines = []
             for ref in default_mode_reflections:
-                primary = ref.get("primary_archetype", "unknown")
+                primary = ref.primary_archetype or "unknown"
                 tags.add(f"default_mode_{primary}")
                 reflection_lines.append(
                     "- {theme} (confidence {confidence:.2f}, stress {stress:.2f}, cache {cache})".format(
-                        theme=ref.get("theme", "Reflection"),
-                        confidence=float(ref.get("confidence", 0.0)),
-                        stress=float(ref.get("stress_released", 0.0)),
-                        cache=int(ref.get("cache_depth", 0)),
+                        theme=ref.theme,
+                        confidence=float(ref.confidence),
+                        stress=float(ref.stress_released),
+                        cache=int(ref.cache_depth),
                     )
                 )
             if reflection_lines:

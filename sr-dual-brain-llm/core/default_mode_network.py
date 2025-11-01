@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Sequence
+
+from .schema import ArchetypeActivation, EmergentIdeaModel, UnconsciousSummaryModel
 
 
 @dataclass
@@ -71,19 +73,18 @@ class DefaultModeNetwork:
         self._cooldown = 0
         self._last_reflections: List[DefaultModeReflection] = []
 
-    def _store_trace(self, summary: Dict[str, object]) -> DMNTrace:
-        scores: Iterable[Dict[str, object]] = summary.get("archetype_map", [])  # type: ignore[arg-type]
-        scores = list(scores)
+    def _store_trace(self, summary: UnconsciousSummaryModel) -> DMNTrace:
+        scores: List[ArchetypeActivation] = list(summary.archetype_map)
         if not scores:
             raise ValueError("Summary missing archetype_map entries")
         top = scores[0]
         trace = DMNTrace(
-            archetype=str(top.get("id", "unknown")),
-            label=str(top.get("label", top.get("id", "unknown"))),
-            intensity=float(top.get("intensity", 0.0)),
-            cache_depth=int(summary.get("cache_depth", 0)),
-            stress_released=float(summary.get("stress_released", 0.0) or 0.0),
-            emergent_count=len(summary.get("emergent_ideas", []) or []),
+            archetype=str(top.id or "unknown"),
+            label=str(top.label or top.id or "unknown"),
+            intensity=float(top.intensity),
+            cache_depth=int(summary.cache_depth),
+            stress_released=float(summary.stress_released or 0.0),
+            emergent_count=len(summary.emergent_ideas or []),
         )
         self._history.append(trace)
         if len(self._history) > self.max_history:
@@ -92,17 +93,17 @@ class DefaultModeNetwork:
 
     def _compose_theme(
         self,
-        top: Dict[str, object],
-        supports: List[Dict[str, object]],
-        emergent: List[Dict[str, object]],
+        top: ArchetypeActivation,
+        supports: Sequence[ArchetypeActivation],
+        emergent: Sequence[EmergentIdeaModel],
     ) -> str:
-        label = str(top.get("label") or top.get("id") or "Archetype")
+        label = str(top.label or top.id or "Archetype")
         if emergent:
             primary = emergent[0]
-            elabel = primary.get("label") or primary.get("archetype") or "insight"
+            elabel = primary.label or primary.archetype or "insight"
             return f"{label} reframed by {elabel}"
         if supports:
-            mix = ", ".join(str(s.get("label") or s.get("id")) for s in supports[:2])
+            mix = ", ".join(str(s.label or s.id) for s in supports[:2])
             return f"{label} braided with {mix}"
         return label
 
@@ -112,21 +113,24 @@ class DefaultModeNetwork:
         emergent_factor = min(0.25, trace.emergent_count * 0.1)
         return trace.weight() + stress_factor + cache_factor + emergent_factor
 
-    def reflect(self, summary: Dict[str, object]) -> List[Dict[str, object]]:
+    def reflect(self, summary: UnconsciousSummaryModel) -> List[DefaultModeReflection]:
         """Produce resting-state reflections given the unconscious summary."""
 
-        if not summary.get("archetype_map"):
+        if not summary.archetype_map:
             self._last_reflections = []
             return []
 
         trace = self._store_trace(summary)
-        scores: List[Dict[str, object]] = list(summary.get("archetype_map") or [])
+        scores: List[ArchetypeActivation] = list(summary.archetype_map)
         if self._cooldown > 0:
             self._cooldown -= 1
             self._last_reflections = []
             return []
 
-        if trace.cache_depth < self.min_cache_depth and trace.stress_released < self.stress_release_threshold:
+        if (
+            trace.cache_depth < self.min_cache_depth
+            and trace.stress_released < self.stress_release_threshold
+        ):
             self._last_reflections = []
             return []
 
@@ -135,21 +139,21 @@ class DefaultModeNetwork:
             self._last_reflections = []
             return []
 
-        supports: List[Dict[str, object]] = list(scores[1:])
-        emergent: List[Dict[str, object]] = list(summary.get("emergent_ideas", []) or [])
+        supports: List[ArchetypeActivation] = list(scores[1:])
+        emergent: List[EmergentIdeaModel] = list(summary.emergent_ideas or [])
         top_score = scores[0]
         theme = self._compose_theme(top_score, supports, emergent)
         supporting_ids = [
-            str(s.get("id", "unknown"))
+            str(s.id or "unknown")
             for s in supports
-            if float(s.get("intensity", 0.0)) >= 0.05
+            if float(s.intensity) >= 0.05
         ][:3]
 
         reflections = [
             DefaultModeReflection(
                 theme=theme,
                 confidence=min(1.0, activation),
-                primary_archetype=str(top_score.get("id", "unknown")),
+                primary_archetype=str(top_score.id or "unknown"),
                 supporting_archetypes=supporting_ids,
                 stress_released=trace.stress_released,
                 cache_depth=trace.cache_depth,
@@ -161,9 +165,11 @@ class DefaultModeNetwork:
             for idea in emergent[1: self.max_reflections]:
                 reflections.append(
                     DefaultModeReflection(
-                        theme=str(idea.get("label") or idea.get("archetype") or "Insight"),
+                        theme=str(idea.label or idea.archetype or "Insight"),
                         confidence=min(1.0, activation * 0.85),
-                        primary_archetype=str(idea.get("archetype", reflections[0].primary_archetype)),
+                        primary_archetype=str(
+                            idea.archetype or reflections[0].primary_archetype
+                        ),
                         supporting_archetypes=supporting_ids,
                         stress_released=trace.stress_released,
                         cache_depth=trace.cache_depth,
@@ -175,7 +181,7 @@ class DefaultModeNetwork:
 
         self._cooldown = self.cooldown_steps
         self._last_reflections = reflections
-        return [reflection.as_dict() for reflection in reflections]
+        return list(reflections)
 
     @property
     def last_reflections(self) -> List[DefaultModeReflection]:
