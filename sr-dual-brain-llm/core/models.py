@@ -43,6 +43,23 @@ class RightBrainModel:
     def __init__(self):
         pass
 
+    async def generate_lead(
+        self,
+        question: str,
+        context: Optional[str] = None,
+        *,
+        temperature: float = 0.8,
+    ) -> str:
+        """Produce an imagistic first impression before the left brain speaks."""
+
+        await asyncio.sleep(0.25 + random.random() * 0.2)
+        base = f"Right-brain impression: {question[:80]}"
+        if context:
+            snippet = context.splitlines()[0][:80]
+            base += f"\nContext echo: {snippet}"
+        base += f"\n(temperature ~{temperature:.2f})"
+        return base
+
     async def deepen(
         self,
         qid: str,

@@ -20,11 +20,16 @@ class Orchestrator:
     def __init__(self, max_roundtrips=2):
         self.max_roundtrips = max_roundtrips
         self.active_roundtrips = {}
+        self.leading_roles = {}
 
-    def register_request(self, qid: str):
+    def register_request(self, qid: str, *, leader: str | None = None):
         self.active_roundtrips[qid] = self.active_roundtrips.get(qid, 0) + 1
+        if leader:
+            self.leading_roles[qid] = leader
         return self.active_roundtrips[qid] <= self.max_roundtrips
 
     def clear(self, qid: str):
         if qid in self.active_roundtrips:
             del self.active_roundtrips[qid]
+        if qid in self.leading_roles:
+            del self.leading_roles[qid]
