@@ -5,6 +5,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 ## Key Ideas
 - **Dual-agent workflow** – the left brain triages requests and only escalates to the right brain when a domain-specific deep dive is warranted.
 - **Adaptive co-leading policy** – the controller senses hemispheric bias, rotates leadership when balanced, and now braids right-brain preludes with left-brain drafts when signals are in equilibrium.
+- **Collaboration resonance gauge** – a hemisphere signal + collaboration profile quantify left/right cue density, balance, and focus lift so braided replies and telemetry expose *why* the duet co-leads.
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
