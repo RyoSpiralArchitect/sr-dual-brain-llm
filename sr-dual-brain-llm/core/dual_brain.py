@@ -895,6 +895,44 @@ class DualBrainController:
                 final_answer = (
                     f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
                 )
+        routing_lines = [
+            "[Hemisphere Routing]",
+            f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
+            f"- policy action: {decision.action}",
+            f"- temperature: {decision.temperature:.2f}",
+        ]
+        if self.coherence_resonator is not None:
+            routing_lines.append(
+                "- coherence weights left {left:.2f} | right {right:.2f}".format(
+                    left=self.coherence_resonator.left_weight,
+                    right=self.coherence_resonator.right_weight,
+                )
+            )
+        final_answer = f"{final_answer}\n\n" + "\n".join(routing_lines)
+        if self.coherence_resonator is not None:
+            projection_payload = (
+                psychoid_projection.to_payload() if psychoid_projection else None
+            )
+            coherence_signal = self.coherence_resonator.integrate(
+                final_answer=final_answer,
+                psychoid_projection=projection_payload,
+            )
+            if coherence_signal is not None:
+                decision.state["coherence_combined"] = coherence_signal.combined_score
+                decision.state["coherence_tension"] = coherence_signal.tension
+                decision.state["coherence_notes"] = coherence_signal.notes
+                decision.state["coherence_contributions"] = coherence_signal.contributions
+                self.telemetry.log(
+                    "coherence_signal",
+                    qid=decision.qid,
+                    signal=coherence_signal.to_payload(),
+                )
+                final_answer = self.coherence_resonator.annotate_answer(
+                    final_answer, coherence_signal
+                )
+                coherence_tags = set(coherence_signal.tags())
+                tags.update(coherence_tags)
+                decision.state["coherence_tags"] = list(coherence_tags)
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:

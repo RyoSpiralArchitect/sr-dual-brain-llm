@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from core.dual_brain import DualBrainController
 from core.shared_memory import SharedMemory
@@ -9,7 +10,6 @@ from core.policy_modes import ReasoningDial
 from core.auditor import Auditor
 from core.orchestrator import Orchestrator
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
-import time
 
 from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
