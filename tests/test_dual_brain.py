@@ -9,7 +9,9 @@ from core.policy_modes import ReasoningDial
 from core.auditor import Auditor
 from core.orchestrator import Orchestrator
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
-from core.unconscious_field import UnconsciousField
+import time
+
+from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
 
@@ -73,6 +75,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "policy_decision" for evt, _ in telemetry.events)
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
+    assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
@@ -146,3 +149,54 @@ def test_amygdala_forces_consult_on_sensitive_requests():
     assert affect_events and affect_events[0]["risk"] >= 0.66
     final_payload = next(payload for evt, payload in telemetry.events if evt == "interaction_complete")
     assert final_payload["amygdala_override"] is True
+
+
+def test_unconscious_emergent_enriches_payload_and_answer():
+    callosum = DummyCallosum(omit_notes=True)
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=8)
+    unconscious_field = UnconsciousField()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        unconscious_field=unconscious_field,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    question = "Sketch a mythic journey across unknown seas."
+    context, _ = controller._compose_context(question)
+    draft = asyncio.run(controller.left_model.generate_answer(question, context))
+    payload = unconscious_field._payload(question, draft)
+    vector = unconscious_field._vectorize(payload)
+    unconscious_field._seed_cache.append(
+        LatentSeed(
+            question=question,
+            draft=draft,
+            archetype_id="hero",
+            archetype_label="Hero",
+            intensity=0.24,
+            novelty=0.75,
+            vector=vector,
+            created_at=time.time(),
+            exposures=1,
+        )
+    )
+
+    answer = asyncio.run(controller.process(question))
+
+    assert "[Unconscious Insight]" in answer
+    assert callosum.payloads, "Right brain should have received enriched payload"
+    hint_payload = callosum.payloads[0]["payload"]
+    assert "unconscious_hints" in hint_payload
+    assert any("Hero" in hint for hint in hint_payload["unconscious_hints"])

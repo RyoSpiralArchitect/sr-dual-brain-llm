@@ -217,6 +217,7 @@ class DualBrainController:
             decision.state["prefrontal_relevance"] = focus.relevance
             decision.state["prefrontal_hippocampal_overlap"] = focus.hippocampal_overlap
         unconscious_profile = None
+        unconscious_summary: Optional[Dict[str, object]] = None
         if self.unconscious_field is not None:
             try:
                 unconscious_profile = self.unconscious_field.analyse(
@@ -227,11 +228,17 @@ class DualBrainController:
             else:
                 summary = self.unconscious_field.summary(unconscious_profile)
                 decision.state["unconscious_top"] = summary["top_k"][0] if summary["top_k"] else None
+                decision.state["unconscious_cache_depth"] = summary.get("cache_depth", 0)
+                if summary.get("emergent_ideas"):
+                    decision.state["unconscious_emergent"] = summary["emergent_ideas"]
+                if summary.get("stress_released"):
+                    decision.state["unconscious_stress_release"] = summary["stress_released"]
                 self.telemetry.log(
                     "unconscious_field",
                     qid=decision.qid,
                     summary=summary,
                 )
+                unconscious_summary = summary
         if focus is not None:
             self.telemetry.log(
                 "prefrontal_focus",
@@ -285,6 +292,15 @@ class DualBrainController:
                 }
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
+                if unconscious_summary is not None:
+                    ideas = unconscious_summary.get("emergent_ideas") or []
+                    if ideas:
+                        payload["unconscious_hints"] = [
+                            f"{idea.get('label')} ({idea.get('archetype')})"
+                            for idea in ideas
+                        ]
+                        payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
+                        payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 try:
@@ -349,6 +365,31 @@ class DualBrainController:
             tags.add("negative_valence")
         if unconscious_profile is not None and unconscious_profile.top_k:
             tags.add(f"archetype_{unconscious_profile.top_k[0]}")
+        if unconscious_summary is not None:
+            if unconscious_summary.get("emergent_ideas"):
+                tags.add("unconscious_emergent")
+                for idea in unconscious_summary["emergent_ideas"]:
+                    archetype = idea.get("archetype")
+                    if archetype:
+                        tags.add(f"emergent_{archetype}")
+            if unconscious_summary.get("stress_released", 0.0):
+                tags.add("unconscious_stress_release")
+            insights = []
+            for idea in unconscious_summary.get("emergent_ideas", []):
+                label = idea.get("label") or idea.get("archetype") or "Insight"
+                archetype = idea.get("archetype", "unknown")
+                intensity = idea.get("intensity")
+                if intensity is not None:
+                    insights.append(
+                        f"- {label} (archetype {archetype}, intensity {float(intensity):.2f})"
+                    )
+                else:
+                    insights.append(f"- {label} (archetype {archetype})")
+            if insights:
+                final_answer = f"{final_answer}\n\n[Unconscious Insight]\n" + "\n".join(insights)
+            stress_value = float(unconscious_summary.get("stress_released", 0.0) or 0.0)
+            if stress_value:
+                final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
@@ -371,6 +412,23 @@ class DualBrainController:
         )
         if self.basal_ganglia is not None and basal_signal is not None:
             self.basal_ganglia.integrate_feedback(reward=reward, latency_ms=latency_ms)
+        if self.unconscious_field is not None:
+            outcome_meta = self.unconscious_field.integrate_outcome(
+                mapping=unconscious_profile,
+                question=question,
+                draft=draft,
+                final_answer=final_answer,
+                success=success,
+                decision_state=decision.state,
+                affect=affect,
+                novelty=novelty,
+                reward=reward,
+            )
+            self.telemetry.log(
+                "unconscious_outcome",
+                qid=decision.qid,
+                outcome=outcome_meta,
+            )
         return final_answer
 
 

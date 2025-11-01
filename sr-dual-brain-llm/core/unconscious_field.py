@@ -46,9 +46,10 @@ import os
 import random
 import re
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:  # Optional imports (graceful)
     import numpy as np  # type: ignore
@@ -101,6 +102,47 @@ class EventMapping:
     geometry: Geometry
     archetype_map: List[ArchetypeScore]
     top_k: List[str]
+
+
+@dataclass
+class LatentSeed:
+    """Cached trace for unresolved material incubating in the unconscious."""
+
+    question: str
+    draft: str
+    archetype_id: str
+    archetype_label: str
+    intensity: float
+    novelty: float
+    vector: List[float]
+    created_at: float
+    exposures: int = 0
+
+    def short_origin(self) -> str:
+        base = self.question.strip() or self.draft.strip()
+        return base[:120]
+
+
+@dataclass
+class EmergentIdea:
+    """Representation of a cached seed that resurfaced with a new insight."""
+
+    archetype: str
+    label: str
+    intensity: float
+    incubation_rounds: int
+    trigger_similarity: float
+    origin: str
+
+    def as_dict(self) -> Dict[str, object]:
+        return {
+            "archetype": self.archetype,
+            "label": self.label,
+            "intensity": self.intensity,
+            "incubation_rounds": self.incubation_rounds,
+            "trigger_similarity": self.trigger_similarity,
+            "origin": self.origin,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -768,14 +810,150 @@ class UnconsciousField:
         self.prototypes = prototypes or load_prototypes(None)
         self.config = config or PipelineConfig()
         self.pipeline = Archetopos(self.prototypes, self.config, embedder=embedder)
+        self._seed_cache: List[LatentSeed] = []
+        self._max_cache = 24
+        self._pending_stress_release = 0.0
+        self._last_emergent: List[Dict[str, object]] = []
+        self._last_stress_release = 0.0
+        self._last_cache_depth = 0
 
-    def analyse(self, *, question: str, draft: Optional[str] = None) -> EventMapping:
-        """Return the archetypal profile for a question/draft pair."""
-
+    @staticmethod
+    def _payload(question: str, draft: Optional[str]) -> str:
         payload = f"Question: {question.strip()}"
         if draft:
             payload = f"{payload}\nDraft: {draft.strip()}"
-        return self.pipeline.map_events([payload])[0]
+        return payload
+
+    def _vectorize(self, payload: str) -> List[float]:
+        return list(self.pipeline.embedder.encode([payload])[0])
+
+    def _trim_cache(self) -> None:
+        if len(self._seed_cache) <= self._max_cache:
+            return
+        self._seed_cache.sort(key=lambda seed: seed.created_at)
+        self._seed_cache = self._seed_cache[-self._max_cache :]
+
+    def _harvest_emergent(self, vector: List[float]) -> List[EmergentIdea]:
+        ideas: List[EmergentIdea] = []
+        survivors: List[LatentSeed] = []
+        for seed in self._seed_cache:
+            similarity = cosine(vector, seed.vector)
+            incubation = seed.exposures + 1
+            threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
+            if similarity >= threshold and incubation >= 2 and seed.intensity >= 0.08:
+                ideas.append(
+                    EmergentIdea(
+                        archetype=seed.archetype_id,
+                        label=seed.archetype_label,
+                        intensity=round(seed.intensity, 4),
+                        incubation_rounds=incubation,
+                        trigger_similarity=round(similarity, 4),
+                        origin=seed.short_origin(),
+                    )
+                )
+            else:
+                seed.exposures = incubation
+                seed.intensity *= 0.96
+                if seed.intensity >= 0.05:
+                    survivors.append(seed)
+        self._seed_cache = survivors
+        return ideas
+
+    def analyse(
+        self,
+        *,
+        question: str,
+        draft: Optional[str] = None,
+    ) -> EventMapping:
+        """Return the archetypal profile while surfacing emergent insights."""
+
+        payload = self._payload(question, draft)
+        mapping = self.pipeline.map_events([payload])[0]
+        vector = self._vectorize(payload)
+        emergent = [idea.as_dict() for idea in self._harvest_emergent(vector)]
+        stress_release = self._pending_stress_release
+        self._pending_stress_release = 0.0
+        self._last_emergent = emergent
+        self._last_stress_release = stress_release
+        self._last_cache_depth = len(self._seed_cache)
+        return mapping
+
+    def integrate_outcome(
+        self,
+        *,
+        mapping: Optional[EventMapping],
+        question: str,
+        draft: str,
+        final_answer: str,
+        success: bool,
+        decision_state: Optional[Dict[str, Any]] = None,
+        affect: Optional[Dict[str, float]] = None,
+        novelty: Optional[float] = None,
+        reward: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Update caches after the conscious processing loop completes."""
+
+        decision_state = decision_state or {}
+        if mapping is None:
+            return {
+                "seed_cached": False,
+                "stress_delta": 0.0,
+                "cache_depth": len(self._seed_cache),
+            }
+
+        payload = self._payload(question, draft)
+        vector = self._vectorize(payload)
+        top_score: Optional[ArchetypeScore] = mapping.archetype_map[0] if mapping.archetype_map else None
+        archetype_id = top_score.id if top_score else (mapping.top_k[0] if mapping.top_k else "unknown")
+        archetype_label = top_score.label if top_score else archetype_id
+        intensity = top_score.intensity if top_score else 0.0
+        novelty_value = novelty if novelty is not None else float(decision_state.get("novelty", 0.0))
+        left_conf = float(decision_state.get("left_conf_raw", 1.0))
+        right_source = decision_state.get("right_source")
+
+        stress_val = 0.0
+        if affect:
+            stress_val += max(0.0, -float(affect.get("valence", 0.0)))
+            stress_val += max(0.0, float(affect.get("risk", 0.0)) - 0.5)
+        if not success:
+            stress_val += 0.2
+        if reward is not None and reward < 0.5:
+            stress_val += 0.1
+
+        should_cache = False
+        if affect and float(affect.get("valence", 0.0)) < -0.25:
+            should_cache = False
+        else:
+            should_cache = (
+                (not success)
+                or left_conf < 0.55
+                or novelty_value > 0.65
+                or right_source == "right_model_fallback"
+            ) and intensity >= 0.1
+
+        if should_cache:
+            seed = LatentSeed(
+                question=question,
+                draft=draft or "",
+                archetype_id=archetype_id,
+                archetype_label=archetype_label,
+                intensity=float(intensity),
+                novelty=float(novelty_value),
+                vector=vector,
+                created_at=time.time(),
+            )
+            self._seed_cache.append(seed)
+            self._trim_cache()
+
+        if stress_val:
+            self._pending_stress_release += stress_val
+
+        self._last_cache_depth = len(self._seed_cache)
+        return {
+            "seed_cached": should_cache,
+            "stress_delta": stress_val,
+            "cache_depth": len(self._seed_cache),
+        }
 
     def summary(self, mapping: EventMapping, top_k: int = 3) -> Dict[str, object]:
         return {
@@ -785,6 +963,9 @@ class UnconsciousField:
                 {"id": score.id, "label": score.label, "intensity": score.intensity}
                 for score in mapping.archetype_map[:top_k]
             ],
+            "emergent_ideas": list(self._last_emergent),
+            "stress_released": self._last_stress_release,
+            "cache_depth": self._last_cache_depth,
         }
 
 
@@ -792,9 +973,11 @@ __all__ = [
     "Archetopos",
     "ArchetypeScore",
     "DEMO_EVENTS",
+    "EmergentIdea",
     "EventMapping",
     "Geometry",
     "HashEmbedder",
+    "LatentSeed",
     "PipelineConfig",
     "Prototype",
     "TextEmbedder",
