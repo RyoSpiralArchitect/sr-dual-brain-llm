@@ -14,6 +14,7 @@ import time
 from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
+from core.default_mode_network import DefaultModeNetwork
 
 
 class DummyCallosum:
@@ -172,6 +173,12 @@ def test_unconscious_emergent_enriches_payload_and_answer():
         unconscious_field=unconscious_field,
         prefrontal_cortex=PrefrontalCortex(),
         basal_ganglia=BasalGanglia(),
+        default_mode_network=DefaultModeNetwork(
+            min_cache_depth=0,
+            stress_release_threshold=0.0,
+            activation_bias=0.05,
+            cooldown_steps=0,
+        ),
     )
 
     question = "Sketch a mythic journey across unknown seas."
@@ -196,7 +203,11 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     answer = asyncio.run(controller.process(question))
 
     assert "[Unconscious Insight]" in answer
+    assert "[Default Mode Reflection]" in answer
     assert callosum.payloads, "Right brain should have received enriched payload"
     hint_payload = callosum.payloads[0]["payload"]
     assert "unconscious_hints" in hint_payload
     assert any("Hero" in hint for hint in hint_payload["unconscious_hints"])
+    assert "default_mode_reflections" in hint_payload
+    assert any("confidence" in entry for entry in hint_payload["default_mode_reflections"])
+    assert any(evt == "default_mode_reflection" for evt, _ in telemetry.events)

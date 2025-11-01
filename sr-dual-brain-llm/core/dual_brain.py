@@ -6,11 +6,12 @@ import asyncio
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary
+from .default_mode_network import DefaultModeNetwork
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 
 
@@ -47,6 +48,7 @@ class DualBrainController:
         unconscious_field: Optional[Any] = None,
         prefrontal_cortex: Optional[PrefrontalCortex] = None,
         basal_ganglia: Optional[BasalGanglia] = None,
+        default_mode_network: Optional[DefaultModeNetwork] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -64,6 +66,7 @@ class DualBrainController:
         self.unconscious_field = unconscious_field
         self.prefrontal_cortex = prefrontal_cortex
         self.basal_ganglia = basal_ganglia or BasalGanglia()
+        self.default_mode_network = default_mode_network
 
     def _compose_context(self, question: str) -> Tuple[str, FocusSummary | None]:
         """Blend working-memory recall with hippocampal episodic cues."""
@@ -218,6 +221,7 @@ class DualBrainController:
             decision.state["prefrontal_hippocampal_overlap"] = focus.hippocampal_overlap
         unconscious_profile = None
         unconscious_summary: Optional[Dict[str, object]] = None
+        default_mode_reflections: Optional[List[Dict[str, object]]] = None
         if self.unconscious_field is not None:
             try:
                 unconscious_profile = self.unconscious_field.analyse(
@@ -239,6 +243,23 @@ class DualBrainController:
                     summary=summary,
                 )
                 unconscious_summary = summary
+        if (
+            self.default_mode_network is not None
+            and unconscious_summary is not None
+        ):
+            try:
+                reflections = self.default_mode_network.reflect(unconscious_summary)
+            except Exception:  # pragma: no cover - defensive guard
+                default_mode_reflections = None
+            else:
+                if reflections:
+                    default_mode_reflections = reflections
+                    decision.state["default_mode_reflections"] = reflections
+                    self.telemetry.log(
+                        "default_mode_reflection",
+                        qid=decision.qid,
+                        reflections=reflections,
+                    )
         if focus is not None:
             self.telemetry.log(
                 "prefrontal_focus",
@@ -301,6 +322,11 @@ class DualBrainController:
                         ]
                         payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
                         payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
+                if default_mode_reflections:
+                    payload["default_mode_reflections"] = [
+                        f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
+                        for ref in default_mode_reflections
+                    ]
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 try:
@@ -390,6 +416,24 @@ class DualBrainController:
             stress_value = float(unconscious_summary.get("stress_released", 0.0) or 0.0)
             if stress_value:
                 final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
+        if default_mode_reflections:
+            tags.add("default_mode_reflection")
+            reflection_lines = []
+            for ref in default_mode_reflections:
+                primary = ref.get("primary_archetype", "unknown")
+                tags.add(f"default_mode_{primary}")
+                reflection_lines.append(
+                    "- {theme} (confidence {confidence:.2f}, stress {stress:.2f}, cache {cache})".format(
+                        theme=ref.get("theme", "Reflection"),
+                        confidence=float(ref.get("confidence", 0.0)),
+                        stress=float(ref.get("stress_released", 0.0)),
+                        cache=int(ref.get("cache_depth", 0)),
+                    )
+                )
+            if reflection_lines:
+                final_answer = (
+                    f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
+                )
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
