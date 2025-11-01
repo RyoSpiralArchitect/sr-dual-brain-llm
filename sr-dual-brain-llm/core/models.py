@@ -17,14 +17,18 @@
 # ============================================================================
 
 import asyncio, random
-from typing import Dict
+from typing import Dict, Optional
 
 class LeftBrainModel:
     def __init__(self):
         pass
 
     async def generate_answer(self, input_text: str, context: str) -> str:
+        """Produce a first-pass draft that reflects retrieved memory snippets."""
         base = f"Draft answer for: {input_text[:80]}"
+        if context:
+            summary = context.splitlines()[0][:80]
+            base += f"\nContext hint: {summary}"
         if any(k in input_text for k in ["詳しく","分析","計算","証拠"]):
             base += " ... (brief, looks complex)"
         return base
@@ -39,8 +43,26 @@ class RightBrainModel:
     def __init__(self):
         pass
 
-    async def deepen(self, qid: str, question: str, partial_answer: str, shared_memory) -> Dict[str, str]:
-        await asyncio.sleep(0.5 + random.random()*0.5)
-        context = shared_memory.retrieve_related(question)
-        detail = f"Deep analysis for qid={qid}: insights about '{question[:50]}' | ctx=[{context[:120]}]"
+    async def deepen(
+        self,
+        qid: str,
+        question: str,
+        partial_answer: str,
+        shared_memory,
+        *,
+        temperature: float = 0.7,
+        budget: str = "small",
+        context: Optional[str] = None,
+        psychoid_projection: Optional[Dict[str, object]] = None,
+    ) -> Dict[str, str]:
+        await asyncio.sleep(0.35 + random.random()*0.3)
+        context_text = context if context is not None else shared_memory.retrieve_related(question)
+        snippet = context_text[:120]
+        detail = (
+            f"Deep analysis for qid={qid}: insights about '{question[:50]}'"
+            f" | temp={temperature:.2f} | budget={budget} | ctx=[{snippet}]"
+        )
+        if psychoid_projection:
+            norm = float(psychoid_projection.get("norm", 0.0))
+            detail += f" | psychoid_norm={norm:.2f}"
         return {"qid": qid, "notes_sum": detail, "confidence_r": 0.85}
