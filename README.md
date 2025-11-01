@@ -12,6 +12,48 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
 - **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
 - **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
+- **Coherence resonator** – balances hemispheric coverage/cohesion and emits brainstem-style integration cues for the final answer.
+
+## Architecture Overview (ASCII)
+```
+                                  ┌────────────────────────┐
+                                  │        User Input      │
+                                  └────────────┬───────────┘
+                                               │
+                                  ┌────────────▼───────────┐
+                                  │   Left Brain Orchestrator│
+                                  │  (policy, gating, focus) │
+                                  └────────────┬───────────┘
+                                               │ draft + state
+                     ┌─────────────────────────┴─────────────────────────┐
+                     │                                                   │
+           ┌─────────▼─────────┐                               ┌─────────▼─────────┐
+           │ Shared Memory &   │     episodic recall           │ Basal Ganglia &   │
+           │ Hippocampal Index │◀──────────────────────────────│ Amygdala Feedback │
+           └─────────┬─────────┘                               └─────────┬─────────┘
+                     │ context mix                                         │ affect + go/inhibit
+                     └─────────────────────────┬───────────────────────────┘
+                                               │
+                             ┌─────────────────▼──────────────────┐
+                             │ Corpus Callosum Transport Layer    │
+                             │ (memory / Kafka / MQTT backends)   │
+                             └─────────────────┬──────────────────┘
+                                               │ enriched consult payload
+                                   ┌───────────▼───────────┐
+                                   │   Right Brain Expert  │
+                                   │ (deepen / fallback LLM)│
+                                   └───────────┬───────────┘
+                                               │ detail notes
+                             ┌─────────────────▼──────────────────┐
+                             │  Coherence Resonator & Brainstem   │
+                             │ (left/right profiles + integration)│
+                             └─────────────────┬──────────────────┘
+                                               │ annotated answer + tags
+                                  ┌────────────▼───────────┐
+                                  │   Final Response to    │
+                                  │        the User        │
+                                  └────────────────────────┘
+```
 
 ## Repository Layout
 ```

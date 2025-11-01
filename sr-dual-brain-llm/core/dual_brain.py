@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -14,6 +15,86 @@ from .prefrontal_cortex import PrefrontalCortex, FocusSummary
 from .default_mode_network import DefaultModeNetwork
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
+from .coherence_resonator import (
+    CoherenceResonator,
+    CoherenceSignal,
+    HemisphericCoherence,
+)
+
+
+_RIGHT_HEMISPHERE_KEYWORDS = {
+    "story",
+    "stories",
+    "poem",
+    "poetry",
+    "metaphor",
+    "imagine",
+    "imagination",
+    "dream",
+    "vision",
+    "art",
+    "artistic",
+    "myth",
+    "mythic",
+    "lyric",
+    "narrative",
+    "creative",
+    "感情",
+    "夢",
+    "詩",
+    "物語",
+    "象徴",
+    "直感",
+    "比喩",
+}
+
+_LEFT_HEMISPHERE_KEYWORDS = {
+    "analyze",
+    "analysis",
+    "explain",
+    "detail",
+    "formula",
+    "proof",
+    "derive",
+    "compute",
+    "calculation",
+    "step",
+    "structure",
+    "data",
+    "algorithm",
+    "framework",
+    "論理",
+    "計算",
+    "分析",
+    "証明",
+    "手順",
+    "仕組み",
+    "数式",
+}
+
+_RIGHT_HEMISPHERE_MARKERS = ["夢", "詩", "物語", "感情", "象徴", "幻想", "archetype"]
+_LEFT_HEMISPHERE_MARKERS = ["計算", "分析", "証明", "構造", "論理", "手順", "データ"]
+
+_RIGHT_HEMISPHERE_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"compose (?:a )?(poem|story)",
+        r"sketch .*journey",
+        r"imagine(?:\s+or)?\s+",
+        r"mythic\s+journey",
+        r"write .*lyrics",
+    ]
+]
+
+_LEFT_HEMISPHERE_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in [
+        r"step[- ]by[- ]step",
+        r"derive .*formula",
+        r"calculate",
+        r"provide an? analysis",
+    ]
+]
 
 
 @dataclass
@@ -51,6 +132,7 @@ class DualBrainController:
         basal_ganglia: Optional[BasalGanglia] = None,
         default_mode_network: Optional[DefaultModeNetwork] = None,
         psychoid_attention_adapter: Optional[PsychoidAttentionAdapter] = None,
+        coherence_resonator: Optional[CoherenceResonator] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -70,6 +152,7 @@ class DualBrainController:
         self.basal_ganglia = basal_ganglia or BasalGanglia()
         self.default_mode_network = default_mode_network
         self.psychoid_adapter = psychoid_attention_adapter
+        self.coherence_resonator = coherence_resonator or CoherenceResonator()
 
     def _prepare_psychoid_projection(
         self, psychoid_signal: Optional[Dict[str, object]], *, seq_len: int = 8
@@ -131,6 +214,42 @@ class DualBrainController:
             return "medium"
         return "easy"
 
+    def _select_hemisphere_mode(
+        self, question: str, focus: FocusSummary | None
+    ) -> Tuple[str, float]:
+        tokens = {tok for tok in re.findall(r"[\w']+", question.lower())}
+        if focus is not None and focus.keywords:
+            tokens.update(tok.lower() for tok in focus.keywords)
+
+        right_score = sum(1.0 for tok in tokens if tok in _RIGHT_HEMISPHERE_KEYWORDS)
+        left_score = sum(1.0 for tok in tokens if tok in _LEFT_HEMISPHERE_KEYWORDS)
+
+        for marker in _RIGHT_HEMISPHERE_MARKERS:
+            if marker and marker in question:
+                right_score += 1.25
+        for marker in _LEFT_HEMISPHERE_MARKERS:
+            if marker and marker in question:
+                left_score += 1.25
+
+        for pattern in _RIGHT_HEMISPHERE_PATTERNS:
+            if pattern.search(question):
+                right_score += 1.5
+        for pattern in _LEFT_HEMISPHERE_PATTERNS:
+            if pattern.search(question):
+                left_score += 1.5
+
+        total = right_score + left_score
+        if total <= 0.0:
+            return "balanced", 0.0
+
+        diff = right_score - left_score
+        intensity = min(1.0, abs(diff) / max(total, 1.0))
+        if diff > 0.8:
+            return "right", intensity
+        if diff < -0.8:
+            return "left", intensity
+        return "balanced", intensity
+
     def _build_policy_state(
         self,
         question: str,
@@ -141,6 +260,8 @@ class DualBrainController:
         consult_bias: float,
         hippocampal_density: int,
         focus_metric: float,
+        hemisphere_mode: str,
+        hemisphere_bias: float,
     ) -> Dict[str, Any]:
         adjusted_conf = max(
             0.0,
@@ -159,6 +280,8 @@ class DualBrainController:
             "consult_bias": consult_bias,
             "hippocampal_density": hippocampal_density,
             "prefrontal_focus": focus_metric,
+            "hemisphere_mode": hemisphere_mode,
+            "hemisphere_bias": hemisphere_bias,
         }
 
     def decide(
@@ -171,6 +294,8 @@ class DualBrainController:
         consult_bias: float,
         hippocampal_density: int,
         focus_metric: float,
+        hemisphere_mode: str,
+        hemisphere_bias: float,
     ) -> DecisionOutcome:
         state = self._build_policy_state(
             question,
@@ -181,6 +306,8 @@ class DualBrainController:
             consult_bias,
             hippocampal_density,
             focus_metric,
+            hemisphere_mode,
+            hemisphere_bias,
         )
         action = self.policy.decide(state)
         action = self.reasoning_dial.adjust_decision(state, action)
@@ -207,23 +334,55 @@ class DualBrainController:
             state["amygdala_override"] = False
         base_temp = self.hypothalamus.recommend_temperature(confidence)
         temperature = self.reasoning_dial.scale_temperature(base_temp)
+        if hemisphere_mode == "right":
+            temperature = min(0.95, temperature + 0.2 * (0.4 + hemisphere_bias))
+        elif hemisphere_mode == "left":
+            temperature = max(0.3, temperature - 0.2 * (0.4 + hemisphere_bias))
+        state["hemisphere_temperature"] = temperature
         slot_ms = self.hypothalamus.recommend_slot_ms(state["risk"])
         qid = str(uuid.uuid4())
         return DecisionOutcome(qid=qid, action=action, temperature=temperature, slot_ms=slot_ms, state=state)
 
     async def process(self, question: str) -> str:
+        if self.coherence_resonator is not None:
+            self.coherence_resonator.reset()
         context, focus = self._compose_context(question)
+        hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
+        if self.coherence_resonator is not None:
+            self.coherence_resonator.retune(hemisphere_mode, intensity=hemisphere_bias)
         focus_metric = 0.0
         if self.prefrontal_cortex is not None and focus is not None:
             focus_metric = self.prefrontal_cortex.focus_metric(focus)
-        hippocampal_density = len(self.hippocampus.episodes) if self.hippocampus is not None else 0
+        hippocampal_density = (
+            len(self.hippocampus.episodes) if self.hippocampus is not None else 0
+        )
+        focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         draft = await self.left_model.generate_answer(question, context)
+        left_coherence: Optional[HemisphericCoherence] = None
+        right_coherence: Optional[HemisphericCoherence] = None
+        coherence_signal: Optional[CoherenceSignal] = None
+        if self.coherence_resonator is not None:
+            left_coherence = self.coherence_resonator.capture_left(
+                question=question,
+                draft=draft,
+                context=context,
+                focus_keywords=focus_keywords or (),
+                focus_metric=focus_metric,
+            )
         confidence = self.left_model.estimate_confidence(draft)
         affect = self._sense_affect(question, draft)
         novelty = self.memory.novelty_score(question)
         consult_bias = self.hypothalamus.bias_for_consult(novelty)
         if self.prefrontal_cortex is not None and focus is not None:
             consult_bias = self.prefrontal_cortex.adjust_consult_bias(consult_bias, focus)
+        if hemisphere_mode == "right":
+            consult_bias = max(
+                -0.35, consult_bias - (0.15 + 0.35 * hemisphere_bias)
+            )
+        elif hemisphere_mode == "left":
+            consult_bias = min(
+                0.35, consult_bias + (0.15 + 0.35 * hemisphere_bias)
+            )
         decision = self.decide(
             question,
             draft,
@@ -233,7 +392,18 @@ class DualBrainController:
             consult_bias,
             hippocampal_density,
             focus_metric,
+            hemisphere_mode,
+            hemisphere_bias,
         )
+        decision.state["hemisphere_mode"] = hemisphere_mode
+        decision.state["hemisphere_bias_strength"] = hemisphere_bias
+        if left_coherence is not None:
+            decision.state["coherence_left"] = left_coherence.to_payload()
+        if self.coherence_resonator is not None:
+            decision.state["hemisphere_weights"] = {
+                "left": self.coherence_resonator.left_weight,
+                "right": self.coherence_resonator.right_weight,
+            }
         basal_signal = getattr(self.basal_ganglia, "last_signal", None)
         if focus is not None:
             decision.state["prefrontal_keywords"] = list(focus.keywords)
@@ -327,6 +497,12 @@ class DualBrainController:
             hippocampal_density=hippocampal_density,
         )
         self.telemetry.log(
+            "hemisphere_routing",
+            qid=decision.qid,
+            mode=hemisphere_mode,
+            intensity=hemisphere_bias,
+        )
+        self.telemetry.log(
             "policy_decision",
             qid=decision.qid,
             state=decision.state,
@@ -354,6 +530,8 @@ class DualBrainController:
                     "temperature": decision.temperature,
                     "budget": self.reasoning_dial.pick_budget(),
                     "context": context,
+                    "hemisphere_mode": hemisphere_mode,
+                    "hemisphere_bias": hemisphere_bias,
                 }
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
@@ -375,6 +553,10 @@ class DualBrainController:
                         payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
                     if psychoid_projection:
                         payload["psychoid_attention_bias"] = psychoid_projection.to_payload()
+                if self.coherence_resonator is not None and left_coherence is not None:
+                    vectorised = self.coherence_resonator.vectorise_left()
+                    if vectorised:
+                        payload["coherence_vector"] = vectorised
                 if default_mode_reflections:
                     payload["default_mode_reflections"] = [
                         f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
@@ -420,6 +602,17 @@ class DualBrainController:
                     final_answer = self.left_model.integrate_info(draft, detail_notes)
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
+                if self.coherence_resonator is not None:
+                    right_coherence = self.coherence_resonator.capture_right(
+                        question=question,
+                        draft=draft,
+                        detail_notes=detail_notes,
+                        focus_keywords=focus_keywords or (),
+                        psychoid_signal=psychoid_signal,
+                        confidence=float(decision.state.get("right_conf", 0.0) or 0.0),
+                        source=response_source,
+                    )
+                    decision.state["coherence_right"] = right_coherence.to_payload()
         except asyncio.TimeoutError:
             final_answer = draft + "\n(Right brain timeout: continuing with draft)"
         finally:
@@ -437,6 +630,8 @@ class DualBrainController:
         self.hypothalamus.update_feedback(reward=reward, latency_ms=latency_ms)
 
         tags = {decision.state.get("q_type", "unknown")}
+        tags.add(f"hemisphere_{hemisphere_mode}")
+        tags.add(f"hemisphere_bias_{int(hemisphere_bias * 100):02d}")
         if decision.state.get("novelty", 0.0) < 0.4:
             tags.add("familiar")
         if decision.state.get("right_source"):
@@ -527,6 +722,44 @@ class DualBrainController:
                 final_answer = (
                     f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
                 )
+        routing_lines = [
+            "[Hemisphere Routing]",
+            f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
+            f"- policy action: {decision.action}",
+            f"- temperature: {decision.temperature:.2f}",
+        ]
+        if self.coherence_resonator is not None:
+            routing_lines.append(
+                "- coherence weights left {left:.2f} | right {right:.2f}".format(
+                    left=self.coherence_resonator.left_weight,
+                    right=self.coherence_resonator.right_weight,
+                )
+            )
+        final_answer = f"{final_answer}\n\n" + "\n".join(routing_lines)
+        if self.coherence_resonator is not None:
+            projection_payload = (
+                psychoid_projection.to_payload() if psychoid_projection else None
+            )
+            coherence_signal = self.coherence_resonator.integrate(
+                final_answer=final_answer,
+                psychoid_projection=projection_payload,
+            )
+            if coherence_signal is not None:
+                decision.state["coherence_combined"] = coherence_signal.combined_score
+                decision.state["coherence_tension"] = coherence_signal.tension
+                decision.state["coherence_notes"] = coherence_signal.notes
+                decision.state["coherence_contributions"] = coherence_signal.contributions
+                self.telemetry.log(
+                    "coherence_signal",
+                    qid=decision.qid,
+                    signal=coherence_signal.to_payload(),
+                )
+                final_answer = self.coherence_resonator.annotate_answer(
+                    final_answer, coherence_signal
+                )
+                coherence_tags = set(coherence_signal.tags())
+                tags.update(coherence_tags)
+                decision.state["coherence_tags"] = list(coherence_tags)
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
