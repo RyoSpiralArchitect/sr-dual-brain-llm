@@ -93,9 +93,16 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "psychoid_attention_projection" for evt, _ in telemetry.events)
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
+    assert any(evt == "hippocampal_collaboration" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 2
+    latest_trace = hippocampus.episodes[-1]
+    assert latest_trace.leading in {"left", "right", "braided"}
+    assert latest_trace.collaboration_strength is not None
+    assert latest_trace.annotations.get("hemisphere_mode") in {"left", "right", "balanced"}
+    rollups = [payload["rollup"] for evt, payload in telemetry.events if evt == "hippocampal_collaboration"]
+    assert rollups and rollups[-1]["window"] >= 1
     final_tags = memory.past_qas[-1].tags
     assert any(tag.startswith("archetype_") for tag in final_tags)
     assert any(tag.startswith("basal_") for tag in final_tags)

@@ -1219,9 +1219,25 @@ class DualBrainController:
         )
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
+        hippocampal_rollup: Optional[Dict[str, float]] = None
         if self.hippocampus is not None:
-            self.hippocampus.index_episode(decision.qid, question, final_answer)
+            self.hippocampus.index_episode(
+                decision.qid,
+                question,
+                final_answer,
+                leading=leading,
+                collaboration_strength=collaboration_profile.strength,
+                selection_reason=selection_reason,
+                tags=tags,
+                metadata={
+                    "hemisphere_mode": hemisphere_mode,
+                    "hemisphere_bias": hemisphere_bias,
+                    "collaborative": collaborative_lead,
+                    "leading_style": leading_style,
+                },
+            )
             episodic_total = len(self.hippocampus.episodes)
+            hippocampal_rollup = self.hippocampus.collaboration_rollup()
         self.telemetry.log(
             "interaction_complete",
             qid=decision.qid,
@@ -1232,6 +1248,12 @@ class DualBrainController:
             amygdala_override=decision.state.get("amygdala_override", False),
             hippocampal_total=episodic_total,
         )
+        if hippocampal_rollup is not None:
+            self.telemetry.log(
+                "hippocampal_collaboration",
+                qid=decision.qid,
+                rollup=hippocampal_rollup,
+            )
         if self.basal_ganglia is not None and basal_signal is not None:
             self.basal_ganglia.integrate_feedback(reward=reward, latency_ms=latency_ms)
         if self.unconscious_field is not None:

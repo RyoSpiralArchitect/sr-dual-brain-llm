@@ -8,7 +8,8 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Collaboration resonance gauge** – a hemisphere signal + collaboration profile quantify left/right cue density, balance, and focus lift so braided replies and telemetry expose *why* the duet co-leads.
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
-- **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
+- **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags, the hippocampus now archives hemispheric lead + collaboration strength, and the controller emits rollups for analytics.
+- **Episodic collaboration atlas** – hippocampal traces log which hemisphere led, why it was chosen, and the average braid strength across recent episodes so downstream agents can tune retrieval bias.
 - **Executive focus + unconscious cues** – a prefrontal-inspired module gates context while an unconscious field surfaces archetypal signals for tagging and auditing.
 - **Emergent unconscious incubation** – unresolved material is cached in the unconscious, resurfacing as archetypal insight hints while stress from noisy inputs is discharged for the next reasoning loop.
 - **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
@@ -38,7 +39,8 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
                                  ┌───────▼────────────┐ ┌───────▼────────────┐
                                  │ Braided Prelude    │ │ Shared Memory &    │
                                  │ (right prelude +   │ │ Hippocampus        │
-                                 │ left draft fusion) │ │ (episodic context) │
+                                 │ left draft fusion) │ │ (episodic + collab │
+                                 │                    │ │ telemetry atlas)   │
                                  └──────────┬─────────┘ └────────┬───────────┘
                                              │                    │
                         ┌────────────────────▼────────────┐ ┌─────▼────────────┐
