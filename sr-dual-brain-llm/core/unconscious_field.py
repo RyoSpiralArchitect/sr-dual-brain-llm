@@ -47,9 +47,10 @@ import random
 import re
 import sys
 import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Deque, Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:  # Optional imports (graceful)
     import numpy as np  # type: ignore
@@ -143,6 +144,131 @@ class EmergentIdea:
             "trigger_similarity": self.trigger_similarity,
             "origin": self.origin,
         }
+
+
+# ---------------------------------------------------------------------------
+# Psychoid archetype projection
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PsychoidSignal:
+    """Latent projection describing psychoid archetype influences."""
+
+    attention_bias: List[Dict[str, object]]
+    bias_vector: List[float]
+    psychoid_tension: float
+    resonance: float
+    signifier_chain: List[str]
+
+
+class PsychoidArchetypeSampler:
+    """Project archetypal intensities into an attention-bias style signal."""
+
+    def __init__(
+        self,
+        prototypes: Dict[str, Prototype],
+        *,
+        qkv_dim: int = 16,
+        max_chain: int = 24,
+        smoothing: float = 0.72,
+    ) -> None:
+        self.prototypes = prototypes
+        self.qkv_dim = max(4, qkv_dim)
+        self.smoothing = smoothing
+        self._chain: Deque[str] = deque(maxlen=max_chain)
+        self._latent_resonance = 0.0
+
+    @staticmethod
+    def _tokenize(text: str) -> List[str]:
+        return re.findall(r"\w+", text.lower())
+
+    def _keyword_overlap(self, archetype_id: str, tokens: Sequence[str]) -> Tuple[int, int]:
+        proto = self.prototypes.get(archetype_id)
+        if not proto:
+            return 0, 0
+        keywords = [kw.lower() for kw in proto.keywords]
+        if not keywords:
+            return 0, 0
+        overlap = sum(1 for kw in keywords if kw in tokens)
+        return overlap, len(keywords)
+
+    def sample_signal(
+        self,
+        mapping: EventMapping,
+        *,
+        question: str,
+        draft: Optional[str] = None,
+        qkv_dim: Optional[int] = None,
+    ) -> PsychoidSignal:
+        qkv = max(4, qkv_dim or self.qkv_dim)
+        tokens = self._tokenize(f"{question} {draft or ''}")
+        weighted: List[Tuple[ArchetypeScore, float, float]] = []
+        for score in mapping.archetype_map:
+            overlap, keyword_total = self._keyword_overlap(score.id, tokens)
+            resonance = 0.0
+            if keyword_total:
+                resonance = overlap / keyword_total
+            psychoid_weight = score.intensity * (1.0 + 0.6 * resonance)
+            weighted.append((score, psychoid_weight, resonance))
+
+        weighted.sort(key=lambda item: item[1], reverse=True)
+        total_weight = sum(item[1] for item in weighted) or 1.0
+        attention_bias: List[Dict[str, object]] = []
+        bias_vector: List[float] = []
+        top_entries = weighted[: max(1, min(4, len(weighted)))]
+        for score, weight, resonance in top_entries:
+            attention_bias.append(
+                {
+                    "archetype": score.id,
+                    "label": score.label,
+                    "weight": float(weight / total_weight),
+                    "resonance": float(resonance),
+                }
+            )
+        if attention_bias:
+            for idx in range(qkv):
+                entry = attention_bias[idx % len(attention_bias)]
+                bias_vector.append(float(entry["weight"]))
+        else:
+            bias_vector = [0.0 for _ in range(qkv)]
+
+        psychoid_tension = 0.0
+        if weighted:
+            peak = weighted[0][1]
+            trough = weighted[-1][1]
+            psychoid_tension = float(max(0.0, peak - trough))
+        max_resonance = max((item[2] for item in weighted), default=0.0)
+        self._latent_resonance = (
+            self.smoothing * self._latent_resonance + (1.0 - self.smoothing) * max_resonance
+        )
+
+        if top_entries:
+            top_score, _, _ = top_entries[0]
+            overlap_tokens = [
+                kw
+                for kw in self.prototypes.get(top_score.id, Prototype("", "", [])).keywords
+                if kw.lower() in tokens
+            ]
+            excerpt = overlap_tokens[0] if overlap_tokens else top_score.label
+            self._chain.append(f"{top_score.id}:{excerpt}")
+
+        return PsychoidSignal(
+            attention_bias=attention_bias,
+            bias_vector=bias_vector,
+            psychoid_tension=psychoid_tension,
+            resonance=float(self._latent_resonance),
+            signifier_chain=list(self._chain),
+        )
+
+    def integrate_feedback(self, *, success: bool, reward: Optional[float]) -> None:
+        decay = 0.78 if success else 0.62
+        self._latent_resonance *= decay
+        if reward is not None:
+            self._latent_resonance += 0.12 * max(0.0, 0.75 - reward)
+        self._latent_resonance = max(0.0, min(1.0, self._latent_resonance))
+        if not success:
+            self._chain.append("rupture")
 
 
 # ---------------------------------------------------------------------------
@@ -816,6 +942,8 @@ class UnconsciousField:
         self._last_emergent: List[Dict[str, object]] = []
         self._last_stress_release = 0.0
         self._last_cache_depth = 0
+        self._psychoid_sampler = PsychoidArchetypeSampler(self.prototypes)
+        self._last_psychoid_signal: Optional[PsychoidSignal] = None
 
     @staticmethod
     def _payload(question: str, draft: Optional[str]) -> str:
@@ -876,6 +1004,9 @@ class UnconsciousField:
         self._last_emergent = emergent
         self._last_stress_release = stress_release
         self._last_cache_depth = len(self._seed_cache)
+        self._last_psychoid_signal = self._psychoid_sampler.sample_signal(
+            mapping, question=question, draft=draft
+        )
         return mapping
 
     def integrate_outcome(
@@ -949,6 +1080,7 @@ class UnconsciousField:
             self._pending_stress_release += stress_val
 
         self._last_cache_depth = len(self._seed_cache)
+        self._psychoid_sampler.integrate_feedback(success=success, reward=reward)
         return {
             "seed_cached": should_cache,
             "stress_delta": stress_val,
@@ -966,6 +1098,9 @@ class UnconsciousField:
             "emergent_ideas": list(self._last_emergent),
             "stress_released": self._last_stress_release,
             "cache_depth": self._last_cache_depth,
+            "psychoid_signal": dataclasses.asdict(self._last_psychoid_signal)
+            if self._last_psychoid_signal
+            else None,
         }
 
 
@@ -978,6 +1113,8 @@ __all__ = [
     "Geometry",
     "HashEmbedder",
     "LatentSeed",
+    "PsychoidArchetypeSampler",
+    "PsychoidSignal",
     "PipelineConfig",
     "Prototype",
     "TextEmbedder",

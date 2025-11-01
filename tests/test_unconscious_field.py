@@ -10,6 +10,10 @@ def test_unconscious_field_generates_consistent_topk():
     assert summary["top_k"], "Summary should include top archetypes"
     assert len(summary["archetype_map"]) == 3
     assert summary["archetype_map"][0]["id"] == mapping.top_k[0]
+    psychoid_signal = summary.get("psychoid_signal")
+    assert psychoid_signal, "Psychoid signal should be included in the summary"
+    assert psychoid_signal["attention_bias"], "Attention bias should not be empty"
+    assert len(psychoid_signal["bias_vector"]) >= 4
 
 
 def test_unconscious_field_accepts_custom_prototypes():
@@ -50,6 +54,9 @@ def test_unconscious_field_incubates_and_releases_emergent_ideas():
     final_summary = field.summary(second_revisit)
     assert final_summary["emergent_ideas"], "Incubated seed should surface as an emergent insight"
     assert final_summary["cache_depth"] >= 0
+    psychoid_signal = final_summary["psychoid_signal"]
+    assert psychoid_signal
+    assert psychoid_signal["signifier_chain"], "Signifier chain should grow across incubations"
 
 
 def test_unconscious_field_streams_negative_stress():
@@ -73,3 +80,4 @@ def test_unconscious_field_streams_negative_stress():
     follow_up_mapping = field.analyse(question="Plan a new approach", draft=None)
     follow_up_summary = field.summary(follow_up_mapping)
     assert follow_up_summary["stress_released"] == 0.0
+    assert follow_up_summary["psychoid_signal"].get("resonance") >= 0.0

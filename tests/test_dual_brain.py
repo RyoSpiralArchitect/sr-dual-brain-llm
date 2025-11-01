@@ -77,6 +77,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
+    assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
     assert any(evt == "prefrontal_focus" for evt, _ in telemetry.events)
     assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
@@ -84,6 +85,9 @@ def test_controller_requests_right_brain_when_confidence_low():
     final_tags = memory.past_qas[-1].tags
     assert any(tag.startswith("archetype_") for tag in final_tags)
     assert any(tag.startswith("basal_") for tag in final_tags)
+    assert "psychoid_projection" in final_tags
+    assert any(tag.startswith("psychoid_") for tag in final_tags if tag != "psychoid_projection")
+    assert "[Psychoid Field Alignment]" in answer
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -115,6 +119,7 @@ def test_controller_falls_back_to_local_right_model():
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
     assert any("right_model_fallback" == tag for tag in final_trace.tags)
+    assert any("psychoid_projection" == tag for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
     assert len(hippocampus.episodes) >= 1
 
@@ -204,10 +209,14 @@ def test_unconscious_emergent_enriches_payload_and_answer():
 
     assert "[Unconscious Insight]" in answer
     assert "[Default Mode Reflection]" in answer
+    assert "[Psychoid Field Alignment]" in answer
+    assert "[Psychoid Signifiers]" in answer
     assert callosum.payloads, "Right brain should have received enriched payload"
     hint_payload = callosum.payloads[0]["payload"]
     assert "unconscious_hints" in hint_payload
     assert any("Hero" in hint for hint in hint_payload["unconscious_hints"])
     assert "default_mode_reflections" in hint_payload
     assert any("confidence" in entry for entry in hint_payload["default_mode_reflections"])
+    assert "psychoid_signifiers" in hint_payload
+    assert hint_payload["psychoid_bias_vector"], "Bias vector should accompany signifiers"
     assert any(evt == "default_mode_reflection" for evt, _ in telemetry.events)

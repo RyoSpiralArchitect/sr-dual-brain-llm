@@ -222,6 +222,7 @@ class DualBrainController:
         unconscious_profile = None
         unconscious_summary: Optional[Dict[str, object]] = None
         default_mode_reflections: Optional[List[Dict[str, object]]] = None
+        psychoid_signal: Optional[Dict[str, object]] = None
         if self.unconscious_field is not None:
             try:
                 unconscious_profile = self.unconscious_field.analyse(
@@ -237,11 +238,22 @@ class DualBrainController:
                     decision.state["unconscious_emergent"] = summary["emergent_ideas"]
                 if summary.get("stress_released"):
                     decision.state["unconscious_stress_release"] = summary["stress_released"]
+                psychoid_signal = summary.get("psychoid_signal")
+                if psychoid_signal:
+                    decision.state["psychoid_bias"] = psychoid_signal.get("attention_bias", [])
+                    decision.state["psychoid_tension"] = psychoid_signal.get("psychoid_tension", 0.0)
+                    decision.state["psychoid_resonance"] = psychoid_signal.get("resonance", 0.0)
                 self.telemetry.log(
                     "unconscious_field",
                     qid=decision.qid,
                     summary=summary,
                 )
+                if psychoid_signal:
+                    self.telemetry.log(
+                        "psychoid_signal",
+                        qid=decision.qid,
+                        signal=psychoid_signal,
+                    )
                 unconscious_summary = summary
         if (
             self.default_mode_network is not None
@@ -322,6 +334,13 @@ class DualBrainController:
                         ]
                         payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
                         payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
+                if psychoid_signal:
+                    chain = psychoid_signal.get("signifier_chain") or []
+                    if chain:
+                        payload["psychoid_signifiers"] = list(chain[-6:])
+                    bias_vector = psychoid_signal.get("bias_vector")
+                    if bias_vector:
+                        payload["psychoid_bias_vector"] = [float(x) for x in bias_vector[:12]]
                 if default_mode_reflections:
                     payload["default_mode_reflections"] = [
                         f"{ref.get('theme')} (confidence {float(ref.get('confidence', 0.0)):.2f})"
@@ -416,6 +435,32 @@ class DualBrainController:
             stress_value = float(unconscious_summary.get("stress_released", 0.0) or 0.0)
             if stress_value:
                 final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
+        if psychoid_signal:
+            tags.add("psychoid_projection")
+            bias_entries = psychoid_signal.get("attention_bias") or []
+            if bias_entries:
+                top_bias = bias_entries[0]
+                if isinstance(top_bias, dict) and top_bias.get("archetype"):
+                    tags.add(f"psychoid_{top_bias['archetype']}")
+            projection_lines = []
+            for entry in bias_entries:
+                projection_lines.append(
+                    "- {label} ({archetype}) weight {weight:.2f} resonance {resonance:.2f}".format(
+                        label=entry.get("label", "Archetype"),
+                        archetype=entry.get("archetype", "unknown"),
+                        weight=float(entry.get("weight", 0.0)),
+                        resonance=float(entry.get("resonance", 0.0)),
+                    )
+                )
+            if projection_lines:
+                final_answer = (
+                    f"{final_answer}\n\n[Psychoid Field Alignment]\n" + "\n".join(projection_lines)
+                )
+            chain = psychoid_signal.get("signifier_chain") or []
+            if chain:
+                final_answer = (
+                    f"{final_answer}\n\n[Psychoid Signifiers]\n" + " -> ".join(chain[-6:])
+                )
         if default_mode_reflections:
             tags.add("default_mode_reflection")
             reflection_lines = []
