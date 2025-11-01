@@ -1,8 +1,10 @@
+"""Hemispheric coherence scoring utilities."""
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 
 _TOKEN_RE = re.compile(r"[\w']+")
@@ -83,6 +85,7 @@ class CoherenceSignal:
     tension: float
     contributions: Dict[str, float] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
+    mode: str = "balanced"
 
     def right_or_blank(self) -> HemisphericCoherence:
         if self.right is not None:
@@ -96,6 +99,7 @@ class CoherenceSignal:
             "tension": float(self.tension),
             "notes": list(self.notes),
             "contributions": dict(self.contributions),
+            "mode": self.mode,
         }
         if self.right is not None:
             payload["right"] = self.right.to_payload()
@@ -103,6 +107,7 @@ class CoherenceSignal:
 
     def tags(self) -> Iterable[str]:
         tags = {"coherence"}
+        tags.add(f"coherence_mode_{self.mode}")
         if self.combined_score >= 0.66:
             tags.add("coherence_high")
         elif self.combined_score >= 0.45:
@@ -133,11 +138,58 @@ class CoherenceResonator:
         total = left_weight + right_weight
         if total <= 0:
             raise ValueError("Weights must be positive")
-        self.left_weight = left_weight / total
-        self.right_weight = right_weight / total
+        self._default_left_weight = left_weight / total
+        self._default_right_weight = right_weight / total
+        self.left_weight = self._default_left_weight
+        self.right_weight = self._default_right_weight
         self.tension_sensitivity = max(0.1, tension_sensitivity)
+        self._base_tension = self.tension_sensitivity
+        self._mode = "balanced"
         self._last_left: Optional[HemisphericCoherence] = None
         self._last_right: Optional[HemisphericCoherence] = None
+        self._last_signal: Optional[CoherenceSignal] = None
+
+    # ------------------------------------------------------------------
+    def reset(self) -> None:
+        """Clear cached hemispheric profiles from the previous interaction."""
+
+        self._last_left = None
+        self._last_right = None
+        self._last_signal = None
+
+    # ------------------------------------------------------------------
+    def _apply_weights(self, left_weight: float, right_weight: float) -> None:
+        left_weight = max(0.05, float(left_weight))
+        right_weight = max(0.05, float(right_weight))
+        total = left_weight + right_weight
+        self.left_weight = left_weight / total
+        self.right_weight = right_weight / total
+
+    # ------------------------------------------------------------------
+    def retune(self, mode: str, *, intensity: float = 0.0) -> None:
+        """Adapt weighting to emphasise the dominant hemisphere."""
+
+        clamped = max(0.0, min(1.0, float(intensity)))
+        boost = 0.15 + 0.25 * clamped
+        if mode == "left":
+            left = self._default_left_weight + boost
+            right = self._default_right_weight - boost
+            self.tension_sensitivity = min(
+                2.5, self._base_tension * (1.0 + 0.25 * (0.5 + clamped))
+            )
+        elif mode == "right":
+            left = self._default_left_weight - boost
+            right = self._default_right_weight + boost
+            self.tension_sensitivity = max(
+                0.2, self._base_tension * (1.0 - 0.3 * (0.5 + clamped))
+            )
+        else:
+            left = self._default_left_weight
+            right = self._default_right_weight
+            self.tension_sensitivity = self._base_tension
+            mode = "balanced"
+        self._apply_weights(left, right)
+        self._mode = mode
 
     # ------------------------------------------------------------------
     def capture_left(
@@ -151,7 +203,7 @@ class CoherenceResonator:
     ) -> HemisphericCoherence:
         tokens = _tokenise(draft)
         if focus_keywords:
-            seeds = [kw.lower() for kw in focus_keywords if kw]
+            seeds = sorted({kw.lower() for kw in focus_keywords if kw})
         else:
             seeds = _tokenise(question)
         coverage = _coverage_score(tokens, seeds)
@@ -164,6 +216,8 @@ class CoherenceResonator:
             ctx_tokens = _tokenise(context)
             ctx_overlap = _coverage_score(tokens, ctx_tokens[:12])
             highlights.append(f"context overlap: {ctx_overlap:.2f}")
+        if cohesion:
+            highlights.append(f"cohesion: {cohesion:.2f}")
         profile = HemisphericCoherence(
             coverage=coverage,
             cohesion=cohesion,
@@ -189,7 +243,7 @@ class CoherenceResonator:
         text = detail_notes or ""
         tokens = _tokenise(text)
         if focus_keywords:
-            seeds = [kw.lower() for kw in focus_keywords if kw]
+            seeds = sorted({kw.lower() for kw in focus_keywords if kw})
         else:
             seeds = _tokenise(question)[:8]
         coverage = _coverage_score(tokens, seeds)
@@ -204,6 +258,8 @@ class CoherenceResonator:
             chain = psychoid_signal.get("signifier_chain") or []
             if chain:
                 highlights.append(f"signifiers:{len(chain)}")
+        if cohesion:
+            highlights.append(f"cohesion: {cohesion:.2f}")
         profile = HemisphericCoherence(
             coverage=coverage,
             cohesion=cohesion,
@@ -245,6 +301,8 @@ class CoherenceResonator:
             notes.append("Moderate hemispheric tension")
         else:
             notes.append("Hemispheres aligned")
+        if right is None:
+            notes.append("No right-brain detail captured")
         if psychoid_projection is not None:
             norm = float(psychoid_projection.get("norm", 0.0) or 0.0)
             contributions["psychoid_norm"] = norm
@@ -257,7 +315,9 @@ class CoherenceResonator:
             tension=tension,
             contributions=contributions,
             notes=notes,
+            mode=self._mode,
         )
+        self._last_signal = signal
         return signal
 
     # ------------------------------------------------------------------
@@ -270,8 +330,25 @@ class CoherenceResonator:
             float(profile.coverage),
             float(profile.cohesion),
             float(profile.resonance),
-            float(profile.tokens),
+            min(1.0, float(profile.tokens) / 320.0),
         ]
+
+    # ------------------------------------------------------------------
+    def vectorise_pair(self) -> Optional[Tuple[List[float], List[float]]]:
+        """Return the last left/right vectors for quick feature export."""
+
+        if self._last_left is None or self._last_right is None:
+            return None
+        left_vec = self.vectorise_left() or []
+        right_profile = self._last_right
+        right_vec = [
+            float(right_profile.score()),
+            float(right_profile.coverage),
+            float(right_profile.cohesion),
+            float(right_profile.resonance),
+            min(1.0, float(right_profile.tokens) / 320.0),
+        ]
+        return left_vec, right_vec
 
     # ------------------------------------------------------------------
     def annotate_answer(self, answer: str, signal: CoherenceSignal) -> str:
@@ -297,10 +374,17 @@ class CoherenceResonator:
         else:
             block.append("- right score 0.00 (no detail response)")
         block.append(f"- combined {signal.combined_score:.2f} | tension {signal.tension:.2f}")
+        block.append(f"- routing mode: {signal.mode}")
         if signal.notes:
             for note in signal.notes:
                 block.append(f"- note: {note}")
         return f"{answer}\n\n" + "\n".join(block)
+
+    # ------------------------------------------------------------------
+    def last_signal(self) -> Optional[CoherenceSignal]:
+        """Expose the most recent integration result for diagnostics."""
+
+        return self._last_signal
 
 
 __all__ = [
