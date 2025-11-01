@@ -1,6 +1,13 @@
 import pytest
 
 from core.coherence_resonator import CoherenceResonator
+from core.schema import (
+    ArchetypeActivation,
+    EmergentIdeaModel,
+    GeometryModel,
+    PsychoidSignalModel,
+    UnconsciousSummaryModel,
+)
 
 
 def test_resonator_tracks_left_and_right_profiles():
@@ -31,7 +38,11 @@ def test_resonator_tracks_left_and_right_profiles():
         draft="",
         detail_notes="Layered harmonics resonate with archetypal tides",
         focus_keywords=("harmonics", "archetypal"),
-        psychoid_signal={"resonance": 0.75, "psychoid_tension": 0.2},
+        psychoid_signal=PsychoidSignalModel(
+            resonance=0.75,
+            psychoid_tension=0.2,
+            signifier_chain=["echo"],
+        ),
         confidence=0.72,
         source="callosum",
     )
@@ -39,20 +50,29 @@ def test_resonator_tracks_left_and_right_profiles():
     assert right.resonance > 0.5
     assert any("source:callosum" in entry for entry in right.highlights)
 
-    summary = {
-        "archetype_map": [
-            {"id": "dream", "label": "Dream", "intensity": 0.9},
-            {"id": "myth", "label": "Myth", "intensity": 0.6},
+    summary = UnconsciousSummaryModel(
+        top_k=["dream", "myth"],
+        geometry=GeometryModel(r=0.0, theta=0.0, curvature_proxy=0.0),
+        archetype_map=[
+            ArchetypeActivation(id="dream", label="Dream", intensity=0.9),
+            ArchetypeActivation(id="myth", label="Myth", intensity=0.6),
         ],
-        "emergent_ideas": [
-            {"archetype": "dream", "label": "Dream tide", "intensity": 0.55},
+        emergent_ideas=[
+            EmergentIdeaModel(
+                archetype="dream",
+                label="Dream tide",
+                intensity=0.55,
+                incubation_rounds=1,
+                trigger_similarity=0.8,
+                origin="test",
+            )
         ],
-        "psychoid_signal": {
-            "signifier_chain": ["sea", "tide", "moon"],
-            "resonance": 0.82,
-        },
-        "cache_depth": 2,
-    }
+        cache_depth=2,
+        psychoid_signal=PsychoidSignalModel(
+            signifier_chain=["sea", "tide", "moon"],
+            resonance=0.82,
+        ),
+    )
     resonator.capture_unconscious(
         question="Analyse layered harmonics in mythic journeys",
         draft=draft_text,
@@ -60,11 +80,18 @@ def test_resonator_tracks_left_and_right_profiles():
         summary=summary,
     )
 
+    motifs_summary = UnconsciousSummaryModel(
+        top_k=[],
+        geometry=GeometryModel(r=0.0, theta=0.0, curvature_proxy=0.0),
+        archetype_map=[],
+        motifs=["chorus", "pulse"],
+    )
+
     motifs = resonator.capture_linguistic_motifs(
         question="Analyse layered harmonics in mythic journeys",
         draft=draft_text,
         final_answer="Combined narration touches harmonics and archetypes coherently.",
-        unconscious_summary={"motifs": ["chorus", "pulse"]},
+        unconscious_summary=motifs_summary,
     )
 
     assert motifs is not None
@@ -108,7 +135,7 @@ def test_resonator_reset_and_pair_vectorisation():
         draft="",
         detail_notes="Right brain expands on resonance with rhythm and flow.",
         focus_keywords=("resonance",),
-        psychoid_signal={"resonance": 0.9},
+        psychoid_signal=PsychoidSignalModel(resonance=0.9),
         confidence=0.6,
         source="callosum",
     )
@@ -165,7 +192,7 @@ def test_retune_adjusts_weights_and_mode_annotations():
         draft="",
         detail_notes="Mythic tides colour the narrative with emotive hues.",
         focus_keywords=("mythic", "narrative"),
-        psychoid_signal={"resonance": 0.8},
+        psychoid_signal=PsychoidSignalModel(resonance=0.8),
         confidence=0.55,
         source="callosum",
     )
