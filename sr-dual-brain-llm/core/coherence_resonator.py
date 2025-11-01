@@ -5,7 +5,9 @@ from __future__ import annotations
 import collections
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+from .schema import PsychoidSignalModel, UnconsciousSummaryModel
 
 
 _TOKEN_RE = re.compile(r"[\w']+")
@@ -267,7 +269,7 @@ class CoherenceResonator:
         draft: str,
         detail_notes: Optional[str],
         focus_keywords: Sequence[str] | None,
-        psychoid_signal: Optional[Mapping[str, object]] = None,
+        psychoid_signal: Optional[PsychoidSignalModel] = None,
         confidence: float = 0.0,
         source: str = "",
     ) -> HemisphericCoherence:
@@ -279,14 +281,14 @@ class CoherenceResonator:
             seeds = _tokenise(question)[:8]
         coverage = _coverage_score(tokens, seeds)
         cohesion = _cohesion_score(text)
-        psychoid_resonance = float(psychoid_signal.get("resonance", 0.0)) if psychoid_signal else 0.0
-        tension = float(psychoid_signal.get("psychoid_tension", 0.0)) if psychoid_signal else 0.0
+        psychoid_resonance = psychoid_signal.resonance if psychoid_signal else 0.0
+        tension = psychoid_signal.psychoid_tension if psychoid_signal else 0.0
         resonance = _resonance_mix(cohesion, coverage, psychoid_resonance, confidence, 1.0 - abs(tension))
         highlights = []
         if source:
             highlights.append(f"source:{source}")
         if psychoid_signal:
-            chain = psychoid_signal.get("signifier_chain") or []
+            chain = psychoid_signal.signifier_chain
             if chain:
                 highlights.append(f"signifiers:{len(chain)}")
         if cohesion:
@@ -306,8 +308,8 @@ class CoherenceResonator:
         self,
         *,
         final_answer: str,
-        psychoid_projection: Optional[Mapping[str, object]] = None,
-        unconscious_summary: Optional[Mapping[str, object]] = None,
+        psychoid_projection: Optional[Dict[str, object]] = None,
+        unconscious_summary: Optional[UnconsciousSummaryModel] = None,
     ) -> Optional[CoherenceSignal]:
         if self._last_left is None:
             return None
@@ -369,7 +371,7 @@ class CoherenceResonator:
             for entry in self._last_unconscious.highlights:
                 notes.append(f"Unconscious: {entry}")
         if unconscious_summary:
-            cache_depth = float(unconscious_summary.get("cache_depth", 0.0) or 0.0)
+            cache_depth = float(unconscious_summary.cache_depth or 0.0)
             if cache_depth:
                 contributions["unconscious_cache"] = cache_depth
         signal = CoherenceSignal(
@@ -499,7 +501,7 @@ class CoherenceResonator:
         question: str,
         draft: str,
         final_answer: str,
-        unconscious_summary: Optional[Mapping[str, object]] = None,
+        unconscious_summary: Optional[UnconsciousSummaryModel] = None,
     ) -> Optional["LinguisticMotifProfile"]:
         tokens = _tokenise(final_answer)
         if len(tokens) < 4:
@@ -526,12 +528,11 @@ class CoherenceResonator:
             highlights.append(f"overlap {overlap:.2f}")
 
         loops = 0
-        if unconscious_summary is not None:
-            motifs = unconscious_summary.get("motifs") or ()
-            if isinstance(motifs, Sequence):
-                loops = len(motifs)
-                if loops:
-                    highlights.append(f"unconscious motifs {loops}")
+        if unconscious_summary is not None and unconscious_summary.motifs:
+            motifs = unconscious_summary.motifs or []
+            loops = len(motifs)
+            if loops:
+                highlights.append(f"unconscious motifs {loops}")
 
         profile = LinguisticMotifProfile(
             motif_density=motif_density,
@@ -555,8 +556,8 @@ class CoherenceResonator:
         question: str,
         draft: str,
         final_answer: str,
-        summary: Optional[Mapping[str, object]] = None,
-        psychoid_signal: Optional[Mapping[str, object]] = None,
+        summary: Optional[UnconsciousSummaryModel] = None,
+        psychoid_signal: Optional[PsychoidSignalModel] = None,
     ) -> Optional["UnconsciousLinguisticWeave"]:
         tokens = _tokenise(final_answer)
         if not tokens and summary is None and psychoid_signal is None:
@@ -571,34 +572,31 @@ class CoherenceResonator:
         highlights: List[str] = []
         emergent_count = 0
         if summary is not None:
-            archetype_entries = summary.get("archetype_map") or []
-            intensities: List[float] = []
-            for entry in archetype_entries:
-                try:
-                    intensities.append(float(entry.get("intensity", 0.0)))
-                except Exception:  # pragma: no cover - defensive
-                    continue
+            archetype_entries = summary.archetype_map
+            intensities = [float(entry.intensity) for entry in archetype_entries]
             if intensities:
-                archetype_resonance = max(0.0, min(1.0, sum(intensities) / (len(intensities) * 1.5)))
+                archetype_resonance = max(
+                    0.0, min(1.0, sum(intensities) / (len(intensities) * 1.5))
+                )
                 highlights.append(
                     "archetype avg {:.2f}".format(archetype_resonance)
                 )
-            emergent = summary.get("emergent_ideas") or []
+            emergent = summary.emergent_ideas
             emergent_count = len(emergent)
             if emergent_count:
                 highlights.append(f"emergent ideas {emergent_count}")
         signifier_depth = 0.0
         if psychoid_signal is None and summary is not None:
-            psychoid_signal = summary.get("psychoid_signal")  # type: ignore[assignment]
+            psychoid_signal = summary.psychoid_signal
         if psychoid_signal:
-            chain = psychoid_signal.get("signifier_chain") or []
-            if isinstance(chain, Sequence):
-                signifier_depth = min(1.0, len(chain) / 12.0)
-                if chain:
-                    highlights.append(f"signifiers {len(chain)}")
-            resonance = psychoid_signal.get("resonance")
-            if isinstance(resonance, (int, float)):
-                archetype_resonance = max(archetype_resonance, max(0.0, min(1.0, float(resonance))))
+            chain = psychoid_signal.signifier_chain
+            signifier_depth = min(1.0, len(chain) / 12.0)
+            if chain:
+                highlights.append(f"signifiers {len(chain)}")
+            archetype_resonance = max(
+                archetype_resonance,
+                max(0.0, min(1.0, float(psychoid_signal.resonance))),
+            )
 
         # Encourage cross-hemispheric linguistic weaving by tracking overlaps
         question_overlap = _coverage_score(tokens, question_tokens[:16])
