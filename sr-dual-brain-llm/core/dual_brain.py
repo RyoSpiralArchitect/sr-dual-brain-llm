@@ -292,6 +292,15 @@ class DualBrainController:
                 }
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
+                if unconscious_summary is not None:
+                    ideas = unconscious_summary.get("emergent_ideas") or []
+                    if ideas:
+                        payload["unconscious_hints"] = [
+                            f"{idea.get('label')} ({idea.get('archetype')})"
+                            for idea in ideas
+                        ]
+                        payload["unconscious_cache_depth"] = unconscious_summary.get("cache_depth", 0)
+                        payload["unconscious_stress_released"] = unconscious_summary.get("stress_released", 0.0)
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 try:
@@ -365,6 +374,22 @@ class DualBrainController:
                         tags.add(f"emergent_{archetype}")
             if unconscious_summary.get("stress_released", 0.0):
                 tags.add("unconscious_stress_release")
+            insights = []
+            for idea in unconscious_summary.get("emergent_ideas", []):
+                label = idea.get("label") or idea.get("archetype") or "Insight"
+                archetype = idea.get("archetype", "unknown")
+                intensity = idea.get("intensity")
+                if intensity is not None:
+                    insights.append(
+                        f"- {label} (archetype {archetype}, intensity {float(intensity):.2f})"
+                    )
+                else:
+                    insights.append(f"- {label} (archetype {archetype})")
+            if insights:
+                final_answer = f"{final_answer}\n\n[Unconscious Insight]\n" + "\n".join(insights)
+            stress_value = float(unconscious_summary.get("stress_released", 0.0) or 0.0)
+            if stress_value:
+                final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
