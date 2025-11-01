@@ -47,7 +47,3 @@ python -m scripts.train_policy --algo ppo --epochs 200
 Q> このデータセットの統計分析結果を詳しく説明してください。
 A> Draft ... + (Reference from RightBrain: Deep analysis ...)
 ```
-
-## 注意
-- 本リポは最小プロトタイプ。実運用では Transformer/VectorDB/本格RL を差し替えてください。
-- すべての .py に SpiralReality 専用ヘッダを付与済みです。
