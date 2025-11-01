@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8">
+<title>Dual-Brain Event Dashboard</title>
+<style>
+body{font-family:ui-sans-serif,system-ui; margin:20px;}
+#status{margin-bottom:10px;}
+.event{padding:6px 8px; border:1px solid #eee; border-radius:8px; margin:6px 0;}
+.evtype{font-weight:bold; margin-right:8px;}
+.meta{color:#666; font-size:12px;}
+</style>
+<div id="status">connecting...</div>
+<div>
+  <label>Type filter: <input id="filter" placeholder="e.g., POLICY_DECISION"></label>
+</div>
+<div id="list"></div>
+<script>
+const ws = new WebSocket((location.protocol==='https:'?'wss':'ws') + '://' + location.host + '/events');
+ws.onopen = ()=>{document.getElementById('status').textContent='live'};
+ws.onclose = ()=>{document.getElementById('status').textContent='disconnected'};
+ws.onmessage = (e)=>{
+  const f = document.getElementById('filter').value.trim();
+  try{
+    const ev = JSON.parse(e.data);
+    if(f && ev.type !== f) return;
+    const d = document.createElement('div'); d.className='event';
+    d.innerHTML = `<span class="evtype">${ev.type}</span>
+      <span class="meta">ep:${ev.episode_id} step:${ev.step} qid:${ev.qid} ts:${(new Date(ev.ts*1000)).toLocaleTimeString()}</span>
+      <pre>${JSON.stringify(ev.payload, null, 2)}</pre>`;
+    document.getElementById('list').prepend(d);
+  }catch(_){}
+};
+</script>
+</html>
