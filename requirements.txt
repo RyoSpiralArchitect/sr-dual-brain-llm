@@ -3,3 +3,4 @@ torch>=1.13.0
 kafka-python>=2.0.2
 paho-mqtt>=1.6.1
 aiohttp>=3.8.1
+pytest>=7.0
