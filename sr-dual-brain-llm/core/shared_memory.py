@@ -18,6 +18,10 @@
 
 from typing import List, Tuple, Dict, Any
 
+def _tokenize(text: str) -> List[str]:
+    """Lightweight tokeniser used for novelty scoring."""
+    return [tok for tok in text.replace("\n", " ").split(" ") if tok]
+
 class SharedMemory:
     def __init__(self):
         self.past_qas: List[Tuple[str, str]] = []
@@ -40,3 +44,21 @@ class SharedMemory:
 
     def get_kv(self, key: str, default=None):
         return self.kv.get(key, default)
+
+    def novelty_score(self, question: str) -> float:
+        """Return a score in ``[0, 1]`` indicating how novel a question is."""
+        if not self.past_qas:
+            return 1.0
+        q_tokens = set(_tokenize(question))
+        if not q_tokens:
+            return 1.0
+        highest_overlap = 0.0
+        for past_q, _ in self.past_qas:
+            past_tokens = set(_tokenize(past_q))
+            if not past_tokens:
+                continue
+            intersection = len(q_tokens & past_tokens)
+            union = len(q_tokens | past_tokens)
+            if union:
+                highest_overlap = max(highest_overlap, intersection / union)
+        return max(0.0, 1.0 - highest_overlap)
