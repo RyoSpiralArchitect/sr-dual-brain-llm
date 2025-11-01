@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 try:  # Optional torch support
     import torch  # type: ignore
@@ -34,6 +34,9 @@ class PsychoidAttentionProjection:
         return payload
 
 
+from .schema import PsychoidSignalModel
+
+
 class PsychoidAttentionAdapter:
     """Transform psychoid archetype signals into QKV-friendly bias matrices."""
 
@@ -50,7 +53,7 @@ class PsychoidAttentionAdapter:
 
     def build_projection(
         self,
-        signal: Mapping[str, Any],
+        signal: Union[Mapping[str, Any], PsychoidSignalModel],
         *,
         seq_len: int,
         qkv_dim: Optional[int] = None,
@@ -60,7 +63,11 @@ class PsychoidAttentionAdapter:
         if seq_len <= 0:
             raise ValueError("seq_len must be positive")
 
-        raw_vector = [float(v) for v in signal.get("bias_vector", []) if v is not None]
+        if isinstance(signal, PsychoidSignalModel):
+            raw_source = signal.bias_vector
+        else:
+            raw_source = signal.get("bias_vector", [])
+        raw_vector = [float(v) for v in raw_source if v is not None]
         if not raw_vector:
             raw_vector = [0.0]
 
@@ -82,10 +89,19 @@ class PsychoidAttentionAdapter:
         if norm < self.minimum_bias:
             norm = self.minimum_bias
 
+        if isinstance(signal, PsychoidSignalModel):
+            resonance = float(signal.resonance)
+            tension = float(signal.psychoid_tension)
+            chain_length = float(len(signal.signifier_chain))
+        else:
+            resonance = float(signal.get("resonance", 0.0) or 0.0)
+            tension = float(signal.get("psychoid_tension", 0.0) or 0.0)
+            chain_length = float(len(signal.get("signifier_chain") or []))
+
         metadata = {
-            "resonance": float(signal.get("resonance", 0.0) or 0.0),
-            "psychoid_tension": float(signal.get("psychoid_tension", 0.0) or 0.0),
-            "chain_length": float(len(signal.get("signifier_chain") or [])),
+            "resonance": resonance,
+            "psychoid_tension": tension,
+            "chain_length": chain_length,
             "clamp": float(self.clamp),
         }
 
