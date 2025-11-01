@@ -45,6 +45,14 @@ async def run_kafka():
             detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
             resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
             prod.send('callosum_responses', resp); prod.flush()
+        elif payload.get("type")=="ASK_LEAD":
+            qid = payload.get("qid")
+            lead = await right.generate_lead(
+                payload.get("question", ""),
+                payload.get("context", ""),
+                temperature=float(payload.get("temperature", 0.85)),
+            )
+            prod.send('callosum_responses', {"qid": qid, "lead_notes": lead}); prod.flush()
 
 async def run_mqtt():
     from core.callosum_mqtt import CallosumMQTT
@@ -63,12 +71,23 @@ async def run_mqtt():
                 qid = payload["qid"]
                 # run coroutine in loop thread-safely
                 asyncio.run_coroutine_threadsafe(handle_mqtt_request(c, right, mem, qid, payload), asyncio.get_event_loop())
+            elif payload.get("type")=="ASK_LEAD":
+                qid = payload.get("qid")
+                asyncio.run_coroutine_threadsafe(handle_mqtt_lead(c, right, qid, payload), asyncio.get_event_loop())
         except Exception:
             pass
     async def handle_mqtt_request(client, right, mem, qid, payload):
         detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
         resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
         client.publish('callosum/responses', json.dumps(resp))
+
+    async def handle_mqtt_lead(client, right, qid, payload):
+        lead = await right.generate_lead(
+            payload.get("question", ""),
+            payload.get("context", ""),
+            temperature=float(payload.get("temperature", 0.85)),
+        )
+        client.publish('callosum/responses', json.dumps({"qid": qid, "lead_notes": lead}))
     client.on_connect = on_connect; client.on_message = on_message
     client.connect('localhost', 1883); client.loop_forever()
 

@@ -66,6 +66,7 @@ class SharedMemory:
         self.max_items = max_items
         self.past_qas: List[MemoryTrace] = []
         self.kv: Dict[str, Any] = {}
+        self.dialogue_flows: Dict[str, Dict[str, Any]] = {}
 
     # ------------------------------------------------------------------
     # Storage helpers
@@ -149,6 +150,27 @@ class SharedMemory:
 
     def get_kv(self, key: str, default: Any = None) -> Any:
         return self.kv.get(key, default)
+
+    # ------------------------------------------------------------------
+    def record_dialogue_flow(
+        self,
+        qid: str,
+        *,
+        leading_brain: str,
+        follow_brain: str | None = None,
+        preview: str | None = None,
+    ) -> None:
+        """Persist metadata about which hemisphere initiated the exchange."""
+
+        self.dialogue_flows[qid] = {
+            "leading": leading_brain,
+            "follow": follow_brain,
+            "preview": preview,
+        }
+        self.kv["last_leading_brain"] = leading_brain
+
+    def dialogue_flow(self, qid: str) -> Dict[str, Any] | None:
+        return self.dialogue_flows.get(qid)
 
     # ------------------------------------------------------------------
     def novelty_score(self, question: str) -> float:

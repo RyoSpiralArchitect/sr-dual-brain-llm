@@ -415,9 +415,12 @@ class DualBrainController:
         qid = str(uuid.uuid4())
         return DecisionOutcome(qid=qid, action=action, temperature=temperature, slot_ms=slot_ms, state=state)
 
-    async def process(self, question: str) -> str:
+    async def process(self, question: str, *, leading_brain: Optional[str] = None) -> str:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
+        leading = (leading_brain or "left").lower()
+        if leading not in {"left", "right"}:
+            leading = "left"
         context, focus = self._compose_context(question)
         hemisphere_mode, hemisphere_bias = self._select_hemisphere_mode(question, focus)
         if self.coherence_resonator is not None:
@@ -429,6 +432,15 @@ class DualBrainController:
             len(self.hippocampus.episodes) if self.hippocampus is not None else 0
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
+        right_lead_notes: Optional[str] = None
+        if leading == "right":
+            try:
+                right_lead_notes = await self.right_model.generate_lead(
+                    question,
+                    context,
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                right_lead_notes = None
         draft = await self.left_model.generate_answer(question, context)
         left_coherence: Optional[HemisphericCoherence] = None
         right_coherence: Optional[HemisphericCoherence] = None
@@ -455,6 +467,7 @@ class DualBrainController:
             consult_bias = min(
                 0.35, consult_bias + (0.15 + 0.35 * hemisphere_bias)
             )
+        force_right_lead = leading == "right"
         decision = self.decide(
             question,
             draft,
@@ -467,8 +480,14 @@ class DualBrainController:
             hemisphere_mode,
             hemisphere_bias,
         )
+        if force_right_lead and decision.action == 0:
+            decision.action = 1
+            decision.state["right_forced_lead"] = True
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
+        decision.state["leading_brain"] = leading
+        if right_lead_notes:
+            decision.state["right_lead_preview"] = right_lead_notes
         if left_coherence is not None:
             decision.state["coherence_left"] = left_coherence.to_payload()
         if self.coherence_resonator is not None:
@@ -582,12 +601,20 @@ class DualBrainController:
             temperature=decision.temperature,
             slot_ms=decision.slot_ms,
         )
+        self.telemetry.log(
+            "leading_brain",
+            qid=decision.qid,
+            leading=leading,
+            preview=bool(right_lead_notes),
+            forced=bool(decision.state.get("right_forced_lead", False)),
+        )
 
-        if not self.orchestrator.register_request(decision.qid):
+        if not self.orchestrator.register_request(decision.qid, leader=leading):
             return "Loop-killed"
 
         final_answer = draft
         detail_notes: Optional[str] = None
+        response_source = "lead" if right_lead_notes else ""
         success = False
         latency_ms = 0.0
         start = time.perf_counter()
@@ -673,24 +700,41 @@ class DualBrainController:
 
                 if detail_notes:
                     final_answer = self.left_model.integrate_info(draft, detail_notes)
+                elif right_lead_notes:
+                    final_answer = self.left_model.integrate_info(draft, right_lead_notes)
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
                 if self.coherence_resonator is not None:
-                    right_coherence = self.coherence_resonator.capture_right(
-                        question=question,
-                        draft=draft,
-                        detail_notes=detail_notes,
-                        focus_keywords=focus_keywords or (),
-                        psychoid_signal=psychoid_signal,
-                        confidence=float(decision.state.get("right_conf", 0.0) or 0.0),
-                        source=response_source,
-                    )
-                    decision.state["coherence_right"] = right_coherence.to_payload()
+                    combined_detail = detail_notes or right_lead_notes
+                    detail_origin = response_source if detail_notes else "lead"
+                    if combined_detail:
+                        right_coherence = self.coherence_resonator.capture_right(
+                            question=question,
+                            draft=draft,
+                            detail_notes=combined_detail,
+                            focus_keywords=focus_keywords or (),
+                            psychoid_signal=psychoid_signal,
+                            confidence=float(decision.state.get("right_conf", 0.0) or 0.0),
+                            source=detail_origin,
+                        )
+                        decision.state["coherence_right"] = right_coherence.to_payload()
         except asyncio.TimeoutError:
             final_answer = draft + "\n(Right brain timeout: continuing with draft)"
         finally:
             latency_ms = (time.perf_counter() - start) * 1000.0
             self.orchestrator.clear(decision.qid)
+
+        integrated_answer = final_answer
+        if leading == "right":
+            lead_block = right_lead_notes or detail_notes or "(Right brain lead unavailable)"
+            final_answer = (
+                "[Right Brain Lead]\n"
+                f"{lead_block}\n\n"
+                "[Left Brain Integration]\n"
+                f"{integrated_answer}"
+            )
+        else:
+            final_answer = f"[Left Brain Lead]\n{integrated_answer}"
 
         routing_lines = [
             "[Hemisphere Routing]",
@@ -740,6 +784,9 @@ class DualBrainController:
                 tilt_lines.append(f"- note: {note}")
         final_answer = f"{final_answer}\n\n" + "\n".join(tilt_lines)
         tags = set()
+        tags.add(f"leading_{leading}")
+        if leading == "right" and decision.action == 0:
+            tags.add("right_lead_solo")
         if self.coherence_resonator is not None:
             self.coherence_resonator.retune(
                 semantic_tilt["mode"],
@@ -762,6 +809,20 @@ class DualBrainController:
                     "coherence_unconscious_weave",
                     qid=decision.qid,
                     fabric=fabric_payload,
+                )
+            motifs = self.coherence_resonator.capture_linguistic_motifs(
+                question=question,
+                draft=draft,
+                final_answer=final_answer,
+                unconscious_summary=unconscious_summary,
+            )
+            if motifs is not None:
+                motifs_payload = motifs.to_payload()
+                decision.state["linguistic_motifs"] = motifs_payload
+                self.telemetry.log(
+                    "coherence_linguistic_motifs",
+                    qid=decision.qid,
+                    motifs=motifs_payload,
                 )
             coherence_signal = self.coherence_resonator.integrate(
                 final_answer=final_answer,
@@ -938,6 +999,17 @@ class DualBrainController:
         if basal_signal is not None:
             tags.update(self.basal_ganglia.tags(basal_signal))
 
+        follow_brain: Optional[str] = None
+        if leading == "right":
+            follow_brain = "left"
+        elif detail_notes or decision.action != 0:
+            follow_brain = "right"
+        self.memory.record_dialogue_flow(
+            decision.qid,
+            leading_brain=leading,
+            follow_brain=follow_brain,
+            preview=right_lead_notes or detail_notes,
+        )
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
         if self.hippocampus is not None:

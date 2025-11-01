@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections
 import re
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -88,6 +89,7 @@ class CoherenceSignal:
     mode: str = "balanced"
     unconscious: Optional["UnconsciousLinguisticWeave"] = None
     linguistic_depth: float = 0.0
+    motifs: Optional["LinguisticMotifProfile"] = None
 
     def right_or_blank(self) -> HemisphericCoherence:
         if self.right is not None:
@@ -108,6 +110,8 @@ class CoherenceSignal:
             payload["right"] = self.right.to_payload()
         if self.unconscious is not None:
             payload["unconscious"] = self.unconscious.to_payload()
+        if self.motifs is not None:
+            payload["motifs"] = self.motifs.to_payload()
         return payload
 
     def tags(self) -> Iterable[str]:
@@ -136,6 +140,15 @@ class CoherenceSignal:
                 tags.add("linguistic_fabric_balanced")
             else:
                 tags.add("linguistic_fabric_sparse")
+        if self.motifs is not None:
+            tags.add("coherence_linguistic_motif")
+            motif_score = self.motifs.score()
+            if motif_score >= 0.7:
+                tags.add("linguistic_motif_resonant")
+            elif motif_score >= 0.45:
+                tags.add("linguistic_motif_balanced")
+            else:
+                tags.add("linguistic_motif_sparse")
         return tags
 
 
@@ -163,6 +176,7 @@ class CoherenceResonator:
         self._last_right: Optional[HemisphericCoherence] = None
         self._last_signal: Optional[CoherenceSignal] = None
         self._last_unconscious: Optional[UnconsciousLinguisticWeave] = None
+        self._last_motifs: Optional[LinguisticMotifProfile] = None
 
     # ------------------------------------------------------------------
     def reset(self) -> None:
@@ -172,6 +186,7 @@ class CoherenceResonator:
         self._last_right = None
         self._last_signal = None
         self._last_unconscious = None
+        self._last_motifs = None
 
     # ------------------------------------------------------------------
     def _apply_weights(self, left_weight: float, right_weight: float) -> None:
@@ -306,11 +321,16 @@ class CoherenceResonator:
         synergy = 1.0 - min(1.0, tension)
         length_factor = min(1.0, len(_tokenise(final_answer)) / 640.0)
         unconscious_score = self._last_unconscious.score() if self._last_unconscious else 0.0
+        motif_score = self._last_motifs.score() if self._last_motifs else 0.0
         combined = max(
             0.0,
             min(
                 1.0,
-                0.45 * weighted + 0.22 * synergy + 0.18 * length_factor + 0.15 * unconscious_score,
+                0.38 * weighted
+                + 0.2 * synergy
+                + 0.16 * length_factor
+                + 0.14 * unconscious_score
+                + 0.12 * motif_score,
             ),
         )
         contributions = {
@@ -326,6 +346,11 @@ class CoherenceResonator:
             contributions["signifier_depth"] = float(
                 self._last_unconscious.signifier_depth
             )
+        if self._last_motifs is not None:
+            contributions["motifs"] = float(self._last_motifs.score())
+            contributions["motif_density"] = float(self._last_motifs.motif_density)
+            contributions["alliteration"] = float(self._last_motifs.alliteration)
+            contributions["cadence"] = float(self._last_motifs.cadence)
         notes: List[str] = []
         if tension >= 0.55:
             notes.append("High hemispheric tension detected")
@@ -357,6 +382,7 @@ class CoherenceResonator:
             mode=self._mode,
             unconscious=self._last_unconscious,
             linguistic_depth=unconscious_score,
+            motifs=self._last_motifs,
         )
         self._last_signal = signal
         return signal
@@ -439,6 +465,25 @@ class CoherenceResonator:
             if weave.highlights:
                 weave_block.extend(f"- note: {entry}" for entry in weave.highlights)
             segments.append("\n".join(weave_block))
+        if signal.motifs is not None:
+            motif = signal.motifs
+            motif_block = [
+                "[Linguistic Motifs]",
+                "- motif score {score:.2f} | density {density:.2f}".format(
+                    score=motif.score(), density=motif.motif_density
+                ),
+                "- alliteration {alliteration:.2f} | cadence {cadence:.2f}".format(
+                    alliteration=motif.alliteration,
+                    cadence=motif.cadence,
+                ),
+                "- echo {echo:.2f} | loops {loops}".format(
+                    echo=motif.echo,
+                    loops=motif.repeated_loops,
+                ),
+            ]
+            if motif.highlights:
+                motif_block.extend(f"- note: {entry}" for entry in motif.highlights)
+            segments.append("\n".join(motif_block))
         return f"{answer}\n\n" + "\n\n".join(segments)
 
     # ------------------------------------------------------------------
@@ -446,6 +491,62 @@ class CoherenceResonator:
         """Expose the most recent integration result for diagnostics."""
 
         return self._last_signal
+
+    # ------------------------------------------------------------------
+    def capture_linguistic_motifs(
+        self,
+        *,
+        question: str,
+        draft: str,
+        final_answer: str,
+        unconscious_summary: Optional[Mapping[str, object]] = None,
+    ) -> Optional["LinguisticMotifProfile"]:
+        tokens = _tokenise(final_answer)
+        if len(tokens) < 4:
+            self._last_motifs = None
+            return None
+
+        motif_density = _motif_density(tokens)
+        alliteration = _alliteration(tokens)
+        cadence = _cadence(final_answer)
+        echo = _echo_density(tokens)
+
+        highlights: List[str] = []
+        if motif_density:
+            highlights.append(f"motif density {motif_density:.2f}")
+        if alliteration:
+            highlights.append(f"alliteration {alliteration:.2f}")
+        if echo:
+            highlights.append(f"echo {echo:.2f}")
+
+        question_overlap = _coverage_score(tokens, _tokenise(question)[:20])
+        draft_overlap = _coverage_score(tokens, _tokenise(draft)[:20])
+        overlap = max(question_overlap, draft_overlap)
+        if overlap:
+            highlights.append(f"overlap {overlap:.2f}")
+
+        loops = 0
+        if unconscious_summary is not None:
+            motifs = unconscious_summary.get("motifs") or ()
+            if isinstance(motifs, Sequence):
+                loops = len(motifs)
+                if loops:
+                    highlights.append(f"unconscious motifs {loops}")
+
+        profile = LinguisticMotifProfile(
+            motif_density=motif_density,
+            alliteration=alliteration,
+            cadence=cadence,
+            echo=echo,
+            repeated_loops=loops,
+            highlights=highlights,
+        )
+        self._last_motifs = profile
+        return profile
+
+    # ------------------------------------------------------------------
+    def last_motifs(self) -> Optional["LinguisticMotifProfile"]:
+        return self._last_motifs
 
     # ------------------------------------------------------------------
     def capture_unconscious(
@@ -535,6 +636,54 @@ def _variation(tokens: Sequence[str]) -> float:
     return max(0.0, min(1.0, variation))
 
 
+def _motif_density(tokens: Sequence[str]) -> float:
+    stems = [token[:4] for token in tokens if token]
+    if len(stems) < 4:
+        return 0.0
+    counter = collections.Counter(stems)
+    repeats = sum(1 for stem, count in counter.items() if count > 1)
+    return max(0.0, min(1.0, repeats / len(counter)))
+
+
+def _alliteration(tokens: Sequence[str]) -> float:
+    if len(tokens) < 2:
+        return 0.0
+    count = 0
+    for first, second in zip(tokens, tokens[1:]):
+        if not first or not second:
+            continue
+        if first[0] == second[0]:
+            count += 1
+    return max(0.0, min(1.0, count / (len(tokens) - 1)))
+
+
+def _cadence(text: str) -> float:
+    sentences = [seg.strip() for seg in re.split(r"[.!?。！？]", text) if seg.strip()]
+    if not sentences:
+        return 0.0
+    lengths = [len(_tokenise(sentence)) for sentence in sentences]
+    if not lengths:
+        return 0.0
+    mean = sum(lengths) / len(lengths)
+    if mean == 0:
+        return 0.0
+    variance = sum((length - mean) ** 2 for length in lengths) / len(lengths)
+    return max(0.0, min(1.0, 1.0 / (1.0 + variance / (mean + 1e-6))))
+
+
+def _echo_density(tokens: Sequence[str]) -> float:
+    if len(tokens) < 4:
+        return 0.0
+    last_index: Dict[str, int] = {}
+    echoes = 0
+    for idx, token in enumerate(tokens):
+        prev = last_index.get(token)
+        if prev is not None and idx - prev > 2:
+            echoes += 1
+        last_index[token] = idx
+    return max(0.0, min(1.0, echoes / len(tokens)))
+
+
 @dataclass
 class UnconsciousLinguisticWeave:
     """Linguistic texture derived from unconscious field alignment."""
@@ -565,9 +714,38 @@ class UnconsciousLinguisticWeave:
         }
 
 
+@dataclass
+class LinguisticMotifProfile:
+    """Motif-oriented linguistic structure captured from the full response."""
+
+    motif_density: float
+    alliteration: float
+    cadence: float
+    echo: float
+    repeated_loops: int = 0
+    highlights: List[str] = field(default_factory=list)
+
+    def score(self) -> float:
+        base = 0.35 * self.motif_density + 0.3 * self.cadence + 0.2 * self.alliteration
+        enriched = base + 0.15 * max(0.0, min(1.0, self.echo))
+        return max(0.0, min(1.0, enriched))
+
+    def to_payload(self) -> Dict[str, object]:
+        return {
+            "motif_density": float(self.motif_density),
+            "alliteration": float(self.alliteration),
+            "cadence": float(self.cadence),
+            "echo": float(self.echo),
+            "score": float(self.score()),
+            "repeated_loops": int(self.repeated_loops),
+            "highlights": list(self.highlights),
+        }
+
+
 __all__ = [
     "CoherenceResonator",
     "CoherenceSignal",
     "HemisphericCoherence",
     "UnconsciousLinguisticWeave",
+    "LinguisticMotifProfile",
 ]

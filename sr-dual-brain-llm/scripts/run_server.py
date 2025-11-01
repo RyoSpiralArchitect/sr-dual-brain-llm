@@ -22,6 +22,7 @@ import asyncio
 from core.shared_memory import SharedMemory
 from core.models import LeftBrainModel, RightBrainModel
 from core.policy import RightBrainPolicy
+from core.policy_selector import decide_leading_brain
 from core.orchestrator import Orchestrator
 from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
@@ -58,6 +59,24 @@ async def right_worker(callosum, mem, right_model):
                     await callosum.publish_response(qid, {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]})
                 except Exception as e:
                     await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
+            elif req.get("type") == "ASK_LEAD":
+                qid = req.get("qid")
+                try:
+                    impression = await right_model.generate_lead(
+                        req.get("question", ""),
+                        req.get("context", ""),
+                        temperature=float(req.get("temperature", 0.85)),
+                    )
+                except Exception as e:
+                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
+                else:
+                    await callosum.publish_response(
+                        qid,
+                        {
+                            "qid": qid,
+                            "lead_notes": impression,
+                        },
+                    )
     else:
         await asyncio.sleep(0.1)
 
@@ -95,7 +114,13 @@ async def main():
         question = await loop.run_in_executor(None, input, "Q> ")
         if not question.strip():
             continue
-        ans = await controller.process(question)
+        context_hints = {
+            "novelty": mem.novelty_score(question),
+            "last_leading": mem.get_kv("last_leading_brain"),
+        }
+        leading_brain = decide_leading_brain(question, context_hints)
+        mem.put_kv("last_leading_brain", leading_brain)
+        ans = await controller.process(question, leading_brain=leading_brain)
         print("A>", ans)
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 
 ## Key Ideas
 - **Dual-agent workflow** – the left brain triages requests and only escalates to the right brain when a domain-specific deep dive is warranted.
+- **Adaptive leading policy** – a lightweight selector chooses whether the left or right hemisphere opens each exchange so both sides can initiate and hand off fluidly.
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags and the controller emits telemetry hooks for analytics.
@@ -14,6 +15,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
 - **Coherence resonator + linguistic fabric** – balances hemispheric coverage/cohesion, stitches unconscious signifiers into the weave, and emits brainstem-style integration cues for the final answer.
 - **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
+- **Motif cadence analysis** – captures alliteration, motif density, and rhythmic cadence across hemispheres so a "[Linguistic Motifs]" block can surface how language form evolves beyond semantics.
 
 ## Architecture Overview (ASCII)
 ```
@@ -56,7 +58,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
                                                │
                              ┌─────────────────▼──────────────────┐
                              │  Coherence Resonator & Brainstem   │
-                             │ (left/right/unconscious integration)│
+                             │ (left/right/unconscious/motif integration)│
                              └─────────────────┬──────────────────┘
                                                │ annotated answer + tags
                                   ┌────────────▼───────────┐
@@ -79,6 +81,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
     │   ├── default_mode_network.py # Resting-state reflections from unconscious summaries
     │   ├── psychoid_attention.py   # Project archetypal signals into QKV attention biases
     │   ├── policy_ppo.py           # PPO policy over discrete actions
+    │   ├── policy_selector.py      # Heuristics for choosing the leading hemisphere
     │   ├── shared_memory.py        # Persistent memory helpers
     │   └── unconscious_field.py    # Archetypal unconscious field integration
     ├── scripts/

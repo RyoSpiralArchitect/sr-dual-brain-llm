@@ -60,6 +60,16 @@ def test_resonator_tracks_left_and_right_profiles():
         summary=summary,
     )
 
+    motifs = resonator.capture_linguistic_motifs(
+        question="Analyse layered harmonics in mythic journeys",
+        draft=draft_text,
+        final_answer="Combined narration touches harmonics and archetypes coherently.",
+        unconscious_summary={"motifs": ["chorus", "pulse"]},
+    )
+
+    assert motifs is not None
+    assert motifs.score() >= motifs.motif_density
+
     signal = resonator.integrate(
         final_answer="Combined narration touches harmonics and archetypes coherently.",
         psychoid_projection={"norm": 0.91},
@@ -74,9 +84,12 @@ def test_resonator_tracks_left_and_right_profiles():
     assert signal.unconscious is not None
     assert signal.linguistic_depth == pytest.approx(signal.unconscious.score())
     assert payload["unconscious"]["score"] == pytest.approx(signal.unconscious.score())
+    assert signal.motifs is not None
+    assert payload["motifs"]["score"] == pytest.approx(signal.motifs.score())
     annotated = resonator.annotate_answer("final", signal)
     assert "[Coherence Integration]" in annotated
     assert "[Unconscious Linguistic Fabric]" in annotated
+    assert "[Linguistic Motifs]" in annotated
     assert "coherence" in set(signal.tags())
 
 
