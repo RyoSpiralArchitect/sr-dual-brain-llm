@@ -69,6 +69,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "Reference from RightBrain" in answer
     assert "[Hemisphere Routing]" in answer
     assert "[Hemisphere Semantic Tilt]" in answer
+    assert "[Unconscious Linguistic Fabric]" in answer
     assert callosum.payloads, "Right brain should have been consulted"
     sent_payload = callosum.payloads[0]["payload"]
     assert sent_payload["temperature"] > 0
@@ -83,6 +84,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "affective_state" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
     assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
@@ -99,6 +101,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "psychoid_attention" in final_tags
     assert any(tag.startswith("psychoid_") for tag in final_tags if tag != "psychoid_projection")
     assert any(tag.startswith("coherence") for tag in final_tags)
+    assert any(tag.startswith("linguistic_fabric") for tag in final_tags)
     assert any(tag.startswith("hemisphere_") for tag in final_tags)
     assert any(tag.startswith("hemisphere_tilt_") for tag in final_tags)
     assert "[Psychoid Field Alignment]" in answer
@@ -133,6 +136,7 @@ def test_controller_falls_back_to_local_right_model():
     assert "Reference from RightBrain" in answer
     assert "[Hemisphere Routing]" in answer
     assert "[Hemisphere Semantic Tilt]" in answer
+    assert "[Unconscious Linguistic Fabric]" in answer
     assert "psychoid_norm=" in answer
     assert "[Coherence Integration]" in answer
     assert memory.past_qas, "Final answer should be recorded"
@@ -145,6 +149,7 @@ def test_controller_falls_back_to_local_right_model():
     assert any(tag.startswith("hemisphere_") for tag in final_trace.tags)
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 1
@@ -177,12 +182,14 @@ def test_amygdala_forces_consult_on_sensitive_requests():
     assert "Reference from RightBrain" in answer
     assert "[Hemisphere Routing]" in answer
     assert "[Hemisphere Semantic Tilt]" in answer
+    assert "[Unconscious Linguistic Fabric]" in answer
     assert callosum.payloads, "Amygdala override should trigger consult"
     assert any("amygdala_alert" in trace.tags for trace in memory.past_qas)
     affect_events = [payload for evt, payload in telemetry.events if evt == "affective_state"]
     assert affect_events and affect_events[0]["risk"] >= 0.66
     assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     final_payload = next(payload for evt, payload in telemetry.events if evt == "interaction_complete")
     assert final_payload["amygdala_override"] is True
 

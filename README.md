@@ -12,47 +12,58 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
 - **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
 - **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
-- **Coherence resonance integration** – a brainstem-style resonator scores hemispheric coverage, cohesion, and resonance, logs tension, and annotates answers.
+- **Coherence resonator + linguistic fabric** – balances hemispheric coverage/cohesion, stitches unconscious signifiers into the weave, and emits brainstem-style integration cues for the final answer.
+- **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
 
-## Architecture Overview
+## Architecture Overview (ASCII)
 ```
-                    ┌────────────────────────────┐
-                    │        Shared Memory       │
-                    └─────────────┬──────────────┘
-                                  │ recall & tags
-         ┌────────────────────────┴─────────────────────────┐
-         │                                                  │
-┌────────▼────────┐    focus + affect    ┌──────────────┐   │  archetypal cues
-│  Prefrontal &   │◀────────────────────▶│   Amygdala   │   │  ┌──────────────────────┐
-│  Basal Control  │                      └──────────────┘   │  │  Unconscious Field   │
-└────────┬────────┘                              │          │  └──────────┬───────────┘
-         │                 executive gating      │          │             │ summaries
-         │                                        ▼          │             │
-┌────────▼────────┐  callosum payloads  ┌────────────────┐  │   ┌─────────▼─────────┐
-│  Left Brain LLM │────────────────────▶│ Corpus Callosum│──┼──▶│ Right Brain LLM   │
-│  (orchestrator) │◀────────────────────│  (memory/Kafka/│  │   │ (specialist detail)│
-└────────┬────────┘   draft integration  │     MQTT)     │  │   └─────────┬─────────┘
-         │                               └────────────────┘  │             │ detail notes
-         │                                        ▲           │             │
-         │                                        │           │             │
-         │                                        │           │   ┌─────────▼─────────┐
-         │                             psychoid attention     │   │ Default Mode Net  │
-         │                                        │           │   └─────────┬─────────┘
-         │                                        │           │             │ reflections
-         │                                        │           │             │
-         │                                        ▼           │             │
-         │                           ┌────────────────────┐   │             │
-         └──────────────────────────▶│  Coherence Resonator│◀─┴─────────────┘
-                                     │ (brainstem blend)  │
-                                     └─────────┬──────────┘
-                                               │ combined signal
-                                     ┌──────────▼──────────┐
-                                     │  Final Answer &     │
-                                     │  Telemetry Streams  │
-                                     └─────────────────────┘
+                                  ┌────────────────────────┐
+                                  │        User Input      │
+                                  └────────────┬───────────┘
+                                               │
+                                  ┌────────────▼───────────┐
+                                  │   Left Brain Orchestrator│
+                                  │  (policy, gating, focus) │
+                                  └────────────┬───────────┘
+                                               │ draft + state
+                     ┌─────────────────────────┴─────────────────────────┐
+                     │                                                   │
+           ┌─────────▼─────────┐                               ┌─────────▼─────────┐
+           │ Shared Memory &   │     episodic recall           │ Basal Ganglia &   │
+           │ Hippocampal Index │◀──────────────────────────────│ Amygdala Feedback │
+           └─────────┬─────────┘                               └─────────┬─────────┘
+                     │ context mix                                         │ affect + go/inhibit
+                     └─────────────────────────┬───────────────────────────┘
+                                               │
+                             ┌─────────────────▼──────────────────┐
+                             │ Corpus Callosum Transport Layer    │
+                             │ (memory / Kafka / MQTT backends)   │
+                             └─────────────────┬──────────────────┘
+                                               │ enriched consult payload
+                                   ┌───────────▼───────────┐
+                                   │   Right Brain Expert  │
+                                   │ (deepen / fallback LLM)│
+                                   └───────────┬───────────┘
+                                               │ detail notes
+                     ┌─────────────────────────┬──────────────────────────┐
+                     │        unconscious cues + psychoid resonance       │
+           ┌─────────▼─────────┐                              ┌──────────▼──────────┐
+           │ Unconscious Field │                              │ Psychoid Attention  │
+           │  & Default Mode   │                              │    Adapter          │
+           └─────────┬─────────┘                              └──────────┬──────────┘
+                     │ summaries + signifiers                             │ bias vectors
+                     └─────────────────────────┬──────────────────────────┘
+                                               │
+                             ┌─────────────────▼──────────────────┐
+                             │  Coherence Resonator & Brainstem   │
+                             │ (left/right/unconscious integration)│
+                             └─────────────────┬──────────────────┘
+                                               │ annotated answer + tags
+                                  ┌────────────▼───────────┐
+                                  │   Final Response to    │
+                                  │        the User        │
+                                  └────────────────────────┘
 ```
-
-The resonator captures the most recent left/right hemispheric signals, evaluates their coverage, cohesion, and resonance, and appends a brainstem-style annotation to the final answer while emitting telemetry about hemispheric tension.
 
 ## Repository Layout
 ```

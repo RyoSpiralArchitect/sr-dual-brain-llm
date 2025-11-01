@@ -86,6 +86,8 @@ class CoherenceSignal:
     contributions: Dict[str, float] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
     mode: str = "balanced"
+    unconscious: Optional["UnconsciousLinguisticWeave"] = None
+    linguistic_depth: float = 0.0
 
     def right_or_blank(self) -> HemisphericCoherence:
         if self.right is not None:
@@ -100,9 +102,12 @@ class CoherenceSignal:
             "notes": list(self.notes),
             "contributions": dict(self.contributions),
             "mode": self.mode,
+            "linguistic_depth": float(self.linguistic_depth),
         }
         if self.right is not None:
             payload["right"] = self.right.to_payload()
+        if self.unconscious is not None:
+            payload["unconscious"] = self.unconscious.to_payload()
         return payload
 
     def tags(self) -> Iterable[str]:
@@ -122,6 +127,15 @@ class CoherenceSignal:
             tags.add("coherence_tension_low")
         if self.right is None or self.right.tokens == 0:
             tags.add("coherence_left_dominant")
+        if self.unconscious is not None:
+            tags.add("coherence_unconscious")
+            depth = self.unconscious.score()
+            if depth >= 0.7:
+                tags.add("linguistic_fabric_rich")
+            elif depth >= 0.45:
+                tags.add("linguistic_fabric_balanced")
+            else:
+                tags.add("linguistic_fabric_sparse")
         return tags
 
 
@@ -148,6 +162,7 @@ class CoherenceResonator:
         self._last_left: Optional[HemisphericCoherence] = None
         self._last_right: Optional[HemisphericCoherence] = None
         self._last_signal: Optional[CoherenceSignal] = None
+        self._last_unconscious: Optional[UnconsciousLinguisticWeave] = None
 
     # ------------------------------------------------------------------
     def reset(self) -> None:
@@ -156,6 +171,7 @@ class CoherenceResonator:
         self._last_left = None
         self._last_right = None
         self._last_signal = None
+        self._last_unconscious = None
 
     # ------------------------------------------------------------------
     def _apply_weights(self, left_weight: float, right_weight: float) -> None:
@@ -276,6 +292,7 @@ class CoherenceResonator:
         *,
         final_answer: str,
         psychoid_projection: Optional[Mapping[str, object]] = None,
+        unconscious_summary: Optional[Mapping[str, object]] = None,
     ) -> Optional[CoherenceSignal]:
         if self._last_left is None:
             return None
@@ -288,12 +305,27 @@ class CoherenceResonator:
         tension = max(0.0, min(1.0, tension * self.tension_sensitivity))
         synergy = 1.0 - min(1.0, tension)
         length_factor = min(1.0, len(_tokenise(final_answer)) / 640.0)
-        combined = max(0.0, min(1.0, 0.6 * weighted + 0.25 * synergy + 0.15 * length_factor))
+        unconscious_score = self._last_unconscious.score() if self._last_unconscious else 0.0
+        combined = max(
+            0.0,
+            min(
+                1.0,
+                0.45 * weighted + 0.22 * synergy + 0.18 * length_factor + 0.15 * unconscious_score,
+            ),
+        )
         contributions = {
             "left": float(left_score),
             "right": float(right_score),
             "synergy": float(synergy),
         }
+        if self._last_unconscious is not None:
+            contributions["unconscious"] = float(self._last_unconscious.score())
+            contributions["linguistic_density"] = float(
+                self._last_unconscious.lexical_density
+            )
+            contributions["signifier_depth"] = float(
+                self._last_unconscious.signifier_depth
+            )
         notes: List[str] = []
         if tension >= 0.55:
             notes.append("High hemispheric tension detected")
@@ -308,6 +340,13 @@ class CoherenceResonator:
             contributions["psychoid_norm"] = norm
             if norm:
                 notes.append(f"Attention norm {norm:.2f} influenced coherence")
+        if self._last_unconscious is not None and self._last_unconscious.highlights:
+            for entry in self._last_unconscious.highlights:
+                notes.append(f"Unconscious: {entry}")
+        if unconscious_summary:
+            cache_depth = float(unconscious_summary.get("cache_depth", 0.0) or 0.0)
+            if cache_depth:
+                contributions["unconscious_cache"] = cache_depth
         signal = CoherenceSignal(
             left=left,
             right=right,
@@ -316,6 +355,8 @@ class CoherenceResonator:
             contributions=contributions,
             notes=notes,
             mode=self._mode,
+            unconscious=self._last_unconscious,
+            linguistic_depth=unconscious_score,
         )
         self._last_signal = signal
         return signal
@@ -378,7 +419,27 @@ class CoherenceResonator:
         if signal.notes:
             for note in signal.notes:
                 block.append(f"- note: {note}")
-        return f"{answer}\n\n" + "\n".join(block)
+        segments = ["\n".join(block)]
+        if signal.unconscious is not None:
+            weave = signal.unconscious
+            weave_block = [
+                "[Unconscious Linguistic Fabric]",
+                "- fabric score {score:.2f} | lexical density {density:.2f}".format(
+                    score=weave.score(), density=weave.lexical_density
+                ),
+                "- archetype resonance {resonance:.2f} | variation {variation:.2f}".format(
+                    resonance=weave.archetype_resonance,
+                    variation=weave.variation,
+                ),
+                "- signifier depth {depth:.2f} | tokens {tokens}".format(
+                    depth=weave.signifier_depth,
+                    tokens=weave.tokens,
+                ),
+            ]
+            if weave.highlights:
+                weave_block.extend(f"- note: {entry}" for entry in weave.highlights)
+            segments.append("\n".join(weave_block))
+        return f"{answer}\n\n" + "\n\n".join(segments)
 
     # ------------------------------------------------------------------
     def last_signal(self) -> Optional[CoherenceSignal]:
@@ -386,9 +447,127 @@ class CoherenceResonator:
 
         return self._last_signal
 
+    # ------------------------------------------------------------------
+    def capture_unconscious(
+        self,
+        *,
+        question: str,
+        draft: str,
+        final_answer: str,
+        summary: Optional[Mapping[str, object]] = None,
+        psychoid_signal: Optional[Mapping[str, object]] = None,
+    ) -> Optional["UnconsciousLinguisticWeave"]:
+        tokens = _tokenise(final_answer)
+        if not tokens and summary is None and psychoid_signal is None:
+            self._last_unconscious = None
+            return None
+
+        question_tokens = _tokenise(question)
+        draft_tokens = _tokenise(draft)
+        lexical_density = _lexical_density(tokens)
+        variation = _variation(tokens)
+        archetype_resonance = 0.0
+        highlights: List[str] = []
+        emergent_count = 0
+        if summary is not None:
+            archetype_entries = summary.get("archetype_map") or []
+            intensities: List[float] = []
+            for entry in archetype_entries:
+                try:
+                    intensities.append(float(entry.get("intensity", 0.0)))
+                except Exception:  # pragma: no cover - defensive
+                    continue
+            if intensities:
+                archetype_resonance = max(0.0, min(1.0, sum(intensities) / (len(intensities) * 1.5)))
+                highlights.append(
+                    "archetype avg {:.2f}".format(archetype_resonance)
+                )
+            emergent = summary.get("emergent_ideas") or []
+            emergent_count = len(emergent)
+            if emergent_count:
+                highlights.append(f"emergent ideas {emergent_count}")
+        signifier_depth = 0.0
+        if psychoid_signal is None and summary is not None:
+            psychoid_signal = summary.get("psychoid_signal")  # type: ignore[assignment]
+        if psychoid_signal:
+            chain = psychoid_signal.get("signifier_chain") or []
+            if isinstance(chain, Sequence):
+                signifier_depth = min(1.0, len(chain) / 12.0)
+                if chain:
+                    highlights.append(f"signifiers {len(chain)}")
+            resonance = psychoid_signal.get("resonance")
+            if isinstance(resonance, (int, float)):
+                archetype_resonance = max(archetype_resonance, max(0.0, min(1.0, float(resonance))))
+
+        # Encourage cross-hemispheric linguistic weaving by tracking overlaps
+        question_overlap = _coverage_score(tokens, question_tokens[:16])
+        draft_overlap = _coverage_score(tokens, draft_tokens[:16])
+        variation = max(variation, 0.5 * (question_overlap + draft_overlap))
+        if question_overlap:
+            highlights.append(f"question weave {question_overlap:.2f}")
+        if draft_overlap:
+            highlights.append(f"draft weave {draft_overlap:.2f}")
+
+        weave = UnconsciousLinguisticWeave(
+            lexical_density=lexical_density,
+            archetype_resonance=archetype_resonance,
+            signifier_depth=signifier_depth,
+            variation=variation,
+            tokens=len(tokens),
+            highlights=highlights,
+            emergent_count=emergent_count,
+        )
+        self._last_unconscious = weave
+        return weave
+
+
+def _lexical_density(tokens: Sequence[str]) -> float:
+    if not tokens:
+        return 0.0
+    return max(0.0, min(1.0, len(set(tokens)) / len(tokens)))
+
+
+def _variation(tokens: Sequence[str]) -> float:
+    if len(tokens) < 2:
+        return 0.0
+    bigrams = {tuple(tokens[idx : idx + 2]) for idx in range(len(tokens) - 1)}
+    variation = len(bigrams) / max(len(tokens) - 1, 1)
+    return max(0.0, min(1.0, variation))
+
+
+@dataclass
+class UnconsciousLinguisticWeave:
+    """Linguistic texture derived from unconscious field alignment."""
+
+    lexical_density: float
+    archetype_resonance: float
+    signifier_depth: float
+    variation: float
+    tokens: int
+    highlights: List[str] = field(default_factory=list)
+    emergent_count: int = 0
+
+    def score(self) -> float:
+        base = 0.45 * self.lexical_density + 0.35 * self.archetype_resonance + 0.2 * self.variation
+        enriched = base + 0.05 * min(1.0, self.signifier_depth)
+        return max(0.0, min(1.0, enriched))
+
+    def to_payload(self) -> Dict[str, object]:
+        return {
+            "lexical_density": float(self.lexical_density),
+            "archetype_resonance": float(self.archetype_resonance),
+            "signifier_depth": float(self.signifier_depth),
+            "variation": float(self.variation),
+            "tokens": int(self.tokens),
+            "score": float(self.score()),
+            "highlights": list(self.highlights),
+            "emergent_count": int(self.emergent_count),
+        }
+
 
 __all__ = [
     "CoherenceResonator",
     "CoherenceSignal",
     "HemisphericCoherence",
+    "UnconsciousLinguisticWeave",
 ]

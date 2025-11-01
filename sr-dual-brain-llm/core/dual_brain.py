@@ -748,9 +748,25 @@ class DualBrainController:
             projection_payload = (
                 psychoid_projection.to_payload() if psychoid_projection else None
             )
+            weave = self.coherence_resonator.capture_unconscious(
+                question=question,
+                draft=draft,
+                final_answer=final_answer,
+                summary=unconscious_summary,
+                psychoid_signal=psychoid_signal,
+            )
+            if weave is not None:
+                fabric_payload = weave.to_payload()
+                decision.state["linguistic_fabric"] = fabric_payload
+                self.telemetry.log(
+                    "coherence_unconscious_weave",
+                    qid=decision.qid,
+                    fabric=fabric_payload,
+                )
             coherence_signal = self.coherence_resonator.integrate(
                 final_answer=final_answer,
                 psychoid_projection=projection_payload,
+                unconscious_summary=unconscious_summary,
             )
             if coherence_signal is not None:
                 decision.state["coherence_combined"] = coherence_signal.combined_score

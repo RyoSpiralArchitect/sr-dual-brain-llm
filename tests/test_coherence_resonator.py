@@ -6,12 +6,13 @@ from core.coherence_resonator import CoherenceResonator
 def test_resonator_tracks_left_and_right_profiles():
     resonator = CoherenceResonator()
 
+    draft_text = (
+        "This analysis explores mythic journeys and harmonics while keeping "
+        "analysis grounded in layered archetypal signals."
+    )
     left = resonator.capture_left(
         question="Analyse layered harmonics in mythic journeys",
-        draft=(
-            "This analysis explores mythic journeys and harmonics while keeping "
-            "analysis grounded in layered archetypal signals."
-        ),
+        draft=draft_text,
         context="Mythic journeys often rely on harmonic layering for meaning.",
         focus_keywords=("analysis", "harmonics", "archetypal"),
         focus_metric=0.58,
@@ -38,9 +39,31 @@ def test_resonator_tracks_left_and_right_profiles():
     assert right.resonance > 0.5
     assert any("source:callosum" in entry for entry in right.highlights)
 
+    summary = {
+        "archetype_map": [
+            {"id": "dream", "label": "Dream", "intensity": 0.9},
+            {"id": "myth", "label": "Myth", "intensity": 0.6},
+        ],
+        "emergent_ideas": [
+            {"archetype": "dream", "label": "Dream tide", "intensity": 0.55},
+        ],
+        "psychoid_signal": {
+            "signifier_chain": ["sea", "tide", "moon"],
+            "resonance": 0.82,
+        },
+        "cache_depth": 2,
+    }
+    resonator.capture_unconscious(
+        question="Analyse layered harmonics in mythic journeys",
+        draft=draft_text,
+        final_answer="Combined narration touches harmonics and archetypes coherently.",
+        summary=summary,
+    )
+
     signal = resonator.integrate(
         final_answer="Combined narration touches harmonics and archetypes coherently.",
         psychoid_projection={"norm": 0.91},
+        unconscious_summary=summary,
     )
 
     assert signal is not None
@@ -48,8 +71,12 @@ def test_resonator_tracks_left_and_right_profiles():
     assert signal.combined_score >= signal.left.score() * 0.5
     payload = signal.to_payload()
     assert payload["contributions"]["psychoid_norm"] == pytest.approx(0.91)
+    assert signal.unconscious is not None
+    assert signal.linguistic_depth == pytest.approx(signal.unconscious.score())
+    assert payload["unconscious"]["score"] == pytest.approx(signal.unconscious.score())
     annotated = resonator.annotate_answer("final", signal)
     assert "[Coherence Integration]" in annotated
+    assert "[Unconscious Linguistic Fabric]" in annotated
     assert "coherence" in set(signal.tags())
 
 
