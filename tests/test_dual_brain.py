@@ -101,6 +101,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert any(evt == "schema_profile" for evt, _ in telemetry.events)
     assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 2
     latest_trace = hippocampus.episodes[-1]
     assert latest_trace.leading in {"left", "right", "braided"}
@@ -128,6 +129,12 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Attention Bias]" in answer
     assert "[Coherence Integration]" in answer
+    inner_events = [payload for evt, payload in telemetry.events if evt == "inner_dialogue_trace"]
+    assert inner_events, "Inner dialogue telemetry should be captured"
+    steps = inner_events[-1]["steps"]
+    assert steps, "Telemetry should expose dialogue steps"
+    assert any(step.get("phase") == "left_draft" for step in steps)
+    assert any(step.get("phase") in {"callosum_response", "consult_skipped"} for step in steps)
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -252,10 +259,13 @@ def test_right_brain_can_take_the_lead():
     assert any(evt == "leading_brain" for evt, _ in telemetry.events)
     assert any(evt == "schema_profile" for evt, _ in telemetry.events)
     assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
     assert memory.past_qas, "The interaction should be persisted"
     flow = list(memory.dialogue_flows.values())[-1]
     assert flow["leading"] == "right"
     assert flow["follow"] == "left"
+    assert flow.get("steps"), "Dialogue flow should include step trace"
+    assert any(step.get("phase") == "callosum_response" for step in flow.get("steps", []))
     final_tags = memory.past_qas[-1].tags
     assert "schema_profile" in final_tags
     assert "distortion_audit" in final_tags
@@ -335,3 +345,4 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
