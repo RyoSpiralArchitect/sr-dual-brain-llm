@@ -123,6 +123,142 @@ def _truncate_text(text: Optional[str], limit: int = 160) -> str:
     return condensed[: max(0, limit - 3)] + "..."
 
 
+def _format_modules(modules: Sequence[str] | None) -> str:
+    if not modules:
+        return "∅"
+    return ", ".join(modules)
+
+
+def _summarise_architecture_stage(idx: int, stage: Dict[str, Any]) -> str:
+    name = stage.get("stage", f"stage_{idx}")
+    modules = _format_modules(stage.get("modules"))
+    descriptors: List[str] = []
+
+    if name == "perception":
+        signals = stage.get("signals", {})
+        affect = signals.get("affect", {}) if isinstance(signals, dict) else {}
+        valence = float(affect.get("valence", 0.0))
+        arousal = float(affect.get("arousal", 0.0))
+        risk = float(affect.get("risk", 0.0))
+        novelty = float(affect.get("novelty", 0.0))
+        descriptors.append(
+            "affect v{:+.2f}/a{:+.2f}/r{:+.2f}/n{:.2f}".format(
+                valence, arousal, risk, novelty
+            )
+        )
+        focus = stage.get("focus", {}) or {}
+        if isinstance(focus, dict) and focus.get("keywords"):
+            keywords = focus.get("keywords", [])
+            descriptors.append(
+                "focus {}".format(", ".join(str(kw) for kw in keywords[:3]))
+            )
+            if len(keywords) > 3:
+                descriptors.append(f"(+{len(keywords) - 3} more)")
+        if isinstance(focus, dict):
+            if "relevance" in focus:
+                descriptors.append(f"rel {float(focus['relevance']):.2f}")
+            if "hippocampal_overlap" in focus:
+                descriptors.append(
+                    f"hip {float(focus['hippocampal_overlap']):.2f}"
+                )
+        hemisphere = signals.get("hemisphere") if isinstance(signals, dict) else {}
+        if isinstance(hemisphere, dict):
+            mode = hemisphere.get("mode", "?")
+            bias = float(hemisphere.get("bias", 0.0))
+            descriptors.append(f"hemisphere {mode}:{bias:.2f}")
+        collaboration = (
+            signals.get("collaboration") if isinstance(signals, dict) else {}
+        )
+        if isinstance(collaboration, dict) and collaboration.get("strength") is not None:
+            strength = float(collaboration.get("strength", 0.0))
+            balance = float(collaboration.get("balance", 0.0))
+            descriptors.append(f"collab {strength:.2f}/{balance:.2f}")
+        schema_profile = stage.get("schema_profile")
+        if isinstance(schema_profile, dict):
+            user_schemas = schema_profile.get("user_schemas", [])
+            if user_schemas:
+                descriptors.append(
+                    "schemas {}".format(", ".join(user_schemas[:2]))
+                )
+            user_modes = schema_profile.get("user_modes", [])
+            if user_modes:
+                descriptors.append("user modes {}".format(", ".join(user_modes[:2])))
+            agent_modes = schema_profile.get("agent_modes", [])
+            if agent_modes:
+                descriptors.append(
+                    "agent modes {}".format(", ".join(agent_modes[:2]))
+                )
+            if "confidence" in schema_profile:
+                descriptors.append(
+                    f"schema conf {float(schema_profile['confidence']):.2f}"
+                )
+    elif name == "inner_dialogue":
+        leading = stage.get("leading", "?")
+        descriptors.append(f"leading {leading}")
+        if stage.get("collaborative"):
+            descriptors.append("braided")
+        step_count = int(stage.get("step_count", 0))
+        descriptors.append(f"steps {step_count}")
+        phases = stage.get("phases") or []
+        if phases:
+            phase_list = ", ".join(str(phase) for phase in list(phases)[:4])
+            descriptors.append(f"phases {phase_list}")
+        temperature = stage.get("temperature")
+        if temperature is not None:
+            descriptors.append(f"temp {float(temperature):.2f}")
+        slot_ms = stage.get("slot_ms")
+        if slot_ms is not None:
+            descriptors.append(f"slot {int(slot_ms)}ms")
+    elif name == "integration":
+        descriptors.append("success" if stage.get("success") else "retry")
+        coherence = stage.get("coherence")
+        if isinstance(coherence, dict):
+            if "combined" in coherence:
+                descriptors.append(f"coh {float(coherence['combined']):.2f}")
+            if "tension" in coherence:
+                descriptors.append(f"ten {float(coherence['tension']):.2f}")
+        distortion = stage.get("distortion")
+        if isinstance(distortion, dict):
+            flags = distortion.get("flags", [])
+            if flags:
+                descriptors.append(
+                    "distortions {}".format(", ".join(flags[:3]))
+                )
+            if "score" in distortion:
+                descriptors.append(f"distortion {float(distortion['score']):.2f}")
+    elif name == "memory":
+        tags = stage.get("tags", []) or []
+        descriptors.append(f"tags {len(tags)}")
+        rollup = stage.get("hippocampal_rollup") or {}
+        if isinstance(rollup, dict) and rollup:
+            if "avg_strength" in rollup:
+                descriptors.append(f"avg {float(rollup['avg_strength']):.2f}")
+            if "strength_coverage" in rollup:
+                descriptors.append(
+                    f"coverage {float(rollup['strength_coverage']):.2f}"
+                )
+            lead_parts: List[str] = []
+            for key, label in (
+                ("lead_left", "L"),
+                ("lead_right", "R"),
+                ("lead_braided", "B"),
+            ):
+                val = rollup.get(key)
+                if val:
+                    lead_parts.append(f"{label}{float(val):.2f}")
+            if lead_parts:
+                descriptors.append("lead mix " + " ".join(lead_parts))
+
+    descriptor_text = "; ".join(descriptors)
+    if descriptor_text:
+        return f"{idx}. {name}: {modules} | {descriptor_text}"
+    return f"{idx}. {name}: {modules}"
+
+
+def _summarise_architecture_path(path: Sequence[Dict[str, Any]]) -> List[str]:
+    return [_summarise_architecture_stage(idx, stage) for idx, stage in enumerate(path, 1)]
+
+
 @dataclass
 class DecisionOutcome:
     """Details about a single orchestration decision."""
@@ -1546,6 +1682,35 @@ class DualBrainController:
         tags.add("inner_dialogue_trace")
         tags.add(f"inner_steps_{len(steps_payload)}")
 
+        tags_with_architecture = set(tags)
+        tags_with_architecture.add("architecture_path")
+        architecture_preview = self._compose_architecture_path(
+            focus=focus,
+            focus_metric=focus_metric,
+            schema_profile=schema_profile,
+            affect=affect,
+            novelty=novelty,
+            hemisphere_signal=hemisphere_signal,
+            collaboration_profile=collaboration_profile,
+            decision=decision,
+            leading=leading,
+            collaborative=collaborative_lead,
+            steps=steps_payload,
+            coherence_signal=coherence_signal,
+            distortion_payload=distortion_payload,
+            tags=sorted(tags_with_architecture),
+            hippocampal_rollup=None,
+            success=success,
+        )
+        architecture_summary = _summarise_architecture_path(architecture_preview)
+        if architecture_summary:
+            final_answer = (
+                f"{final_answer}\n\n[Architecture Path]\n" + "\n".join(architecture_summary)
+            )
+            tags = tags_with_architecture
+            decision.state["architecture_path_preview"] = architecture_preview
+            decision.state["architecture_path_summary"] = architecture_summary
+
         follow_brain: Optional[str] = None
         if collaborative_lead:
             follow_brain = "braided"
@@ -1553,7 +1718,6 @@ class DualBrainController:
             follow_brain = "left"
         elif detail_notes or decision.action != 0:
             follow_brain = "right"
-        self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
         hippocampal_rollup: Optional[Dict[str, float]] = None
         if self.hippocampus is not None:
@@ -1586,6 +1750,8 @@ class DualBrainController:
             )
             episodic_total = len(self.hippocampus.episodes)
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
+
+        self.memory.store({"Q": question, "A": final_answer}, tags=tags)
 
         architecture_path = self._compose_architecture_path(
             focus=focus,

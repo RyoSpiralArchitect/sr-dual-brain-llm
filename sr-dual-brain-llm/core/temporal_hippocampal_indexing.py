@@ -121,12 +121,18 @@ class TemporalHippocampalIndexing:
         if not self.episodes:
             return []
         qv = self._embed(query)
-        scored: List[Tuple[float, EpisodicTrace]] = []
-        for trace in self.episodes:
+        query_tokens = set(_tokenize(query.lower()))
+        scored: List[Tuple[float, float, int, float, EpisodicTrace]] = []
+        for idx, trace in enumerate(self.episodes):
             sim = float(np.dot(qv, trace.vector))
-            scored.append((sim, trace))
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return scored[:topk]
+            lexical = 0.0
+            if query_tokens:
+                trace_tokens = set(_tokenize(trace.question.lower()))
+                lexical = len(query_tokens & trace_tokens) / max(len(query_tokens), 1)
+            combined = sim + 0.35 * lexical
+            scored.append((combined, lexical, -idx, sim, trace))
+        scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+        return [(sim, trace) for _, _, _, sim, trace in scored[:topk]]
 
     def retrieve_summary(
         self, query: str, topk: int = 3, max_chars: int = 240

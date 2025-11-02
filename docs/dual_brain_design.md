@@ -71,7 +71,7 @@ This document synthesizes three knowledge traditions—analytical psychology, co
    - *Mediator* (callosum/orchestrator) iterates until convergence or time budget is reached.
 3. **Integration & Expression** – `coherence_resonator` merges drafts, guided by affective and schema metadata, to produce a braided response annotated for telemetry.
 4. **Memory Update** – Hippocampal indexer captures the episode; consolidation policies decide what to commit, decaying low-salience traces.
-5. **Architecture Telemetry** – The controller now emits an `architecture_path` event and persists it in shared memory so engineers can replay perception→dialogue→integration→memory transitions per turn.
+5. **Architecture Telemetry** – The controller now emits an `architecture_path` event and persists it in shared memory so engineers can replay perception→dialogue→integration→memory transitions per turn. Final answers echo this trace in an `[Architecture Path]` section so humans can audit the stages without inspecting telemetry logs.
 
 ### Control Policies
 - **Consultation policy** – Train PPO (`core/policy_ppo.py`) with reward shaping that penalises factual errors (CBT audit) and empathy failures (affect deviation), encouraging balanced dual-brain usage.

@@ -18,6 +18,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Coherence resonator + linguistic fabric** – balances hemispheric coverage/cohesion, stitches unconscious signifiers into the weave, and emits brainstem-style integration cues for the final answer.
 - **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
 - **Motif cadence analysis** – captures alliteration, motif density, and rhythmic cadence across hemispheres so a "[Linguistic Motifs]" block can surface how language form evolves beyond semantics.
+- **Architecture path narration** – final responses append an `[Architecture Path]` section summarising perception → dialogue → integration → memory stages for quick auditing.
 
 ## Architecture Overview (Braided Co-Lead Flow)
 ```mermaid

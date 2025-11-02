@@ -126,9 +126,11 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(tag.startswith("mode_agent") for tag in final_tags)
     assert "schema_profile" in final_tags
     assert "distortion_audit" in final_tags
+    assert "architecture_path" in final_tags
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Attention Bias]" in answer
     assert "[Coherence Integration]" in answer
+    assert "[Architecture Path]" in answer
     inner_events = [payload for evt, payload in telemetry.events if evt == "inner_dialogue_trace"]
     assert inner_events, "Inner dialogue telemetry should be captured"
     steps = inner_events[-1]["steps"]
@@ -142,6 +144,14 @@ def test_controller_requests_right_brain_when_confidence_low():
     architecture_path = architecture_events[-1]["path"]
     assert architecture_path and architecture_path[0]["stage"] == "perception"
     assert any(stage.get("stage") == "memory" for stage in architecture_path)
+    arch_section = answer.split("[Architecture Path]", 1)[1]
+    architecture_lines = [
+        line.strip()
+        for line in arch_section.strip().splitlines()
+        if line.strip()
+    ]
+    assert architecture_lines and architecture_lines[0].startswith("1. perception")
+    assert len(architecture_lines) == len(architecture_path)
     interaction_ids = [
         payload["qid"] for evt, payload in telemetry.events if evt == "interaction_complete"
     ]
@@ -185,6 +195,7 @@ def test_controller_falls_back_to_local_right_model():
     assert "psychoid_norm=" in answer
     assert "[Coherence Integration]" in answer
     assert "[Cognitive Distortion Audit]" in answer
+    assert "[Architecture Path]" in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
@@ -195,6 +206,7 @@ def test_controller_falls_back_to_local_right_model():
     assert any(tag.startswith("hemisphere_") for tag in final_trace.tags)
     assert "schema_profile" in final_trace.tags
     assert "distortion_audit" in final_trace.tags
+    assert "architecture_path" in final_trace.tags
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
@@ -210,6 +222,10 @@ def test_controller_falls_back_to_local_right_model():
     assert architecture_events, "Architecture path should be logged even on fallback"
     fallback_path = architecture_events[-1]["path"]
     assert any(stage.get("stage") == "inner_dialogue" for stage in fallback_path)
+    arch_section = answer.split("[Architecture Path]", 1)[1]
+    arch_lines = [line.strip() for line in arch_section.strip().splitlines() if line.strip()]
+    assert arch_lines and arch_lines[0].startswith("1. perception")
+    assert len(arch_lines) == len(fallback_path)
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
