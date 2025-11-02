@@ -12,6 +12,36 @@ from .schema import PsychoidSignalModel, UnconsciousSummaryModel
 
 _TOKEN_RE = re.compile(r"[\w']+")
 
+_DISTORTION_PATTERNS = {
+    "overgeneralisation": re.compile(
+        r"\b(always|never|everybody|nobody|全て|絶対|必ず)\b", re.IGNORECASE
+    ),
+    "catastrophising": re.compile(
+        r"\b(disaster|catastroph|ruined|devastat|最悪|取り返し|終わり)\w*\b",
+        re.IGNORECASE,
+    ),
+    "mind_reading": re.compile(
+        r"\b(they|he|she|people|everyone)\s+(?:must|will|are|is|be)\s+(?:think|thinking|believe|judg)\w*\b",
+        re.IGNORECASE,
+    ),
+    "should_statements": re.compile(
+        r"\b(should|must|have to|ought|べき|しなければ)\b", re.IGNORECASE
+    ),
+    "labeling": re.compile(
+        r"\b(i am|i'm|you are|they are|私(?:は|が)|俺は)\s+(?:a\s+)?(failure|loser|idiot|stupid|無価値|ダメ|役立たず)\b",
+        re.IGNORECASE,
+    ),
+}
+
+_NEGATIVE_FILTER_WORDS = {
+    "terrible",
+    "horrible",
+    "hopeless",
+    "worthless",
+    "終わり",
+    "絶望",
+}
+
 
 def _tokenise(text: str) -> List[str]:
     if not text:
@@ -92,6 +122,7 @@ class CoherenceSignal:
     unconscious: Optional["UnconsciousLinguisticWeave"] = None
     linguistic_depth: float = 0.0
     motifs: Optional["LinguisticMotifProfile"] = None
+    distortions: Optional["CognitiveDistortionReport"] = None
 
     def right_or_blank(self) -> HemisphericCoherence:
         if self.right is not None:
@@ -114,6 +145,8 @@ class CoherenceSignal:
             payload["unconscious"] = self.unconscious.to_payload()
         if self.motifs is not None:
             payload["motifs"] = self.motifs.to_payload()
+        if self.distortions is not None:
+            payload["distortions"] = self.distortions.to_payload()
         return payload
 
     def tags(self) -> Iterable[str]:
@@ -151,7 +184,103 @@ class CoherenceSignal:
                 tags.add("linguistic_motif_balanced")
             else:
                 tags.add("linguistic_motif_sparse")
+        if self.distortions is not None:
+            tags.update(self.distortions.tags())
         return tags
+
+
+@dataclass
+class CognitiveDistortionReport:
+    """Summary of detected cognitive distortions for a response."""
+
+    flags: Tuple[str, ...]
+    score: float
+    density: float
+    notes: List[str] = field(default_factory=list)
+    evidence: Dict[str, int] = field(default_factory=dict)
+
+    def to_payload(self) -> Dict[str, object]:
+        return {
+            "flags": list(self.flags),
+            "score": float(self.score),
+            "density": float(self.density),
+            "notes": list(self.notes),
+            "evidence": dict(self.evidence),
+        }
+
+    def tags(self) -> Iterable[str]:
+        tags = {"distortion_audit"}
+        if self.flags:
+            tags.add("distortion_flagged")
+            for flag in self.flags:
+                tags.add(f"distortion_{flag}")
+            if self.score >= 0.6:
+                tags.add("distortion_severity_high")
+            elif self.score >= 0.35:
+                tags.add("distortion_severity_mid")
+            else:
+                tags.add("distortion_severity_low")
+        else:
+            tags.add("distortion_clear")
+        tags.add(f"distortion_density_{int(self.density * 100):02d}")
+        return tags
+
+
+class CognitiveDistortionAudit:
+    """Heuristic detector for common CBT cognitive distortions."""
+
+    def __init__(
+        self,
+        *,
+        patterns: Optional[Dict[str, re.Pattern[str]]] = None,
+        include_negative_filter: bool = True,
+    ) -> None:
+        self.patterns = patterns or dict(_DISTORTION_PATTERNS)
+        self.include_negative_filter = include_negative_filter
+
+    def analyse(
+        self,
+        *,
+        question: str = "",
+        draft: str = "",
+        detail: str = "",
+        final_answer: str,
+    ) -> CognitiveDistortionReport:
+        combined_text = " ".join(
+            part for part in [question, draft, detail, final_answer] if part
+        )
+        tokens = _tokenise(combined_text)
+        evidence: Dict[str, int] = {}
+        notes: List[str] = []
+        lower_text = combined_text.lower()
+
+        for label, pattern in self.patterns.items():
+            matches = pattern.findall(lower_text)
+            if matches:
+                evidence[label] = len(matches)
+                notes.append(f"{label} detected {len(matches)}x via pattern match")
+
+        if self.include_negative_filter:
+            negative_hits = sum(1 for tok in tokens if tok in _NEGATIVE_FILTER_WORDS)
+            if negative_hits >= 2:
+                evidence["negative_filter"] = negative_hits
+                notes.append("Multiple negative filter terms detected")
+
+        if "should" in lower_text and "not" in lower_text:
+            evidence["should_statements"] = max(1, evidence.get("should_statements", 0))
+
+        total_hits = sum(evidence.values())
+        density = total_hits / max(len(tokens), 1)
+        score = max(0.0, min(1.0, 0.65 * min(1.0, total_hits / 3) + 0.35 * min(1.0, density * 5)))
+        flags = tuple(sorted(label for label, count in evidence.items() if count > 0))
+
+        return CognitiveDistortionReport(
+            flags=flags,
+            score=score,
+            density=density,
+            notes=notes,
+            evidence=evidence,
+        )
 
 
 class CoherenceResonator:
@@ -163,6 +292,7 @@ class CoherenceResonator:
         left_weight: float = 0.55,
         right_weight: float = 0.45,
         tension_sensitivity: float = 1.15,
+        distortion_audit: Optional[CognitiveDistortionAudit] = None,
     ) -> None:
         total = left_weight + right_weight
         if total <= 0:
@@ -179,6 +309,10 @@ class CoherenceResonator:
         self._last_signal: Optional[CoherenceSignal] = None
         self._last_unconscious: Optional[UnconsciousLinguisticWeave] = None
         self._last_motifs: Optional[LinguisticMotifProfile] = None
+        self.distortion_audit = distortion_audit or CognitiveDistortionAudit()
+        self._last_question: str = ""
+        self._last_left_text: str = ""
+        self._last_right_detail: str = ""
 
     # ------------------------------------------------------------------
     def reset(self) -> None:
@@ -189,6 +323,9 @@ class CoherenceResonator:
         self._last_signal = None
         self._last_unconscious = None
         self._last_motifs = None
+        self._last_question = ""
+        self._last_left_text = ""
+        self._last_right_detail = ""
 
     # ------------------------------------------------------------------
     def _apply_weights(self, left_weight: float, right_weight: float) -> None:
@@ -234,6 +371,8 @@ class CoherenceResonator:
         focus_keywords: Sequence[str] | None = None,
         focus_metric: float = 0.0,
     ) -> HemisphericCoherence:
+        self._last_question = question
+        self._last_left_text = draft
         tokens = _tokenise(draft)
         if focus_keywords:
             seeds = sorted({kw.lower() for kw in focus_keywords if kw})
@@ -274,6 +413,7 @@ class CoherenceResonator:
         source: str = "",
     ) -> HemisphericCoherence:
         text = detail_notes or ""
+        self._last_right_detail = text
         tokens = _tokenise(text)
         if focus_keywords:
             seeds = sorted({kw.lower() for kw in focus_keywords if kw})
@@ -374,6 +514,23 @@ class CoherenceResonator:
             cache_depth = float(unconscious_summary.cache_depth or 0.0)
             if cache_depth:
                 contributions["unconscious_cache"] = cache_depth
+        distortion_report: Optional[CognitiveDistortionReport] = None
+        if self.distortion_audit is not None:
+            distortion_report = self.distortion_audit.analyse(
+                question=self._last_question,
+                draft=self._last_left_text,
+                detail=self._last_right_detail,
+                final_answer=final_answer,
+            )
+            contributions["distortion_score"] = float(distortion_report.score)
+            contributions["distortion_density"] = float(distortion_report.density)
+            if distortion_report.flags:
+                notes.append(
+                    "Cognitive distortions detected: "
+                    + ", ".join(distortion_report.flags)
+                )
+            else:
+                notes.append("Distortion audit: clear")
         signal = CoherenceSignal(
             left=left,
             right=right,
@@ -385,6 +542,7 @@ class CoherenceResonator:
             unconscious=self._last_unconscious,
             linguistic_depth=unconscious_score,
             motifs=self._last_motifs,
+            distortions=distortion_report,
         )
         self._last_signal = signal
         return signal
@@ -486,6 +644,22 @@ class CoherenceResonator:
             if motif.highlights:
                 motif_block.extend(f"- note: {entry}" for entry in motif.highlights)
             segments.append("\n".join(motif_block))
+        if signal.distortions is not None:
+            report = signal.distortions
+            if report.flags:
+                flags_line = ", ".join(report.flags)
+            else:
+                flags_line = "none"
+            dist_block = [
+                "[Cognitive Distortion Audit]",
+                "- score {score:.2f} | density {density:.4f}".format(
+                    score=report.score, density=report.density
+                ),
+                f"- flags: {flags_line}",
+            ]
+            if report.notes:
+                dist_block.extend(f"- note: {note}" for note in report.notes)
+            segments.append("\n".join(dist_block))
         return f"{answer}\n\n" + "\n\n".join(segments)
 
     # ------------------------------------------------------------------
@@ -741,6 +915,8 @@ class LinguisticMotifProfile:
 
 
 __all__ = [
+    "CognitiveDistortionAudit",
+    "CognitiveDistortionReport",
     "CoherenceResonator",
     "CoherenceSignal",
     "HemisphericCoherence",

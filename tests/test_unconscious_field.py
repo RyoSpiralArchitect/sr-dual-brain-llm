@@ -1,4 +1,9 @@
-from core.unconscious_field import UnconsciousField, PipelineConfig, Prototype
+from core.unconscious_field import (
+    ArchetypeRegistry,
+    Prototype,
+    UnconsciousField,
+    PipelineConfig,
+)
 
 
 def test_unconscious_field_generates_consistent_topk():
@@ -14,6 +19,8 @@ def test_unconscious_field_generates_consistent_topk():
     assert psychoid_signal, "Psychoid signal should be included in the summary"
     assert psychoid_signal.attention_bias, "Attention bias should not be empty"
     assert len(psychoid_signal.bias_vector) >= 4
+    if summary.motifs:
+        assert any("archetype" in motif or motif for motif in summary.motifs)
 
 
 def test_unconscious_field_accepts_custom_prototypes():
@@ -24,6 +31,25 @@ def test_unconscious_field_accepts_custom_prototypes():
     field = UnconsciousField(prototypes=prototypes, config=PipelineConfig(dim=16, seed=3))
     mapping = field.analyse(question="I feel safe under the night sky", draft=None)
     assert {score.id for score in mapping.archetype_map} == set(prototypes.keys())
+    summary = field.summary(mapping)
+    assert summary.motifs is None or any("dream" in motif or "archetype_match" in motif for motif in summary.motifs)
+
+
+def test_archetype_registry_extends_keywords_and_motifs():
+    registry = ArchetypeRegistry()
+    registry.extend(
+        "dreamer",
+        keywords=["dream", "night", "symbol"],
+        motifs=["lullaby", "archetype_match_dreamer"],
+        label="Dreamer",
+    )
+    field = UnconsciousField(registry=registry, config=PipelineConfig(dim=12, seed=11))
+    mapping = field.analyse(question="The night dream calls for a lullaby", draft="")
+    summary = field.summary(mapping)
+    assert summary.top_k, "Registry-provided archetype should surface"
+    assert summary.motifs is not None and any(
+        motif for motif in summary.motifs if "dreamer" in motif
+    )
 
 
 def test_unconscious_field_incubates_and_releases_emergent_ideas():
