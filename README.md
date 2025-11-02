@@ -18,57 +18,27 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Coherence resonator + linguistic fabric** – balances hemispheric coverage/cohesion, stitches unconscious signifiers into the weave, and emits brainstem-style integration cues for the final answer.
 - **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
 - **Motif cadence analysis** – captures alliteration, motif density, and rhythmic cadence across hemispheres so a "[Linguistic Motifs]" block can surface how language form evolves beyond semantics.
+- **Architecture path narration** – final responses append an `[Architecture Path]` section summarising perception → dialogue → integration → memory stages for quick auditing.
 
 ## Architecture Overview (Braided Co-Lead Flow)
+```mermaid
+flowchart TD
+    U[User Input] --> P[Perception Layer<br/>Amygdala + Prefrontal Cortex + Schema Profiler]
+    P --> D[Inner Dialogue Loop<br/>Left/Right Brains + Corpus Callosum]
+    D --> I[Integration & Auditing<br/>Coherence Resonator + Auditor + Default Mode]
+    I --> M[Memory & Consolidation<br/>Shared Memory + Hippocampus + Unconscious Field]
+    M --> R[Final Response]
+    D -->|Braided insights| I
+    P -. affect/focus telemetry .-> TP[Perception Signals]
+    D -. inner steps .-> TI[Inner Dialogue Trace]
+    I -. architecture map .-> TA[Architecture Path Telemetry]
 ```
-                                    ┌────────────────────────┐
-                                    │        User Input      │
-                                    └────────────┬───────────┘
-                                                 │
-                          ┌──────────────────────▼──────────────────────┐
-                          │ Hemispheric Selector & Resonance Weaving    │
-                          │ (bias sensing, rotation, co-lead cadence)   │
-                          └──────────────┬──────────────┬───────────────┘
-                                         │              │
-                          ┌──────────────▼──────┐   ┌───▼───────────────┐
-                          │ Left Brain Orchestr │   │ Right Brain Muse  │
-                          │ (policy, focus,     │   │ (dreaming, motifs,│
-                          │ structural drafting)│   │ imaginative scaff.)│
-                          └──────────────┬──────┘   └────────────┬───────┘
-                                         │                      │
-                                 ┌───────▼────────────┐ ┌───────▼────────────┐
-                                 │ Braided Prelude    │ │ Shared Memory &    │
-                                 │ (right prelude +   │ │ Hippocampus        │
-                                 │ left draft fusion) │ │ (episodic + collab │
-                                 │                    │ │ telemetry atlas)   │
-                                 └──────────┬─────────┘ └────────┬───────────┘
-                                             │                    │
-                        ┌────────────────────▼────────────┐ ┌─────▼────────────┐
-                        │ Basal Ganglia & Amygdala Affect │ │ Corpus Callosum  │
-                        │ (go/inhibit, affective shaping) │ │ Transport Layer  │
-                        └──────────────┬──────────────┬───┘ │ (in-memory /     │
-                                         │              │     │ Kafka / MQTT)   │
-                                         │              └─────▼────────────┐
-                                         │                    │ enriched consult
-                                         │                    │ payloads        
-                                         │                    └────────┬────────┘
-                                         │                             │
-                             ┌───────────▼──────────────────────────┐
-                             │ Psychoid Attention + Default Mode    │
-                             │ Reflections (archetypal cues,        │
-                             │ unconscious summaries, biasing)      │
-                             └───────────┬──────────────────────────┘
-                                         │
-                                 ┌───────▼──────────────────────────┐
-                                 │ Coherence Resonator & Linguistic │
-                                 │ Brainstem (merge drafts, weave   │
-                                 │ motifs, annotate telemetry)      │
-                                 └──────────┬───────────────────────┘
-                                             │ annotated response
-                                    ┌────────▼──────────────────────┐
-                                    │      Final Response to User   │
-                                    └───────────────────────────────┘
-```
+
+The controller now emits an explicit `architecture_path` telemetry event that summarises
+how each perception, inner-dialogue, integration, and memory module participated in a
+turn. Shared memory persists this architectural trace alongside inner-dialogue steps so
+contributors can replay entire reasoning trajectories. The Mermaid source lives in
+`docs/diagrams/dual_brain_architecture.mmd` for easy editing.
 
 ## Repository Layout
 ```
@@ -99,6 +69,9 @@ Supporting assets live at the repository root:
 - `LICENSE_NOTICE.txt`
 - `docker-compose.yml`
 - `requirements.txt`
+
+## Design Playbooks
+- [Dual-Brain LLM Design Playbook](docs/dual_brain_design.md) – bridges analytical psychology, CBT, and neuroscience with the existing modules and outlines implementation backlogs.
 
 ## Prerequisites
 - Python 3.10+
