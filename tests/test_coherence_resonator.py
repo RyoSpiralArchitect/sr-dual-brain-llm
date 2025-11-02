@@ -98,7 +98,7 @@ def test_resonator_tracks_left_and_right_profiles():
     assert motifs.score() >= motifs.motif_density
 
     signal = resonator.integrate(
-        final_answer="Combined narration touches harmonics and archetypes coherently.",
+        final_answer="Combined narration touches harmonics and archetypes coherently; everyone must always align.",
         psychoid_projection={"norm": 0.91},
         unconscious_summary=summary,
     )
@@ -106,6 +106,9 @@ def test_resonator_tracks_left_and_right_profiles():
     assert signal is not None
     assert signal.right is not None
     assert signal.combined_score >= signal.left.score() * 0.5
+    assert signal.distortions is not None
+    assert "overgeneralisation" in signal.distortions.flags or signal.distortions.score >= 0.0
+    assert "distortion_flagged" in set(signal.tags())
     payload = signal.to_payload()
     assert payload["contributions"]["psychoid_norm"] == pytest.approx(0.91)
     assert signal.unconscious is not None
@@ -117,6 +120,7 @@ def test_resonator_tracks_left_and_right_profiles():
     assert "[Coherence Integration]" in annotated
     assert "[Unconscious Linguistic Fabric]" in annotated
     assert "[Linguistic Motifs]" in annotated
+    assert "[Cognitive Distortion Audit]" in annotated
     assert "coherence" in set(signal.tags())
 
 

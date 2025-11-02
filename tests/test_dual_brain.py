@@ -71,6 +71,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "[Hemisphere Semantic Tilt]" in answer
     assert "[Unconscious Linguistic Fabric]" in answer
     assert "[Linguistic Motifs]" in answer
+    assert "[Cognitive Distortion Audit]" in answer
     assert callosum.payloads, "Right brain should have been consulted"
     sent_payload = callosum.payloads[0]["payload"]
     assert sent_payload["temperature"] > 0
@@ -87,6 +88,8 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
+    assert any(evt == "schema_profile" for evt, _ in telemetry.events)
+    assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
     assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
@@ -96,6 +99,9 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert any(evt == "hippocampal_collaboration" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia" for evt, _ in telemetry.events)
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
+    assert any(evt == "schema_profile" for evt, _ in telemetry.events)
+    assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 2
     latest_trace = hippocampus.episodes[-1]
     assert latest_trace.leading in {"left", "right", "braided"}
@@ -115,9 +121,36 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "coherence_linguistic_motif" in final_tags
     assert any(tag.startswith("hemisphere_") for tag in final_tags)
     assert any(tag.startswith("hemisphere_tilt_") for tag in final_tags)
+    assert any(tag.startswith("schema_user") for tag in final_tags)
+    assert any(tag.startswith("mode_user") for tag in final_tags)
+    assert any(tag.startswith("mode_agent") for tag in final_tags)
+    assert "schema_profile" in final_tags
+    assert "distortion_audit" in final_tags
     assert "[Psychoid Field Alignment]" in answer
     assert "[Psychoid Attention Bias]" in answer
     assert "[Coherence Integration]" in answer
+    inner_events = [payload for evt, payload in telemetry.events if evt == "inner_dialogue_trace"]
+    assert inner_events, "Inner dialogue telemetry should be captured"
+    steps = inner_events[-1]["steps"]
+    assert steps, "Telemetry should expose dialogue steps"
+    assert any(step.get("phase") == "left_draft" for step in steps)
+    assert any(step.get("phase") in {"callosum_response", "consult_skipped"} for step in steps)
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events, "Architecture path telemetry should be emitted"
+    architecture_path = architecture_events[-1]["path"]
+    assert architecture_path and architecture_path[0]["stage"] == "perception"
+    assert any(stage.get("stage") == "memory" for stage in architecture_path)
+    interaction_ids = [
+        payload["qid"] for evt, payload in telemetry.events if evt == "interaction_complete"
+    ]
+    assert interaction_ids, "Interaction completion should provide a qid"
+    latest_qid = interaction_ids[-1]
+    flow_record = memory.dialogue_flow(latest_qid)
+    assert flow_record is not None
+    assert flow_record.get("architecture")
+    assert flow_record.get("architecture_count") == len(architecture_path)
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -151,6 +184,7 @@ def test_controller_falls_back_to_local_right_model():
     assert "[Linguistic Motifs]" in answer
     assert "psychoid_norm=" in answer
     assert "[Coherence Integration]" in answer
+    assert "[Cognitive Distortion Audit]" in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
@@ -159,13 +193,23 @@ def test_controller_falls_back_to_local_right_model():
     assert any("psychoid_attention" == tag for tag in final_trace.tags)
     assert any(tag.startswith("coherence") for tag in final_trace.tags)
     assert any(tag.startswith("hemisphere_") for tag in final_trace.tags)
+    assert "schema_profile" in final_trace.tags
+    assert "distortion_audit" in final_trace.tags
     assert any(payload["success"] for evt, payload in telemetry.events if evt == "interaction_complete")
     assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_routing" for evt, _ in telemetry.events)
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
+    assert any(evt == "schema_profile" for evt, _ in telemetry.events)
+    assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 1
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events, "Architecture path should be logged even on fallback"
+    fallback_path = architecture_events[-1]["path"]
+    assert any(stage.get("stage") == "inner_dialogue" for stage in fallback_path)
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
@@ -233,11 +277,20 @@ def test_right_brain_can_take_the_lead():
     assert answer.startswith("[Right Brain Lead]")
     assert "[Left Brain Integration]" in answer
     assert "Reference from RightBrain" in answer
+    assert "[Cognitive Distortion Audit]" in answer
     assert any(evt == "leading_brain" for evt, _ in telemetry.events)
+    assert any(evt == "schema_profile" for evt, _ in telemetry.events)
+    assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
     assert memory.past_qas, "The interaction should be persisted"
     flow = list(memory.dialogue_flows.values())[-1]
     assert flow["leading"] == "right"
     assert flow["follow"] == "left"
+    assert flow.get("steps"), "Dialogue flow should include step trace"
+    assert any(step.get("phase") == "callosum_response" for step in flow.get("steps", []))
+    final_tags = memory.past_qas[-1].tags
+    assert "schema_profile" in final_tags
+    assert "distortion_audit" in final_tags
     tags = memory.past_qas[-1].tags
     assert any(tag == "leading_right" for tag in tags)
 
@@ -314,3 +367,4 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
+    assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)

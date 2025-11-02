@@ -86,7 +86,14 @@ class Prototype:
     id: str
     label: str
     keywords: List[str]
+    motifs: List[str] = dataclasses.field(default_factory=list)
     notes: str = ""
+
+    def keyword_set(self) -> List[str]:
+        """Return a deduplicated list of canonical keywords + motifs."""
+
+        merged = list(dict.fromkeys([kw.lower() for kw in self.keywords + self.motifs]))
+        return merged
 
 
 @dataclass
@@ -158,7 +165,7 @@ class PsychoidArchetypeSampler:
         proto = self.prototypes.get(archetype_id)
         if not proto:
             return 0, 0
-        keywords = [kw.lower() for kw in proto.keywords]
+        keywords = proto.keyword_set()
         if not keywords:
             return 0, 0
         overlap = sum(1 for kw in keywords if kw in tokens)
@@ -480,9 +487,24 @@ DEFAULT_PROTOTYPES: Dict[str, Prototype] = {
 }
 
 
+def _tokenise(text: str) -> List[str]:
+    if not text:
+        return []
+    return [tok for tok in re.findall(r"\w+", text.lower()) if tok]
+
+
 def load_prototypes(path: Optional[str]) -> Dict[str, Prototype]:
     if not path:
-        return dict(DEFAULT_PROTOTYPES)
+        return {
+            pid: Prototype(
+                id=proto.id,
+                label=proto.label,
+                keywords=list(proto.keywords),
+                motifs=list(proto.motifs),
+                notes=proto.notes,
+            )
+            for pid, proto in DEFAULT_PROTOTYPES.items()
+        }
     if not os.path.exists(path):
         raise FileNotFoundError(f"Prototype file not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
@@ -499,15 +521,123 @@ def load_prototypes(path: Optional[str]) -> Dict[str, Prototype]:
             id=pid,
             label=rec.get("label", pid),
             keywords=list(rec.get("keywords", [])),
+            motifs=list(rec.get("motifs", [])),
             notes=rec.get("notes", ""),
         )
     return out
 
 
 def save_prototypes(path: str, protos: Dict[str, Prototype]) -> None:
-    arr = [dataclasses.asdict(p) for p in protos.values()]
+    arr = []
+    for proto in protos.values():
+        record = dataclasses.asdict(proto)
+        # Maintain backwards compatibility for callers that expect keywords only.
+        record.setdefault("motifs", list(proto.motifs))
+        arr.append(record)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(arr, f, ensure_ascii=False, indent=2)
+
+
+class ArchetypeRegistry:
+    """Registry that manages archetype prototypes and motif metadata."""
+
+    def __init__(
+        self,
+        prototypes: Optional[Dict[str, Prototype]] = None,
+    ) -> None:
+        self._prototypes: Dict[str, Prototype] = {}
+        if prototypes is None:
+            prototypes = load_prototypes(None)
+        self._ingest(prototypes)
+        self._rebuild_indexes()
+
+    @classmethod
+    def from_path(cls, path: str) -> "ArchetypeRegistry":
+        return cls(load_prototypes(path))
+
+    def _ingest(self, prototypes: Dict[str, Prototype]) -> None:
+        for proto in prototypes.values():
+            self.register(proto)
+
+    def _rebuild_indexes(self) -> None:
+        self._motif_index: Dict[str, Tuple[str, ...]] = {}
+        for pid, proto in self._prototypes.items():
+            keywords = proto.keyword_set()
+            if keywords:
+                self._motif_index[pid] = tuple(sorted(dict.fromkeys(keywords)))
+
+    @property
+    def prototypes(self) -> Dict[str, Prototype]:
+        return self._prototypes
+
+    def register(self, prototype: Prototype) -> Prototype:
+        clone = Prototype(
+            id=prototype.id,
+            label=prototype.label,
+            keywords=list(prototype.keywords),
+            motifs=list(prototype.motifs),
+            notes=prototype.notes,
+        )
+        self._prototypes[clone.id] = clone
+        self._rebuild_indexes()
+        return clone
+
+    def extend(
+        self,
+        archetype_id: str,
+        *,
+        keywords: Iterable[str] | None = None,
+        motifs: Iterable[str] | None = None,
+        label: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> Prototype:
+        proto = self._prototypes.get(archetype_id)
+        if proto is None:
+            proto = Prototype(
+                id=archetype_id,
+                label=label or archetype_id,
+                keywords=list(keywords or []),
+                motifs=list(motifs or []),
+                notes=notes or "",
+            )
+        else:
+            proto = Prototype(
+                id=proto.id,
+                label=label or proto.label,
+                keywords=list(proto.keywords),
+                motifs=list(proto.motifs),
+                notes=notes if notes is not None else proto.notes,
+            )
+            if keywords:
+                proto.keywords = list(
+                    dict.fromkeys(list(proto.keywords) + [kw for kw in keywords if kw])
+                )
+            if motifs:
+                proto.motifs = list(
+                    dict.fromkeys(list(proto.motifs) + [mt for mt in motifs if mt])
+                )
+        self._prototypes[proto.id] = proto
+        self._rebuild_indexes()
+        return proto
+
+    def resolve(self, archetype_id: str) -> Optional[Prototype]:
+        return self._prototypes.get(archetype_id)
+
+    def motif_tags(self, tokens: Sequence[str]) -> Tuple[str, ...]:
+        token_set = {tok.lower() for tok in tokens if tok}
+        tags: List[str] = []
+        for archetype_id, keywords in self._motif_index.items():
+            overlap = len(token_set & set(keywords))
+            if overlap:
+                tags.append(f"archetype_match_{archetype_id}")
+                tags.append(f"archetype_overlap_{archetype_id}_{overlap}")
+        return tuple(sorted(set(tags)))
+
+    def to_payload(self) -> Dict[str, object]:
+        return {
+            "count": len(self._prototypes),
+            "archetypes": [dataclasses.asdict(proto) for proto in self._prototypes.values()],
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -534,7 +664,9 @@ class Archetopos:
         self.cfg = cfg
         self.embedder = embedder or HashEmbedder(dim=cfg.dim, seed=cfg.seed)
         self._proto_ids: List[str] = list(prototypes.keys())
-        proto_texts = [" ".join(prototypes[pid].keywords) for pid in self._proto_ids]
+        proto_texts = [
+            " ".join(prototypes[pid].keyword_set()) for pid in self._proto_ids
+        ]
         self._proto_vecs = self.embedder.encode(proto_texts)
 
     def map_events(self, texts: Sequence[str]) -> List[EventMapping]:
@@ -901,10 +1033,17 @@ class UnconsciousField:
         self,
         *,
         prototypes: Optional[Dict[str, Prototype]] = None,
+        registry: Optional[ArchetypeRegistry] = None,
         config: Optional[PipelineConfig] = None,
         embedder: Optional[TextEmbedder] = None,
     ) -> None:
-        self.prototypes = prototypes or load_prototypes(None)
+        if registry is None:
+            registry = ArchetypeRegistry(prototypes)
+        elif prototypes:
+            for proto in prototypes.values():
+                registry.register(proto)
+        self.registry = registry
+        self.prototypes = self.registry.prototypes
         self.config = config or PipelineConfig()
         self.pipeline = Archetopos(self.prototypes, self.config, embedder=embedder)
         self._seed_cache: List[LatentSeed] = []
@@ -1059,6 +1198,15 @@ class UnconsciousField:
         }
 
     def summary(self, mapping: EventMapping, top_k: int = 3) -> UnconsciousSummaryModel:
+        motifs: List[str] = []
+        for archetype_id in mapping.top_k[:top_k]:
+            proto = self.registry.resolve(archetype_id)
+            if proto and proto.motifs:
+                motifs.extend(proto.motifs[:3])
+        if mapping.text:
+            motif_tags = self.registry.motif_tags(_tokenise(mapping.text))
+            motifs.extend(motif_tags)
+        deduped_motifs = list(dict.fromkeys([m for m in motifs if m]))
         return UnconsciousSummaryModel(
             top_k=list(mapping.top_k[:top_k]),
             geometry=GeometryModel(**dataclasses.asdict(mapping.geometry)),
@@ -1074,11 +1222,13 @@ class UnconsciousField:
             stress_released=self._last_stress_release,
             cache_depth=self._last_cache_depth,
             psychoid_signal=self._last_psychoid_signal,
+            motifs=deduped_motifs or None,
         )
 
 
 __all__ = [
     "Archetopos",
+    "ArchetypeRegistry",
     "ArchetypeScore",
     "DEMO_EVENTS",
     "EmergentIdeaModel",
