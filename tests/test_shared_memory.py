@@ -29,3 +29,27 @@ def test_retrieve_related_uses_similarity_and_tags():
     memory.store({"Q": "Detail thermodynamic entropy", "A": "S = k ln W."})
     memory.store({"Q": "Summarise entropy increase", "A": "Second law"})
     assert len(memory.past_qas) <= memory.max_items
+
+
+def test_record_dialogue_flow_tracks_architecture():
+    memory = SharedMemory()
+    steps = [{"phase": "left_draft", "role": "left"}]
+    architecture = [
+        {"stage": "perception", "modules": ["Amygdala"], "signals": {"novelty": 0.2}},
+        {"stage": "inner_dialogue", "modules": ["LeftBrainModel"], "step_count": 1},
+    ]
+
+    memory.record_dialogue_flow(
+        "qid-1",
+        leading_brain="left",
+        follow_brain="right",
+        preview="hello",
+        steps=steps,
+        architecture=architecture,
+    )
+
+    record = memory.dialogue_flow("qid-1")
+    assert record is not None
+    assert record["step_count"] == 1
+    assert record["architecture_count"] == 2
+    assert record["architecture"][0]["stage"] == "perception"

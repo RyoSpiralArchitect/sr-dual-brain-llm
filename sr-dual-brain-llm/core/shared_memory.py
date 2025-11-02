@@ -160,6 +160,7 @@ class SharedMemory:
         follow_brain: str | None = None,
         preview: str | None = None,
         steps: Iterable[Dict[str, Any]] | None = None,
+        architecture: Iterable[Dict[str, Any]] | None = None,
     ) -> None:
         """Persist metadata about which hemisphere initiated the exchange."""
 
@@ -172,6 +173,10 @@ class SharedMemory:
             payload = [dict(step) for step in steps]
             record["steps"] = payload
             record["step_count"] = len(payload)
+        if architecture:
+            arch_payload = [dict(stage) for stage in architecture]
+            record["architecture"] = arch_payload
+            record["architecture_count"] = len(arch_payload)
         self.dialogue_flows[qid] = record
         self.kv["last_leading_brain"] = leading_brain
 

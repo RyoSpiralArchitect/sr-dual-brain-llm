@@ -7,7 +7,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
@@ -384,6 +384,122 @@ class DualBrainController:
             focus_bonus=focus_bonus,
             token_count=signal.token_count,
         )
+
+    def _compose_architecture_path(
+        self,
+        *,
+        focus: FocusSummary | None,
+        focus_metric: float,
+        schema_profile: SchemaProfile | None,
+        affect: Dict[str, float],
+        novelty: float,
+        hemisphere_signal: HemisphericSignal,
+        collaboration_profile: CollaborationProfile,
+        decision: DecisionOutcome,
+        leading: str,
+        collaborative: bool,
+        steps: Sequence[Dict[str, Any]],
+        coherence_signal: Optional[CoherenceSignal],
+        distortion_payload: Optional[Dict[str, Any]],
+        tags: Sequence[str],
+        hippocampal_rollup: Optional[Dict[str, float]],
+        success: bool,
+    ) -> List[Dict[str, Any]]:
+        """Summarise the active architecture stages for telemetry and memory."""
+
+        path: List[Dict[str, Any]] = []
+
+        perception_modules = ["Amygdala"] if self.amygdala else []
+        if self.prefrontal_cortex is not None:
+            perception_modules.append("PrefrontalCortex")
+            perception_modules.append("SchemaProfiler")
+        perception_modules.append("SharedMemory")
+        if self.hippocampus is not None:
+            perception_modules.append("TemporalHippocampalIndexing")
+
+        perception_entry: Dict[str, Any] = {
+            "stage": "perception",
+            "modules": perception_modules,
+            "signals": {
+                "affect": {
+                    "valence": float(affect.get("valence", 0.0)),
+                    "arousal": float(affect.get("arousal", 0.0)),
+                    "risk": float(affect.get("risk", 0.0)),
+                    "novelty": float(novelty),
+                },
+                "focus_metric": float(focus_metric),
+                "hemisphere": hemisphere_signal.to_payload(),
+                "collaboration": collaboration_profile.to_payload(),
+            },
+        }
+        if focus is not None:
+            perception_entry["focus"] = focus.to_dict()
+        if schema_profile is not None:
+            perception_entry["schema_profile"] = schema_profile.to_dict()
+        path.append(perception_entry)
+
+        dialogue_modules = ["LeftBrainModel", "ReasoningDial", "BasalGanglia"]
+        if self.right_model is not None:
+            dialogue_modules.append("RightBrainModel")
+        dialogue_modules.append("CorpusCallosum")
+        if self.unconscious_field is not None:
+            dialogue_modules.append("UnconsciousField")
+
+        phases = sorted(
+            {
+                phase
+                for phase in (
+                    step.get("phase") for step in steps if isinstance(step, dict)
+                )
+                if phase
+            }
+        )
+        dialogue_entry: Dict[str, Any] = {
+            "stage": "inner_dialogue",
+            "modules": dialogue_modules,
+            "leading": leading,
+            "collaborative": collaborative,
+            "policy_action": int(decision.action),
+            "temperature": float(decision.temperature),
+            "slot_ms": int(decision.slot_ms),
+            "step_count": len(steps),
+            "phases": phases,
+        }
+        path.append(dialogue_entry)
+
+        integration_modules = ["CoherenceResonator", "Auditor"]
+        if self.default_mode_network is not None:
+            integration_modules.append("DefaultModeNetwork")
+        if self.psychoid_adapter is not None:
+            integration_modules.append("PsychoidAttentionAdapter")
+
+        integration_entry: Dict[str, Any] = {
+            "stage": "integration",
+            "modules": integration_modules,
+            "success": bool(success),
+        }
+        if coherence_signal is not None:
+            integration_entry["coherence"] = coherence_signal.to_payload()
+        if distortion_payload is not None:
+            integration_entry["distortion"] = distortion_payload
+        path.append(integration_entry)
+
+        memory_modules = ["SharedMemory"]
+        if self.hippocampus is not None:
+            memory_modules.append("TemporalHippocampalIndexing")
+        if self.unconscious_field is not None:
+            memory_modules.append("UnconsciousField")
+
+        memory_entry: Dict[str, Any] = {
+            "stage": "memory",
+            "modules": memory_modules,
+            "tags": list(tags),
+        }
+        if hippocampal_rollup is not None:
+            memory_entry["hippocampal_rollup"] = hippocampal_rollup
+        path.append(memory_entry)
+
+        return path
 
     def _evaluate_semantic_tilt(
         self,
@@ -1437,13 +1553,6 @@ class DualBrainController:
             follow_brain = "left"
         elif detail_notes or decision.action != 0:
             follow_brain = "right"
-        self.memory.record_dialogue_flow(
-            decision.qid,
-            leading_brain=leading,
-            follow_brain=follow_brain,
-            preview=_truncate_text(right_lead_notes or detail_notes),
-            steps=steps_payload,
-        )
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
         hippocampal_rollup: Optional[Dict[str, float]] = None
@@ -1477,6 +1586,42 @@ class DualBrainController:
             )
             episodic_total = len(self.hippocampus.episodes)
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
+
+        architecture_path = self._compose_architecture_path(
+            focus=focus,
+            focus_metric=focus_metric,
+            schema_profile=schema_profile,
+            affect=affect,
+            novelty=novelty,
+            hemisphere_signal=hemisphere_signal,
+            collaboration_profile=collaboration_profile,
+            decision=decision,
+            leading=leading,
+            collaborative=collaborative_lead,
+            steps=steps_payload,
+            coherence_signal=coherence_signal,
+            distortion_payload=distortion_payload,
+            tags=sorted(tags),
+            hippocampal_rollup=hippocampal_rollup,
+            success=success,
+        )
+        if architecture_path:
+            decision.state["architecture_path"] = architecture_path
+            self.telemetry.log(
+                "architecture_path",
+                qid=decision.qid,
+                path=architecture_path,
+            )
+        if self.hippocampus is not None and self.hippocampus.episodes and architecture_path:
+            self.hippocampus.episodes[-1].annotations["architecture_path"] = architecture_path
+        self.memory.record_dialogue_flow(
+            decision.qid,
+            leading_brain=leading,
+            follow_brain=follow_brain,
+            preview=_truncate_text(right_lead_notes or detail_notes),
+            steps=steps_payload,
+            architecture=architecture_path,
+        )
         self.telemetry.log(
             "interaction_complete",
             qid=decision.qid,

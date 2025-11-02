@@ -135,6 +135,22 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert steps, "Telemetry should expose dialogue steps"
     assert any(step.get("phase") == "left_draft" for step in steps)
     assert any(step.get("phase") in {"callosum_response", "consult_skipped"} for step in steps)
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events, "Architecture path telemetry should be emitted"
+    architecture_path = architecture_events[-1]["path"]
+    assert architecture_path and architecture_path[0]["stage"] == "perception"
+    assert any(stage.get("stage") == "memory" for stage in architecture_path)
+    interaction_ids = [
+        payload["qid"] for evt, payload in telemetry.events if evt == "interaction_complete"
+    ]
+    assert interaction_ids, "Interaction completion should provide a qid"
+    latest_qid = interaction_ids[-1]
+    flow_record = memory.dialogue_flow(latest_qid)
+    assert flow_record is not None
+    assert flow_record.get("architecture")
+    assert flow_record.get("architecture_count") == len(architecture_path)
 
 
 def test_controller_falls_back_to_local_right_model():
@@ -188,6 +204,12 @@ def test_controller_falls_back_to_local_right_model():
     assert any(evt == "schema_profile" for evt, _ in telemetry.events)
     assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
     assert len(hippocampus.episodes) >= 1
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events, "Architecture path should be logged even on fallback"
+    fallback_path = architecture_events[-1]["path"]
+    assert any(stage.get("stage") == "inner_dialogue" for stage in fallback_path)
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
