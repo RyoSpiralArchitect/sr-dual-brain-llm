@@ -100,6 +100,9 @@ Supporting assets live at the repository root:
 - `docker-compose.yml`
 - `requirements.txt`
 
+## Design Playbooks
+- [Dual-Brain LLM Design Playbook](docs/dual_brain_design.md) – bridges analytical psychology, CBT, and neuroscience with the existing modules and outlines implementation backlogs.
+
 ## Prerequisites
 - Python 3.10+
 - Optional: Docker (for Kafka/Mosquitto brokers)

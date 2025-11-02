@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
-from .prefrontal_cortex import PrefrontalCortex, FocusSummary
+from .prefrontal_cortex import PrefrontalCortex, FocusSummary, SchemaProfile
 from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
@@ -520,6 +520,8 @@ class DualBrainController:
         collaboration_profile = self._compute_collaboration_profile(
             hemisphere_signal, focus
         )
+        schema_profile: Optional[SchemaProfile] = None
+        distortion_payload: Optional[Dict[str, object]] = None
         auto_selected_leading = False
         collaborative_lead = False
         selection_reason = "explicit_request"
@@ -1014,6 +1016,10 @@ class DualBrainController:
                 coherence_tags = set(coherence_signal.tags())
                 tags.update(coherence_tags)
                 decision.state["coherence_tags"] = list(coherence_tags)
+                if coherence_signal.distortions is not None:
+                    distortion_payload = coherence_signal.distortions.to_payload()
+                else:
+                    distortion_payload = None
 
         audit_result = self.auditor.check(final_answer)
         if not audit_result.get("ok", True):
@@ -1199,6 +1205,31 @@ class DualBrainController:
                 coherence_tags = set(coherence_signal.tags())
                 tags.update(coherence_tags)
                 decision.state["coherence_tags"] = list(coherence_tags)
+        if distortion_payload is not None:
+            self.telemetry.log(
+                "cognitive_distortion_audit",
+                qid=decision.qid,
+                report=distortion_payload,
+            )
+        if self.prefrontal_cortex is not None and schema_profile is None:
+            try:
+                schema_profile = self.prefrontal_cortex.profile_turn(
+                    question=question,
+                    answer=final_answer,
+                    focus=focus,
+                    affect=affect,
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                schema_profile = None
+        if schema_profile is not None:
+            schema_payload = schema_profile.to_dict()
+            decision.state["schema_profile"] = schema_payload
+            self.telemetry.log(
+                "schema_profile",
+                qid=decision.qid,
+                profile=schema_payload,
+            )
+            tags.update(schema_profile.tags())
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
@@ -1234,6 +1265,16 @@ class DualBrainController:
                     "hemisphere_bias": hemisphere_bias,
                     "collaborative": collaborative_lead,
                     "leading_style": leading_style,
+                    **(
+                        {"schema_profile": schema_profile.to_dict()}
+                        if schema_profile is not None
+                        else {}
+                    ),
+                    **(
+                        {"distortion_report": distortion_payload}
+                        if distortion_payload is not None
+                        else {}
+                    ),
                 },
             )
             episodic_total = len(self.hippocampus.episodes)
