@@ -6,12 +6,12 @@ import asyncio
 import re
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
-from .prefrontal_cortex import PrefrontalCortex, FocusSummary
+from .prefrontal_cortex import PrefrontalCortex, FocusSummary, SchemaProfile
 from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
@@ -114,6 +114,15 @@ def _format_section(title: str, lines: List[str]) -> str:
     return f"[{title}]"
 
 
+def _truncate_text(text: Optional[str], limit: int = 160) -> str:
+    if not text:
+        return ""
+    condensed = " ".join(text.split())
+    if len(condensed) <= limit:
+        return condensed
+    return condensed[: max(0, limit - 3)] + "..."
+
+
 @dataclass
 class DecisionOutcome:
     """Details about a single orchestration decision."""
@@ -167,6 +176,29 @@ class CollaborationProfile:
             "focus_bonus": float(self.focus_bonus),
             "token_count": float(self.token_count),
         }
+        
+
+@dataclass
+class InnerDialogueStep:
+    """Single step captured during an inner dialogue exchange."""
+
+    phase: str
+    role: str
+    content: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: float = field(default_factory=lambda: time.time())
+
+    def to_payload(self) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "phase": self.phase,
+            "role": self.role,
+            "ts": float(self.timestamp),
+        }
+        if self.content:
+            payload["content"] = self.content
+        if self.metadata:
+            payload["meta"] = dict(self.metadata)
+        return payload
 
 
 class DualBrainController:
@@ -520,6 +552,8 @@ class DualBrainController:
         collaboration_profile = self._compute_collaboration_profile(
             hemisphere_signal, focus
         )
+        schema_profile: Optional[SchemaProfile] = None
+        distortion_payload: Optional[Dict[str, object]] = None
         auto_selected_leading = False
         collaborative_lead = False
         selection_reason = "explicit_request"
@@ -570,6 +604,7 @@ class DualBrainController:
             len(self.hippocampus.episodes) if self.hippocampus is not None else 0
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
+        inner_steps: List[InnerDialogueStep] = []
         right_lead_notes: Optional[str] = None
         if leading == "right" or collaborative_lead:
             try:
@@ -579,6 +614,24 @@ class DualBrainController:
                 )
             except Exception:  # pragma: no cover - defensive guard
                 right_lead_notes = None
+            preview_meta = {
+                "requested": True,
+                "collaborative": collaborative_lead,
+                "leading_mode": leading,
+            }
+            if right_lead_notes:
+                preview_meta["available"] = True
+                preview_meta["length"] = len(right_lead_notes)
+            else:
+                preview_meta["available"] = False
+            inner_steps.append(
+                InnerDialogueStep(
+                    phase="right_preview",
+                    role="right",
+                    content=_truncate_text(right_lead_notes),
+                    metadata=preview_meta,
+                )
+            )
         left_lead_preview: Optional[str] = None
         draft = await self.left_model.generate_answer(question, context)
         if collaborative_lead:
@@ -608,6 +661,27 @@ class DualBrainController:
             consult_bias = min(
                 0.35, consult_bias + (0.15 + 0.35 * hemisphere_bias)
             )
+        inner_steps.append(
+            InnerDialogueStep(
+                phase="left_draft",
+                role="left",
+                content=_truncate_text(draft),
+                metadata={
+                    "confidence": round(confidence, 4),
+                    "novelty": round(novelty, 4),
+                    "consult_bias": round(consult_bias, 4),
+                    "valence": affect["valence"],
+                    "arousal": affect["arousal"],
+                    "hemisphere_mode": hemisphere_mode,
+                    "focus_metric": round(focus_metric, 4),
+                    **(
+                        {"left_coherence": round(left_coherence.score(), 4)}
+                        if left_coherence is not None
+                        else {}
+                    ),
+                },
+            )
+        )
         force_right_lead = leading == "right"
         decision = self.decide(
             question,
@@ -792,9 +866,22 @@ class DualBrainController:
         response_source = "lead" if right_lead_notes else ""
         success = False
         latency_ms = 0.0
+        call_error = False
+        call_confidence = 0.0
+        fallback_confidence = 0.0
+        fallback_error: Optional[str] = None
         start = time.perf_counter()
         try:
             if decision.action == 0:
+                inner_steps.append(
+                    InnerDialogueStep(
+                        phase="consult_skipped",
+                        role="left",
+                        content="Policy retained left-brain draft",
+                        metadata={"reason": "policy_action_0"},
+                    )
+                )
+                response_source = response_source or "left_only"
                 success = True
             else:
                 payload = {
@@ -838,6 +925,26 @@ class DualBrainController:
                     ]
                 timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
+                request_meta = {
+                    "temperature": round(decision.temperature, 3),
+                    "budget": payload["budget"],
+                    "slot_ms": decision.slot_ms,
+                    "timeout_ms": timeout_ms,
+                    "hemisphere_mode": hemisphere_mode,
+                    "hemisphere_bias": round(hemisphere_bias, 4),
+                    "focus_keywords": len(payload.get("focus_keywords", [])),
+                    "unconscious_hints": len(payload.get("unconscious_hints", [])),
+                    "psychoid_bias": bool(payload.get("psychoid_attention_bias")),
+                    "default_mode_refs": len(payload.get("default_mode_reflections", [])),
+                }
+                inner_steps.append(
+                    InnerDialogueStep(
+                        phase="callosum_request",
+                        role="coordinator",
+                        content=_truncate_text(payload.get("draft_sum", ""), 120),
+                        metadata=request_meta,
+                    )
+                )
                 try:
                     self.callosum.slot_ms = decision.slot_ms
                     response = await self.callosum.ask_detail(payload, timeout_ms=timeout_ms)
@@ -845,8 +952,12 @@ class DualBrainController:
                     self.callosum.slot_ms = original_slot
                 response_source = "callosum"
                 detail_notes = response.get("notes_sum")
-                if response.get("error") or not detail_notes:
+                call_error = bool(response.get("error"))
+                call_confidence = float(response.get("confidence_r", 0.0) or 0.0)
+                fallback_used = False
+                if call_error or not detail_notes:
                     response_source = "right_model_fallback"
+                    fallback_used = True
                     try:
                         fallback = await self.right_model.deepen(
                             decision.qid,
@@ -863,13 +974,17 @@ class DualBrainController:
                             ),
                         )
                     except Exception as exc:  # pragma: no cover - defensive guard
+                        fallback_error = str(exc)
                         final_answer = draft + f"\n(Right brain error: {exc})"
                     else:
                         detail_notes = fallback.get("notes_sum")
-                        decision.state["right_conf"] = fallback.get("confidence_r", 0.0)
+                        fallback_confidence = float(
+                            fallback.get("confidence_r", 0.0) or 0.0
+                        )
+                        decision.state["right_conf"] = fallback_confidence
                         success = True
                 else:
-                    decision.state["right_conf"] = response.get("confidence_r", 0.0)
+                    decision.state["right_conf"] = call_confidence
                     success = True
 
                 if detail_notes:
@@ -892,8 +1007,42 @@ class DualBrainController:
                             source=detail_origin,
                         )
                         decision.state["coherence_right"] = right_coherence.to_payload()
+                response_meta: Dict[str, Any] = {
+                    "call_error": call_error,
+                    "call_confidence": round(call_confidence, 4),
+                    "fallback_used": fallback_used,
+                    "fallback_confidence": round(fallback_confidence, 4),
+                    "has_detail": bool(detail_notes),
+                    "final_source": response_source,
+                }
+                if fallback_error:
+                    response_meta["fallback_error"] = fallback_error
+                if detail_notes:
+                    response_meta["detail_length"] = len(detail_notes)
+                if right_lead_notes and not detail_notes:
+                    response_meta["used_preview"] = True
+                if right_coherence is not None:
+                    response_meta["right_coherence"] = round(
+                        right_coherence.score(), 4
+                    )
+                inner_steps.append(
+                    InnerDialogueStep(
+                        phase="callosum_response",
+                        role="right",
+                        content=_truncate_text(detail_notes or right_lead_notes),
+                        metadata=response_meta,
+                    )
+                )
         except asyncio.TimeoutError:
             final_answer = draft + "\n(Right brain timeout: continuing with draft)"
+            inner_steps.append(
+                InnerDialogueStep(
+                    phase="callosum_timeout",
+                    role="coordinator",
+                    content="Right brain consult timed out",
+                    metadata={"timeout_ms": timeout_ms, "slot_ms": decision.slot_ms},
+                )
+            )
         finally:
             latency_ms = (time.perf_counter() - start) * 1000.0
             self.orchestrator.clear(decision.qid)
@@ -1014,6 +1163,36 @@ class DualBrainController:
                 coherence_tags = set(coherence_signal.tags())
                 tags.update(coherence_tags)
                 decision.state["coherence_tags"] = list(coherence_tags)
+                if coherence_signal.distortions is not None:
+                    distortion_payload = coherence_signal.distortions.to_payload()
+                else:
+                    distortion_payload = None
+
+        inner_steps.append(
+            InnerDialogueStep(
+                phase="integration",
+                role="integrator",
+                content=_truncate_text(final_answer),
+                metadata={
+                    "leading": leading,
+                    "collaborative": collaborative_lead,
+                    "response_source": response_source or "left_only",
+                    "success": success,
+                    "latency_ms": round(latency_ms, 3),
+                    "action": decision.action,
+                    **(
+                        {"coherence": round(coherence_signal.combined_score, 4)}
+                        if coherence_signal is not None
+                        else {}
+                    ),
+                    **(
+                        {"right_coherence": round(right_coherence.score(), 4)}
+                        if right_coherence is not None
+                        else {}
+                    ),
+                },
+            )
+        )
 
         audit_result = self.auditor.check(final_answer)
         if not audit_result.get("ok", True):
@@ -1199,10 +1378,57 @@ class DualBrainController:
                 coherence_tags = set(coherence_signal.tags())
                 tags.update(coherence_tags)
                 decision.state["coherence_tags"] = list(coherence_tags)
+        if distortion_payload is not None:
+            self.telemetry.log(
+                "cognitive_distortion_audit",
+                qid=decision.qid,
+                report=distortion_payload,
+            )
+        if self.prefrontal_cortex is not None and schema_profile is None:
+            try:
+                schema_profile = self.prefrontal_cortex.profile_turn(
+                    question=question,
+                    answer=final_answer,
+                    focus=focus,
+                    affect=affect,
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                schema_profile = None
+        if schema_profile is not None:
+            schema_payload = schema_profile.to_dict()
+            decision.state["schema_profile"] = schema_payload
+            self.telemetry.log(
+                "schema_profile",
+                qid=decision.qid,
+                profile=schema_payload,
+            )
+            tags.update(schema_profile.tags())
         if focus is not None and self.prefrontal_cortex is not None:
             tags.update(self.prefrontal_cortex.tags(focus))
         if basal_signal is not None:
             tags.update(self.basal_ganglia.tags(basal_signal))
+
+        if inner_steps:
+            inner_steps[-1].content = _truncate_text(final_answer)
+            inner_steps[-1].metadata.update(
+                {
+                    "finalised": True,
+                    "reward": round(reward, 3),
+                    "tag_count": len(tags),
+                }
+            )
+        steps_payload = [step.to_payload() for step in inner_steps]
+        decision.state["inner_dialogue_trace"] = steps_payload
+        self.telemetry.log(
+            "inner_dialogue_trace",
+            qid=decision.qid,
+            steps=steps_payload,
+            leading=leading,
+            collaborative=collaborative_lead,
+            action=decision.action,
+        )
+        tags.add("inner_dialogue_trace")
+        tags.add(f"inner_steps_{len(steps_payload)}")
 
         follow_brain: Optional[str] = None
         if collaborative_lead:
@@ -1215,7 +1441,8 @@ class DualBrainController:
             decision.qid,
             leading_brain=leading,
             follow_brain=follow_brain,
-            preview=right_lead_notes or detail_notes,
+            preview=_truncate_text(right_lead_notes or detail_notes),
+            steps=steps_payload,
         )
         self.memory.store({"Q": question, "A": final_answer}, tags=tags)
         episodic_total = 0
@@ -1234,6 +1461,18 @@ class DualBrainController:
                     "hemisphere_bias": hemisphere_bias,
                     "collaborative": collaborative_lead,
                     "leading_style": leading_style,
+                    "inner_dialogue_trace": steps_payload,
+                    "inner_dialogue_steps": len(steps_payload),
+                    **(
+                        {"schema_profile": schema_profile.to_dict()}
+                        if schema_profile is not None
+                        else {}
+                    ),
+                    **(
+                        {"distortion_report": distortion_payload}
+                        if distortion_payload is not None
+                        else {}
+                    ),
                 },
             )
             episodic_total = len(self.hippocampus.episodes)

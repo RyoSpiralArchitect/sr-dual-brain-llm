@@ -159,14 +159,20 @@ class SharedMemory:
         leading_brain: str,
         follow_brain: str | None = None,
         preview: str | None = None,
+        steps: Iterable[Dict[str, Any]] | None = None,
     ) -> None:
         """Persist metadata about which hemisphere initiated the exchange."""
 
-        self.dialogue_flows[qid] = {
+        record: Dict[str, Any] = {
             "leading": leading_brain,
             "follow": follow_brain,
             "preview": preview,
         }
+        if steps:
+            payload = [dict(step) for step in steps]
+            record["steps"] = payload
+            record["step_count"] = len(payload)
+        self.dialogue_flows[qid] = record
         self.kv["last_leading_brain"] = leading_brain
 
     def dialogue_flow(self, qid: str) -> Dict[str, Any] | None:
