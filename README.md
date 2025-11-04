@@ -6,6 +6,7 @@ The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative lang
 - **Dual-agent workflow** – the left brain triages requests and only escalates to the right brain when a domain-specific deep dive is warranted.
 - **Adaptive co-leading policy** – the controller senses hemispheric bias, rotates leadership when balanced, and now braids right-brain preludes with left-brain drafts when signals are in equilibrium.
 - **Collaboration resonance gauge** – a hemisphere signal + collaboration profile quantify left/right cue density, balance, and focus lift so braided replies and telemetry expose *why* the duet co-leads.
+- **Neural impulse simulation** – biologically faithful action potential dynamics model neural activity during processing with realistic membrane potentials, refractory periods, synaptic transmission, and neurotransmitter modulation.
 - **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
 - **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
 - **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags, the hippocampus now archives hemispheric lead + collaboration strength, and the controller emits rollups for analytics.
@@ -49,6 +50,7 @@ contributors can replay entire reasoning trajectories. The Mermaid source lives 
     │   ├── callosum_kafka.py       # Kafka-based transport skeleton
     │   ├── callosum_mqtt.py        # MQTT-based transport skeleton
     │   ├── orchestrator.py         # Left-brain coordinator
+    │   ├── neural_impulse.py       # Biological action potential dynamics
     │   ├── prefrontal_cortex.py    # Executive-focus heuristics and gating
     │   ├── basal_ganglia.py        # Striatal go/no-go heuristics for consult control
     │   ├── default_mode_network.py # Resting-state reflections from unconscious summaries
@@ -69,6 +71,42 @@ Supporting assets live at the repository root:
 - `LICENSE_NOTICE.txt`
 - `docker-compose.yml`
 - `requirements.txt`
+
+## Neural Impulse Mechanism
+
+The system now includes biologically faithful neural impulse simulation that models actual brain activity during processing:
+
+### Key Biological Features
+- **Action Potentials**: All-or-nothing electrical signals (~100mV amplitude, ~1ms duration)
+- **Membrane Dynamics**: Realistic resting potential (-70mV) and threshold (-55mV)
+- **Refractory Periods**: Absolute (1ms) and relative (3ms) refractory periods prevent immediate re-firing
+- **Temporal & Spatial Summation**: Multiple synaptic inputs integrate over time to influence firing
+- **Synaptic Transmission**: Chemical neurotransmitter release with realistic delays (~0.5ms)
+- **Neurotransmitter Types**:
+  - **Glutamate** (excitatory) - main excitatory neurotransmitter
+  - **GABA** (inhibitory) - main inhibitory neurotransmitter  
+  - **Dopamine** (modulatory) - reward and motivation signaling
+  - **Acetylcholine** (modulatory) - attention and learning
+  - **Serotonin** (modulatory) - mood and arousal regulation
+- **Hebbian Plasticity**: Synapses strengthen when neurons fire together
+
+### Neural Network Architecture
+The system creates a dual-hemisphere neural network:
+- **Left Hemisphere Pathway**: Sequential processing neurons (analytical)
+- **Right Hemisphere Pathway**: Parallel processing neurons (holistic)
+- **Basal Ganglia Modulator**: Dopaminergic neuron for action selection
+- **Amygdala Modulator**: GABAergic neuron for risk-based inhibition
+- **Prefrontal Modulator**: Cholinergic neuron for attention gating
+
+### Neural Activity in Processing
+During each processing turn, the system:
+1. Simulates neural activity in the active hemisphere
+2. Modulates firing based on affective state, novelty, and focus
+3. Tracks action potentials and neurotransmitter release
+4. Reports network activity metrics (firing rates, membrane potentials)
+5. Includes neural activity summary in final responses
+
+The neural activity provides a biologically grounded substrate that mirrors how real brains process information through electrical and chemical signals.
 
 ## Design Playbooks
 - [Dual-Brain LLM Design Playbook](docs/dual_brain_design.md) – bridges analytical psychology, CBT, and neuroscience with the existing modules and outlines implementation backlogs.

@@ -21,6 +21,11 @@ from .coherence_resonator import (
     HemisphericCoherence,
 )
 from .schema import PsychoidSignalModel, UnconsciousSummaryModel
+from .neural_impulse import (
+    NeuralIntegrator,
+    Neuron,
+    NeurotransmitterType,
+)
 
 
 _RIGHT_HEMISPHERE_KEYWORDS = {
@@ -362,6 +367,7 @@ class DualBrainController:
         default_mode_network: Optional[DefaultModeNetwork] = None,
         psychoid_attention_adapter: Optional[PsychoidAttentionAdapter] = None,
         coherence_resonator: Optional[CoherenceResonator] = None,
+        neural_integrator: Optional[NeuralIntegrator] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -383,6 +389,159 @@ class DualBrainController:
         self.psychoid_adapter = psychoid_attention_adapter
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
         self._last_leading_brain: Optional[str] = "right"
+        
+        # Neural impulse simulation
+        self.neural_integrator = neural_integrator
+        if self.neural_integrator is None:
+            self.neural_integrator = self._create_default_neural_network()
+    
+    def _create_default_neural_network(self) -> NeuralIntegrator:
+        """Create a default neural network for impulse simulation.
+        
+        This creates a simplified dual-hemisphere network with:
+        - Left hemisphere pathway (analytical processing)
+        - Right hemisphere pathway (holistic processing)
+        - Inter-hemispheric connections (corpus callosum analog)
+        - Modulatory pathways for affect and attention
+        """
+        integrator = NeuralIntegrator()
+        
+        # Create left hemisphere pathway (glutamatergic, excitatory)
+        left_pathway = integrator.create_simple_pathway(
+            "left_hemisphere",
+            num_neurons=4,
+            neurotransmitter=NeurotransmitterType.GLUTAMATE,
+        )
+        
+        # Create right hemisphere pathway (also excitatory but separate)
+        right_pathway = integrator.create_simple_pathway(
+            "right_hemisphere",
+            num_neurons=4,
+            neurotransmitter=NeurotransmitterType.GLUTAMATE,
+        )
+        
+        # Create modulatory neurons (dopaminergic for reward/motivation)
+        basal_ganglia_neuron = Neuron(
+            "basal_ganglia_modulator",
+            base_neurotransmitter=NeurotransmitterType.DOPAMINE,
+        )
+        integrator.add_neuron(basal_ganglia_neuron)
+        
+        # Amygdala modulation (GABAergic for inhibition when risk detected)
+        amygdala_neuron = Neuron(
+            "amygdala_modulator",
+            base_neurotransmitter=NeurotransmitterType.GABA,
+        )
+        integrator.add_neuron(amygdala_neuron)
+        
+        # Prefrontal attention (acetylcholine for attention/focus)
+        prefrontal_neuron = Neuron(
+            "prefrontal_modulator",
+            base_neurotransmitter=NeurotransmitterType.ACETYLCHOLINE,
+        )
+        integrator.add_neuron(prefrontal_neuron)
+        
+        return integrator
+
+    def _simulate_neural_activity(
+        self,
+        *,
+        hemisphere: str,
+        affect: Dict[str, float],
+        novelty: float,
+        focus_metric: float,
+        num_steps: int = 10,
+    ) -> Dict[str, Any]:
+        """Simulate neural impulse activity for a processing phase.
+        
+        This models the biological neural activity that occurs during
+        cognitive processing, with realistic action potentials and
+        synaptic transmission.
+        
+        Args:
+            hemisphere: "left" or "right" indicating which hemisphere is active
+            affect: Affective state (valence, arousal, risk)
+            novelty: Novelty score of the input
+            focus_metric: Prefrontal focus strength
+            num_steps: Number of simulation time steps
+            
+        Returns:
+            Dictionary with neural activity metrics and impulse data
+        """
+        if self.neural_integrator is None:
+            return {}
+        
+        # Determine which pathway to stimulate based on hemisphere
+        pathway_id = f"{hemisphere}_hemisphere_neuron_0"
+        
+        # Stimulus strength based on affect and novelty
+        arousal = float(affect.get("arousal", 0.0))
+        risk = float(affect.get("risk", 0.0))
+        
+        # Higher arousal and novelty increase neural activity
+        base_stimulus = 0.6 + 0.3 * arousal + 0.2 * novelty
+        
+        # Inject stimulus into the hemisphere pathway
+        self.neural_integrator.inject_stimulus(
+            pathway_id,
+            strength=base_stimulus,
+            neurotransmitter=NeurotransmitterType.GLUTAMATE,
+        )
+        
+        # Modulate with basal ganglia (dopamine based on novelty/reward)
+        if novelty > 0.5:
+            self.neural_integrator.inject_stimulus(
+                "basal_ganglia_modulator",
+                strength=0.4 + 0.3 * novelty,
+                neurotransmitter=NeurotransmitterType.DOPAMINE,
+            )
+        
+        # Amygdala modulation (inhibition when high risk)
+        if risk > 0.5:
+            self.neural_integrator.inject_stimulus(
+                "amygdala_modulator",
+                strength=0.5 + 0.4 * risk,
+                neurotransmitter=NeurotransmitterType.GABA,
+            )
+        
+        # Prefrontal attention modulation
+        if focus_metric > 0.3:
+            self.neural_integrator.inject_stimulus(
+                "prefrontal_modulator",
+                strength=0.3 + 0.4 * focus_metric,
+                neurotransmitter=NeurotransmitterType.ACETYLCHOLINE,
+            )
+        
+        # Run simulation for specified steps
+        all_impulses = []
+        for _ in range(num_steps):
+            new_impulses = self.neural_integrator.step(dt=0.001)
+            all_impulses.extend(new_impulses)
+        
+        # Collect activity metrics
+        network_activity = self.neural_integrator.get_network_activity()
+        
+        # Count impulses by neurotransmitter type
+        impulse_counts = {
+            "glutamate": 0,
+            "gaba": 0,
+            "dopamine": 0,
+            "acetylcholine": 0,
+            "serotonin": 0,
+        }
+        for impulse in all_impulses:
+            nt_type = impulse.neurotransmitter.value
+            if nt_type in impulse_counts:
+                impulse_counts[nt_type] += 1
+        
+        return {
+            "hemisphere": hemisphere,
+            "total_impulses": len(all_impulses),
+            "impulse_counts": impulse_counts,
+            "network_activity": network_activity,
+            "simulation_steps": num_steps,
+            "stimulus_strength": base_stimulus,
+        }
 
     def _prepare_psychoid_projection(
         self, psychoid_signal: Optional[PsychoidSignalModel], *, seq_len: int = 8
@@ -977,6 +1136,27 @@ class DualBrainController:
             decision.state["prefrontal_keywords"] = list(focus.keywords)
             decision.state["prefrontal_relevance"] = focus.relevance
             decision.state["prefrontal_hippocampal_overlap"] = focus.hippocampal_overlap
+        
+        # Simulate neural impulse activity for the leading hemisphere
+        neural_activity: Optional[Dict[str, Any]] = None
+        if self.neural_integrator is not None:
+            try:
+                neural_activity = self._simulate_neural_activity(
+                    hemisphere=leading,
+                    affect=affect,
+                    novelty=novelty,
+                    focus_metric=focus_metric,
+                    num_steps=10,
+                )
+                decision.state["neural_activity"] = neural_activity
+                self.telemetry.log(
+                    "neural_impulse_activity",
+                    qid=decision.qid,
+                    activity=neural_activity,
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                neural_activity = None
+        
         unconscious_profile = None
         unconscious_summary: Optional[UnconsciousSummaryModel] = None
         default_mode_reflections: Optional[List[DefaultModeReflection]] = None
@@ -1681,6 +1861,36 @@ class DualBrainController:
         )
         tags.add("inner_dialogue_trace")
         tags.add(f"inner_steps_{len(steps_payload)}")
+        
+        # Add neural impulse activity summary if available
+        if neural_activity:
+            tags.add("neural_impulse_simulation")
+            impulse_lines = [
+                f"- Hemisphere: {neural_activity['hemisphere']}",
+                f"- Total impulses: {neural_activity['total_impulses']}",
+                f"- Stimulus strength: {neural_activity['stimulus_strength']:.2f}",
+            ]
+            impulse_counts = neural_activity.get("impulse_counts", {})
+            if impulse_counts:
+                count_parts = []
+                for nt, count in impulse_counts.items():
+                    if count > 0:
+                        count_parts.append(f"{nt}={count}")
+                if count_parts:
+                    impulse_lines.append(f"- Neurotransmitter activity: {', '.join(count_parts)}")
+            
+            network_activity = neural_activity.get("network_activity", {})
+            if network_activity:
+                impulse_lines.append(
+                    f"- Active neurons: {network_activity.get('active_neurons', 0):.0f}/{network_activity.get('network_size', 0):.0f}"
+                )
+                impulse_lines.append(
+                    f"- Average membrane potential: {network_activity.get('avg_membrane_potential', 0):.1f} mV"
+                )
+            
+            final_answer = (
+                f"{final_answer}\n\n[Neural Impulse Activity]\n" + "\n".join(impulse_lines)
+            )
 
         tags_with_architecture = set(tags)
         tags_with_architecture.add("architecture_path")

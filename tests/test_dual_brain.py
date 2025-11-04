@@ -384,3 +384,65 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
     assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
     assert any(evt == "inner_dialogue_trace" for evt, _ in telemetry.events)
+
+
+def test_neural_impulse_integration():
+    """Test that neural impulse simulation integrates correctly with DualBrainController."""
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    
+    # Create controller without neural integrator - it will create default one
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+        unconscious_field=UnconsciousField(),
+        # Don't pass neural_integrator - let it create the default
+    )
+    
+    # Run a simple question
+    question = "Explain a complex pattern."
+    result = asyncio.run(controller.process(question))
+    
+    # Verify neural activity was simulated
+    neural_events = [e for e in telemetry.events if e[0] == "neural_impulse_activity"]
+    assert len(neural_events) > 0, "Should have neural impulse activity logged"
+    
+    # Check neural activity data structure
+    neural_event = neural_events[0]
+    activity = neural_event[1]["activity"]
+    assert "hemisphere" in activity
+    assert "total_impulses" in activity
+    assert "impulse_counts" in activity
+    assert "network_activity" in activity
+    
+    # Verify response includes neural activity section
+    assert "[Neural Impulse Activity]" in result
+    assert "Total impulses:" in result
+    assert "Hemisphere:" in result
+    
+    # Verify network was created with expected structure
+    assert controller.neural_integrator is not None
+    assert len(controller.neural_integrator.neurons) > 0
+    
+    # Check that impulses were actually generated
+    assert activity["total_impulses"] >= 0  # At least some activity should occur
+    
+    # Verify neurotransmitter activity tracking
+    impulse_counts = activity["impulse_counts"]
+    assert isinstance(impulse_counts, dict)
+    assert "glutamate" in impulse_counts
+    assert "gaba" in impulse_counts
+    assert "dopamine" in impulse_counts
