@@ -192,6 +192,20 @@ The bundled script demonstrates how to train the policy that decides when to esc
 python sr-dual-brain-llm/scripts/train_policy.py --algo ppo --epochs 200
 ```
 
+## Demonstrating Neurotransmitter Modulation
+Run the interactive demo to see neurotransmitter modulation in action:
+```bash
+PYTHONPATH=sr-dual-brain-llm python sr-dual-brain-llm/scripts/demo_neurotransmitters.py
+```
+
+The demo showcases:
+- GABA-based information filtering and noise removal
+- State transition control to prevent over-activation
+- Attention focusing through selective inhibition
+- Glutamate task initiation pulses
+- Dopamine reward signaling for PPO learning
+- Serotonin stability and cooperation adjustment
+
 ## Example Interaction
 ```
 User> Provide a detailed statistical analysis of this dataset.
