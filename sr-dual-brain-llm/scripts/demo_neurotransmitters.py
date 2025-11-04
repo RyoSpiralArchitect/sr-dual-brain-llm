@@ -271,4 +271,13 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n\nDemo interrupted by user.")
+    except Exception as e:
+        print(f"\n\nError running demo: {e}")
+        print("Please ensure all dependencies are installed:")
+        print("  pip install -r requirements.txt")
+        import sys
+        sys.exit(1)
