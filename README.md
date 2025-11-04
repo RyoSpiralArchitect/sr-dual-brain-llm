@@ -46,19 +46,21 @@ contributors can replay entire reasoning trajectories. The Mermaid source lives 
 └── sr-dual-brain-llm/
     ├── core/
     │   ├── __init__.py
-    │   ├── callosum.py             # Default asyncio in-memory transport
-    │   ├── callosum_kafka.py       # Kafka-based transport skeleton
-    │   ├── callosum_mqtt.py        # MQTT-based transport skeleton
-    │   ├── orchestrator.py         # Left-brain coordinator
-    │   ├── neural_impulse.py       # Biological action potential dynamics
-    │   ├── prefrontal_cortex.py    # Executive-focus heuristics and gating
-    │   ├── basal_ganglia.py        # Striatal go/no-go heuristics for consult control
-    │   ├── default_mode_network.py # Resting-state reflections from unconscious summaries
-    │   ├── psychoid_attention.py   # Project archetypal signals into QKV attention biases
-    │   ├── policy_ppo.py           # PPO policy over discrete actions
-    │   ├── policy_selector.py      # Heuristics for choosing the leading hemisphere
-    │   ├── shared_memory.py        # Persistent memory helpers
-    │   └── unconscious_field.py    # Archetypal unconscious field integration
+    │   ├── callosum.py                    # Default asyncio in-memory transport
+    │   ├── enhanced_callosum.py           # Neurotransmitter-filtered corpus callosum
+    │   ├── callosum_kafka.py              # Kafka-based transport skeleton
+    │   ├── callosum_mqtt.py               # MQTT-based transport skeleton
+    │   ├── orchestrator.py                # Left-brain coordinator
+    │   ├── neural_impulse.py              # Biological action potential dynamics
+    │   ├── neurotransmitter_modulator.py  # GABA/Glutamate/Dopamine/Serotonin control
+    │   ├── prefrontal_cortex.py           # Executive-focus heuristics and gating
+    │   ├── basal_ganglia.py               # Striatal go/no-go heuristics for consult control
+    │   ├── default_mode_network.py        # Resting-state reflections from unconscious summaries
+    │   ├── psychoid_attention.py          # Project archetypal signals into QKV attention biases
+    │   ├── policy_ppo.py                  # PPO policy over discrete actions
+    │   ├── policy_selector.py             # Heuristics for choosing the leading hemisphere
+    │   ├── shared_memory.py               # Persistent memory helpers
+    │   └── unconscious_field.py           # Archetypal unconscious field integration
     ├── scripts/
     │   ├── right_worker_broker.py  # Broker worker that runs the right brain
     │   ├── run_server.py           # Entry point using the in-memory backend
@@ -90,6 +92,38 @@ The system now includes biologically faithful neural impulse simulation that mod
   - **Serotonin** (modulatory) - mood and arousal regulation
 - **Hebbian Plasticity**: Synapses strengthen when neurons fire together
 
+### Advanced Neurotransmitter Modulation System
+
+The system now includes a sophisticated neurotransmitter-based control mechanism that regulates information flow and agent behavior:
+
+#### GABA (Inhibitory Control)
+- **Information Filtering**: Suppresses low-priority and noisy information before transmission through the corpus callosum
+- **State Transition Control**: Prevents over-activation of agents by generating inhibitory pulses when activation exceeds thresholds
+- **Attention Focusing**: Selectively inhibits non-target regions to enhance concentration on specific tasks
+
+#### Glutamate (Excitatory Activation)
+- **Task Initiation**: Generates excitatory pulses to activate agents based on task complexity and urgency
+- **Agent Activation**: Directly stimulates specific brain regions or agents for processing
+
+#### Dopamine (Reward & Motivation)
+- **Reward Signaling**: Generates reward/penalty pulses based on task success, quality, and efficiency
+- **PPO Integration**: Provides direct feedback to the PPO policy learning system
+- **Motivation Tracking**: Maintains reward history for policy optimization
+
+#### Serotonin (Stability & Cooperation)
+- **System Stability**: Adjusts overall system stability based on volatility and cooperation metrics
+- **Cooperative State**: Promotes cooperation between agents during high-conflict scenarios
+- **Stability Trending**: Tracks and reports stability trends over time
+
+### Enhanced Corpus Callosum
+
+The `EnhancedCallosum` wraps the standard corpus callosum with neurotransmitter-based filtering:
+- Automatically estimates priority, novelty, and task relevance from message content
+- Applies GABA-based filtering to block noise and low-priority information
+- Tracks transmission statistics (filter rate, total/filtered/transmitted requests)
+- Adds neurotransmitter pulse metadata to all messages
+- Supports both filtered and unfiltered modes
+
 ### Neural Network Architecture
 The system creates a dual-hemisphere neural network:
 - **Left Hemisphere Pathway**: Sequential processing neurons (analytical)
@@ -102,9 +136,12 @@ The system creates a dual-hemisphere neural network:
 During each processing turn, the system:
 1. Simulates neural activity in the active hemisphere
 2. Modulates firing based on affective state, novelty, and focus
-3. Tracks action potentials and neurotransmitter release
-4. Reports network activity metrics (firing rates, membrane potentials)
-5. Includes neural activity summary in final responses
+3. Applies neurotransmitter-based filtering to information transfers
+4. Tracks action potentials and neurotransmitter release
+5. Generates reward signals for PPO policy learning
+6. Maintains system stability through serotonin modulation
+7. Reports network activity metrics (firing rates, membrane potentials)
+8. Includes neural activity summary and neurotransmitter pulses in final responses
 
 The neural activity provides a biologically grounded substrate that mirrors how real brains process information through electrical and chemical signals.
 
