@@ -40,10 +40,21 @@ async def run_kafka():
     loop = asyncio.get_event_loop()
     for msg in consumer:
         payload = msg.value
-        if payload.get("type")=="ASK_DETAIL":
+        if payload.get("type") in {"ASK_DETAIL", "RIGHT_LEAD"}:
             qid = payload["qid"]
-            detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
-            resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
+            detail = await right.deepen(
+                qid,
+                payload["question"],
+                payload.get("draft_sum", ""),
+                mem,
+            )
+            resp = {
+                "qid": qid,
+                "notes_sum": detail["notes_sum"],
+                "confidence_r": detail["confidence_r"],
+            }
+            if payload.get("leading_brain"):
+                resp["leading_brain"] = payload["leading_brain"]
             prod.send('callosum_responses', resp); prod.flush()
 
 async def run_mqtt():
@@ -59,15 +70,26 @@ async def run_mqtt():
     def on_message(c, u, msg):
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
-            if payload.get("type")=="ASK_DETAIL":
+            if payload.get("type") in {"ASK_DETAIL", "RIGHT_LEAD"}:
                 qid = payload["qid"]
                 # run coroutine in loop thread-safely
                 asyncio.run_coroutine_threadsafe(handle_mqtt_request(c, right, mem, qid, payload), asyncio.get_event_loop())
         except Exception:
             pass
     async def handle_mqtt_request(client, right, mem, qid, payload):
-        detail = await right.deepen(qid, payload["question"], payload.get("draft_sum",""), mem)
-        resp = {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
+        detail = await right.deepen(
+            qid,
+            payload["question"],
+            payload.get("draft_sum", ""),
+            mem,
+        )
+        resp = {
+            "qid": qid,
+            "notes_sum": detail["notes_sum"],
+            "confidence_r": detail["confidence_r"],
+        }
+        if payload.get("leading_brain"):
+            resp["leading_brain"] = payload["leading_brain"]
         client.publish('callosum/responses', json.dumps(resp))
     client.on_connect = on_connect; client.on_message = on_message
     client.connect('localhost', 1883); client.loop_forever()

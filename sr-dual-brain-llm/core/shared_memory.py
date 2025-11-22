@@ -150,6 +150,16 @@ class SharedMemory:
     def get_kv(self, key: str, default: Any = None) -> Any:
         return self.kv.get(key, default)
 
+    def record_leading_brain(self, qid: str, leading_brain: str) -> None:
+        brain = str(leading_brain).strip().lower()
+        if brain not in {"left", "right"}:
+            return
+        self.put_kv(f"leading_brain:{qid}", brain)
+        self.put_kv("last_leading_brain", brain)
+
+    def get_leading_brain(self, qid: str) -> str | None:
+        return self.kv.get(f"leading_brain:{qid}")
+
     # ------------------------------------------------------------------
     def novelty_score(self, question: str) -> float:
         """Return a score in ``[0, 1]`` indicating how novel a question is."""

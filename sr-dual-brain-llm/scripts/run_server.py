@@ -27,6 +27,7 @@ from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
+from core.policy_selector import decide_leading_brain
 
 _BACKEND = os.environ.get("CALLOSUM_BACKEND", "memory")
 
@@ -43,7 +44,7 @@ async def right_worker(callosum, mem, right_model):
     if hasattr(callosum, "recv_request"):
         while True:
             req = await callosum.recv_request()
-            if req.get("type") == "ASK_DETAIL":
+            if req.get("type") in {None, "ASK_DETAIL", "RIGHT_LEAD"}:
                 qid = req["qid"]
                 try:
                     detail = await right_model.deepen(
@@ -95,7 +96,17 @@ async def main():
         question = await loop.run_in_executor(None, input, "Q> ")
         if not question.strip():
             continue
-        ans = await controller.process(question)
+        context_snapshot = {
+            "memory": mem.get_context(3),
+            "novelty": mem.novelty_score(question),
+            "recent_lead": mem.get_kv("last_leading_brain"),
+        }
+        leading_brain = decide_leading_brain(question, context_snapshot)
+        ans = await controller.process(
+            question,
+            leading_brain=leading_brain,
+            context_snapshot=context_snapshot,
+        )
         print("A>", ans)
 
 if __name__ == "__main__":

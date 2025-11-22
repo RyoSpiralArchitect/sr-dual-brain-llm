@@ -29,6 +29,7 @@ class Callosum:
 
     async def ask_detail(self, payload: Dict[str, Any], timeout_ms: int = 3000) -> Dict[str, Any]:
         qid = payload.get("qid") or str(uuid.uuid4())
+        payload.setdefault("type", "ASK_DETAIL")
         payload["qid"] = qid
         fut = asyncio.get_event_loop().create_future()
         self._response_futures[qid] = fut
