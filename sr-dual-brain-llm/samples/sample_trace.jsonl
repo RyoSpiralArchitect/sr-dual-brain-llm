@@ -1,3 +1,6 @@
 {"type": "POLICY_DECISION", "ts": 1761981569.134268, "episode_id": "ep1", "step": 1, "qid": "q_s1", "payload": {"state": {"left_conf": 0.6, "draft_len": 80, "novelty": 1.0, "risk": 0.2, "temp": 0.7, "q_type": "medium"}, "action": 1, "reward": 0.6, "logp": 0.0}}
 {"type": "CALL_SEND", "ts": 1761981569.234268, "episode_id": "ep1", "step": 2, "qid": "q_s1", "payload": {"type": "ASK_DETAIL"}}
 {"type": "CALL_RECV", "ts": 1761981569.384268, "episode_id": "ep1", "step": 2, "qid": "q_s1", "payload": {"detail_len": 64}}
+{"type": "HEMISPHERE_SWAP", "ts": 1761981569.534268, "episode_id": "ep1", "step": 3, "qid": "q_s1", "payload": {"leader": "right", "reason": "novelty_high", "braid_strength": 0.72}}
+{"type": "UNCONSCIOUS_CUE", "ts": 1761981569.684268, "episode_id": "ep1", "step": 4, "qid": "q_s1", "payload": {"archetype": "navigator", "signal": "risk_of_scope_creep", "intensity": 0.44}}
+{"type": "MEMORY_WRITE", "ts": 1761981569.834268, "episode_id": "ep1", "step": 5, "qid": "q_s1", "payload": {"trace_type": "architecture_path", "nodes": ["perception", "dialogue", "integration", "memory"]}}
