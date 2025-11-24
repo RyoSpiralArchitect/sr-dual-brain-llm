@@ -74,6 +74,11 @@ Supporting assets live at the repository root:
 - `docker-compose.yml`
 - `requirements.txt`
 
+## Sample assets
+- `examples/sample_questions.json` – 20+ Japaneseタスクのスタックで、要約・分析・翻訳・リスク検出など左脳/右脳の役割を試せる質問集。
+- `samples/prompts/brain_prompt_sets.json` – 戦略/分析/クリエイティブの3カテゴリに分けた協調テンプレート例。ハンドオフ手順や無意識層を刺激するプロンプトの型を収録。
+- `samples/sample_trace.jsonl` – ポリシー決定からコール送受信、左右入れ替え、無意識キュー、メモリ書き込みまで含むJSONLトレース。
+
 ## Neural Impulse Mechanism
 
 The system now includes biologically faithful neural impulse simulation that models actual brain activity during processing:
