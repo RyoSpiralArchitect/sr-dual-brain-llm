@@ -19,12 +19,23 @@
 import asyncio, random
 from typing import Dict, Optional
 
+from .llm_client import LLMClient, LLMConfig, load_llm_config
+
 class LeftBrainModel:
     def __init__(self):
-        pass
+        self.llm_config = load_llm_config("LEFT_BRAIN") or load_llm_config()
+        self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
+        self.uses_external_llm = bool(self._llm_client)
 
     async def generate_answer(self, input_text: str, context: str) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
+        if self._llm_client:
+            system = context if context else None
+            try:
+                return await self._llm_client.complete(input_text, system=system, temperature=0.4)
+            except Exception:
+                pass
+
         base = f"Draft answer for: {input_text[:80]}"
         if context:
             summary = context.splitlines()[0][:80]
@@ -41,7 +52,9 @@ class LeftBrainModel:
 
 class RightBrainModel:
     def __init__(self):
-        pass
+        self.llm_config = load_llm_config("RIGHT_BRAIN") or load_llm_config()
+        self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
+        self.uses_external_llm = bool(self._llm_client)
 
     async def generate_lead(
         self,
@@ -51,6 +64,16 @@ class RightBrainModel:
         temperature: float = 0.8,
     ) -> str:
         """Produce an imagistic first impression before the left brain speaks."""
+        if self._llm_client:
+            system = context if context else None
+            try:
+                return await self._llm_client.complete(
+                    question,
+                    system=system,
+                    temperature=temperature,
+                )
+            except Exception:
+                pass
 
         await asyncio.sleep(0.25 + random.random() * 0.2)
         base = f"Right-brain impression: {question[:80]}"
@@ -72,6 +95,23 @@ class RightBrainModel:
         context: Optional[str] = None,
         psychoid_projection: Optional[Dict[str, object]] = None,
     ) -> Dict[str, str]:
+        if self._llm_client:
+            system_parts = []
+            if context:
+                system_parts.append(f"Context:\n{context}")
+            if psychoid_projection:
+                system_parts.append(f"Psychoid projection: {psychoid_projection}")
+            system = "\n\n".join(system_parts) if system_parts else None
+            try:
+                completion = await self._llm_client.complete(
+                    f"{question}\n\nDraft summary:\n{partial_answer}",
+                    system=system,
+                    temperature=temperature,
+                )
+                return {"qid": qid, "notes_sum": completion, "confidence_r": 0.9}
+            except Exception:
+                pass
+
         await asyncio.sleep(0.35 + random.random()*0.3)
         context_text = context if context is not None else shared_memory.retrieve_related(question)
         snippet = context_text[:120]

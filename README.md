@@ -170,6 +170,35 @@ python sr-dual-brain-llm/scripts/run_server.py
 ```
 This launches the left-brain orchestrator and an in-process right-brain specialist connected via the asyncio corpus callosum.
 
+### Quick start without Kafka/MQTT
+Set the provider/model API keys as environment variables and the orchestrator will call the APIs directly (no Docker required):
+
+```bash
+export LLM_PROVIDER=openai
+export LLM_MODEL_ID=gpt-4o-mini
+export OPENAI_API_KEY=sk-...
+
+# Optional per-hemisphere overrides
+export LEFT_BRAIN_MODEL=gpt-4o-mini
+export RIGHT_BRAIN_MODEL=gpt-4o-mini
+python sr-dual-brain-llm/scripts/run_server.py
+```
+
+Supported providers: `openai`, `google`, `anthropic`, `mistral`, `xai`, `huggingface`. You can also use provider-specific keys such as `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY`, `HUGGINGFACE_API_TOKEN`/`HF_TOKEN`, or a shared `LLM_API_KEY`. Optional knobs:
+
+- `LLM_API_BASE` or `<PROVIDER>_API_BASE` to point at custom endpoints (e.g., Azure OpenAI)
+- `LLM_MAX_OUTPUT_TOKENS` / `LEFT_BRAIN_MAX_TOKENS` / `RIGHT_BRAIN_MAX_TOKENS`
+- `LLM_TIMEOUT` / `LEFT_BRAIN_TIMEOUT` / `RIGHT_BRAIN_TIMEOUT`
+- `OPENAI_ORGANIZATION` or `LEFT_BRAIN_ORG` / `RIGHT_BRAIN_ORG`
+
+| Provider      | Required envs                         | Optional envs                        |
+|---------------|---------------------------------------|--------------------------------------|
+| OpenAI/xAI    | `LLM_PROVIDER=openai` or `xai`, `LLM_MODEL_ID`, `OPENAI_API_KEY` | `OPENAI_ORGANIZATION`, `OPENAI_API_BASE` |
+| Anthropic     | `LLM_PROVIDER=anthropic`, `LLM_MODEL_ID`, `ANTHROPIC_API_KEY` | `ANTHROPIC_VERSION`, `ANTHROPIC_API_BASE` |
+| Google (Gemini)| `LLM_PROVIDER=google`, `LLM_MODEL_ID`, `GOOGLE_API_KEY` | `GOOGLE_API_BASE` |
+| Mistral       | `LLM_PROVIDER=mistral`, `LLM_MODEL_ID`, `MISTRAL_API_KEY` | `MISTRAL_API_BASE` |
+| HuggingFace   | `LLM_PROVIDER=huggingface`, `LLM_MODEL_ID`, `HUGGINGFACE_API_TOKEN`/`HF_TOKEN` | `HUGGINGFACE_API_BASE` |
+
 ## Switching Communication Backends
 Set the `CALLOSUM_BACKEND` environment variable before starting any script. Supported values are:
 - `memory` *(default)* – single-process asyncio messaging.
