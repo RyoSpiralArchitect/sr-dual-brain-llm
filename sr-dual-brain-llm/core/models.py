@@ -25,6 +25,7 @@ class LeftBrainModel:
     def __init__(self):
         self.llm_config = load_llm_config("LEFT_BRAIN") or load_llm_config()
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
+        self.uses_external_llm = bool(self._llm_client)
 
     async def generate_answer(self, input_text: str, context: str) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
@@ -53,6 +54,7 @@ class RightBrainModel:
     def __init__(self):
         self.llm_config = load_llm_config("RIGHT_BRAIN") or load_llm_config()
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
+        self.uses_external_llm = bool(self._llm_client)
 
     async def generate_lead(
         self,

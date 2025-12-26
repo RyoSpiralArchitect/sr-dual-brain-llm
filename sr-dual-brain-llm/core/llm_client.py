@@ -69,7 +69,8 @@ def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
     if not api_key:
         return None
 
-    api_base = _env(f"{prefix}_API_BASE") or _env("LLM_API_BASE")
+    provider_base = _env(f"{provider.upper()}_API_BASE")
+    api_base = _env(f"{prefix}_API_BASE") or _env("LLM_API_BASE") or provider_base
     organization = _env(f"{prefix}_ORG") or _env("OPENAI_ORGANIZATION")
     max_output_tokens = int(
         _env(f"{prefix}_MAX_TOKENS")
@@ -104,6 +105,7 @@ class LLMClient:
 
     def __init__(self, config: LLMConfig):
         self.config = config
+        self.provider = config.provider
 
     async def _post_json(self, url: str, payload: Dict[str, object], headers: Dict[str, str]) -> Dict[str, object]:
         timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
@@ -115,7 +117,7 @@ class LLMClient:
                 return data
 
     async def complete(self, prompt: str, *, system: Optional[str] = None, temperature: float = 0.7) -> str:
-        provider = self.config.provider
+        provider = self.provider
         if provider in {"openai", "mistral", "xai"}:
             return await self._openai_style(prompt, system=system, temperature=temperature)
         if provider == "anthropic":
@@ -127,7 +129,7 @@ class LLMClient:
         raise ValueError(f"Unsupported provider: {provider}")
 
     def _default_base(self) -> str:
-        provider = self.config.provider
+        provider = self.provider
         if provider == "openai":
             return "https://api.openai.com/v1"
         if provider == "mistral":
@@ -246,4 +248,3 @@ class LLMClient:
             if "generated_text" in data:
                 return str(data["generated_text"]).strip()
         return str(data)
-
