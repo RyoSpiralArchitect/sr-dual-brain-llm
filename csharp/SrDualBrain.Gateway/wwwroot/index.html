@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SrDualBrain Gateway</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">SrDualBrain</div>
+        <div class="brand__subtitle">C# REST Gateway → Python Engine</div>
+      </div>
+      <div class="status" id="status">
+        <span class="pill pill--muted">connecting…</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card chat">
+        <div class="card__header">
+          <div class="card__title">Chat</div>
+          <div class="card__actions">
+            <button class="btn btn--ghost" id="btnClear">Clear</button>
+            <button class="btn btn--danger" id="btnReset">Reset session</button>
+          </div>
+        </div>
+
+        <div class="chat__log" id="chatLog" aria-live="polite"></div>
+
+        <form class="chat__composer" id="composer">
+          <textarea
+            id="question"
+            rows="2"
+            placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
+            spellcheck="false"
+          ></textarea>
+          <button class="btn btn--primary" id="btnSend" type="submit">Send</button>
+        </form>
+      </section>
+
+      <aside class="side">
+        <section class="card controls">
+          <div class="card__header">
+            <div class="card__title">Controls</div>
+          </div>
+          <div class="grid">
+            <label class="field">
+              <span class="field__label">Session</span>
+              <input id="sessionId" type="text" value="demo" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Leading brain</span>
+              <select id="leadingBrain">
+                <option value="auto">auto</option>
+                <option value="left">left</option>
+                <option value="right">right</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Provider (optional)</span>
+              <select id="llmProvider">
+                <option value="">(use server default)</option>
+                <option value="openai">openai</option>
+                <option value="anthropic">anthropic</option>
+                <option value="google">google</option>
+                <option value="mistral">mistral</option>
+                <option value="xai">xai</option>
+                <option value="huggingface">huggingface</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Model (optional)</span>
+              <input id="llmModel" type="text" placeholder="e.g. gpt-4o-mini" />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Max output tokens (optional)</span>
+              <input id="llmMaxOutputTokens" type="number" min="64" step="1" placeholder="1024" />
+            </label>
+          </div>
+
+          <div class="checks">
+            <label class="check">
+              <input id="returnTelemetry" type="checkbox" checked />
+              <span>Return telemetry</span>
+            </label>
+            <label class="check">
+              <input id="returnDialogueFlow" type="checkbox" checked />
+              <span>Return dialogue flow</span>
+            </label>
+          </div>
+
+          <div class="hint">
+            API keys are read from server environment variables (never sent from browser).
+          </div>
+        </section>
+
+        <section class="card metrics">
+          <div class="card__header">
+            <div class="card__title">Metrics</div>
+            <div class="card__subtitle" id="metricsSubtitle">—</div>
+          </div>
+          <div class="metrics__grid" id="metricsGrid">
+            <div class="metric">
+              <div class="metric__k">coherence</div>
+              <div class="metric__v" id="mCoherence">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">tension</div>
+              <div class="metric__v" id="mTension">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">routing</div>
+              <div class="metric__v" id="mRouting">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">action</div>
+              <div class="metric__v" id="mAction">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">temperature</div>
+              <div class="metric__v" id="mTemp">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">latency</div>
+              <div class="metric__v" id="mLatency">—</div>
+            </div>
+          </div>
+
+          <details class="details">
+            <summary>Telemetry (raw)</summary>
+            <pre class="json" id="telemetryRaw">{}</pre>
+          </details>
+        </section>
+      </aside>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

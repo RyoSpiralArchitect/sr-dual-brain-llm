@@ -16,23 +16,45 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import argparse, asyncio
+import argparse
+import asyncio
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from core.events import Timeline
 from core.event_bus import MemoryBus
 from dashboard.server import broadcast, app
 import uvicorn
+
+
 async def feeder(path: str, speed: float):
-    bus = MemoryBus(); bus.subscribe(lambda ev: broadcast(ev))
     tl = Timeline(path)
-    for ev in tl.replay(speed=speed):
-        await bus.publish(ev)
+    async with MemoryBus() as bus:
+        bus.subscribe(broadcast)
+        for ev in tl.replay(speed=speed):
+            await bus.publish(ev)
+
+
+async def run(args) -> None:
+    config = uvicorn.Config(app, host=args.host, port=args.port, reload=False)
+    server = uvicorn.Server(config)
+    server_task = asyncio.create_task(server.serve())
+    try:
+        await feeder(args.log, args.speed)
+    finally:
+        server.should_exit = True
+        await server_task
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--log", required=True)
     p.add_argument("--speed", type=float, default=1.0)
     p.add_argument("--host", default="127.0.0.1"); p.add_argument("--port", type=int, default=8765)
     args = p.parse_args()
-    loop = asyncio.get_event_loop()
-    loop.create_task(feeder(args.log, args.speed))
-    uvicorn.run(app, host=args.host, port=args.port, reload=False)
+    asyncio.run(run(args))
 if __name__ == "__main__": main()

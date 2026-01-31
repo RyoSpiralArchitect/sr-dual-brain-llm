@@ -18,11 +18,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
+
+
+EMBEDDING_VERSION = "srdb-blake2b-v1"
 
 
 def _tokenize(text: str) -> List[str]:
@@ -36,6 +40,15 @@ def _normalise_tags(tags: Iterable[str] | None) -> Tuple[str, ...]:
     return tuple(sorted(unique))
 
 
+def _stable_hash_64(token: str) -> int:
+    digest = hashlib.blake2b(
+        token.encode("utf-8"),
+        digest_size=8,
+        person=b"srdb.emb.v1",
+    ).digest()
+    return int.from_bytes(digest, "little", signed=False)
+
+
 @dataclass
 class EpisodicTrace:
     """Single hippocampal memory containing hemispheric collaboration context."""
@@ -44,6 +57,7 @@ class EpisodicTrace:
     question: str
     answer: str
     vector: np.ndarray
+    embedding_version: str = EMBEDDING_VERSION
     timestamp: float = field(default_factory=lambda: time.time())
     leading: Optional[str] = None
     collaboration_strength: Optional[float] = None
@@ -78,9 +92,12 @@ class TemporalHippocampalIndexing:
     def _embed(self, text: str) -> np.ndarray:
         v = np.zeros(self.dim, dtype=np.float32)
         for tok in _tokenize(text.lower()):
-            v[hash(tok) % self.dim] += 1.0
+            v[_stable_hash_64(tok) % self.dim] += 1.0
         n = float(np.linalg.norm(v) + self._eps)
         return v / n
+
+    def embed_text(self, text: str) -> np.ndarray:
+        return self._embed(text)
 
     def index_episode(
         self,
@@ -107,6 +124,7 @@ class TemporalHippocampalIndexing:
             question=question,
             answer=answer,
             vector=vec,
+            embedding_version=EMBEDDING_VERSION,
             leading=(leading or None),
             collaboration_strength=None
             if collaboration_strength is None

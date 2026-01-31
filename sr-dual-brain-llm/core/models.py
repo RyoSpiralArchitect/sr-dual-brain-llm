@@ -21,16 +21,26 @@ from typing import Dict, Optional
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
 
+_SYSTEM_GUARDRAILS = (
+    "Answer the user's question directly.\n"
+    "Do not mention internal orchestration (e.g., left/right brain, corpus callosum, telemetry, architecture paths, qid).\n"
+    "Do not add bracketed debug headings or meta commentary about the system."
+)
+
+
 class LeftBrainModel:
-    def __init__(self):
-        self.llm_config = load_llm_config("LEFT_BRAIN") or load_llm_config()
+    def __init__(self, llm_config: Optional[LLMConfig] = None):
+        self.llm_config = llm_config or load_llm_config("LEFT_BRAIN") or load_llm_config()
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
         self.uses_external_llm = bool(self._llm_client)
 
     async def generate_answer(self, input_text: str, context: str) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
         if self._llm_client:
-            system = context if context else None
+            system_parts = [_SYSTEM_GUARDRAILS]
+            if context:
+                system_parts.append(f"Context:\n{context}")
+            system = "\n\n".join(system_parts)
             try:
                 return await self._llm_client.complete(input_text, system=system, temperature=0.4)
             except Exception:
@@ -48,11 +58,13 @@ class LeftBrainModel:
         return 0.45 if "..." in draft else 0.9
 
     def integrate_info(self, draft: str, info: str) -> str:
-        return f"{draft}\n(Reference from RightBrain: {info})"
+        if not info:
+            return draft
+        return f"{draft}\n\n{info}"
 
 class RightBrainModel:
-    def __init__(self):
-        self.llm_config = load_llm_config("RIGHT_BRAIN") or load_llm_config()
+    def __init__(self, llm_config: Optional[LLMConfig] = None):
+        self.llm_config = llm_config or load_llm_config("RIGHT_BRAIN") or load_llm_config()
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
         self.uses_external_llm = bool(self._llm_client)
 
@@ -65,7 +77,10 @@ class RightBrainModel:
     ) -> str:
         """Produce an imagistic first impression before the left brain speaks."""
         if self._llm_client:
-            system = context if context else None
+            system_parts = [_SYSTEM_GUARDRAILS]
+            if context:
+                system_parts.append(f"Context:\n{context}")
+            system = "\n\n".join(system_parts)
             try:
                 return await self._llm_client.complete(
                     question,
@@ -76,11 +91,11 @@ class RightBrainModel:
                 pass
 
         await asyncio.sleep(0.25 + random.random() * 0.2)
-        base = f"Right-brain impression: {question[:80]}"
+        base = f"First impression: {question[:80]}"
         if context:
             snippet = context.splitlines()[0][:80]
             base += f"\nContext echo: {snippet}"
-        base += f"\n(temperature ~{temperature:.2f})"
+        base += "\nKey images: connection, contrast, hidden assumptions."
         return base
 
     async def deepen(
@@ -97,6 +112,7 @@ class RightBrainModel:
     ) -> Dict[str, str]:
         if self._llm_client:
             system_parts = []
+            system_parts.append(_SYSTEM_GUARDRAILS)
             if context:
                 system_parts.append(f"Context:\n{context}")
             if psychoid_projection:
@@ -116,10 +132,9 @@ class RightBrainModel:
         context_text = context if context is not None else shared_memory.retrieve_related(question)
         snippet = context_text[:120]
         detail = (
-            f"Deep analysis for qid={qid}: insights about '{question[:50]}'"
-            f" | temp={temperature:.2f} | budget={budget} | ctx=[{snippet}]"
+            f"Deeper take: {question}\n"
+            f"- What matters: clarify definitions and the user's goal.\n"
+            f"- Hidden assumptions: check what's being held constant.\n"
+            f"- Context hint: {snippet}"
         )
-        if psychoid_projection:
-            norm = float(psychoid_projection.get("norm", 0.0))
-            detail += f" | psychoid_norm={norm:.2f}"
         return {"qid": qid, "notes_sum": detail, "confidence_r": 0.85}

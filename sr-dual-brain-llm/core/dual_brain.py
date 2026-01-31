@@ -357,7 +357,7 @@ class DualBrainController:
         reasoning_dial,
         auditor,
         orchestrator,
-        default_timeout_ms: int = 6000,
+        default_timeout_ms: int = 45000,
         telemetry: Optional[Any] = None,
         amygdala: Optional[Amygdala] = None,
         hippocampus: Optional[TemporalHippocampalIndexing] = None,
@@ -564,6 +564,11 @@ class DualBrainController:
         """Blend working-memory recall with hippocampal episodic cues."""
 
         memory_context = self.memory.retrieve_related(question)
+        schema_context = ""
+        try:
+            schema_context = self.memory.retrieve_schema_related(question)
+        except Exception:  # pragma: no cover - optional feature
+            schema_context = ""
         hippocampal_context = ""
         if self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(question)
@@ -571,6 +576,8 @@ class DualBrainController:
         segments = []
         if memory_context:
             segments.append(memory_context)
+        if schema_context:
+            segments.append(f"[Schema memory] {schema_context}")
         if hippocampal_context:
             segments.append(f"[Hippocampal recall] {hippocampal_context}")
         combined = "\n".join(segments)
@@ -905,6 +912,8 @@ class DualBrainController:
         focus_metric: float,
         hemisphere_mode: str,
         hemisphere_bias: float,
+        *,
+        qid: Optional[str] = None,
     ) -> DecisionOutcome:
         state = self._build_policy_state(
             question,
@@ -949,10 +958,25 @@ class DualBrainController:
             temperature = max(0.3, temperature - 0.2 * (0.4 + hemisphere_bias))
         state["hemisphere_temperature"] = temperature
         slot_ms = self.hypothalamus.recommend_slot_ms(state["risk"])
-        qid = str(uuid.uuid4())
-        return DecisionOutcome(qid=qid, action=action, temperature=temperature, slot_ms=slot_ms, state=state)
+        qid_value = str(qid) if qid else str(uuid.uuid4())
+        return DecisionOutcome(
+            qid=qid_value,
+            action=action,
+            temperature=temperature,
+            slot_ms=slot_ms,
+            state=state,
+        )
 
-    async def process(self, question: str, *, leading_brain: Optional[str] = None) -> str:
+    async def process(
+        self,
+        question: str,
+        *,
+        leading_brain: Optional[str] = None,
+        qid: Optional[str] = None,
+        answer_mode: str = "plain",
+    ) -> str:
+        mode = str(answer_mode or "plain").strip().lower()
+        emit_debug_sections = mode in {"debug", "annotated", "meta"}
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
@@ -1105,6 +1129,7 @@ class DualBrainController:
             focus_metric,
             hemisphere_mode,
             hemisphere_bias,
+            qid=qid,
         )
         if force_right_lead and decision.action == 0:
             decision.action = 1
@@ -1407,7 +1432,7 @@ class DualBrainController:
                         )
                     except Exception as exc:  # pragma: no cover - defensive guard
                         fallback_error = str(exc)
-                        final_answer = draft + f"\n(Right brain error: {exc})"
+                        final_answer = draft
                     else:
                         detail_notes = fallback.get("notes_sum")
                         fallback_confidence = float(
@@ -1466,7 +1491,7 @@ class DualBrainController:
                     )
                 )
         except asyncio.TimeoutError:
-            final_answer = draft + "\n(Right brain timeout: continuing with draft)"
+            final_answer = draft
             inner_steps.append(
                 InnerDialogueStep(
                     phase="callosum_timeout",
@@ -1480,31 +1505,35 @@ class DualBrainController:
             self.orchestrator.clear(decision.qid)
 
         integrated_answer = final_answer
-        if collaborative_lead:
-            right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
-            left_block = left_lead_preview or draft
-            final_answer = (
-                "[Right Brain Prelude]\n"
-                f"{right_block}\n\n"
-                "[Left Brain Prelude]\n"
-                f"{left_block}\n\n"
-                "[Integrated Response]\n"
-                f"{integrated_answer}"
-            )
-        elif leading == "right":
-            lead_block = right_lead_notes or detail_notes or "(Right brain lead unavailable)"
-            final_answer = (
-                "[Right Brain Lead]\n"
-                f"{lead_block}\n\n"
-                "[Left Brain Integration]\n"
-                f"{integrated_answer}"
-            )
+        user_answer = integrated_answer
+        if emit_debug_sections:
+            if collaborative_lead:
+                right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
+                left_block = left_lead_preview or draft
+                final_answer = (
+                    "[Right Brain Prelude]\n"
+                    f"{right_block}\n\n"
+                    "[Left Brain Prelude]\n"
+                    f"{left_block}\n\n"
+                    "[Integrated Response]\n"
+                    f"{integrated_answer}"
+                )
+            elif leading == "right":
+                lead_block = right_lead_notes or detail_notes or "(Right brain lead unavailable)"
+                final_answer = (
+                    "[Right Brain Lead]\n"
+                    f"{lead_block}\n\n"
+                    "[Left Brain Integration]\n"
+                    f"{integrated_answer}"
+                )
+            else:
+                final_answer = f"[Left Brain Lead]\n{integrated_answer}"
         else:
-            final_answer = f"[Left Brain Lead]\n{integrated_answer}"
+            final_answer = user_answer
 
         semantic_tilt = self._evaluate_semantic_tilt(
             question=question,
-            final_answer=final_answer,
+            final_answer=user_answer,
             detail_notes=detail_notes,
         )
         decision.state["hemisphere_semantic_tilt"] = semantic_tilt
@@ -1548,7 +1577,7 @@ class DualBrainController:
             weave = self.coherence_resonator.capture_unconscious(
                 question=question,
                 draft=draft,
-                final_answer=final_answer,
+                final_answer=user_answer,
                 summary=unconscious_summary,
                 psychoid_signal=psychoid_signal,
             )
@@ -1563,7 +1592,7 @@ class DualBrainController:
             motifs = self.coherence_resonator.capture_linguistic_motifs(
                 question=question,
                 draft=draft,
-                final_answer=final_answer,
+                final_answer=user_answer,
                 unconscious_summary=unconscious_summary,
             )
             if motifs is not None:
@@ -1575,7 +1604,7 @@ class DualBrainController:
                     motifs=motifs_payload,
                 )
             coherence_signal = self.coherence_resonator.integrate(
-                final_answer=final_answer,
+                final_answer=user_answer,
                 psychoid_projection=projection_payload,
                 unconscious_summary=unconscious_summary,
             )
@@ -1589,9 +1618,10 @@ class DualBrainController:
                     qid=decision.qid,
                     signal=coherence_signal.to_payload(),
                 )
-                final_answer = self.coherence_resonator.annotate_answer(
-                    final_answer, coherence_signal
-                )
+                if emit_debug_sections:
+                    final_answer = self.coherence_resonator.annotate_answer(
+                        final_answer, coherence_signal
+                    )
                 coherence_tags = set(coherence_signal.tags())
                 tags.update(coherence_tags)
                 decision.state["coherence_tags"] = list(coherence_tags)
@@ -1626,9 +1656,10 @@ class DualBrainController:
             )
         )
 
-        audit_result = self.auditor.check(final_answer)
+        audit_result = self.auditor.check(user_answer)
         if not audit_result.get("ok", True):
-            final_answer = draft + f"\n(Auditor veto: {audit_result.get('reason', 'unknown')})"
+            user_answer = draft
+            final_answer = user_answer
             success = False
 
         reward = 0.75 if success else 0.45
@@ -1675,11 +1706,12 @@ class DualBrainController:
                 insights.append(
                     f"- {label} (archetype {archetype}, intensity {intensity:.2f})"
                 )
-            if insights:
-                final_answer = f"{final_answer}\n\n[Unconscious Insight]\n" + "\n".join(insights)
             stress_value = float(unconscious_summary.stress_released or 0.0)
-            if stress_value:
-                final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
+            if emit_debug_sections:
+                if insights:
+                    final_answer = f"{final_answer}\n\n[Unconscious Insight]\n" + "\n".join(insights)
+                if stress_value:
+                    final_answer = f"{final_answer}\n\n[Stress Released] {stress_value:.2f}"
         if psychoid_signal:
             tags.add("psychoid_projection")
             bias_entries = list(psychoid_signal.attention_bias)
@@ -1697,24 +1729,26 @@ class DualBrainController:
                         resonance=float(entry.resonance),
                     )
                 )
-            if projection_lines:
-                final_answer = (
-                    f"{final_answer}\n\n[Psychoid Field Alignment]\n" + "\n".join(projection_lines)
-                )
             chain = psychoid_signal.signifier_chain
-            if chain:
-                final_answer = (
-                    f"{final_answer}\n\n[Psychoid Signifiers]\n" + " -> ".join(chain[-6:])
-                )
             if psychoid_projection:
                 tags.add("psychoid_attention")
                 bias_payload = psychoid_projection.to_payload()
-                final_answer = (
-                    f"{final_answer}\n\n[Psychoid Attention Bias]\n"
-                    f"- norm {bias_payload.get('norm', 0.0):.3f}"
-                    f" | temperature {bias_payload.get('temperature', 0.0):.2f}"
-                    f" | clamp {bias_payload.get('clamp', 0.0):.2f}"
-                )
+                if emit_debug_sections:
+                    final_answer = (
+                        f"{final_answer}\n\n[Psychoid Attention Bias]\n"
+                        f"- norm {bias_payload.get('norm', 0.0):.3f}"
+                        f" | temperature {bias_payload.get('temperature', 0.0):.2f}"
+                        f" | clamp {bias_payload.get('clamp', 0.0):.2f}"
+                    )
+            if emit_debug_sections:
+                if projection_lines:
+                    final_answer = (
+                        f"{final_answer}\n\n[Psychoid Field Alignment]\n" + "\n".join(projection_lines)
+                    )
+                if chain:
+                    final_answer = (
+                        f"{final_answer}\n\n[Psychoid Signifiers]\n" + " -> ".join(chain[-6:])
+                    )
         if default_mode_reflections:
             tags.add("default_mode_reflection")
             reflection_lines = []
@@ -1729,87 +1763,64 @@ class DualBrainController:
                         cache=int(ref.cache_depth),
                     )
                 )
-            if reflection_lines:
+            if emit_debug_sections and reflection_lines:
                 final_answer = (
                     f"{final_answer}\n\n[Default Mode Reflection]\n" + "\n".join(reflection_lines)
                 )
-        routing_lines = [
-            f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
-            f"- policy action: {decision.action}",
-            f"- temperature: {decision.temperature:.2f}",
-        ]
-        if self.coherence_resonator is not None:
-            routing_lines.append(
-                "- coherence weights left {left:.2f} | right {right:.2f}".format(
-                    left=self.coherence_resonator.left_weight,
-                    right=self.coherence_resonator.right_weight,
+        if emit_debug_sections:
+            routing_lines = [
+                f"- mode: {hemisphere_mode} (intensity {hemisphere_bias:.2f})",
+                f"- policy action: {decision.action}",
+                f"- temperature: {decision.temperature:.2f}",
+            ]
+            if self.coherence_resonator is not None:
+                routing_lines.append(
+                    "- coherence weights left {left:.2f} | right {right:.2f}".format(
+                        left=self.coherence_resonator.left_weight,
+                        right=self.coherence_resonator.right_weight,
+                    )
                 )
-            )
-        tilt_lines = [
-            "- semantic mode: {mode} (intensity {intensity:.2f})".format(
-                mode=semantic_tilt["mode"],
-                intensity=float(semantic_tilt["intensity"]),
-            ),
-            "- right hits: {hits}".format(
-                hits=", ".join(semantic_tilt["right_hits"]) or "none",
-            ),
-            "- left hits: {hits}".format(
-                hits=", ".join(semantic_tilt["left_hits"]) or "none",
-            ),
-        ]
-        if semantic_tilt["notes"]:
-            for note in semantic_tilt["notes"]:
-                tilt_lines.append(f"- note: {note}")
-        collab_lines = [
-            "- strength: {strength:.2f}".format(
-                strength=collaboration_profile.strength,
-            ),
-            "- balance: {balance:.2f}".format(
-                balance=collaboration_profile.balance,
-            ),
-            "- density: {density:.2f}".format(
-                density=collaboration_profile.density,
-            ),
-            "- focus bonus: {bonus:.2f}".format(
-                bonus=collaboration_profile.focus_bonus,
-            ),
-            "- cue scores left {left:.2f} | right {right:.2f}".format(
-                left=hemisphere_signal.left_score,
-                right=hemisphere_signal.right_score,
-            ),
-            "- cue tokens: {count}".format(count=hemisphere_signal.token_count),
-            f"- collaborative rotation engaged: {collaborative_lead}",
-        ]
-        meta_sections = [
-            _format_section("Hemisphere Routing", routing_lines),
-            _format_section("Hemisphere Semantic Tilt", tilt_lines),
-            _format_section("Collaboration Profile", collab_lines),
-        ]
-        final_answer = f"{final_answer}\n\n" + "\n\n".join(meta_sections)
-        if self.coherence_resonator is not None:
-            projection_payload = (
-                psychoid_projection.to_payload() if psychoid_projection else None
-            )
-            coherence_signal = self.coherence_resonator.integrate(
-                final_answer=final_answer,
-                psychoid_projection=projection_payload,
-            )
-            if coherence_signal is not None:
-                decision.state["coherence_combined"] = coherence_signal.combined_score
-                decision.state["coherence_tension"] = coherence_signal.tension
-                decision.state["coherence_notes"] = coherence_signal.notes
-                decision.state["coherence_contributions"] = coherence_signal.contributions
-                self.telemetry.log(
-                    "coherence_signal",
-                    qid=decision.qid,
-                    signal=coherence_signal.to_payload(),
-                )
-                final_answer = self.coherence_resonator.annotate_answer(
-                    final_answer, coherence_signal
-                )
-                coherence_tags = set(coherence_signal.tags())
-                tags.update(coherence_tags)
-                decision.state["coherence_tags"] = list(coherence_tags)
+            tilt_lines = [
+                "- semantic mode: {mode} (intensity {intensity:.2f})".format(
+                    mode=semantic_tilt["mode"],
+                    intensity=float(semantic_tilt["intensity"]),
+                ),
+                "- right hits: {hits}".format(
+                    hits=", ".join(semantic_tilt["right_hits"]) or "none",
+                ),
+                "- left hits: {hits}".format(
+                    hits=", ".join(semantic_tilt["left_hits"]) or "none",
+                ),
+            ]
+            if semantic_tilt["notes"]:
+                for note in semantic_tilt["notes"]:
+                    tilt_lines.append(f"- note: {note}")
+            collab_lines = [
+                "- strength: {strength:.2f}".format(
+                    strength=collaboration_profile.strength,
+                ),
+                "- balance: {balance:.2f}".format(
+                    balance=collaboration_profile.balance,
+                ),
+                "- density: {density:.2f}".format(
+                    density=collaboration_profile.density,
+                ),
+                "- focus bonus: {bonus:.2f}".format(
+                    bonus=collaboration_profile.focus_bonus,
+                ),
+                "- cue scores left {left:.2f} | right {right:.2f}".format(
+                    left=hemisphere_signal.left_score,
+                    right=hemisphere_signal.right_score,
+                ),
+                "- cue tokens: {count}".format(count=hemisphere_signal.token_count),
+                f"- collaborative rotation engaged: {collaborative_lead}",
+            ]
+            meta_sections = [
+                _format_section("Hemisphere Routing", routing_lines),
+                _format_section("Hemisphere Semantic Tilt", tilt_lines),
+                _format_section("Collaboration Profile", collab_lines),
+            ]
+            final_answer = f"{final_answer}\n\n" + "\n\n".join(meta_sections)
         if distortion_payload is not None:
             self.telemetry.log(
                 "cognitive_distortion_audit",
@@ -1820,7 +1831,7 @@ class DualBrainController:
             try:
                 schema_profile = self.prefrontal_cortex.profile_turn(
                     question=question,
-                    answer=final_answer,
+                    answer=user_answer,
                     focus=focus,
                     affect=affect,
                 )
@@ -1841,7 +1852,7 @@ class DualBrainController:
             tags.update(self.basal_ganglia.tags(basal_signal))
 
         if inner_steps:
-            inner_steps[-1].content = _truncate_text(final_answer)
+            inner_steps[-1].content = _truncate_text(user_answer)
             inner_steps[-1].metadata.update(
                 {
                     "finalised": True,
@@ -1865,32 +1876,36 @@ class DualBrainController:
         # Add neural impulse activity summary if available
         if neural_activity:
             tags.add("neural_impulse_simulation")
-            impulse_lines = [
-                f"- Hemisphere: {neural_activity['hemisphere']}",
-                f"- Total impulses: {neural_activity['total_impulses']}",
-                f"- Stimulus strength: {neural_activity['stimulus_strength']:.2f}",
-            ]
-            impulse_counts = neural_activity.get("impulse_counts", {})
-            if impulse_counts:
-                count_parts = []
-                for nt, count in impulse_counts.items():
-                    if count > 0:
-                        count_parts.append(f"{nt}={count}")
-                if count_parts:
-                    impulse_lines.append(f"- Neurotransmitter activity: {', '.join(count_parts)}")
-            
-            network_activity = neural_activity.get("network_activity", {})
-            if network_activity:
-                impulse_lines.append(
-                    f"- Active neurons: {network_activity.get('active_neurons', 0):.0f}/{network_activity.get('network_size', 0):.0f}"
+            if emit_debug_sections:
+                impulse_lines = [
+                    f"- Hemisphere: {neural_activity['hemisphere']}",
+                    f"- Total impulses: {neural_activity['total_impulses']}",
+                    f"- Stimulus strength: {neural_activity['stimulus_strength']:.2f}",
+                ]
+                impulse_counts = neural_activity.get("impulse_counts", {})
+                if impulse_counts:
+                    count_parts = []
+                    for nt, count in impulse_counts.items():
+                        if count > 0:
+                            count_parts.append(f"{nt}={count}")
+                    if count_parts:
+                        impulse_lines.append(
+                            f"- Neurotransmitter activity: {', '.join(count_parts)}"
+                        )
+
+                network_activity = neural_activity.get("network_activity", {})
+                if network_activity:
+                    impulse_lines.append(
+                        f"- Active neurons: {network_activity.get('active_neurons', 0):.0f}/{network_activity.get('network_size', 0):.0f}"
+                    )
+                    impulse_lines.append(
+                        f"- Average membrane potential: {network_activity.get('avg_membrane_potential', 0):.1f} mV"
+                    )
+
+                final_answer = (
+                    f"{final_answer}\n\n[Neural Impulse Activity]\n"
+                    + "\n".join(impulse_lines)
                 )
-                impulse_lines.append(
-                    f"- Average membrane potential: {network_activity.get('avg_membrane_potential', 0):.1f} mV"
-                )
-            
-            final_answer = (
-                f"{final_answer}\n\n[Neural Impulse Activity]\n" + "\n".join(impulse_lines)
-            )
 
         tags_with_architecture = set(tags)
         tags_with_architecture.add("architecture_path")
@@ -1914,12 +1929,14 @@ class DualBrainController:
         )
         architecture_summary = _summarise_architecture_path(architecture_preview)
         if architecture_summary:
-            final_answer = (
-                f"{final_answer}\n\n[Architecture Path]\n" + "\n".join(architecture_summary)
-            )
             tags = tags_with_architecture
             decision.state["architecture_path_preview"] = architecture_preview
             decision.state["architecture_path_summary"] = architecture_summary
+            if emit_debug_sections:
+                final_answer = (
+                    f"{final_answer}\n\n[Architecture Path]\n"
+                    + "\n".join(architecture_summary)
+                )
 
         follow_brain: Optional[str] = None
         if collaborative_lead:
@@ -1934,7 +1951,7 @@ class DualBrainController:
             self.hippocampus.index_episode(
                 decision.qid,
                 question,
-                final_answer,
+                user_answer,
                 leading=leading,
                 collaboration_strength=collaboration_profile.strength,
                 selection_reason=selection_reason,
@@ -1961,7 +1978,7 @@ class DualBrainController:
             episodic_total = len(self.hippocampus.episodes)
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
 
-        self.memory.store({"Q": question, "A": final_answer}, tags=tags)
+        self.memory.store({"Q": question, "A": user_answer}, tags=tags, qid=decision.qid)
 
         architecture_path = self._compose_architecture_path(
             focus=focus,
@@ -2021,7 +2038,7 @@ class DualBrainController:
                 mapping=unconscious_profile,
                 question=question,
                 draft=draft,
-                final_answer=final_answer,
+                final_answer=user_answer,
                 success=success,
                 decision_state=decision.state,
                 affect=affect,

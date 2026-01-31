@@ -16,4 +16,4 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-print("For interactive demo use: python -m scripts.run_server")
+print("For interactive demo use: python3 sr-dual-brain-llm/scripts/run_server.py")

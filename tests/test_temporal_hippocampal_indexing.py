@@ -1,4 +1,9 @@
 import math
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
 
@@ -43,3 +48,31 @@ def test_index_episode_tracks_collaboration_metadata():
     summary = hippocampus.retrieve_summary("symbolic river", topk=1)
     assert "lead=right" in summary
     assert "collab=0.80" in summary
+
+
+def test_embedding_is_deterministic_across_hash_seeds():
+    project_root = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{project_root}{os.pathsep}{env.get('PYTHONPATH', '')}"
+
+    script = (
+        "import json; "
+        "from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing; "
+        "idx=TemporalHippocampalIndexing(dim=32); "
+        "print('EMBED=' + json.dumps(idx.embed_text('hello world').tolist()))"
+    )
+
+    def run(seed: str) -> list[float]:
+        run_env = dict(env)
+        run_env["PYTHONHASHSEED"] = seed
+        out = subprocess.check_output([sys.executable, "-c", script], env=run_env, text=True)
+        marker = "EMBED="
+        for line in reversed(out.splitlines()):
+            if line.startswith(marker):
+                return list(json.loads(line[len(marker):]))
+        raise AssertionError(f"Expected {marker} in subprocess output")
+
+    a = run("1")
+    b = run("2")
+    assert len(a) == len(b)
+    assert all(abs(x - y) < 1e-10 for x, y in zip(a, b))

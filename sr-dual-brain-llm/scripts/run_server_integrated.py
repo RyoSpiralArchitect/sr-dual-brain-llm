@@ -16,8 +16,16 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import asyncio, uuid
-from typing import Dict, Any
+import asyncio
+import sys
+import uuid
+from pathlib import Path
+from typing import Any, Dict
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from core.events import new_event, EventTracer
 from core.policy_modes import ReasoningDial
 from core.hypothalamus import Hypothalamus
@@ -58,7 +66,9 @@ class RightBrain:
         await asyncio.sleep(0.15 if budget=='small' else 0.35)
         return {"notes_sum": notes, "confidence_r": 0.75, "cost": {"tokens": len(notes), "ms": 150 if budget=='small' else 350}}
 
-class Auditor: async def check(self, txt): return {"ok": True}
+class Auditor:
+    async def check(self, txt):
+        return {"ok": True}
 
 async def handle_query(qid, question, tracer, dial_mode="evaluative"):
     episode_id = str(uuid.uuid4())

@@ -50,6 +50,7 @@ class MemoryTrace:
 
     question: str
     answer: str
+    qid: str | None = None
     timestamp: float = field(default_factory=lambda: time.time())
     tags: Tuple[str, ...] = field(default_factory=tuple)
     question_tokens: Tuple[str, ...] = field(default_factory=tuple)
@@ -70,13 +71,20 @@ class SharedMemory:
 
     # ------------------------------------------------------------------
     # Storage helpers
-    def store(self, qa_pair: Dict[str, str] | MemoryTrace, *, tags: Iterable[str] | None = None) -> None:
+    def store(
+        self,
+        qa_pair: Dict[str, str] | MemoryTrace,
+        *,
+        tags: Iterable[str] | None = None,
+        qid: str | None = None,
+    ) -> None:
         """Persist a QA pair or trace into the rolling memory buffer."""
 
         if isinstance(qa_pair, MemoryTrace):
             trace = qa_pair
         else:
             trace = MemoryTrace(
+                qid=qid,
                 question=qa_pair["Q"],
                 answer=qa_pair["A"],
                 tags=_normalise_tags(tags) or _derive_tags(qa_pair["Q"]),
@@ -143,6 +151,57 @@ class SharedMemory:
         scored.sort(key=lambda item: item[0], reverse=True)
         top = [f"Q:{trace.question} A:{trace.answer}" for _, trace in scored[:n]]
         return "\n".join(top)
+
+    def retrieve_schema_related(self, question: str, n: int = 2) -> str:
+        """Return condensed "schema memory" snippets stored in kv.
+
+        Schema memories are optional and typically populated by an offline
+        consolidation job (e.g., `scripts/sleep_consolidate.py`).
+        """
+
+        raw = self.kv.get("schema_memories")
+        if not raw:
+            return ""
+        if not isinstance(raw, list):
+            return ""
+
+        q_tokens = set(_tokenize(question))
+        q_tags = set(_derive_tags(question))
+        total = len(raw)
+        scored: List[Tuple[float, Dict[str, Any]]] = []
+        for idx, item in enumerate(raw):
+            if not isinstance(item, dict):
+                continue
+            tags = item.get("tags") or []
+            if not isinstance(tags, list):
+                tags = []
+            tag_set = {str(t).strip().lower() for t in tags if t and str(t).strip()}
+            if not tag_set:
+                continue
+            overlap = len(tag_set & q_tags) / max(len(q_tags), 1)
+            token_overlap = len(tag_set & q_tokens) / max(len(q_tokens), 1) if q_tokens else 0.0
+            recency = 1.0 - (idx / max(total, 1))
+            score = 0.65 * overlap + 0.25 * token_overlap + 0.10 * recency
+            if score <= 0.0:
+                continue
+            scored.append((score, item))
+
+        if not scored:
+            # If nothing matches, fall back to the most recent schema summary.
+            item = raw[0]
+            if isinstance(item, dict) and item.get("summary"):
+                return str(item.get("summary"))
+            return ""
+
+        scored.sort(key=lambda it: it[0], reverse=True)
+        top_items = [item for _, item in scored[: max(1, int(n))]]
+        summaries: List[str] = []
+        for item in top_items:
+            summary = str(item.get("summary") or "").strip()
+            if not summary:
+                continue
+            summaries.append(summary[:800])
+        return "\n\n".join(summaries)
 
     # ------------------------------------------------------------------
     def put_kv(self, key: str, value: Any) -> None:

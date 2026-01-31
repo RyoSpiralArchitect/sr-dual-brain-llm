@@ -32,13 +32,33 @@ class LLMConfig:
     api_key: str
     api_base: Optional[str] = None
     organization: Optional[str] = None
-    max_output_tokens: int = 512
+    max_output_tokens: int = 1024
     timeout_seconds: int = 40
+    auto_continue: bool = True
+    max_continuations: int = 2
     extra_headers: Dict[str, str] = field(default_factory=dict)
 
 
 def _env(name: str, default: Optional[str] = None) -> Optional[str]:
     return os.environ.get(name, default)
+
+
+def _coerce_int(value: Optional[str], default: int) -> int:
+    try:
+        return int(value) if value is not None else default
+    except Exception:
+        return default
+
+
+def _coerce_bool(value: Optional[str], default: bool) -> bool:
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off"}:
+        return False
+    return default
 
 
 def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
@@ -72,12 +92,24 @@ def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
     provider_base = _env(f"{provider.upper()}_API_BASE")
     api_base = _env(f"{prefix}_API_BASE") or _env("LLM_API_BASE") or provider_base
     organization = _env(f"{prefix}_ORG") or _env("OPENAI_ORGANIZATION")
-    max_output_tokens = int(
+    max_output_tokens = _coerce_int(
         _env(f"{prefix}_MAX_TOKENS")
         or _env("LLM_MAX_OUTPUT_TOKENS")
-        or 512
+        or "1024",
+        1024,
     )
-    timeout_seconds = int(_env(f"{prefix}_TIMEOUT") or _env("LLM_TIMEOUT") or 40)
+    timeout_seconds = _coerce_int(
+        _env(f"{prefix}_TIMEOUT") or _env("LLM_TIMEOUT") or "40",
+        40,
+    )
+    auto_continue = _coerce_bool(
+        _env(f"{prefix}_AUTO_CONTINUE") or _env("LLM_AUTO_CONTINUE") or "1",
+        True,
+    )
+    max_continuations = _coerce_int(
+        _env(f"{prefix}_MAX_CONTINUATIONS") or _env("LLM_MAX_CONTINUATIONS") or "2",
+        2,
+    )
 
     extra_headers: Dict[str, str] = {}
     if provider.lower() == "anthropic":
@@ -91,6 +123,8 @@ def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
         organization=organization,
         max_output_tokens=max_output_tokens,
         timeout_seconds=timeout_seconds,
+        auto_continue=auto_continue,
+        max_continuations=max_continuations,
         extra_headers=extra_headers,
     )
 
@@ -128,6 +162,30 @@ class LLMClient:
             return await self._huggingface(prompt, system=system, temperature=temperature)
         raise ValueError(f"Unsupported provider: {provider}")
 
+    @staticmethod
+    def _merge_continuation(prefix: str, continuation: str) -> str:
+        if not prefix:
+            return continuation
+        if not continuation:
+            return prefix
+
+        prefix_norm = str(prefix)
+        cont_norm = str(continuation)
+
+        # De-duplicate small overlaps (common when models repeat the tail).
+        max_probe = min(len(prefix_norm), len(cont_norm), 200)
+        for n in range(max_probe, 0, -1):
+            if prefix_norm.endswith(cont_norm[:n]):
+                cont_norm = cont_norm[n:]
+                break
+
+        if not cont_norm:
+            return prefix_norm
+
+        if prefix_norm.endswith(("\n", " ", "\t")) or cont_norm.startswith(("\n", " ", "\t", ".", ",", "!", "?", ":", ";")):
+            return prefix_norm + cont_norm
+        return prefix_norm + " " + cont_norm
+
     def _default_base(self) -> str:
         provider = self.provider
         if provider == "openai":
@@ -147,30 +205,64 @@ class LLMClient:
     async def _openai_style(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
-        messages = []
+        base_messages = []
         if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
-        payload = {
-            "model": self.config.model,
-            "messages": messages,
-            "temperature": float(temperature),
-            "max_tokens": self.config.max_output_tokens,
-        }
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json",
-        }
-        if self.config.organization:
-            headers["OpenAI-Organization"] = self.config.organization
-        headers.update(self.config.extra_headers)
-        data = await self._post_json(url, payload, headers)
-        choices = data.get("choices") or []
-        if choices and choices[0].get("message"):
-            return choices[0]["message"].get("content", "").strip()
-        if choices and choices[0].get("delta"):
-            return choices[0]["delta"].get("content", "").strip()
-        return str(data)
+            base_messages.append({"role": "system", "content": system})
+        base_messages.append({"role": "user", "content": prompt})
+
+        async def _call(messages: list[dict[str, str]]) -> tuple[str, Optional[str]]:
+            payload = {
+                "model": self.config.model,
+                "messages": messages,
+                "temperature": float(temperature),
+                "max_tokens": self.config.max_output_tokens,
+            }
+            headers = {
+                "Authorization": f"Bearer {self.config.api_key}",
+                "Content-Type": "application/json",
+            }
+            if self.config.organization:
+                headers["OpenAI-Organization"] = self.config.organization
+            headers.update(self.config.extra_headers)
+            data = await self._post_json(url, payload, headers)
+            choices = data.get("choices") or []
+            if not choices or not isinstance(choices, list):
+                return str(data).strip(), None
+            choice0 = choices[0] if isinstance(choices[0], dict) else {}
+            finish_reason = choice0.get("finish_reason")
+            msg = choice0.get("message") or choice0.get("delta") or {}
+            if isinstance(msg, dict):
+                content = msg.get("content", "")
+            else:
+                content = ""
+            return str(content or "").strip(), str(finish_reason) if finish_reason is not None else None
+
+        text, finish = await _call(base_messages)
+        full_text = text
+
+        if not self.config.auto_continue or not finish:
+            return full_text.strip()
+
+        if finish.lower() not in {"length", "max_tokens"}:
+            return full_text.strip()
+
+        continuation_prompt = (
+            "Continue from where you left off. Do not repeat any text. Output only the continuation."
+        )
+        for _ in range(max(0, int(self.config.max_continuations))):
+            messages = [
+                *base_messages,
+                {"role": "assistant", "content": full_text},
+                {"role": "user", "content": continuation_prompt},
+            ]
+            chunk, finish = await _call(messages)
+            if not chunk:
+                break
+            full_text = self._merge_continuation(full_text, chunk)
+            if not finish or finish.lower() not in {"length", "max_tokens"}:
+                break
+
+        return full_text.strip()
 
     async def _anthropic(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
@@ -180,20 +272,54 @@ class LLMClient:
             "content-type": "application/json",
             "anthropic-version": self.config.extra_headers.get("anthropic-version", "2023-06-01"),
         }
-        payload = {
-            "model": self.config.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": self.config.max_output_tokens,
-            "temperature": float(temperature),
-        }
-        if system:
-            payload["system"] = system
-        data = await self._post_json(url, payload, headers)
-        content = data.get("content") or []
-        if content and isinstance(content, list):
-            text_parts = [part.get("text", "") for part in content if isinstance(part, dict)]
-            return "\n".join([part for part in text_parts if part]).strip()
-        return str(data)
+        base_messages = [{"role": "user", "content": prompt}]
+
+        async def _call(messages: list[dict[str, str]]) -> tuple[str, Optional[str]]:
+            payload = {
+                "model": self.config.model,
+                "messages": messages,
+                "max_tokens": self.config.max_output_tokens,
+                "temperature": float(temperature),
+            }
+            if system:
+                payload["system"] = system
+            data = await self._post_json(url, payload, headers)
+            stop_reason = data.get("stop_reason")
+            content = data.get("content") or []
+            if content and isinstance(content, list):
+                text_parts = [
+                    part.get("text", "") for part in content if isinstance(part, dict)
+                ]
+                return "\n".join([part for part in text_parts if part]).strip(), (
+                    str(stop_reason) if stop_reason is not None else None
+                )
+            return str(data).strip(), str(stop_reason) if stop_reason is not None else None
+
+        text, stop_reason = await _call(base_messages)
+        full_text = text
+
+        if not self.config.auto_continue or not stop_reason:
+            return full_text.strip()
+        if str(stop_reason).lower() not in {"max_tokens"}:
+            return full_text.strip()
+
+        continuation_prompt = (
+            "Continue from where you left off. Do not repeat any text. Output only the continuation."
+        )
+        for _ in range(max(0, int(self.config.max_continuations))):
+            messages = [
+                *base_messages,
+                {"role": "assistant", "content": full_text},
+                {"role": "user", "content": continuation_prompt},
+            ]
+            chunk, stop_reason = await _call(messages)
+            if not chunk:
+                break
+            full_text = self._merge_continuation(full_text, chunk)
+            if not stop_reason or str(stop_reason).lower() not in {"max_tokens"}:
+                break
+
+        return full_text.strip()
 
     async def _google(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")

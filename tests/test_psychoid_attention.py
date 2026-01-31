@@ -34,7 +34,12 @@ def test_projection_can_bias_attention_scores():
     projection = adapter.build_projection(signal, seq_len=3)
     scores = torch.zeros(2, 3, 3)
     biased = adapter.apply_to_scores(scores, projection)
+    expected = torch.tensor(
+        projection.bias_matrix,
+        dtype=biased.dtype,
+        device=biased.device,
+    )
     assert torch.allclose(
         biased[0],
-        torch.tensor(projection.bias_matrix, dtype=biased.dtype),
+        expected,
     )

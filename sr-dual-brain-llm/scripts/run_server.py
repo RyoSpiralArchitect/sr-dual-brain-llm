@@ -16,10 +16,17 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import os
 import asyncio
+import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.shared_memory import SharedMemory
+from core.callosum import Callosum
 from core.models import LeftBrainModel, RightBrainModel
 from core.policy import RightBrainPolicy
 from core.policy_selector import decide_leading_brain
@@ -28,17 +35,6 @@ from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
-
-_BACKEND = os.environ.get("CALLOSUM_BACKEND", "memory")
-
-def load_callosum(name: str):
-    if name == "memory":
-        from core.callosum import Callosum as Impl; return Impl()
-    if name == "kafka":
-        from core.callosum_kafka import CallosumKafka as Impl; return Impl()
-    if name == "mqtt":
-        from core.callosum_mqtt import CallosumMQTT as Impl; return Impl()
-    raise ValueError(f"Unknown backend: {name}")
 
 async def right_worker(callosum, mem, right_model):
     if hasattr(callosum, "recv_request"):
@@ -81,7 +77,7 @@ async def right_worker(callosum, mem, right_model):
         await asyncio.sleep(0.1)
 
 async def main():
-    callosum = load_callosum(_BACKEND)
+    callosum = Callosum()
     mem = SharedMemory()
     left = LeftBrainModel()
     right = RightBrainModel()
@@ -106,10 +102,9 @@ async def main():
         auditor=auditor,
         orchestrator=orchestrator,
     )
-    if _BACKEND == "memory":
-        asyncio.create_task(right_worker(callosum, mem, right))
-    print(f"Server ready (backend={_BACKEND}). Type questions (stdin). Ctrl-C to quit.")
-    loop = asyncio.get_event_loop()
+    asyncio.create_task(right_worker(callosum, mem, right))
+    print("Server ready (callosum=memory). Type questions (stdin). Ctrl-C to quit.")
+    loop = asyncio.get_running_loop()
     while True:
         question = await loop.run_in_executor(None, input, "Q> ")
         if not question.strip():

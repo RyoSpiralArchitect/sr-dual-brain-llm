@@ -1,3 +1,5 @@
+import asyncio
+
 from core.llm_client import LLMConfig, LLMClient, load_llm_config
 
 
@@ -39,3 +41,73 @@ def test_default_bases_cover_supported_providers():
         cfg = LLMConfig(provider=provider, model="dummy", api_key="key")
         client = LLMClient(cfg)
         assert client._default_base() == expected_base
+
+
+def test_openai_style_auto_continue_on_length(monkeypatch):
+    cfg = LLMConfig(
+        provider="openai",
+        model="dummy",
+        api_key="key",
+        max_output_tokens=5,
+        auto_continue=True,
+        max_continuations=2,
+    )
+    client = LLMClient(cfg)
+    calls = []
+
+    async def fake_post_json(url, payload, headers):
+        calls.append(payload)
+        if len(calls) == 1:
+            return {
+                "choices": [
+                    {
+                        "message": {"content": "Hello"},
+                        "finish_reason": "length",
+                    }
+                ]
+            }
+        return {
+            "choices": [
+                {
+                    "message": {"content": " world"},
+                    "finish_reason": "stop",
+                }
+            ]
+        }
+
+    monkeypatch.setattr(client, "_post_json", fake_post_json)
+
+    out = asyncio.run(client.complete("prompt", system="sys", temperature=0.2))
+    assert out == "Hello world"
+    assert len(calls) == 2
+    assert any(msg.get("role") == "assistant" for msg in calls[1].get("messages", []))
+
+
+def test_openai_style_auto_continue_can_be_disabled(monkeypatch):
+    cfg = LLMConfig(
+        provider="openai",
+        model="dummy",
+        api_key="key",
+        max_output_tokens=5,
+        auto_continue=False,
+        max_continuations=2,
+    )
+    client = LLMClient(cfg)
+    calls = []
+
+    async def fake_post_json(url, payload, headers):
+        calls.append(payload)
+        return {
+            "choices": [
+                {
+                    "message": {"content": "Hello"},
+                    "finish_reason": "length",
+                }
+            ]
+        }
+
+    monkeypatch.setattr(client, "_post_json", fake_post_json)
+
+    out = asyncio.run(client.complete("prompt", system="sys", temperature=0.2))
+    assert out == "Hello"
+    assert len(calls) == 1

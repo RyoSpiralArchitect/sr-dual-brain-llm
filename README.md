@@ -1,27 +1,13 @@
 # SpiralReality Dual Brain LLM
 
-The **Spiral Dual Brain LLM** experiment explores how a pair of cooperative language-model agents can solve complex tasks by emulating the interaction between the human left and right hemispheres. A lightweight orchestrator ("left brain") owns the primary conversation with a user, while a specialist agent ("right brain") can be summoned on demand through a configurable communication layer called the *corpus callosum*. Shared episodic memory keeps the context synchronized so both agents work from the same knowledge.
+SpiralReality Dual Brain LLM is a research playground for **dual-agent orchestration**: a “left brain” (planner/drafter) and a “right brain” (specialist/deepener) collaborate via an in-memory *corpus callosum* and share a lightweight episodic memory. The goal is to make *why* the system chose a collaboration pattern observable via telemetry, traces, and structured “architecture path” summaries.
 
-## Key Ideas
-- **Dual-agent workflow** – the left brain triages requests and only escalates to the right brain when a domain-specific deep dive is warranted.
-- **Adaptive co-leading policy** – the controller senses hemispheric bias, rotates leadership when balanced, and now braids right-brain preludes with left-brain drafts when signals are in equilibrium.
-- **Collaboration resonance gauge** – a hemisphere signal + collaboration profile quantify left/right cue density, balance, and focus lift so braided replies and telemetry expose *why* the duet co-leads.
-- **Neural impulse simulation** – biologically faithful action potential dynamics model neural activity during processing with realistic membrane potentials, refractory periods, synaptic transmission, and neurotransmitter modulation.
-- **Pluggable corpus callosum** – switch between in-memory, Kafka, or MQTT transports without touching the business logic.
-- **Trainable policy** – a simple PPO policy chooses when to invoke the right brain, enabling experimentation with reinforcement-learning driven cooperation.
-- **Adaptive memory + telemetry** – enriched shared memory ranks past traces by similarity/tags, the hippocampus now archives hemispheric lead + collaboration strength, and the controller emits rollups for analytics.
-- **Episodic collaboration atlas** – hippocampal traces log which hemisphere led, why it was chosen, and the average braid strength across recent episodes so downstream agents can tune retrieval bias.
-- **Executive focus + unconscious cues** – a prefrontal-inspired module gates context while an unconscious field surfaces archetypal signals for tagging and auditing.
-- **Emergent unconscious incubation** – unresolved material is cached in the unconscious, resurfacing as archetypal insight hints while stress from noisy inputs is discharged for the next reasoning loop.
-- **Default mode reflections** – a resting-state network distils unconscious cache depth, stress release, and emergent archetypes into reflective prompts that enrich callosum payloads and final answers.
-- **Basal ganglia gating** – action selection receives striatal-like go/inhibit signals tuned by novelty, affect, and focus feedback.
-- **Psychoid attention bridging** – archetypal projections bend right-brain attention scores through a psychoid-aware adapter that exports QKV-friendly bias matrices and telemetry.
-- **Coherence resonator + linguistic fabric** – balances hemispheric coverage/cohesion, stitches unconscious signifiers into the weave, and emits brainstem-style integration cues for the final answer.
-- **Unconscious linguistic weaving** – archetypal traces, psychoid signifiers, and lexical texture are fused into a "[Unconscious Linguistic Fabric]" block so responses speak to language itself rather than semantics alone.
-- **Motif cadence analysis** – captures alliteration, motif density, and rhythmic cadence across hemispheres so a "[Linguistic Motifs]" block can surface how language form evolves beyond semantics.
-- **Architecture path narration** – final responses append an `[Architecture Path]` section summarising perception → dialogue → integration → memory stages for quick auditing.
+This repository intentionally optimizes for:
+- Experimenting with orchestration policies (when to consult, when to braid, when to stay solo)
+- Inspectable runtime behavior (telemetry, inner-dialogue steps, coherence signals)
+- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over stdio)
 
-## Architecture Overview (Braided Co-Lead Flow)
+## Architecture (Braided Co-Lead Flow)
 ```mermaid
 flowchart TD
     U[User Input] --> P[Perception Layer<br/>Amygdala + Prefrontal Cortex + Schema Profiler]
@@ -29,230 +15,228 @@ flowchart TD
     D --> I[Integration & Auditing<br/>Coherence Resonator + Auditor + Default Mode]
     I --> M[Memory & Consolidation<br/>Shared Memory + Hippocampus + Unconscious Field]
     M --> R[Final Response]
-    D -->|Braided insights| I
-    P -. affect/focus telemetry .-> TP[Perception Signals]
-    D -. inner steps .-> TI[Inner Dialogue Trace]
-    I -. architecture map .-> TA[Architecture Path Telemetry]
 ```
 
-The controller now emits an explicit `architecture_path` telemetry event that summarises
-how each perception, inner-dialogue, integration, and memory module participated in a
-turn. Shared memory persists this architectural trace alongside inner-dialogue steps so
-contributors can replay entire reasoning trajectories. The Mermaid source lives in
-`docs/diagrams/dual_brain_architecture.mmd` for easy editing.
+By default, `/v1/process` returns a **clean user-facing answer** (no internal debug blocks). The same signals are still available via `telemetry` + `dialogue_flow`, and you can opt-in to debug-style answers via `answer_mode`.
 
-## Repository Layout
-```
-└── sr-dual-brain-llm/
-    ├── core/
-    │   ├── __init__.py
-    │   ├── callosum.py                    # Default asyncio in-memory transport
-    │   ├── enhanced_callosum.py           # Neurotransmitter-filtered corpus callosum
-    │   ├── callosum_kafka.py              # Kafka-based transport skeleton
-    │   ├── callosum_mqtt.py               # MQTT-based transport skeleton
-    │   ├── orchestrator.py                # Left-brain coordinator
-    │   ├── neural_impulse.py              # Biological action potential dynamics
-    │   ├── neurotransmitter_modulator.py  # GABA/Glutamate/Dopamine/Serotonin control
-    │   ├── prefrontal_cortex.py           # Executive-focus heuristics and gating
-    │   ├── basal_ganglia.py               # Striatal go/no-go heuristics for consult control
-    │   ├── default_mode_network.py        # Resting-state reflections from unconscious summaries
-    │   ├── psychoid_attention.py          # Project archetypal signals into QKV attention biases
-    │   ├── policy_ppo.py                  # PPO policy over discrete actions
-    │   ├── policy_selector.py             # Heuristics for choosing the leading hemisphere
-    │   ├── shared_memory.py               # Persistent memory helpers
-    │   └── unconscious_field.py           # Archetypal unconscious field integration
-    ├── scripts/
-    │   ├── right_worker_broker.py  # Broker worker that runs the right brain
-    │   ├── run_server.py           # Entry point using the in-memory backend
-    │   └── train_policy.py         # Minimal PPO training loop
-    └── samples/
-        └── prompts/                # Example questions and prompts
-```
+## Quick Start (Recommended): REST via C# Gateway
+The recommended research loop is:
+1) C# Minimal API exposes REST endpoints
+2) C# launches and talks to the Python engine over stdio (JSONL)
+3) Python owns orchestration, memory, and telemetry
 
-Supporting assets live at the repository root:
-- `LICENSE_NOTICE.txt`
-- `docker-compose.yml`
-- `requirements.txt`
-
-## Sample assets
-- `examples/sample_questions.json` – 20+ Japaneseタスクのスタックで、要約・分析・翻訳・リスク検出など左脳/右脳の役割を試せる質問集。
-- `samples/prompts/brain_prompt_sets.json` – 戦略/分析/クリエイティブの3カテゴリに分けた協調テンプレート例。ハンドオフ手順や無意識層を刺激するプロンプトの型を収録。
-- `samples/sample_trace.jsonl` – ポリシー決定からコール送受信、左右入れ替え、無意識キュー、メモリ書き込みまで含むJSONLトレース。
-
-## Neural Impulse Mechanism
-
-The system now includes biologically faithful neural impulse simulation that models actual brain activity during processing:
-
-### Key Biological Features
-- **Action Potentials**: All-or-nothing electrical signals (~100mV amplitude, ~1ms duration)
-- **Membrane Dynamics**: Realistic resting potential (-70mV) and threshold (-55mV)
-- **Refractory Periods**: Absolute (1ms) and relative (3ms) refractory periods prevent immediate re-firing
-- **Temporal & Spatial Summation**: Multiple synaptic inputs integrate over time to influence firing
-- **Synaptic Transmission**: Chemical neurotransmitter release with realistic delays (~0.5ms)
-- **Neurotransmitter Types**:
-  - **Glutamate** (excitatory) - main excitatory neurotransmitter
-  - **GABA** (inhibitory) - main inhibitory neurotransmitter  
-  - **Dopamine** (modulatory) - reward and motivation signaling
-  - **Acetylcholine** (modulatory) - attention and learning
-  - **Serotonin** (modulatory) - mood and arousal regulation
-- **Hebbian Plasticity**: Synapses strengthen when neurons fire together
-
-### Advanced Neurotransmitter Modulation System
-
-The system now includes a sophisticated neurotransmitter-based control mechanism that regulates information flow and agent behavior:
-
-#### GABA (Inhibitory Control)
-- **Information Filtering**: Suppresses low-priority and noisy information before transmission through the corpus callosum
-- **State Transition Control**: Prevents over-activation of agents by generating inhibitory pulses when activation exceeds thresholds
-- **Attention Focusing**: Selectively inhibits non-target regions to enhance concentration on specific tasks
-
-#### Glutamate (Excitatory Activation)
-- **Task Initiation**: Generates excitatory pulses to activate agents based on task complexity and urgency
-- **Agent Activation**: Directly stimulates specific brain regions or agents for processing
-
-#### Dopamine (Reward & Motivation)
-- **Reward Signaling**: Generates reward/penalty pulses based on task success, quality, and efficiency
-- **PPO Integration**: Provides direct feedback to the PPO policy learning system
-- **Motivation Tracking**: Maintains reward history for policy optimization
-
-#### Serotonin (Stability & Cooperation)
-- **System Stability**: Adjusts overall system stability based on volatility and cooperation metrics
-- **Cooperative State**: Promotes cooperation between agents during high-conflict scenarios
-- **Stability Trending**: Tracks and reports stability trends over time
-
-### Enhanced Corpus Callosum
-
-The `EnhancedCallosum` wraps the standard corpus callosum with neurotransmitter-based filtering:
-- Automatically estimates priority, novelty, and task relevance from message content
-- Applies GABA-based filtering to block noise and low-priority information
-- Tracks transmission statistics (filter rate, total/filtered/transmitted requests)
-- Adds neurotransmitter pulse metadata to all messages
-- Supports both filtered and unfiltered modes
-
-### Neural Network Architecture
-The system creates a dual-hemisphere neural network:
-- **Left Hemisphere Pathway**: Sequential processing neurons (analytical)
-- **Right Hemisphere Pathway**: Parallel processing neurons (holistic)
-- **Basal Ganglia Modulator**: Dopaminergic neuron for action selection
-- **Amygdala Modulator**: GABAergic neuron for risk-based inhibition
-- **Prefrontal Modulator**: Cholinergic neuron for attention gating
-
-### Neural Activity in Processing
-During each processing turn, the system:
-1. Simulates neural activity in the active hemisphere
-2. Modulates firing based on affective state, novelty, and focus
-3. Applies neurotransmitter-based filtering to information transfers
-4. Tracks action potentials and neurotransmitter release
-5. Generates reward signals for PPO policy learning
-6. Maintains system stability through serotonin modulation
-7. Reports network activity metrics (firing rates, membrane potentials)
-8. Includes neural activity summary and neurotransmitter pulses in final responses
-
-The neural activity provides a biologically grounded substrate that mirrors how real brains process information through electrical and chemical signals.
-
-## Design Playbooks
-- [Dual-Brain LLM Design Playbook](docs/dual_brain_design.md) – bridges analytical psychology, CBT, and neuroscience with the existing modules and outlines implementation backlogs.
-
-## Prerequisites
+### Prerequisites
 - Python 3.10+
-- Optional: Docker (for Kafka/Mosquitto brokers)
+- .NET 8 SDK (ensure `dotnet` is on your `PATH`; on some macOS setups it may live at `/usr/local/share/dotnet/dotnet`)
 
-## Installation
+### Python install
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Optional (Postgres-backed state)
+pip install -r requirements-pg.txt
+
+# Optional (tests)
+pip install -r requirements-dev.txt
 ```
 
-## Running the Orchestrator (In-memory Backend)
+### Run the gateway
 ```bash
-python sr-dual-brain-llm/scripts/run_server.py
+export DUALBRAIN_REPO_ROOT="$PWD"
+dotnet run --project csharp/SrDualBrain.Gateway --urls http://127.0.0.1:8080
 ```
-This launches the left-brain orchestrator and an in-process right-brain specialist connected via the asyncio corpus callosum.
 
-### Quick start without Kafka/MQTT
-Set the provider/model API keys as environment variables and the orchestrator will call the APIs directly (no Docker required):
+Optional gateway timeout override (useful for long generations / auto-continue):
+```bash
+export DUALBRAIN_ENGINE_TIMEOUT_SECONDS=120
+```
 
+### Browser UI (chat + metrics)
+Open:
+- `http://127.0.0.1:8080/`
+
+The UI lets you optionally pin `provider/model` for the session and set `max_output_tokens`.
+
+### Call it
+```bash
+curl -s http://127.0.0.1:8080/v1/process \
+  -H 'content-type: application/json' \
+  -d '{
+    "session_id": "demo",
+    "question": "Explain why a dual-agent workflow can improve quality.",
+    "leading_brain": "auto",
+    "return_telemetry": true,
+    "llm": { "provider": "openai", "model": "gpt-4o-mini" }
+  }'
+```
+
+Notes:
+- API keys are read from environment variables (do not send keys in requests).
+- `session_id` scopes in-memory state (shared memory + hippocampal episodes) inside the Python engine process.
+
+## REST API
+
+### `GET /v1/health`
+Returns gateway + engine health.
+
+### `POST /v1/reset`
+Resets a session inside the Python engine.
+
+Request:
+```json
+{ "session_id": "demo" }
+```
+
+### `POST /v1/process`
+Runs one orchestration turn.
+
+Request fields:
+- `question` (string, required)
+- `session_id` (string, default: `"default"`)
+- `leading_brain` (`"auto"|"left"|"right"`, default: `"auto"`)
+- `answer_mode` (`"plain"|"debug"|"annotated"|"meta"`, default: `"plain"`)
+- `return_telemetry` (bool, default: `false`)
+- `return_dialogue_flow` (bool, default: `true`)
+- `qid` (string, optional): supply your own ID for dataset runs / trace correlation
+- `llm` (object, optional): select provider/model for the *session* (keys still come from env)
+  - `provider` (string, required if `llm` provided): `openai|google|anthropic|mistral|xai|huggingface`
+  - `model` (string, required if `llm` provided)
+  - `left_model` / `right_model` (string, optional): per-hemisphere model override
+  - Optional request-time knobs (no secrets): `api_base`, `organization`, `max_output_tokens`, `timeout_seconds`, `auto_continue`, `max_continuations`
+
+Response fields:
+- `qid` (string)
+- `answer` (string)
+- `session_id` (string)
+- `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
+- `telemetry` (array, optional): structured per-module events emitted during the turn
+
+### `POST /v1/episodes/search`
+Searches hippocampal episodic memory for a session.
+
+Request:
+```json
+{ "session_id": "demo", "query": "coherence audit", "topk": 5 }
+```
+
+Response:
+- `backend`: `"pgvector" | "postgres" | "memory" | "none"`
+- `results`: array of `{ similarity, qid, question, answer, ts, tags, ... }`
+
+### `POST /v1/telemetry/query`
+Queries persisted telemetry events (Postgres only).
+
+Request:
+```json
+{ "session_id": "demo", "limit": 250, "event": "policy_decision" }
+```
+
+### `POST /v1/schema/list`
+Lists consolidated schema memories (Postgres only).
+
+Request:
+```json
+{ "session_id": "demo", "limit": 16 }
+```
+
+### Concurrency model
+The gateway currently runs **one Python engine process** and the engine processes requests sequentially (one line in → one line out). This is intentional for determinism during research runs. Scaling options are in the roadmap.
+
+## LLM Configuration
+
+### Environment variables (recommended)
+The Python engine can call external providers directly via plain HTTP (no SDK deps).
+
+Example (OpenAI):
 ```bash
 export LLM_PROVIDER=openai
 export LLM_MODEL_ID=gpt-4o-mini
 export OPENAI_API_KEY=sk-...
-
-# Optional per-hemisphere overrides
-export LEFT_BRAIN_MODEL=gpt-4o-mini
-export RIGHT_BRAIN_MODEL=gpt-4o-mini
-python sr-dual-brain-llm/scripts/run_server.py
 ```
 
-Supported providers: `openai`, `google`, `anthropic`, `mistral`, `xai`, `huggingface`. You can also use provider-specific keys such as `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY`, `HUGGINGFACE_API_TOKEN`/`HF_TOKEN`, or a shared `LLM_API_KEY`. Optional knobs:
-
-- `LLM_API_BASE` or `<PROVIDER>_API_BASE` to point at custom endpoints (e.g., Azure OpenAI)
-- `LLM_MAX_OUTPUT_TOKENS` / `LEFT_BRAIN_MAX_TOKENS` / `RIGHT_BRAIN_MAX_TOKENS`
+Optional overrides:
+- `LEFT_BRAIN_MODEL`, `RIGHT_BRAIN_MODEL`
+- `LLM_API_BASE` or `<PROVIDER>_API_BASE`
+- `LLM_MAX_OUTPUT_TOKENS` / `LEFT_BRAIN_MAX_TOKENS` / `RIGHT_BRAIN_MAX_TOKENS` (default: 1024)
 - `LLM_TIMEOUT` / `LEFT_BRAIN_TIMEOUT` / `RIGHT_BRAIN_TIMEOUT`
-- `OPENAI_ORGANIZATION` or `LEFT_BRAIN_ORG` / `RIGHT_BRAIN_ORG`
+- `LLM_AUTO_CONTINUE` / `LEFT_BRAIN_AUTO_CONTINUE` / `RIGHT_BRAIN_AUTO_CONTINUE` (default: on)
+- `LLM_MAX_CONTINUATIONS` / `LEFT_BRAIN_MAX_CONTINUATIONS` / `RIGHT_BRAIN_MAX_CONTINUATIONS` (default: 2)
+- `OPENAI_ORGANIZATION`
 
-| Provider      | Required envs                         | Optional envs                        |
-|---------------|---------------------------------------|--------------------------------------|
-| OpenAI/xAI    | `LLM_PROVIDER=openai` or `xai`, `LLM_MODEL_ID`, `OPENAI_API_KEY` | `OPENAI_ORGANIZATION`, `OPENAI_API_BASE` |
-| Anthropic     | `LLM_PROVIDER=anthropic`, `LLM_MODEL_ID`, `ANTHROPIC_API_KEY` | `ANTHROPIC_VERSION`, `ANTHROPIC_API_BASE` |
-| Google (Gemini)| `LLM_PROVIDER=google`, `LLM_MODEL_ID`, `GOOGLE_API_KEY` | `GOOGLE_API_BASE` |
-| Mistral       | `LLM_PROVIDER=mistral`, `LLM_MODEL_ID`, `MISTRAL_API_KEY` | `MISTRAL_API_BASE` |
-| HuggingFace   | `LLM_PROVIDER=huggingface`, `LLM_MODEL_ID`, `HUGGINGFACE_API_TOKEN`/`HF_TOKEN` | `HUGGINGFACE_API_BASE` |
+Auto-continue will issue follow-up calls when a provider reports that output stopped due to token limits (e.g., OpenAI-style `finish_reason=length`, Anthropic `stop_reason=max_tokens`).
 
-## Switching Communication Backends
-Set the `CALLOSUM_BACKEND` environment variable before starting any script. Supported values are:
-- `memory` *(default)* – single-process asyncio messaging.
-- `kafka` – publishes messages via Kafka topics.
-- `mqtt` – routes requests with an MQTT broker (e.g., Mosquitto).
+### Provider keys
+Use provider-specific keys (e.g., `ANTHROPIC_API_KEY`) or the shared `LLM_API_KEY`.
 
-### Kafka Quick Start
+Supported providers: `openai`, `google`, `anthropic`, `mistral`, `xai`, `huggingface`.
+
+## Postgres-backed Stateful Memory (Optional)
+To persist state across engine restarts, set:
+- `DUALBRAIN_PG_DSN` (e.g., `postgresql://user:pass@localhost:5432/dual_brain`)
+
+If your DSN uses a Docker service name like `host` (e.g., `...@host:5432/...`), it will not resolve from your macOS host shell; use `localhost` (or `127.0.0.1`) with the published port instead.
+
+The engine auto-creates tables on startup:
+- `SharedMemory` traces
+- Hippocampal episodes (+ embedding version)
+- Telemetry events
+- Schema memory (sleep/consolidation output) + consolidation cursor
+
+### pgvector (optional)
+If `pgvector` is installed/enabled in your database, the store will add a `vector_pg` column and use cosine search to accelerate `POST /v1/episodes/search`. If not available, vectors are still stored as JSON and search falls back to a Python similarity scan over recent candidates.
+
+### Telemetry persistence toggle
+Set `DUALBRAIN_PG_PERSIST_TELEMETRY=0` to disable telemetry writes (default: enabled when Postgres is enabled).
+
+### Schema memory (sleep/consolidation)
+Run the deterministic consolidation job:
 ```bash
-docker-compose up -d            # starts Kafka and Mosquitto services
-CALLOSUM_BACKEND=kafka python sr-dual-brain-llm/scripts/run_server.py
-# In another terminal
-CALLOSUM_BACKEND=kafka python sr-dual-brain-llm/scripts/right_worker_broker.py
+python3 sr-dual-brain-llm/scripts/sleep_consolidate.py --session-id demo
 ```
 
-### MQTT Quick Start
+On session creation, the engine loads recent schema memories (default: 16) and may inject them into the context as `[Schema memory] ...`. Override with:
+- `DUALBRAIN_SCHEMA_MEMORY_LIMIT`
+
+Resetting a session via `POST /v1/reset` will also delete the persisted rows for that session.
+
+## Running without HTTP (Engine JSONL)
+If you want to debug the engine protocol directly:
 ```bash
-docker-compose up -d
-CALLOSUM_BACKEND=mqtt python sr-dual-brain-llm/scripts/run_server.py
-CALLOSUM_BACKEND=mqtt python sr-dual-brain-llm/scripts/right_worker_broker.py
+printf '{"id":"1","method":"health","params":{}}\n' | python3 sr-dual-brain-llm/scripts/engine_stdio.py
 ```
 
-## Training the PPO Policy
-The bundled script demonstrates how to train the policy that decides when to escalate to the right brain.
+## Running the Interactive Orchestrator (Python-only)
 ```bash
-python sr-dual-brain-llm/scripts/train_policy.py --algo ppo --epochs 200
+python3 sr-dual-brain-llm/scripts/run_server.py
 ```
 
-## Demonstrating Neurotransmitter Modulation
-Run the interactive demo to see neurotransmitter modulation in action:
-```bash
-PYTHONPATH=sr-dual-brain-llm python sr-dual-brain-llm/scripts/demo_neurotransmitters.py
+## Development
+- Python tests: `python3 -m pytest -q`
+- C# build: `dotnet build csharp/SrDualBrain.Gateway -c Release`
+
+## Repository Layout
+```
+.
+├── csharp/
+│   └── SrDualBrain.Gateway/        # C# Minimal API REST gateway (HTTP → Python stdio)
+├── docs/                           # Design notes / playbooks
+├── sr-dual-brain-llm/
+│   ├── core/                       # Orchestration + memory + telemetry modules
+│   ├── dashboard/                  # Experimental UI (not required for REST path)
+│   └── scripts/
+│       ├── engine_stdio.py         # JSONL engine entrypoint (used by the C# gateway)
+│       └── run_server.py           # Interactive CLI loop
+└── tests/
 ```
 
-The demo showcases:
-- GABA-based information filtering and noise removal
-- State transition control to prevent over-activation
-- Attention focusing through selective inhibition
-- Glutamate task initiation pulses
-- Dopamine reward signaling for PPO learning
-- Serotonin stability and cooperation adjustment
-
-## Example Interaction
-```
-User> Provide a detailed statistical analysis of this dataset.
-Left Brain> Drafting an overview and consulting the right brain for deeper insights...
-Right Brain> Returning detailed regression diagnostics and visual summaries.
-Left Brain> Combined response with right-brain references.
-```
-
-## Contributing
-1. Fork and clone the repository.
-2. Create a new branch for your change.
-3. Run `ruff` or your preferred linter before submitting a pull request.
-4. Describe the backend configuration you tested in the PR body.
+## Roadmap (Next Research Upgrades)
+- **Stateful memory backends**:
+  - Redis for fast shared state + TTL / decay
+  - Postgres for durable episodic traces + queryable analytics
+- **Eval harness**: deterministic scenario packs + metrics for coherence, safety, memory retention
+- **Scaling**: multi-engine pool behind the gateway (process pool / queue) + per-session routing
 
 ## License
 See `LICENSE_NOTICE.txt` for third-party notices and licensing information.

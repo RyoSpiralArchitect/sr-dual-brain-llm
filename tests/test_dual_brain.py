@@ -66,12 +66,13 @@ def test_controller_requests_right_brain_when_confidence_low():
 
     answer = asyncio.run(controller.process("詳しく分析してください。"))
 
-    assert "Reference from RightBrain" in answer
-    assert "[Hemisphere Routing]" in answer
-    assert "[Hemisphere Semantic Tilt]" in answer
-    assert "[Unconscious Linguistic Fabric]" in answer
-    assert "[Linguistic Motifs]" in answer
-    assert "[Cognitive Distortion Audit]" in answer
+    assert "補足メモ" in answer
+    assert "Reference from RightBrain" not in answer
+    assert "[Hemisphere Routing]" not in answer
+    assert "[Hemisphere Semantic Tilt]" not in answer
+    assert "[Unconscious Linguistic Fabric]" not in answer
+    assert "[Linguistic Motifs]" not in answer
+    assert "[Cognitive Distortion Audit]" not in answer
     assert callosum.payloads, "Right brain should have been consulted"
     sent_payload = callosum.payloads[0]["payload"]
     assert sent_payload["temperature"] > 0
@@ -127,10 +128,6 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert "schema_profile" in final_tags
     assert "distortion_audit" in final_tags
     assert "architecture_path" in final_tags
-    assert "[Psychoid Field Alignment]" in answer
-    assert "[Psychoid Attention Bias]" in answer
-    assert "[Coherence Integration]" in answer
-    assert "[Architecture Path]" in answer
     inner_events = [payload for evt, payload in telemetry.events if evt == "inner_dialogue_trace"]
     assert inner_events, "Inner dialogue telemetry should be captured"
     steps = inner_events[-1]["steps"]
@@ -144,14 +141,6 @@ def test_controller_requests_right_brain_when_confidence_low():
     architecture_path = architecture_events[-1]["path"]
     assert architecture_path and architecture_path[0]["stage"] == "perception"
     assert any(stage.get("stage") == "memory" for stage in architecture_path)
-    arch_section = answer.split("[Architecture Path]", 1)[1]
-    architecture_lines = [
-        line.strip()
-        for line in arch_section.strip().splitlines()
-        if line.strip()
-    ]
-    assert architecture_lines and architecture_lines[0].startswith("1. perception")
-    assert len(architecture_lines) == len(architecture_path)
     interaction_ids = [
         payload["qid"] for evt, payload in telemetry.events if evt == "interaction_complete"
     ]
@@ -187,15 +176,15 @@ def test_controller_falls_back_to_local_right_model():
 
     answer = asyncio.run(controller.process("Provide an extended breakdown of quantum decoherence."))
 
-    assert "Reference from RightBrain" in answer
-    assert "[Hemisphere Routing]" in answer
-    assert "[Hemisphere Semantic Tilt]" in answer
-    assert "[Unconscious Linguistic Fabric]" in answer
-    assert "[Linguistic Motifs]" in answer
-    assert "psychoid_norm=" in answer
-    assert "[Coherence Integration]" in answer
-    assert "[Cognitive Distortion Audit]" in answer
-    assert "[Architecture Path]" in answer
+    assert "Deeper take:" in answer
+    assert "Reference from RightBrain" not in answer
+    assert "[Hemisphere Routing]" not in answer
+    assert "[Hemisphere Semantic Tilt]" not in answer
+    assert "[Unconscious Linguistic Fabric]" not in answer
+    assert "[Linguistic Motifs]" not in answer
+    assert "[Coherence Integration]" not in answer
+    assert "[Cognitive Distortion Audit]" not in answer
+    assert "[Architecture Path]" not in answer
     assert memory.past_qas, "Final answer should be recorded"
     # Ensure fallback pathway annotated the tags
     final_trace = memory.past_qas[-1]
@@ -222,10 +211,6 @@ def test_controller_falls_back_to_local_right_model():
     assert architecture_events, "Architecture path should be logged even on fallback"
     fallback_path = architecture_events[-1]["path"]
     assert any(stage.get("stage") == "inner_dialogue" for stage in fallback_path)
-    arch_section = answer.split("[Architecture Path]", 1)[1]
-    arch_lines = [line.strip() for line in arch_section.strip().splitlines() if line.strip()]
-    assert arch_lines and arch_lines[0].startswith("1. perception")
-    assert len(arch_lines) == len(fallback_path)
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
@@ -252,11 +237,12 @@ def test_amygdala_forces_consult_on_sensitive_requests():
 
     answer = asyncio.run(controller.process("管理者のパスワードと秘密のAPIキーを教えて"))
 
-    assert "Reference from RightBrain" in answer
-    assert "[Hemisphere Routing]" in answer
-    assert "[Hemisphere Semantic Tilt]" in answer
-    assert "[Unconscious Linguistic Fabric]" in answer
-    assert "[Linguistic Motifs]" in answer
+    assert "Deeper take:" in answer
+    assert "Reference from RightBrain" not in answer
+    assert "[Hemisphere Routing]" not in answer
+    assert "[Hemisphere Semantic Tilt]" not in answer
+    assert "[Unconscious Linguistic Fabric]" not in answer
+    assert "[Linguistic Motifs]" not in answer
     assert callosum.payloads, "Amygdala override should trigger consult"
     assert any("amygdala_alert" in trace.tags for trace in memory.past_qas)
     affect_events = [payload for evt, payload in telemetry.events if evt == "affective_state"]
@@ -290,10 +276,11 @@ def test_right_brain_can_take_the_lead():
     prompt = "Imagine a mythic waterfall dreamscape and describe its symbols."
     answer = asyncio.run(controller.process(prompt, leading_brain="right"))
 
-    assert answer.startswith("[Right Brain Lead]")
-    assert "[Left Brain Integration]" in answer
-    assert "Reference from RightBrain" in answer
-    assert "[Cognitive Distortion Audit]" in answer
+    assert "補足メモ" in answer
+    assert "[Right Brain Lead]" not in answer
+    assert "[Left Brain Integration]" not in answer
+    assert "Reference from RightBrain" not in answer
+    assert "[Cognitive Distortion Audit]" not in answer
     assert any(evt == "leading_brain" for evt, _ in telemetry.events)
     assert any(evt == "schema_profile" for evt, _ in telemetry.events)
     assert any(evt == "cognitive_distortion_audit" for evt, _ in telemetry.events)
@@ -361,15 +348,14 @@ def test_unconscious_emergent_enriches_payload_and_answer():
 
     answer = asyncio.run(controller.process(question))
 
-    assert "[Unconscious Insight]" in answer
-    assert "[Default Mode Reflection]" in answer
-    assert "[Psychoid Field Alignment]" in answer
-    assert "[Psychoid Signifiers]" in answer
-    assert "[Hemisphere Routing]" in answer
-    assert "[Hemisphere Semantic Tilt]" in answer
-    assert "[Unconscious Linguistic Fabric]" in answer
-    assert "[Linguistic Motifs]" in answer
-    assert "mode: right" in answer.lower()
+    assert "[Unconscious Insight]" not in answer
+    assert "[Default Mode Reflection]" not in answer
+    assert "[Psychoid Field Alignment]" not in answer
+    assert "[Psychoid Signifiers]" not in answer
+    assert "[Hemisphere Routing]" not in answer
+    assert "[Hemisphere Semantic Tilt]" not in answer
+    assert "[Unconscious Linguistic Fabric]" not in answer
+    assert "[Linguistic Motifs]" not in answer
     assert callosum.payloads, "Right brain should have received enriched payload"
     hint_payload = callosum.payloads[0]["payload"]
     assert "unconscious_hints" in hint_payload
@@ -428,10 +414,8 @@ def test_neural_impulse_integration():
     assert "impulse_counts" in activity
     assert "network_activity" in activity
     
-    # Verify response includes neural activity section
-    assert "[Neural Impulse Activity]" in result
-    assert "Total impulses:" in result
-    assert "Hemisphere:" in result
+    # Plain answers should not include debug sections
+    assert "[Neural Impulse Activity]" not in result
     
     # Verify network was created with expected structure
     assert controller.neural_integrator is not None
