@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""STDIO JSONL bridge for the dual-brain engine.
+"""JSON-RPC bridge for the dual-brain engine.
 
 This keeps all orchestration logic inside the Python codebase while allowing a
 stable external REST gateway (e.g., C# Minimal API) to drive experiments.
@@ -7,6 +7,10 @@ stable external REST gateway (e.g., C# Minimal API) to drive experiments.
 Protocol (1 JSON object per line):
 Request:  {"id": "...", "method": "process|reset|health", "params": {...}}
 Response: {"id": "...", "ok": true, "result": {...}}  or  {"id": "...", "ok": false, "error": {...}}
+
+When DUALBRAIN_PIPE_NAME is set, the engine switches to a length-prefixed JSON
+protocol over a duplex Unix domain socket created by .NET Named Pipes.
+Frame format: [u32 little-endian length][UTF-8 JSON payload]
 """
 
 from __future__ import annotations
@@ -17,6 +21,8 @@ import json
 import os
 import sys
 import time
+import tempfile
+import struct
 import uuid
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -132,6 +138,89 @@ class InMemoryTelemetry:
                 **_jsonable(payload),
             }
         )
+
+
+class _EngineTransport:
+    async def read(self) -> Optional[Dict[str, Any]]:
+        raise NotImplementedError
+
+    async def write(self, payload: Dict[str, Any]) -> None:
+        raise NotImplementedError
+
+    async def close(self) -> None:
+        return None
+
+
+class _StdioTransport(_EngineTransport):
+    async def read(self) -> Optional[Dict[str, Any]]:
+        line = await asyncio.to_thread(sys.stdin.readline)
+        if not line:
+            return None
+        line = line.strip()
+        if not line:
+            return {}
+        return json.loads(line)
+
+    async def write(self, payload: Dict[str, Any]) -> None:
+        print(json.dumps(payload, ensure_ascii=False), flush=True)
+
+
+class _PipeTransport(_EngineTransport):
+    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        self._reader = reader
+        self._writer = writer
+
+    @staticmethod
+    def _path_for_pipe_name(pipe_name: str) -> str:
+        base = os.environ.get("TMPDIR") or tempfile.gettempdir()
+        base = str(base)
+        return os.path.join(base, f"CoreFxPipe_{pipe_name}")
+
+    @classmethod
+    async def connect(cls, *, pipe_name: str, timeout_s: float = 5.0) -> "_PipeTransport":
+        explicit_path = os.environ.get("DUALBRAIN_PIPE_PATH")
+        path = explicit_path or cls._path_for_pipe_name(pipe_name)
+
+        deadline = time.monotonic() + max(0.2, float(timeout_s))
+        last_err: Exception | None = None
+        while time.monotonic() < deadline:
+            try:
+                reader, writer = await asyncio.open_unix_connection(path)
+                return cls(reader, writer)
+            except (FileNotFoundError, ConnectionRefusedError) as exc:
+                last_err = exc
+                await asyncio.sleep(0.05)
+            except Exception as exc:
+                last_err = exc
+                await asyncio.sleep(0.1)
+        raise RuntimeError(
+            f"Failed to connect to .NET named pipe '{pipe_name}' at '{path}': {last_err}"
+        )
+
+    async def read(self) -> Optional[Dict[str, Any]]:
+        try:
+            header = await self._reader.readexactly(4)
+        except asyncio.IncompleteReadError:
+            return None
+        length = struct.unpack("<I", header)[0]
+        if length == 0:
+            return {}
+        data = await self._reader.readexactly(int(length))
+        return json.loads(data.decode("utf-8"))
+
+    async def write(self, payload: Dict[str, Any]) -> None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        header = struct.pack("<I", len(data))
+        self._writer.write(header)
+        self._writer.write(data)
+        await self._writer.drain()
+
+    async def close(self) -> None:
+        try:
+            self._writer.close()
+            await self._writer.wait_closed()
+        except Exception:
+            pass
 
 
 async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
@@ -811,6 +900,20 @@ def _handle_health(sessions: Dict[str, EngineSession]) -> Dict[str, Any]:
     }
 
 
+async def _writer_loop(
+    queue: "asyncio.Queue[Optional[Dict[str, Any]]]",
+    transport: _EngineTransport,
+) -> None:
+    while True:
+        msg = await queue.get()
+        if msg is None:
+            break
+        try:
+            await transport.write(msg)
+        except Exception as exc:
+            print(f"[engine_stdio] write failed: {exc}", file=sys.stderr, flush=True)
+
+
 async def main() -> None:
     state_store = None
     pg_error: str | None = None
@@ -834,16 +937,36 @@ async def main() -> None:
             )
 
     sessions: Dict[str, EngineSession] = {}
+    pipe_name = str(os.environ.get("DUALBRAIN_PIPE_NAME", "") or "").strip()
+    transport: _EngineTransport
+    if pipe_name:
+        timeout_ms = int(os.environ.get("DUALBRAIN_PIPE_CONNECT_TIMEOUT_MS", "5000") or 5000)
+        transport = await _PipeTransport.connect(
+            pipe_name=pipe_name,
+            timeout_s=max(0.2, float(timeout_ms) / 1000.0),
+        )
+        print(
+            f"[engine_stdio] connected named pipe '{pipe_name}'",
+            file=sys.stderr,
+            flush=True,
+        )
+    else:
+        transport = _StdioTransport()
+
+    out_queue: "asyncio.Queue[Optional[Dict[str, Any]]]" = asyncio.Queue()
+    writer_task = asyncio.create_task(_writer_loop(out_queue, transport))
+
+    def _send(obj: Dict[str, Any]) -> None:
+        out_queue.put_nowait(obj)
+
     try:
         while True:
-            line = await asyncio.to_thread(sys.stdin.readline)
-            if not line:
-                break
-            line = line.strip()
-            if not line:
-                continue
             try:
-                req = json.loads(line)
+                req = await transport.read()
+                if req is None:
+                    break
+                if not req:
+                    continue
                 req_id = str(req.get("id") or "")
                 method = str(req.get("method") or "")
                 params = req.get("params") or {}
@@ -920,7 +1043,7 @@ async def main() -> None:
                         msg: Dict[str, Any] = {"id": req_id, "event": event}
                         if payload:
                             msg.update(_jsonable(payload))
-                        print(json.dumps(msg, ensure_ascii=False), flush=True)
+                        _send(msg)
 
                     payload = await _handle_process_stream(
                         session,
@@ -966,8 +1089,21 @@ async def main() -> None:
                     },
                 }
 
-            print(json.dumps(resp, ensure_ascii=False), flush=True)
+            _send(resp)
     finally:
+        try:
+            out_queue.put_nowait(None)
+        except Exception:
+            pass
+        try:
+            await writer_task
+        except Exception:
+            pass
+        try:
+            await transport.close()
+        except Exception:
+            pass
+
         for session in list(sessions.values()):
             try:
                 await session.close()

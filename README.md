@@ -5,7 +5,7 @@ SpiralReality Dual Brain LLM is a research playground for **dual-agent orchestra
 This repository intentionally optimizes for:
 - Experimenting with orchestration policies (when to consult, when to braid, when to stay solo)
 - Inspectable runtime behavior (telemetry, inner-dialogue steps, coherence signals)
-- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over stdio)
+- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over stdio by default, with optional named-pipe IPC)
 
 ## Architecture (Braided Co-Lead Flow)
 ```mermaid
@@ -22,7 +22,8 @@ By default, `/v1/process` returns a **clean user-facing answer** (no internal de
 ## Quick Start (Recommended): REST via C# Gateway
 The recommended research loop is:
 1) C# Minimal API exposes REST endpoints
-2) C# launches and talks to the Python engine over stdio (JSONL)
+2) C# launches and talks to the Python engine over stdio (JSONL) by default
+   - Optional: named-pipe IPC (length-prefixed frames) for faster/larger payloads
 3) Python owns orchestration, memory, and telemetry
 
 ### Prerequisites
@@ -47,6 +48,15 @@ pip install -r requirements-dev.txt
 export DUALBRAIN_REPO_ROOT="$PWD"
 dotnet run --project csharp/SrDualBrain.Gateway --urls http://127.0.0.1:8080
 ```
+
+Optional: switch gateway↔engine IPC to named pipes (recommended for future multimodal / large payload experiments):
+```bash
+export DUALBRAIN_ENGINE_TRANSPORT=pipes
+```
+
+Notes (macOS):
+- .NET named pipes use Unix domain sockets under the hood and have a strict path length limit.
+- If you hit socket path length issues in unusual environments, set `TMPDIR=/tmp/` before running `dotnet run`.
 
 Optional gateway timeout override (useful for long generations / auto-continue):
 ```bash

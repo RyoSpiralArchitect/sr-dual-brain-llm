@@ -29,6 +29,7 @@ var repoRoot = Environment.GetEnvironmentVariable("DUALBRAIN_REPO_ROOT")
               ?? FindRepoRoot(AppContext.BaseDirectory)
               ?? Directory.GetCurrentDirectory();
 var pythonExe = Environment.GetEnvironmentVariable("DUALBRAIN_PYTHON") ?? "python3";
+var engineTransport = Environment.GetEnvironmentVariable("DUALBRAIN_ENGINE_TRANSPORT") ?? "stdio";
 var engineScript = Environment.GetEnvironmentVariable("DUALBRAIN_ENGINE_PATH")
                    ?? Path.Combine(repoRoot, "sr-dual-brain-llm", "scripts", "engine_stdio.py");
 
@@ -53,7 +54,8 @@ builder.Services.AddSingleton<PythonEngineClient>(sp =>
         pythonExe: pythonExe,
         engineScriptPath: engineScript,
         workingDirectory: repoRoot,
-        defaultTimeout: TimeSpan.FromSeconds(timeoutSeconds));
+        defaultTimeout: TimeSpan.FromSeconds(timeoutSeconds),
+        transport: engineTransport);
 });
 
 builder.Services.AddSingleton<EngineHealthCache>();

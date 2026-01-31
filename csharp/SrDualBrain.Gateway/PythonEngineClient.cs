@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Buffers.Binary;
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -14,7 +16,9 @@ public sealed class PythonEngineClient : IAsyncDisposable
     private readonly string _engineScriptPath;
     private readonly string _workingDirectory;
     private readonly TimeSpan _defaultTimeout;
+    private readonly string _transport;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private readonly SemaphoreSlim _startLock = new(1, 1);
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonObject>> _pending = new();
     private readonly ConcurrentDictionary<string, ChannelWriter<JsonObject>> _streams = new();
@@ -23,6 +27,9 @@ public sealed class PythonEngineClient : IAsyncDisposable
     private Process? _process;
     private Task? _stdoutPump;
     private Task? _stderrPump;
+    private Task? _pipePump;
+    private NamedPipeServerStream? _pipe;
+    private string? _pipeName;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -34,13 +41,15 @@ public sealed class PythonEngineClient : IAsyncDisposable
         string pythonExe,
         string engineScriptPath,
         string workingDirectory,
-        TimeSpan defaultTimeout)
+        TimeSpan defaultTimeout,
+        string? transport = null)
     {
         _logger = logger;
         _pythonExe = pythonExe;
         _engineScriptPath = engineScriptPath;
         _workingDirectory = workingDirectory;
         _defaultTimeout = defaultTimeout;
+        _transport = (transport ?? "stdio").Trim();
     }
 
     public async Task<JsonObject> CallAsync(string method, JsonObject? @params, CancellationToken cancellationToken)
@@ -50,7 +59,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
     public async Task<JsonObject> CallAsync(string method, JsonObject? @params, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        EnsureStarted();
+        await EnsureStartedAsync(cancellationToken);
 
         var id = Guid.NewGuid().ToString("N");
         var request = new JsonObject
@@ -69,7 +78,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         try
         {
             var line = JsonSerializer.Serialize(request, JsonOptions);
-            await WriteLineAsync(line, cancellationToken);
+            await WriteMessageAsync(line, cancellationToken);
 
             var response = await tcs.Task.WaitAsync(timeout, cancellationToken);
             var ok = response["ok"]?.GetValue<bool>() ?? false;
@@ -97,7 +106,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         TimeSpan timeout,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        EnsureStarted();
+        await EnsureStartedAsync(cancellationToken);
 
         var id = Guid.NewGuid().ToString("N");
         var request = new JsonObject
@@ -127,7 +136,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         try
         {
             var line = JsonSerializer.Serialize(request, JsonOptions);
-            await WriteLineAsync(line, cancellationToken);
+            await WriteMessageAsync(line, cancellationToken);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(timeout);
@@ -199,19 +208,240 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
-    private void EnsureStarted()
+    private async Task WritePipeFrameAsync(string json, CancellationToken cancellationToken)
     {
-        if (_process is { HasExited: false })
+        var pipe = _pipe;
+        if (pipe is null || !pipe.IsConnected)
+        {
+            throw new InvalidOperationException("Python engine pipe is not connected.");
+        }
+
+        var payload = Encoding.UTF8.GetBytes(json);
+        if (payload.Length <= 0)
         {
             return;
         }
+        if (payload.Length > 64 * 1024 * 1024)
+        {
+            throw new InvalidOperationException($"Engine message too large: {payload.Length} bytes");
+        }
 
-        StartProcess();
+        var header = new byte[4];
+        BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
+
+        await _writeLock.WaitAsync(cancellationToken);
+        try
+        {
+            await pipe.WriteAsync(header, cancellationToken);
+            await pipe.WriteAsync(payload, cancellationToken);
+            await pipe.FlushAsync(cancellationToken);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
+    private async Task WriteMessageAsync(string line, CancellationToken cancellationToken)
+    {
+        if (IsPipeTransport())
+        {
+            await WritePipeFrameAsync(line, cancellationToken);
+            return;
+        }
+        await WriteLineAsync(line, cancellationToken);
+    }
+
+    private static async Task ReadExactAsync(Stream stream, Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        var offset = 0;
+        while (offset < buffer.Length)
+        {
+            var read = await stream.ReadAsync(buffer.Slice(offset), cancellationToken);
+            if (read <= 0)
+            {
+                throw new EndOfStreamException("Pipe closed");
+            }
+            offset += read;
+        }
+    }
+
+    private async Task PumpPipeAsync(NamedPipeServerStream pipe, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var header = new byte[4];
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await ReadExactAsync(pipe, header, cancellationToken);
+                var len = BinaryPrimitives.ReadInt32LittleEndian(header);
+                if (len <= 0)
+                {
+                    continue;
+                }
+                if (len > 64 * 1024 * 1024)
+                {
+                    throw new InvalidOperationException($"Engine frame too large: {len} bytes");
+                }
+
+                var data = new byte[len];
+                await ReadExactAsync(pipe, data, cancellationToken);
+
+                JsonObject? obj;
+                try
+                {
+                    obj = JsonSerializer.Deserialize<JsonObject>(data, JsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to parse engine pipe frame ({Len} bytes)", len);
+                    continue;
+                }
+
+                var id = obj?["id"]?.GetValue<string>();
+                if (id is null)
+                {
+                    continue;
+                }
+
+                var hasOk = obj?["ok"] is not null;
+                if (hasOk && _pending.TryGetValue(id, out var tcs))
+                {
+                    tcs.TrySetResult(obj!);
+                    if (_streams.TryGetValue(id, out var writer))
+                    {
+                        writer.TryComplete();
+                    }
+                    continue;
+                }
+
+                var eventName = obj?["event"]?.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(eventName) && _streams.TryGetValue(id, out var streamWriter))
+                {
+                    streamWriter.TryWrite(obj!.DeepClone() as JsonObject ?? obj!);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // normal shutdown
+        }
+        catch (EndOfStreamException)
+        {
+            // Pipe closed during shutdown or engine restart.
+            if (cancellationToken.IsCancellationRequested || _process is null || _process.HasExited)
+            {
+                return;
+            }
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Engine pipe pump failed.");
+            FailAllPending(ex);
+        }
+    }
+
+    private static string CreatePipeName()
+    {
+        const int maxPathLen = 104; // UnixDomainSocketEndPoint limit on macOS
+        const string socketPrefix = "CoreFxPipe_";
+        var temp = Path.GetTempPath();
+        var maxNameLen = maxPathLen - temp.Length - socketPrefix.Length;
+        maxNameLen = Math.Clamp(maxNameLen, 12, 64);
+
+        var guid = Guid.NewGuid().ToString("N");
+        const string prefix = "srdb";
+        var suffixLen = Math.Max(4, maxNameLen - (prefix.Length + 1));
+        suffixLen = Math.Min(suffixLen, guid.Length);
+        return $"{prefix}_{guid[..suffixLen]}";
+    }
+
+    private bool IsPipeTransport()
+    {
+        var t = _transport.Trim().ToLowerInvariant();
+        return t is "pipe" or "pipes" or "namedpipe" or "namedpipes";
+    }
+
+    private async Task EnsureStartedAsync(CancellationToken cancellationToken)
+    {
+        if (_process is { HasExited: false })
+        {
+            if (!IsPipeTransport())
+            {
+                return;
+            }
+
+            if (_pipe is { IsConnected: true })
+            {
+                return;
+            }
+        }
+
+        await _startLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_process is { HasExited: false })
+            {
+                // Process is alive but pipe may not be connected yet.
+            }
+            else
+            {
+                StartProcess();
+            }
+
+            if (!IsPipeTransport())
+            {
+                return;
+            }
+
+            var pipe = _pipe;
+            if (pipe is null)
+            {
+                throw new InvalidOperationException("Pipe transport selected but no pipe was created.");
+            }
+
+            if (!pipe.IsConnected)
+            {
+                using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                connectCts.CancelAfter(TimeSpan.FromSeconds(5));
+                await pipe.WaitForConnectionAsync(connectCts.Token);
+                _logger.LogInformation("Python engine connected via named pipe ({PipeName})", _pipeName);
+            }
+
+            if (_pipePump is null)
+            {
+                _pipePump = Task.Run(() => PumpPipeAsync(pipe, _cts.Token));
+            }
+        }
+        finally
+        {
+            _startLock.Release();
+        }
+    }
+
+    private void EnsureStarted()
+    {
+        // Obsolete: prefer EnsureStartedAsync. Kept for legacy call sites.
+        EnsureStartedAsync(CancellationToken.None).GetAwaiter().GetResult();
     }
 
     private void StartProcess()
     {
         FailAllPending(new InvalidOperationException("Python engine restarted."));
+
+        // Tear down any previous pipe transport.
+        try
+        {
+            _pipe?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
+        _pipe = null;
+        _pipeName = null;
+        _pipePump = null;
 
         var startInfo = new ProcessStartInfo
         {
@@ -227,6 +457,19 @@ public sealed class PythonEngineClient : IAsyncDisposable
             StandardErrorEncoding = Encoding.UTF8,
         };
         startInfo.EnvironmentVariables["PYTHONUNBUFFERED"] = "1";
+
+        if (IsPipeTransport())
+        {
+            _pipeName = CreatePipeName();
+            _pipe = new NamedPipeServerStream(
+                _pipeName,
+                PipeDirection.InOut,
+                maxNumberOfServerInstances: 1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
+            startInfo.EnvironmentVariables["DUALBRAIN_PIPE_NAME"] = _pipeName;
+            startInfo.EnvironmentVariables["DUALBRAIN_PIPE_CONNECT_TIMEOUT_MS"] = "5000";
+        }
 
         _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
         _process.Exited += (_, _) =>
@@ -258,6 +501,12 @@ public sealed class PythonEngineClient : IAsyncDisposable
                 if (line is null)
                 {
                     break;
+                }
+
+                if (IsPipeTransport())
+                {
+                    _logger.LogDebug("engine stdout: {Line}", line);
+                    continue;
                 }
 
                 if (!line.TrimStart().StartsWith("{", StringComparison.Ordinal))
@@ -388,6 +637,27 @@ public sealed class PythonEngineClient : IAsyncDisposable
             // ignore
         }
 
+        try
+        {
+            if (_pipePump is not null)
+            {
+                await _pipePump;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        try
+        {
+            _pipe?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
+
         if (_process is not null)
         {
             try
@@ -406,5 +676,6 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
         _cts.Dispose();
         _writeLock.Dispose();
+        _startLock.Dispose();
     }
 }
