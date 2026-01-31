@@ -89,12 +89,20 @@
 
           <div class="checks">
             <label class="check">
-              <input id="returnTelemetry" type="checkbox" checked />
+              <input id="useStreaming" type="checkbox" checked />
+              <span>Stream answer (SSE)</span>
+            </label>
+            <label class="check">
+              <input id="returnTelemetry" type="checkbox" />
               <span>Return telemetry</span>
             </label>
             <label class="check">
-              <input id="returnDialogueFlow" type="checkbox" checked />
+              <input id="returnDialogueFlow" type="checkbox" />
               <span>Return dialogue flow</span>
+            </label>
+            <label class="check">
+              <input id="traceInline" type="checkbox" />
+              <span>Inline trace (slower)</span>
             </label>
           </div>
 
@@ -138,6 +146,11 @@
           <details class="details">
             <summary>Telemetry (raw)</summary>
             <pre class="json" id="telemetryRaw">{}</pre>
+          </details>
+
+          <details class="details">
+            <summary>Dialogue flow (raw)</summary>
+            <pre class="json" id="dialogueFlowRaw">{}</pre>
           </details>
         </section>
       </aside>

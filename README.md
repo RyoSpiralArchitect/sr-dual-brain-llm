@@ -84,6 +84,14 @@ Notes:
 ### `GET /v1/health`
 Returns gateway + engine health.
 
+### `GET /v1/trace/{qid}`
+Fetches stored `telemetry` and/or `dialogue_flow` for a prior turn (even if `/v1/process` returned only the clean answer + metrics).
+
+Query params:
+- `session_id` (default: `"default"`)
+- `include_telemetry` (default: `true`)
+- `include_dialogue_flow` (default: `true`)
+
 ### `POST /v1/reset`
 Resets a session inside the Python engine.
 
@@ -116,6 +124,9 @@ Response fields:
 - `metrics` (object): lightweight summary (coherence/policy/latency) for UI dashboards
 - `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
 - `telemetry` (array, optional): structured per-module events emitted during the turn
+
+### `POST /v1/process/stream` (SSE)
+Streams the answer via Server-Sent Events (SSE) for faster UI rendering. The gateway returns `start`/`delta`/`final` events; fetch `/v1/trace/{qid}` afterward if you want `telemetry` or `dialogue_flow`.
 
 ### `POST /v1/episodes/search`
 Searches hippocampal episodic memory for a session.

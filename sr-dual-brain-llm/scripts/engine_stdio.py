@@ -18,6 +18,7 @@ import os
 import sys
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -169,6 +170,28 @@ class EngineSession:
     worker_task: asyncio.Task[None]
     persisted_memory: int = 0
     persisted_episodes: int = 0
+    trace_cache: "OrderedDict[str, Dict[str, Any]]" = dataclasses.field(default_factory=OrderedDict)
+    trace_cache_limit: int = 64
+
+    def remember_trace(
+        self,
+        qid: str,
+        *,
+        metrics: Dict[str, Any],
+        dialogue_flow: Any,
+        telemetry: list[dict[str, Any]],
+    ) -> None:
+        self.trace_cache[qid] = {
+            "qid": qid,
+            "session_id": self.session_id,
+            "metrics": metrics,
+            "dialogue_flow": dialogue_flow,
+            "telemetry": telemetry,
+            "ts": time.time(),
+        }
+        self.trace_cache.move_to_end(qid)
+        while len(self.trace_cache) > self.trace_cache_limit:
+            self.trace_cache.popitem(last=False)
 
     @classmethod
     async def create(
@@ -215,6 +238,8 @@ class EngineSession:
         default_mode = DefaultModeNetwork()
         psychoid_adapter = PsychoidAttentionAdapter()
         telemetry = InMemoryTelemetry()
+        trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
+        trace_cache_limit = max(4, min(512, trace_cache_limit))
 
         controller = DualBrainController(
             callosum=callosum,
@@ -259,6 +284,7 @@ class EngineSession:
             worker_task=worker_task,
             persisted_memory=persisted_memory,
             persisted_episodes=persisted_episodes,
+            trace_cache_limit=trace_cache_limit,
         )
 
     async def close(self) -> None:
@@ -326,10 +352,55 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
         "session_id": session.session_id,
         "metrics": _extract_metrics(list(session.telemetry.events)),
     }
+
+    telemetry_events = list(session.telemetry.events)
+    metrics = result["metrics"]
+    dialogue_flow = session.memory.dialogue_flow(qid)
+    session.remember_trace(
+        qid,
+        metrics=metrics,
+        dialogue_flow=dialogue_flow,
+        telemetry=telemetry_events,
+    )
+
     if return_dialogue_flow:
-        result["dialogue_flow"] = session.memory.dialogue_flow(qid)
+        result["dialogue_flow"] = dialogue_flow
     if return_telemetry:
-        result["telemetry"] = list(session.telemetry.events)
+        result["telemetry"] = telemetry_events
+    return result
+
+
+async def _handle_get_trace(
+    sessions: Dict[str, EngineSession],
+    params: Dict[str, Any],
+) -> Dict[str, Any]:
+    session_id = str(params.get("session_id", "default") or "default")
+    qid = str(params.get("qid") or "").strip()
+    if not qid:
+        raise ValueError("qid is required")
+
+    include_telemetry = bool(params.get("include_telemetry", True))
+    include_dialogue_flow = bool(params.get("include_dialogue_flow", True))
+
+    session = sessions.get(session_id)
+    if session is None:
+        return {"session_id": session_id, "qid": qid, "found": False}
+
+    cached = session.trace_cache.get(qid)
+    if cached is None:
+        return {"session_id": session_id, "qid": qid, "found": False}
+
+    result: Dict[str, Any] = {
+        "session_id": session_id,
+        "qid": qid,
+        "found": True,
+        "metrics": cached.get("metrics") or {},
+        "ts": cached.get("ts"),
+    }
+    if include_dialogue_flow:
+        result["dialogue_flow"] = cached.get("dialogue_flow")
+    if include_telemetry:
+        result["telemetry"] = cached.get("telemetry") or []
     return result
 
 
@@ -658,6 +729,9 @@ async def main() -> None:
                                     "Session already exists with different LLM config; use a new session_id or call reset."
                                 )
                     payload = await _handle_process(session, params)
+                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                elif method == "get_trace":
+                    payload = await _handle_get_trace(sessions, params)
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "search_episodes":
                     payload = await _handle_search_episodes(

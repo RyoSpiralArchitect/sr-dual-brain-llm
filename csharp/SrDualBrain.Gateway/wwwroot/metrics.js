@@ -9,6 +9,7 @@ const els = {
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
   telemetryRaw: $("telemetryRaw"),
+  dialogueFlowRaw: $("dialogueFlowRaw"),
   btnDock: $("btnDock"),
 };
 
@@ -20,6 +21,7 @@ function renderMetrics(response) {
   els.metricsSubtitle.textContent = subtitle || "—";
 
   const telemetry = response?.telemetry ?? [];
+  const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
 
   const combined = metrics?.coherence?.combined ?? null;
@@ -37,6 +39,9 @@ function renderMetrics(response) {
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(Number(latency))}ms`;
 
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
+  if (els.dialogueFlowRaw) {
+    els.dialogueFlowRaw.textContent = JSON.stringify(dialogueFlow, null, 2);
+  }
 }
 
 function postToOpener(msg) {
@@ -65,4 +70,3 @@ els.btnDock?.addEventListener("click", () => {
 });
 
 postToOpener({ type: "srdb.metrics.ready" });
-

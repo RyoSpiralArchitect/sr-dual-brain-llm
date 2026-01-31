@@ -14,8 +14,10 @@ const els = {
   llmProvider: $("llmProvider"),
   llmModel: $("llmModel"),
   llmMaxOutputTokens: $("llmMaxOutputTokens"),
+  useStreaming: $("useStreaming"),
   returnTelemetry: $("returnTelemetry"),
   returnDialogueFlow: $("returnDialogueFlow"),
+  traceInline: $("traceInline"),
   metricsSubtitle: $("metricsSubtitle"),
   mCoherence: $("mCoherence"),
   mTension: $("mTension"),
@@ -24,6 +26,7 @@ const els = {
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
   telemetryRaw: $("telemetryRaw"),
+  dialogueFlowRaw: $("dialogueFlowRaw"),
 };
 
 let lastLlmSignature = null;
@@ -197,6 +200,7 @@ function renderMetrics(response) {
   els.metricsSubtitle.textContent = qid ? `qid ${qid}` : "—";
 
   const telemetry = response?.telemetry ?? [];
+  const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
 
   let combined = null;
@@ -240,20 +244,26 @@ function renderMetrics(response) {
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
 
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
+  if (els.dialogueFlowRaw) {
+    els.dialogueFlowRaw.textContent = JSON.stringify(dialogueFlow, null, 2);
+  }
 
   publishMetricsToPopout(response);
 }
 
-async function callProcess(questionText) {
+async function buildProcessBody(questionText, { includeTraceInline }) {
   const sessionId = (els.sessionId.value || "default").trim() || "default";
   const leading = (els.leadingBrain.value || "auto").trim() || "auto";
+  const wantTelemetry = !!els.returnTelemetry.checked;
+  const wantDialogueFlow = !!els.returnDialogueFlow.checked;
+  const traceInline = includeTraceInline && !!els.traceInline?.checked;
 
   const body = {
     session_id: sessionId,
     question: questionText,
     leading_brain: leading,
-    return_telemetry: !!els.returnTelemetry.checked,
-    return_dialogue_flow: !!els.returnDialogueFlow.checked,
+    return_telemetry: wantTelemetry && traceInline,
+    return_dialogue_flow: wantDialogueFlow && traceInline,
   };
 
   const provider = (els.llmProvider.value || "").trim();
@@ -276,6 +286,10 @@ async function callProcess(questionText) {
     });
   }
 
+  return { sessionId, wantTelemetry, wantDialogueFlow, traceInline, body, llmSig: currentSig };
+}
+
+async function callProcess(body) {
   const res = await fetch("/v1/process", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -286,10 +300,96 @@ async function callProcess(questionText) {
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
-  const payload = await res.json();
-  sessionLlmSignature.set(sessionId, currentSig);
-  lastLlmSignature = currentSig;
-  return payload;
+  return await res.json();
+}
+
+async function fetchTrace(sessionId, qid, { includeTelemetry, includeDialogueFlow }) {
+  const qs = new URLSearchParams({
+    session_id: sessionId,
+    include_telemetry: includeTelemetry ? "true" : "false",
+    include_dialogue_flow: includeDialogueFlow ? "true" : "false",
+  });
+  const res = await fetch(`/v1/trace/${encodeURIComponent(qid)}?${qs.toString()}`, { cache: "no-store" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Trace HTTP ${res.status}: ${text}`);
+  }
+  return await res.json();
+}
+
+function mergeTrace(result, trace) {
+  if (!trace || !trace.found) return result;
+  return {
+    ...result,
+    telemetry: trace.telemetry ?? result.telemetry,
+    dialogue_flow: trace.dialogue_flow ?? result.dialogue_flow,
+  };
+}
+
+async function callProcessStream(body, { onDelta, onFinal }) {
+  const res = await fetch("/v1/process/stream", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  if (!res.body) {
+    throw new Error("Streaming response body not available.");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalResult = null;
+
+  function handleEventBlock(block) {
+    const lines = block.split("\n");
+    let eventName = "message";
+    const dataLines = [];
+    for (const line of lines) {
+      if (line.startsWith("event:")) {
+        eventName = line.slice(6).trim();
+      } else if (line.startsWith("data:")) {
+        dataLines.push(line.slice(5).trimStart());
+      }
+    }
+    const dataText = dataLines.join("\n");
+    if (!dataText) return;
+    let payload = null;
+    try {
+      payload = JSON.parse(dataText);
+    } catch {
+      payload = { text: dataText };
+    }
+
+    if (eventName === "delta") {
+      const chunk = payload?.text ?? "";
+      if (chunk && onDelta) onDelta(chunk);
+    } else if (eventName === "final") {
+      finalResult = payload;
+      if (onFinal) onFinal(payload);
+    } else if (eventName === "error") {
+      const msg = payload?.message ?? "unknown error";
+      throw new Error(msg);
+    }
+  }
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+      const block = buffer.slice(0, idx).trimEnd();
+      buffer = buffer.slice(idx + 2);
+      if (block) handleEventBlock(block);
+    }
+  }
+
+  return finalResult;
 }
 
 async function onSend() {
@@ -302,11 +402,50 @@ async function onSend() {
 
   setBusy(true);
   try {
-    const result = await callProcess(text);
-    placeholder.querySelector(".bubble__content").textContent = result.answer || "(no answer)";
+    const wantStream = !!els.useStreaming?.checked;
+    const req = await buildProcessBody(text, { includeTraceInline: !wantStream });
+
+    let result;
+    if (wantStream) {
+      let streamed = "";
+      result = await callProcessStream(req.body, {
+        onDelta: (chunk) => {
+          streamed += chunk;
+          placeholder.querySelector(".bubble__content").textContent = streamed;
+        },
+        onFinal: (payload) => {
+          if (payload?.answer) {
+            placeholder.querySelector(".bubble__content").textContent = payload.answer;
+          }
+        },
+      });
+      if (!result) {
+        result = { qid: "", answer: streamed, session_id: req.sessionId, metrics: null };
+      }
+    } else {
+      result = await callProcess(req.body);
+      placeholder.querySelector(".bubble__content").textContent = result.answer || "(no answer)";
+    }
+
+    sessionLlmSignature.set(req.sessionId, req.llmSig);
+    lastLlmSignature = req.llmSig;
+
     // Keep chat bubbles clean; qid/metrics are shown in the side panel.
     placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
     renderMetrics(result);
+
+    if ((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) {
+      try {
+        const trace = await fetchTrace(req.sessionId, result.qid, {
+          includeTelemetry: req.wantTelemetry,
+          includeDialogueFlow: req.wantDialogueFlow,
+        });
+        const merged = mergeTrace(result, trace);
+        renderMetrics(merged);
+      } catch {
+        // ignore trace fetch failures
+      }
+    }
   } catch (err) {
     placeholder.querySelector(".bubble__content").textContent = String(err);
     placeholder.classList.add("bubble--error");
@@ -331,6 +470,7 @@ els.question.addEventListener("keydown", (e) => {
 els.btnClear.addEventListener("click", () => {
   els.chatLog.innerHTML = "";
   els.telemetryRaw.textContent = "{}";
+  if (els.dialogueFlowRaw) els.dialogueFlowRaw.textContent = "{}";
   els.metricsSubtitle.textContent = "—";
   els.mCoherence.textContent = "—";
   els.mTension.textContent = "—";

@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.Json;
 using Microsoft.AspNetCore.ResponseCompression;
 using SrDualBrain.Gateway;
 
@@ -55,6 +56,7 @@ builder.Services.AddSingleton<PythonEngineClient>(sp =>
         defaultTimeout: TimeSpan.FromSeconds(timeoutSeconds));
 });
 
+builder.Services.AddSingleton<EngineHealthCache>();
 builder.Services.AddHostedService<EngineWarmupService>();
 
 var app = builder.Build();
@@ -65,9 +67,9 @@ app.UseStaticFiles();
 
 app.MapGet("/favicon.ico", () => Results.NoContent());
 
-app.MapGet("/v1/health", async (PythonEngineClient engine, CancellationToken ct) =>
+app.MapGet("/v1/health", async (EngineHealthCache engineHealth, CancellationToken ct) =>
 {
-    var result = await engine.CallAsync("health", new JsonObject(), ct);
+    var result = await engineHealth.GetAsync(ct);
     return Results.Json(new JsonObject
     {
         ["gateway"] = "ok",
@@ -87,10 +89,86 @@ app.MapPost("/v1/process", async (PythonEngineClient engine, JsonObject body, Ca
     body["session_id"] ??= "default";
     body["leading_brain"] ??= "auto";
     body["return_dialogue_flow"] ??= true;
+    body["qid"] ??= Guid.NewGuid().ToString();
 
     var result = await engine.CallAsync("process", body, ct);
 
     return Results.Json(result);
+});
+
+app.MapGet("/v1/trace/{qid}", async (PythonEngineClient engine, HttpRequest request, string qid, CancellationToken ct) =>
+{
+    var sessionId = request.Query["session_id"].ToString();
+    if (string.IsNullOrWhiteSpace(sessionId))
+    {
+        sessionId = "default";
+    }
+
+    var includeTelemetry = ParseBool(request.Query["include_telemetry"], defaultValue: true);
+    var includeDialogueFlow = ParseBool(request.Query["include_dialogue_flow"], defaultValue: true);
+
+    var result = await engine.CallAsync(
+        "get_trace",
+        new JsonObject
+        {
+            ["session_id"] = sessionId,
+            ["qid"] = qid,
+            ["include_telemetry"] = includeTelemetry,
+            ["include_dialogue_flow"] = includeDialogueFlow,
+        },
+        ct);
+
+    var found = result["found"]?.GetValue<bool>() ?? false;
+    return found ? Results.Json(result) : Results.NotFound(result);
+});
+
+app.MapPost("/v1/process/stream", async (HttpContext ctx, PythonEngineClient engine, JsonObject body, CancellationToken ct) =>
+{
+    ctx.Response.Headers.CacheControl = "no-cache";
+    ctx.Response.Headers.Pragma = "no-cache";
+    ctx.Response.ContentType = "text/event-stream; charset=utf-8";
+
+    body["session_id"] ??= "default";
+    body["leading_brain"] ??= "auto";
+    body["qid"] ??= Guid.NewGuid().ToString();
+    body["return_telemetry"] = false;
+    body["return_dialogue_flow"] = false;
+
+    var qid = body["qid"]?.GetValue<string>() ?? "";
+    var sessionId = body["session_id"]?.GetValue<string>() ?? "default";
+
+    await WriteSseAsync(ctx.Response, "start", new JsonObject { ["qid"] = qid, ["session_id"] = sessionId }, ct);
+
+    JsonObject result;
+    try
+    {
+        result = await engine.CallAsync("process", body, ct);
+    }
+    catch (OperationCanceledException)
+    {
+        return;
+    }
+    catch (Exception ex)
+    {
+        await WriteSseAsync(ctx.Response, "error", new JsonObject { ["message"] = ex.Message }, ct);
+        return;
+    }
+
+    var answer = result["answer"]?.GetValue<string>() ?? "";
+    foreach (var chunk in ChunkAnswer(answer))
+    {
+        await WriteSseAsync(ctx.Response, "delta", new JsonObject { ["text"] = chunk }, ct);
+    }
+
+    var finalPayload = new JsonObject
+    {
+        ["qid"] = result["qid"]?.GetValue<string>() ?? qid,
+        ["answer"] = answer,
+        ["session_id"] = result["session_id"]?.GetValue<string>() ?? sessionId,
+        ["metrics"] = result["metrics"]?.DeepClone(),
+    };
+    await WriteSseAsync(ctx.Response, "final", finalPayload, ct);
+    await WriteSseAsync(ctx.Response, "done", new JsonObject(), ct);
 });
 
 app.MapPost("/v1/episodes/search", async (PythonEngineClient engine, JsonObject body, CancellationToken ct) =>
@@ -122,3 +200,39 @@ app.MapPost("/v1/schema/list", async (PythonEngineClient engine, JsonObject body
 });
 
 app.Run();
+
+static bool ParseBool(string? raw, bool defaultValue)
+{
+    if (string.IsNullOrWhiteSpace(raw))
+    {
+        return defaultValue;
+    }
+    return raw.Trim().ToLowerInvariant() switch
+    {
+        "1" or "true" or "yes" or "on" => true,
+        "0" or "false" or "no" or "off" => false,
+        _ => defaultValue,
+    };
+}
+
+static IEnumerable<string> ChunkAnswer(string answer)
+{
+    const int chunkSize = 220;
+    if (string.IsNullOrEmpty(answer))
+    {
+        yield break;
+    }
+
+    for (var i = 0; i < answer.Length; i += chunkSize)
+    {
+        yield return answer.Substring(i, Math.Min(chunkSize, answer.Length - i));
+    }
+}
+
+static async Task WriteSseAsync(HttpResponse response, string @event, JsonObject payload, CancellationToken ct)
+{
+    var data = JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = false });
+    await response.WriteAsync($"event: {@event}\n", ct);
+    await response.WriteAsync($"data: {data}\n\n", ct);
+    await response.Body.FlushAsync(ct);
+}
