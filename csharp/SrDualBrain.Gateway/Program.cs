@@ -86,6 +86,38 @@ app.MapPost("/v1/reset", async (PythonEngineClient engine, JsonObject body, Canc
     return Results.Json(result);
 });
 
+app.MapPost("/v1/blobs", async (HttpRequest request, PythonEngineClient engine, CancellationToken ct) =>
+{
+    if (!request.HasFormContentType)
+    {
+        return Results.BadRequest(new { error = "Expected multipart/form-data" });
+    }
+
+    var form = await request.ReadFormAsync(ct);
+    var sessionId = form["session_id"].ToString();
+    if (string.IsNullOrWhiteSpace(sessionId))
+    {
+        sessionId = "default";
+    }
+
+    var file = form.Files.GetFile("file") ?? form.Files.FirstOrDefault();
+    if (file is null)
+    {
+        return Results.BadRequest(new { error = "Missing file field" });
+    }
+
+    await using var stream = file.OpenReadStream();
+    var result = await engine.PutBlobAsync(
+        sessionId,
+        stream,
+        length: file.Length,
+        contentType: file.ContentType,
+        fileName: file.FileName,
+        cancellationToken: ct);
+
+    return Results.Json(result);
+});
+
 app.MapPost("/v1/process", async (PythonEngineClient engine, JsonObject body, CancellationToken ct) =>
 {
     body["session_id"] ??= "default";

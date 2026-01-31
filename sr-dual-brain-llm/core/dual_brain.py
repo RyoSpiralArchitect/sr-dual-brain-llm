@@ -1222,18 +1222,41 @@ class DualBrainController:
                 executive_task = None
         inner_steps: List[InnerDialogueStep] = []
         right_lead_notes: Optional[str] = None
-        streamed_initial = False
+        stream_final_only = bool(on_delta and on_reset)
+        emitted_any = False
+
+        async def _emit_delta(text: str) -> None:
+            nonlocal emitted_any
+            if not on_delta or not text:
+                return
+            emitted_any = True
+            maybe = on_delta(text)
+            if asyncio.iscoroutine(maybe):
+                await maybe
+
+        async def _emit_reset_if_needed() -> None:
+            nonlocal emitted_any
+            if not on_reset or not emitted_any:
+                return
+            maybe = on_reset()
+            if asyncio.iscoroutine(maybe):
+                await maybe
+            emitted_any = False
+
+        delta_cb = _emit_delta if on_delta else None
         if leading == "right" or collaborative_lead:
             try:
                 right_lead_notes = await self.right_model.generate_lead(
                     question,
                     context,
-                    on_delta=on_delta if leading == "right" and on_delta else None,
+                    on_delta=(
+                        delta_cb
+                        if leading == "right" and delta_cb and not stream_final_only
+                        else None
+                    ),
                 )
             except Exception:  # pragma: no cover - defensive guard
                 right_lead_notes = None
-            if leading == "right" and on_delta and right_lead_notes:
-                streamed_initial = True
             preview_meta = {
                 "requested": True,
                 "collaborative": collaborative_lead,
@@ -1256,10 +1279,12 @@ class DualBrainController:
         draft = await self.left_model.generate_answer(
             question,
             context,
-            on_delta=on_delta if on_delta and not streamed_initial else None,
+            on_delta=(
+                delta_cb
+                if delta_cb and not stream_final_only and not emitted_any
+                else None
+            ),
         )
-        if on_delta and not streamed_initial:
-            streamed_initial = True
         if collaborative_lead:
             left_lead_preview = draft.split("\n\n", 1)[0][:320]
         left_coherence: Optional[HemisphericCoherence] = None
@@ -1589,16 +1614,13 @@ class DualBrainController:
                         directives_json = json.dumps(executive_directives, ensure_ascii=False)
                     except Exception:
                         directives_json = str(executive_directives)
-                    if on_delta and on_reset:
-                        maybe = on_reset()
-                        if asyncio.iscoroutine(maybe):
-                            await maybe
+                    await _emit_reset_if_needed()
                     final_answer = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
                         info="Executive directives (do not output directly):\n" + directives_json,
                         temperature=max(0.2, min(0.6, decision.temperature)),
-                        on_delta=on_delta,
+                        on_delta=None if stream_final_only else delta_cb,
                     )
                 success = True
             else:
@@ -1764,16 +1786,13 @@ class DualBrainController:
 
                 if has_right_material or can_polish:
                     if integration_parts:
-                        if on_delta and on_reset:
-                            maybe = on_reset()
-                            if asyncio.iscoroutine(maybe):
-                                await maybe
+                        await _emit_reset_if_needed()
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
                             info="\n\n".join(integration_parts),
                             temperature=max(0.2, min(0.6, decision.temperature)),
-                            on_delta=on_delta,
+                            on_delta=None if stream_final_only else delta_cb,
                         )
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
@@ -1886,6 +1905,11 @@ class DualBrainController:
                 final_answer = f"[Left Brain Lead]\n{integrated_answer}"
         else:
             final_answer = user_answer
+
+        if stream_final_only and delta_cb and not emitted_any and final_answer:
+            chunk_size = 512
+            for i in range(0, len(final_answer), chunk_size):
+                await _emit_delta(final_answer[i : i + chunk_size])
 
         semantic_tilt = self._evaluate_semantic_tilt(
             question=question,

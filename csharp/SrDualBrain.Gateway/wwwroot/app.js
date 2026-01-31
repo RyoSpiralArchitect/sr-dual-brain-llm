@@ -15,6 +15,9 @@ const els = {
   llmModel: $("llmModel"),
   llmMaxOutputTokens: $("llmMaxOutputTokens"),
   executiveMode: $("executiveMode"),
+  blobFile: $("blobFile"),
+  btnUploadBlob: $("btnUploadBlob"),
+  blobChips: $("blobChips"),
   useStreaming: $("useStreaming"),
   returnExecutive: $("returnExecutive"),
   returnTelemetry: $("returnTelemetry"),
@@ -39,6 +42,7 @@ const sessionLlmSignature = new Map();
 let metricsPopout = null;
 let metricsPopoutPoll = null;
 let lastMetricsPayload = null;
+let pendingBlobs = [];
 
 function isMetricsPopoutOpen() {
   return !!metricsPopout && !metricsPopout.closed;
@@ -121,6 +125,31 @@ function setStatus(kind, text) {
           ? "pill pill--bad"
           : "pill pill--muted";
   els.status.innerHTML = `<span class="${cls}">${escapeHtml(text)}</span>`;
+}
+
+function renderBlobs() {
+  if (!els.blobChips) return;
+  els.blobChips.innerHTML = "";
+  if (!pendingBlobs.length) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = "attachments: —";
+    els.blobChips.appendChild(chip);
+    return;
+  }
+  for (const blob of pendingBlobs) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    const shortId = String(blob.blob_id || "").slice(0, 8);
+    chip.textContent = `${blob.content_type || "blob"}:${shortId}`;
+    chip.title = `${blob.file_name || ""} (${blob.size_bytes || blob.size || "?"} bytes)`;
+    chip.addEventListener("click", () => {
+      pendingBlobs = pendingBlobs.filter((b) => b.blob_id !== blob.blob_id);
+      renderBlobs();
+    });
+    els.blobChips.appendChild(chip);
+  }
 }
 
 function escapeHtml(text) {
@@ -312,6 +341,14 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     return_telemetry: wantTelemetry && traceInline,
     return_dialogue_flow: wantDialogueFlow && traceInline,
   };
+  if (pendingBlobs.length) {
+    body.attachments = pendingBlobs.map((b) => ({
+      blob_id: b.blob_id,
+      content_type: b.content_type || null,
+      file_name: b.file_name || null,
+      size_bytes: b.size_bytes || null,
+    }));
+  }
 
   const provider = (els.llmProvider.value || "").trim();
   const model = (els.llmModel.value || "").trim();
@@ -549,8 +586,37 @@ els.btnReset.addEventListener("click", async () => {
       body: JSON.stringify({ session_id: sessionId }),
     });
     appendBubble("assistant", `session reset: ${sessionId}`, { mono: true, right: "reset" });
+    pendingBlobs = [];
+    renderBlobs();
   } catch (err) {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
+  } finally {
+    setBusy(false);
+  }
+});
+
+els.btnUploadBlob?.addEventListener("click", async () => {
+  const file = els.blobFile?.files?.[0];
+  if (!file) return;
+  const sessionId = (els.sessionId.value || "default").trim() || "default";
+
+  setBusy(true);
+  try {
+    const form = new FormData();
+    form.append("session_id", sessionId);
+    form.append("file", file, file.name);
+
+    const res = await fetch("/v1/blobs", { method: "POST", body: form });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
+    const payload = await res.json();
+    pendingBlobs.push(payload);
+    renderBlobs();
+    els.blobFile.value = "";
+  } catch (err) {
+    appendBubble("assistant", `upload failed: ${err}`, { mono: true, right: "error" });
   } finally {
     setBusy(false);
   }
@@ -580,4 +646,5 @@ window.addEventListener("message", (e) => {
 });
 
 refreshHealth();
+renderBlobs();
 setInterval(refreshHealth, 10_000);

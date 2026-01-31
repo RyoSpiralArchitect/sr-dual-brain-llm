@@ -19,6 +19,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
     private readonly string _transport;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private readonly SemaphoreSlim _startLock = new(1, 1);
+    private readonly SemaphoreSlim _blobLock = new(1, 1);
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonObject>> _pending = new();
     private readonly ConcurrentDictionary<string, ChannelWriter<JsonObject>> _streams = new();
@@ -30,6 +31,8 @@ public sealed class PythonEngineClient : IAsyncDisposable
     private Task? _pipePump;
     private NamedPipeServerStream? _pipe;
     private string? _pipeName;
+    private NamedPipeServerStream? _blobPipe;
+    private string? _blobPipeName;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -189,6 +192,74 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
+    public async Task<JsonObject> PutBlobAsync(
+        string sessionId,
+        Stream content,
+        long length,
+        string? contentType,
+        string? fileName,
+        CancellationToken cancellationToken)
+    {
+        if (!IsPipeTransport())
+        {
+            throw new InvalidOperationException("Blob uploads require DUALBRAIN_ENGINE_TRANSPORT=pipes.");
+        }
+
+        sessionId = string.IsNullOrWhiteSpace(sessionId) ? "default" : sessionId.Trim();
+        if (length <= 0)
+        {
+            throw new InvalidOperationException("Blob length must be > 0.");
+        }
+        if (length > uint.MaxValue)
+        {
+            throw new InvalidOperationException($"Blob too large for framing: {length} bytes");
+        }
+
+        await _blobLock.WaitAsync(cancellationToken);
+        try
+        {
+            await EnsureStartedAsync(cancellationToken);
+
+            var blobPipe = _blobPipe;
+            if (blobPipe is null || !blobPipe.IsConnected)
+            {
+                throw new InvalidOperationException("Blob pipe is not connected.");
+            }
+
+            var blobId = Guid.NewGuid().ToString("N");
+            var header = new JsonObject
+            {
+                ["session_id"] = sessionId,
+                ["blob_id"] = blobId,
+                ["content_type"] = string.IsNullOrWhiteSpace(contentType) ? null : contentType,
+                ["file_name"] = string.IsNullOrWhiteSpace(fileName) ? null : fileName,
+            };
+
+            var headerBytes = JsonSerializer.SerializeToUtf8Bytes(header, JsonOptions);
+
+            var writeTask = Task.Run(async () =>
+            {
+                await WriteBlobFrameAsync(blobPipe, headerBytes, content, (uint)length, cancellationToken);
+            }, cancellationToken);
+
+            var result = await CallAsync(
+                "blob_put",
+                new JsonObject
+                {
+                    ["session_id"] = sessionId,
+                    ["blob_id"] = blobId,
+                },
+                cancellationToken);
+
+            await writeTask;
+            return result;
+        }
+        finally
+        {
+            _blobLock.Release();
+        }
+    }
+
     private async Task WriteLineAsync(string line, CancellationToken cancellationToken)
     {
         var proc = _process;
@@ -206,6 +277,48 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             _writeLock.Release();
         }
+    }
+
+    private static async Task WriteBlobFrameAsync(
+        NamedPipeServerStream blobPipe,
+        byte[] headerBytes,
+        Stream content,
+        uint contentLength,
+        CancellationToken cancellationToken)
+    {
+        if (headerBytes.Length <= 0)
+        {
+            throw new InvalidOperationException("Blob header is empty.");
+        }
+        if (headerBytes.Length > 64 * 1024)
+        {
+            throw new InvalidOperationException($"Blob header too large: {headerBytes.Length} bytes");
+        }
+
+        var headerLenBuf = new byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(headerLenBuf, (uint)headerBytes.Length);
+        var dataLenBuf = new byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(dataLenBuf, contentLength);
+
+        await blobPipe.WriteAsync(headerLenBuf, cancellationToken);
+        await blobPipe.WriteAsync(headerBytes, cancellationToken);
+        await blobPipe.WriteAsync(dataLenBuf, cancellationToken);
+
+        var remaining = (long)contentLength;
+        var buffer = new byte[64 * 1024];
+        while (remaining > 0)
+        {
+            var toRead = (int)Math.Min(buffer.Length, remaining);
+            var read = await content.ReadAsync(buffer.AsMemory(0, toRead), cancellationToken);
+            if (read <= 0)
+            {
+                throw new EndOfStreamException("Unexpected end of blob content stream.");
+            }
+            await blobPipe.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            remaining -= read;
+        }
+
+        await blobPipe.FlushAsync(cancellationToken);
     }
 
     private async Task WritePipeFrameAsync(string json, CancellationToken cancellationToken)
@@ -342,7 +455,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
-    private static string CreatePipeName()
+    private static string CreatePipeName(string prefix)
     {
         const int maxPathLen = 104; // UnixDomainSocketEndPoint limit on macOS
         const string socketPrefix = "CoreFxPipe_";
@@ -351,7 +464,11 @@ public sealed class PythonEngineClient : IAsyncDisposable
         maxNameLen = Math.Clamp(maxNameLen, 12, 64);
 
         var guid = Guid.NewGuid().ToString("N");
-        const string prefix = "srdb";
+        prefix = string.IsNullOrWhiteSpace(prefix) ? "srdb" : prefix.Trim();
+        if (prefix.Length > 16)
+        {
+            prefix = prefix[..16];
+        }
         var suffixLen = Math.Max(4, maxNameLen - (prefix.Length + 1));
         suffixLen = Math.Min(suffixLen, guid.Length);
         return $"{prefix}_{guid[..suffixLen]}";
@@ -372,7 +489,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
                 return;
             }
 
-            if (_pipe is { IsConnected: true })
+            if (_pipe is { IsConnected: true } && _blobPipe is { IsConnected: true })
             {
                 return;
             }
@@ -409,6 +526,19 @@ public sealed class PythonEngineClient : IAsyncDisposable
                 _logger.LogInformation("Python engine connected via named pipe ({PipeName})", _pipeName);
             }
 
+            var blobPipe = _blobPipe;
+            if (blobPipe is null)
+            {
+                throw new InvalidOperationException("Pipe transport selected but no blob pipe was created.");
+            }
+            if (!blobPipe.IsConnected)
+            {
+                using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                connectCts.CancelAfter(TimeSpan.FromSeconds(5));
+                await blobPipe.WaitForConnectionAsync(connectCts.Token);
+                _logger.LogInformation("Python engine connected via blob pipe ({PipeName})", _blobPipeName);
+            }
+
             if (_pipePump is null)
             {
                 _pipePump = Task.Run(() => PumpPipeAsync(pipe, _cts.Token));
@@ -439,9 +569,19 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             // ignore
         }
+        try
+        {
+            _blobPipe?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
         _pipe = null;
         _pipeName = null;
         _pipePump = null;
+        _blobPipe = null;
+        _blobPipeName = null;
 
         var startInfo = new ProcessStartInfo
         {
@@ -460,15 +600,24 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
         if (IsPipeTransport())
         {
-            _pipeName = CreatePipeName();
+            _pipeName = CreatePipeName("srdb");
+            _blobPipeName = CreatePipeName("srdbb");
             _pipe = new NamedPipeServerStream(
                 _pipeName,
                 PipeDirection.InOut,
                 maxNumberOfServerInstances: 1,
                 PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous);
+            _blobPipe = new NamedPipeServerStream(
+                _blobPipeName,
+                PipeDirection.InOut,
+                maxNumberOfServerInstances: 1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
             startInfo.EnvironmentVariables["DUALBRAIN_PIPE_NAME"] = _pipeName;
             startInfo.EnvironmentVariables["DUALBRAIN_PIPE_CONNECT_TIMEOUT_MS"] = "5000";
+            startInfo.EnvironmentVariables["DUALBRAIN_BLOB_PIPE_NAME"] = _blobPipeName;
+            startInfo.EnvironmentVariables["DUALBRAIN_BLOB_PIPE_CONNECT_TIMEOUT_MS"] = "5000";
         }
 
         _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
@@ -657,6 +806,14 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             // ignore
         }
+        try
+        {
+            _blobPipe?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
 
         if (_process is not null)
         {
@@ -677,5 +834,6 @@ public sealed class PythonEngineClient : IAsyncDisposable
         _cts.Dispose();
         _writeLock.Dispose();
         _startLock.Dispose();
+        _blobLock.Dispose();
     }
 }

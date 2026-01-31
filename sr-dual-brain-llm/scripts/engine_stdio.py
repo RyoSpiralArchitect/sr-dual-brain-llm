@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import hashlib
 import json
 import os
 import sys
@@ -221,6 +222,85 @@ class _PipeTransport(_EngineTransport):
             await self._writer.wait_closed()
         except Exception:
             pass
+
+
+class _BlobPipe:
+    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        self.reader = reader
+        self.writer = writer
+
+    @staticmethod
+    def _path_for_pipe_name(pipe_name: str) -> str:
+        base = os.environ.get("TMPDIR") or tempfile.gettempdir()
+        base = str(base)
+        return os.path.join(base, f"CoreFxPipe_{pipe_name}")
+
+    @classmethod
+    async def connect(cls, *, pipe_name: str, timeout_s: float = 5.0) -> "_BlobPipe":
+        explicit_path = os.environ.get("DUALBRAIN_BLOB_PIPE_PATH")
+        path = explicit_path or cls._path_for_pipe_name(pipe_name)
+
+        deadline = time.monotonic() + max(0.2, float(timeout_s))
+        last_err: Exception | None = None
+        while time.monotonic() < deadline:
+            try:
+                reader, writer = await asyncio.open_unix_connection(path)
+                return cls(reader, writer)
+            except (FileNotFoundError, ConnectionRefusedError) as exc:
+                last_err = exc
+                await asyncio.sleep(0.05)
+            except Exception as exc:
+                last_err = exc
+                await asyncio.sleep(0.1)
+        raise RuntimeError(
+            f"Failed to connect to blob pipe '{pipe_name}' at '{path}': {last_err}"
+        )
+
+    async def close(self) -> None:
+        try:
+            self.writer.close()
+            await self.writer.wait_closed()
+        except Exception:
+            pass
+
+
+async def _read_blob_frame(
+    blob: _BlobPipe,
+    *,
+    expected_session_id: str | None = None,
+    expected_blob_id: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    header_len_raw = await blob.reader.readexactly(4)
+    header_len = struct.unpack("<I", header_len_raw)[0]
+    if header_len <= 0 or header_len > 1024 * 64:
+        raise ValueError(f"Invalid blob header length: {header_len}")
+    header_bytes = await blob.reader.readexactly(int(header_len))
+    try:
+        header = json.loads(header_bytes.decode("utf-8"))
+    except Exception as exc:
+        raise ValueError(f"Invalid blob header JSON: {exc}") from exc
+    if not isinstance(header, dict):
+        raise ValueError("Blob header must be a JSON object")
+
+    data_len_raw = await blob.reader.readexactly(4)
+    data_len = struct.unpack("<I", data_len_raw)[0]
+    max_bytes = int(os.environ.get("DUALBRAIN_BLOB_MAX_BYTES", str(64 * 1024 * 1024)) or 0)
+    if max_bytes > 0 and int(data_len) > max_bytes:
+        # Drain and discard to keep the stream aligned.
+        remaining = int(data_len)
+        while remaining > 0:
+            chunk = await blob.reader.readexactly(min(65536, remaining))
+            remaining -= len(chunk)
+        raise ValueError(f"Blob too large: {data_len} bytes (max {max_bytes})")
+
+    session_id = str(header.get("session_id") or "").strip()
+    blob_id = str(header.get("blob_id") or "").strip()
+    if expected_session_id and session_id and session_id != expected_session_id:
+        raise ValueError(f"Blob session_id mismatch: {session_id} != {expected_session_id}")
+    if expected_blob_id and blob_id and blob_id != expected_blob_id:
+        raise ValueError(f"Blob blob_id mismatch: {blob_id} != {expected_blob_id}")
+
+    return header, {"data_len": int(data_len)}
 
 
 async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
@@ -913,6 +993,56 @@ async def _writer_loop(
         except Exception as exc:
             print(f"[engine_stdio] write failed: {exc}", file=sys.stderr, flush=True)
 
+async def _handle_blob_put(
+    params: Dict[str, Any],
+    *,
+    blob_pipe: _BlobPipe | None,
+    blob_root: Path,
+    blob_index: Dict[str, Dict[str, Any]],
+) -> Dict[str, Any]:
+    if blob_pipe is None:
+        raise ValueError("Blob pipe not available (enable gateway pipes transport).")
+
+    session_id = str(params.get("session_id", "default") or "default").strip() or "default"
+    expected_blob_id = str(params.get("blob_id") or "").strip()
+    if not expected_blob_id:
+        raise ValueError("blob_id is required")
+
+    header, meta = await _read_blob_frame(
+        blob_pipe,
+        expected_session_id=session_id,
+        expected_blob_id=expected_blob_id,
+    )
+    data_len = int(meta["data_len"])
+    content_type = str(header.get("content_type") or "").strip() or None
+    file_name = str(header.get("file_name") or "").strip() or None
+    blob_id = str(header.get("blob_id") or expected_blob_id).strip() or expected_blob_id
+
+    session_dir = blob_root / session_id
+    session_dir.mkdir(parents=True, exist_ok=True)
+    path = session_dir / f"{blob_id}.blob"
+
+    hasher = hashlib.sha256()
+    remaining = data_len
+    with open(path, "wb") as f:
+        while remaining > 0:
+            chunk = await blob_pipe.reader.readexactly(min(65536, remaining))
+            f.write(chunk)
+            hasher.update(chunk)
+            remaining -= len(chunk)
+
+    payload: Dict[str, Any] = {
+        "session_id": session_id,
+        "blob_id": blob_id,
+        "content_type": content_type,
+        "file_name": file_name,
+        "size_bytes": data_len,
+        "sha256": hasher.hexdigest(),
+        "stored": True,
+    }
+    blob_index.setdefault(session_id, {})[blob_id] = payload
+    return payload
+
 
 async def main() -> None:
     state_store = None
@@ -952,6 +1082,29 @@ async def main() -> None:
         )
     else:
         transport = _StdioTransport()
+
+    blob_pipe: _BlobPipe | None = None
+    blob_pipe_name = str(os.environ.get("DUALBRAIN_BLOB_PIPE_NAME", "") or "").strip()
+    if blob_pipe_name:
+        timeout_ms = int(os.environ.get("DUALBRAIN_BLOB_PIPE_CONNECT_TIMEOUT_MS", "5000") or 5000)
+        blob_pipe = await _BlobPipe.connect(
+            pipe_name=blob_pipe_name,
+            timeout_s=max(0.2, float(timeout_ms) / 1000.0),
+        )
+        print(
+            f"[engine_stdio] connected blob pipe '{blob_pipe_name}'",
+            file=sys.stderr,
+            flush=True,
+        )
+
+    blob_root = Path(
+        str(
+            os.environ.get("DUALBRAIN_BLOB_DIR")
+            or (Path(tempfile.gettempdir()) / "srdb_blobs")
+        )
+    )
+    blob_root.mkdir(parents=True, exist_ok=True)
+    blob_index: Dict[str, Dict[str, Any]] = {}
 
     out_queue: "asyncio.Queue[Optional[Dict[str, Any]]]" = asyncio.Queue()
     writer_task = asyncio.create_task(_writer_loop(out_queue, transport))
@@ -1077,6 +1230,14 @@ async def main() -> None:
                         "error": pg_error,
                     }
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                elif method == "blob_put":
+                    payload = await _handle_blob_put(
+                        params,
+                        blob_pipe=blob_pipe,
+                        blob_root=blob_root,
+                        blob_index=blob_index,
+                    )
+                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 else:
                     raise ValueError(f"unknown method: {method}")
             except Exception as exc:
@@ -1101,6 +1262,11 @@ async def main() -> None:
             pass
         try:
             await transport.close()
+        except Exception:
+            pass
+        try:
+            if blob_pipe is not None:
+                await blob_pipe.close()
         except Exception:
             pass
 

@@ -94,6 +94,15 @@ Notes:
 ### `GET /v1/health`
 Returns gateway + engine health.
 
+### `POST /v1/blobs` (multipart upload)
+Uploads a binary blob (e.g., an image) into the Python engine.
+
+This endpoint is intended for future multimodal experiments and uses a separate named-pipe "blob" channel when `DUALBRAIN_ENGINE_TRANSPORT=pipes` is enabled.
+
+Request (multipart/form-data):
+- `session_id` (optional, default `"default"`)
+- `file` (required)
+
 ### `GET /v1/trace/{qid}`
 Fetches stored `telemetry` and/or `dialogue_flow` for a prior turn (even if `/v1/process` returned only the clean answer + metrics).
 
