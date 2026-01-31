@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Channels;
 
 namespace SrDualBrain.Gateway;
 
@@ -16,6 +17,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
     private readonly SemaphoreSlim _writeLock = new(1, 1);
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonObject>> _pending = new();
+    private readonly ConcurrentDictionary<string, ChannelWriter<JsonObject>> _streams = new();
     private readonly CancellationTokenSource _cts = new();
 
     private Process? _process;
@@ -86,6 +88,95 @@ public sealed class PythonEngineClient : IAsyncDisposable
         finally
         {
             _pending.TryRemove(id, out _);
+        }
+    }
+
+    public async IAsyncEnumerable<JsonObject> CallStreamAsync(
+        string method,
+        JsonObject? @params,
+        TimeSpan timeout,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        EnsureStarted();
+
+        var id = Guid.NewGuid().ToString("N");
+        var request = new JsonObject
+        {
+            ["id"] = id,
+            ["method"] = method,
+            ["params"] = @params ?? new JsonObject(),
+        };
+
+        var tcs = new TaskCompletionSource<JsonObject>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_pending.TryAdd(id, tcs))
+        {
+            throw new InvalidOperationException("Failed to enqueue request.");
+        }
+
+        var channel = Channel.CreateUnbounded<JsonObject>(new UnboundedChannelOptions
+        {
+            SingleReader = true,
+            SingleWriter = false,
+        });
+        if (!_streams.TryAdd(id, channel.Writer))
+        {
+            _pending.TryRemove(id, out _);
+            throw new InvalidOperationException("Failed to register stream.");
+        }
+
+        try
+        {
+            var line = JsonSerializer.Serialize(request, JsonOptions);
+            await WriteLineAsync(line, cancellationToken);
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(timeout);
+
+            while (true)
+            {
+                if (tcs.Task.IsCompleted)
+                {
+                    yield return await tcs.Task;
+                    yield break;
+                }
+
+                var canRead = await channel.Reader.WaitToReadAsync(timeoutCts.Token);
+                if (!canRead)
+                {
+                    // Stream finished; ensure final response is observed.
+                    yield return await tcs.Task.WaitAsync(timeoutCts.Token);
+                    yield break;
+                }
+
+                while (channel.Reader.TryRead(out var message))
+                {
+                    yield return message;
+                }
+            }
+        }
+        finally
+        {
+            _streams.TryRemove(id, out _);
+            _pending.TryRemove(id, out _);
+            try
+            {
+                channel.Writer.TryComplete();
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+    }
+
+    public async IAsyncEnumerable<JsonObject> CallStreamAsync(
+        string method,
+        JsonObject? @params,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var ev in CallStreamAsync(method, @params, _defaultTimeout, cancellationToken))
+        {
+            yield return ev;
         }
     }
 
@@ -193,9 +284,21 @@ public sealed class PythonEngineClient : IAsyncDisposable
                     continue;
                 }
 
-                if (_pending.TryGetValue(id, out var tcs))
+                var hasOk = obj?["ok"] is not null;
+                if (hasOk && _pending.TryGetValue(id, out var tcs))
                 {
                     tcs.TrySetResult(obj!);
+                    if (_streams.TryGetValue(id, out var writer))
+                    {
+                        writer.TryComplete();
+                    }
+                    continue;
+                }
+
+                var eventName = obj?["event"]?.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(eventName) && _streams.TryGetValue(id, out var streamWriter))
+                {
+                    streamWriter.TryWrite(obj!.DeepClone() as JsonObject ?? obj!);
                 }
             }
         }
@@ -242,6 +345,19 @@ public sealed class PythonEngineClient : IAsyncDisposable
             item.Value.TrySetException(ex);
         }
         _pending.Clear();
+
+        foreach (var item in _streams)
+        {
+            try
+            {
+                item.Value.TryComplete(ex);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+        _streams.Clear();
     }
 
     public async ValueTask DisposeAsync()

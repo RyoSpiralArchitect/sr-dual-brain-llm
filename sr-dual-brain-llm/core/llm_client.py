@@ -18,9 +18,13 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import os
+from collections.abc import AsyncIterator
+from codecs import getincrementaldecoder
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
@@ -162,6 +166,37 @@ class LLMClient:
             return await self._huggingface(prompt, system=system, temperature=temperature)
         raise ValueError(f"Unsupported provider: {provider}")
 
+    async def complete_stream(
+        self,
+        prompt: str,
+        *,
+        system: Optional[str] = None,
+        temperature: float = 0.7,
+        on_delta: Optional[Callable[[str], Any]] = None,
+    ) -> str:
+        """Stream output tokens as they arrive (when supported).
+
+        Returns the final assembled completion. When streaming is not supported for
+        the configured provider, the method falls back to `complete()` and emits
+        the full response once via `on_delta` (when provided).
+        """
+
+        provider = self.provider
+        if provider in {"openai", "mistral", "xai"}:
+            return await self._openai_style_stream(
+                prompt,
+                system=system,
+                temperature=temperature,
+                on_delta=on_delta,
+            )
+
+        text = await self.complete(prompt, system=system, temperature=temperature)
+        if on_delta:
+            maybe = on_delta(text)
+            if asyncio.iscoroutine(maybe):
+                await maybe
+        return text
+
     @staticmethod
     def _merge_continuation(prefix: str, continuation: str) -> str:
         if not prefix:
@@ -201,6 +236,157 @@ class LLMClient:
         if provider == "huggingface":
             return "https://api-inference.huggingface.co/models"
         raise ValueError(f"Unsupported provider: {provider}")
+
+    @staticmethod
+    async def _iter_sse_data(chunks: AsyncIterator[bytes]) -> AsyncIterator[str]:
+        decoder = getincrementaldecoder("utf-8")()
+        buffer = ""
+        async for chunk in chunks:
+            if not chunk:
+                continue
+            buffer += decoder.decode(chunk)
+            while True:
+                sep = buffer.find("\n\n")
+                if sep < 0:
+                    break
+                block = buffer[:sep]
+                buffer = buffer[sep + 2 :]
+                for raw_line in block.splitlines():
+                    line = raw_line.strip()
+                    if not line.startswith("data:"):
+                        continue
+                    yield line[5:].strip()
+
+    async def _consume_openai_style_stream(
+        self,
+        data_iter: AsyncIterator[str],
+        *,
+        on_delta: Optional[Callable[[str], Any]],
+    ) -> tuple[str, Optional[str]]:
+        full_text = ""
+        finish_reason: Optional[str] = None
+
+        async for data_line in data_iter:
+            if not data_line:
+                continue
+            if data_line == "[DONE]":
+                break
+
+            try:
+                payload = json.loads(data_line)
+            except Exception:
+                continue
+
+            if isinstance(payload, dict) and payload.get("error"):
+                raise RuntimeError(str(payload["error"]))
+
+            choices = payload.get("choices") if isinstance(payload, dict) else None
+            if not choices or not isinstance(choices, list):
+                continue
+
+            choice0 = choices[0] if isinstance(choices[0], dict) else {}
+            reason = choice0.get("finish_reason")
+            if reason is not None:
+                finish_reason = str(reason)
+
+            delta = choice0.get("delta") or choice0.get("message") or {}
+            content = delta.get("content") if isinstance(delta, dict) else None
+            if not content:
+                continue
+
+            chunk = str(content)
+            full_text += chunk
+            if on_delta:
+                maybe = on_delta(chunk)
+                if asyncio.iscoroutine(maybe):
+                    await maybe
+
+        return full_text, finish_reason
+
+    async def _openai_style_stream_call(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float,
+        on_delta: Optional[Callable[[str], Any]],
+    ) -> tuple[str, Optional[str]]:
+        base = (self.config.api_base or self._default_base()).rstrip("/")
+        url = f"{base}/chat/completions"
+        payload = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": float(temperature),
+            "max_tokens": self.config.max_output_tokens,
+            "stream": True,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.config.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+        }
+        if self.config.organization:
+            headers["OpenAI-Organization"] = self.config.organization
+        headers.update(self.config.extra_headers)
+
+        timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(url, json=payload, headers=headers) as resp:
+                if resp.status >= 400:
+                    text = await resp.text()
+                    raise RuntimeError(
+                        f"{self.config.provider} returned {resp.status}: {text}"
+                    )
+                data_iter = self._iter_sse_data(resp.content.iter_any())
+                return await self._consume_openai_style_stream(
+                    data_iter, on_delta=on_delta
+                )
+
+    async def _openai_style_stream(
+        self,
+        prompt: str,
+        *,
+        system: Optional[str],
+        temperature: float,
+        on_delta: Optional[Callable[[str], Any]],
+    ) -> str:
+        base_messages = []
+        if system:
+            base_messages.append({"role": "system", "content": system})
+        base_messages.append({"role": "user", "content": prompt})
+
+        chunk, finish = await self._openai_style_stream_call(
+            base_messages,
+            temperature=temperature,
+            on_delta=on_delta,
+        )
+        full_text = chunk
+
+        if not self.config.auto_continue or not finish:
+            return full_text.strip()
+        if str(finish).lower() not in {"length", "max_tokens"}:
+            return full_text.strip()
+
+        continuation_prompt = (
+            "Continue from where you left off. Do not repeat any text. Output only the continuation."
+        )
+        for _ in range(max(0, int(self.config.max_continuations))):
+            messages = [
+                *base_messages,
+                {"role": "assistant", "content": full_text},
+                {"role": "user", "content": continuation_prompt},
+            ]
+            cont, finish = await self._openai_style_stream_call(
+                messages,
+                temperature=temperature,
+                on_delta=on_delta,
+            )
+            if not cont:
+                break
+            full_text = self._merge_continuation(full_text, cont)
+            if not finish or str(finish).lower() not in {"length", "max_tokens"}:
+                break
+
+        return full_text.strip()
 
     async def _openai_style(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")

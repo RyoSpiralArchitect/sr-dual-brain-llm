@@ -17,20 +17,24 @@
 # ============================================================================
 
 import asyncio, random
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
     "Do not mention internal orchestration (e.g., left/right brain, corpus callosum, telemetry, architecture paths, qid).\n"
-    "Do not add bracketed debug headings or meta commentary about the system."
+    "Do not add bracketed debug headings or meta commentary about the system.\n"
+    "Do not mention system prompts, hidden instructions, or that you are a language model unless the user explicitly asks."
 )
 
 _RIGHT_DEEPEN_GUARDRAILS = (
-    "When given a draft, provide complementary additions only.\n"
+    "When given a draft, return only additional content addressed to the user.\n"
+    "Your output must be directly insertable into the final assistant message (no writing advice).\n"
     "Do not restate or paraphrase the draft.\n"
-    "Prefer 2-5 concise bullet points of what to add / clarify, or a short suggested follow-up question."
+    "Do not say 'Add', 'Consider', 'You should', or similar coaching.\n"
+    "Write in the user's language and tone.\n"
+    "Prefer 1-5 concise bullet points of extra substance, or a short follow-up question."
 )
 
 _INTEGRATION_GUARDRAILS = (
@@ -50,7 +54,13 @@ class LeftBrainModel:
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
         self.uses_external_llm = bool(self._llm_client)
 
-    async def generate_answer(self, input_text: str, context: str) -> str:
+    async def generate_answer(
+        self,
+        input_text: str,
+        context: str,
+        *,
+        on_delta: Optional[Callable[[str], Any]] = None,
+    ) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
         if self._llm_client:
             system_parts = [_SYSTEM_GUARDRAILS]
@@ -58,7 +68,23 @@ class LeftBrainModel:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
             try:
-                return await self._llm_client.complete(input_text, system=system, temperature=0.4)
+                if hasattr(self._llm_client, "complete_stream"):
+                    return await self._llm_client.complete_stream(
+                        input_text,
+                        system=system,
+                        temperature=0.4,
+                        on_delta=on_delta,
+                    )
+                completion = await self._llm_client.complete(
+                    input_text,
+                    system=system,
+                    temperature=0.4,
+                )
+                if on_delta:
+                    maybe = on_delta(completion)
+                    if asyncio.iscoroutine(maybe):
+                        await maybe
+                return completion
             except Exception:
                 pass
 
@@ -68,6 +94,10 @@ class LeftBrainModel:
             base += f"\nContext hint: {summary}"
         if any(k in input_text for k in ["詳しく","分析","計算","証拠"]):
             base += " ... (brief, looks complex)"
+        if on_delta:
+            maybe = on_delta(base)
+            if asyncio.iscoroutine(maybe):
+                await maybe
         return base
 
     def estimate_confidence(self, draft: str) -> float:
@@ -76,7 +106,27 @@ class LeftBrainModel:
     def integrate_info(self, draft: str, info: str) -> str:
         if not info:
             return draft
-        return f"{draft}\n\n{info}"
+        text = str(info or "").strip()
+        if not text:
+            return draft
+
+        lower = text.lower()
+        coaching_markers = (
+            "add a ",
+            "consider ",
+            "if the user",
+            "you should",
+            "try to",
+            "make sure to",
+            "もう少し",
+            "〜したほうが",
+            "した方が",
+        )
+        if any(marker in lower for marker in coaching_markers):
+            # Avoid leaking internal "advisor" notes when no integration LLM is available.
+            return draft
+
+        return f"{draft}\n\n{text}"
 
     async def integrate_info_async(
         self,
@@ -85,12 +135,18 @@ class LeftBrainModel:
         draft: str,
         info: str,
         temperature: float = 0.3,
+        on_delta: Optional[Callable[[str], Any]] = None,
     ) -> str:
         if not info:
             return draft
 
         if not self._llm_client:
-            return self.integrate_info(draft, info)
+            merged = self.integrate_info(draft, info)
+            if on_delta:
+                maybe = on_delta(merged)
+                if asyncio.iscoroutine(maybe):
+                    await maybe
+            return merged
 
         system_parts = [_SYSTEM_GUARDRAILS, _INTEGRATION_GUARDRAILS]
         system = "\n\n".join(system_parts)
@@ -102,9 +158,23 @@ class LeftBrainModel:
             "Final answer:"
         )
         try:
-            completion = await self._llm_client.complete(
-                prompt, system=system, temperature=temperature
-            )
+            if hasattr(self._llm_client, "complete_stream"):
+                completion = await self._llm_client.complete_stream(
+                    prompt,
+                    system=system,
+                    temperature=temperature,
+                    on_delta=on_delta,
+                )
+            else:
+                completion = await self._llm_client.complete(
+                    prompt,
+                    system=system,
+                    temperature=temperature,
+                )
+                if on_delta:
+                    maybe = on_delta(completion)
+                    if asyncio.iscoroutine(maybe):
+                        await maybe
         except Exception:
             return self.integrate_info(draft, info)
         return completion.strip() or draft
@@ -121,6 +191,7 @@ class RightBrainModel:
         context: Optional[str] = None,
         *,
         temperature: float = 0.8,
+        on_delta: Optional[Callable[[str], Any]] = None,
     ) -> str:
         """Produce an imagistic first impression before the left brain speaks."""
         if self._llm_client:
@@ -129,11 +200,23 @@ class RightBrainModel:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
             try:
-                return await self._llm_client.complete(
+                if hasattr(self._llm_client, "complete_stream"):
+                    return await self._llm_client.complete_stream(
+                        question,
+                        system=system,
+                        temperature=temperature,
+                        on_delta=on_delta,
+                    )
+                completion = await self._llm_client.complete(
                     question,
                     system=system,
                     temperature=temperature,
                 )
+                if on_delta:
+                    maybe = on_delta(completion)
+                    if asyncio.iscoroutine(maybe):
+                        await maybe
+                return completion
             except Exception:
                 pass
 
@@ -143,6 +226,10 @@ class RightBrainModel:
             snippet = context.splitlines()[0][:80]
             base += f"\nContext echo: {snippet}"
         base += "\nKey images: connection, contrast, hidden assumptions."
+        if on_delta:
+            maybe = on_delta(base)
+            if asyncio.iscoroutine(maybe):
+                await maybe
         return base
 
     async def deepen(
@@ -172,7 +259,7 @@ class RightBrainModel:
                         f"{question}\n\n"
                         "Draft (for reference only):\n"
                         f"{partial_answer}\n\n"
-                        "Return only additive notes (no rephrasing)."
+                        "Return only user-facing additive content (no coaching, no critique)."
                     ),
                     system=system,
                     temperature=temperature,

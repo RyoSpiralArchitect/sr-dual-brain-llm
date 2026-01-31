@@ -111,3 +111,75 @@ def test_openai_style_auto_continue_can_be_disabled(monkeypatch):
     out = asyncio.run(client.complete("prompt", system="sys", temperature=0.2))
     assert out == "Hello"
     assert len(calls) == 1
+
+
+def test_iter_sse_data_handles_chunk_boundaries():
+    async def fake_chunks():
+        yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"},\"finish_reason\":null}]}\n"
+        yield b"\n"
+        yield b"data: {\"choices\":[{\"delta\":{\"content\":\"lo\"},\"finish_reason\":\"stop\"}]}\n\n"
+        yield b"data: [DONE]\n\n"
+
+    async def collect():
+        out = []
+        async for item in LLMClient._iter_sse_data(fake_chunks()):
+            out.append(item)
+        return out
+
+    items = asyncio.run(collect())
+    assert items[:2] == [
+        "{\"choices\":[{\"delta\":{\"content\":\"Hel\"},\"finish_reason\":null}]}",
+        "{\"choices\":[{\"delta\":{\"content\":\"lo\"},\"finish_reason\":\"stop\"}]}",
+    ]
+    assert items[-1] == "[DONE]"
+
+
+def test_openai_style_consume_stream_calls_callback():
+    cfg = LLMConfig(provider="openai", model="dummy", api_key="key")
+    client = LLMClient(cfg)
+    deltas = []
+
+    async def fake_data():
+        yield "{\"choices\":[{\"delta\":{\"content\":\"Hel\"},\"finish_reason\":null}]}"
+        yield "{\"choices\":[{\"delta\":{\"content\":\"lo\"},\"finish_reason\":\"stop\"}]}"
+        yield "[DONE]"
+
+    def on_delta(text: str):
+        deltas.append(text)
+
+    full, finish = asyncio.run(client._consume_openai_style_stream(fake_data(), on_delta=on_delta))
+    assert full == "Hello"
+    assert finish == "stop"
+    assert deltas == ["Hel", "lo"]
+
+
+def test_openai_style_complete_stream_auto_continue(monkeypatch):
+    cfg = LLMConfig(
+        provider="openai",
+        model="dummy",
+        api_key="key",
+        max_output_tokens=5,
+        auto_continue=True,
+        max_continuations=2,
+    )
+    client = LLMClient(cfg)
+    calls = []
+    streamed = []
+
+    async def fake_stream_call(messages, *, temperature, on_delta):
+        calls.append(messages)
+        if len(calls) == 1:
+            if on_delta:
+                on_delta("Hello")
+            return "Hello", "length"
+        if on_delta:
+            on_delta(" world")
+        return " world", "stop"
+
+    monkeypatch.setattr(client, "_openai_style_stream_call", fake_stream_call)
+
+    out = asyncio.run(client.complete_stream("prompt", system="sys", temperature=0.2, on_delta=streamed.append))
+    assert out == "Hello world"
+    assert streamed == ["Hello", " world"]
+    assert len(calls) == 2
+    assert any(msg.get("role") == "assistant" for msg in calls[1])

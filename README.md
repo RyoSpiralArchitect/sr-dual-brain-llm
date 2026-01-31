@@ -126,7 +126,31 @@ Response fields:
 - `telemetry` (array, optional): structured per-module events emitted during the turn
 
 ### `POST /v1/process/stream` (SSE)
-Streams the answer via Server-Sent Events (SSE) for faster UI rendering. The gateway returns `start`/`delta`/`final` events; fetch `/v1/trace/{qid}` afterward if you want `telemetry` or `dialogue_flow`.
+Streams the answer via Server-Sent Events (SSE).
+
+When using an OpenAI-style provider (`openai`, `mistral`, `xai`), `delta` events are emitted from the provider's true token stream (not "chunk the final answer"). The engine may emit a `reset` event if it decides to replace an initial draft with an integrated final answer.
+
+SSE events:
+- `start`: `{ qid, session_id }`
+- `delta`: `{ text }`
+- `reset`: `{}` (client should clear the current assistant text)
+- `final`: `{ qid, answer, session_id, metrics }`
+- `done`: `{}`
+- `error`: `{ message }`
+
+Fetch `/v1/trace/{qid}` afterward if you want `telemetry` or `dialogue_flow`.
+
+Example:
+```bash
+curl -N http://127.0.0.1:8080/v1/process/stream \
+  -H 'content-type: application/json' \
+  -d '{
+    "session_id":"demo",
+    "question":"Write a 2 minute explanation of what coherence means here.",
+    "leading_brain":"auto",
+    "llm": { "provider":"openai", "model":"gpt-4o-mini" }
+  }'
+```
 
 ### `POST /v1/episodes/search`
 Searches hippocampal episodic memory for a session.
@@ -220,6 +244,13 @@ Resetting a session via `POST /v1/reset` will also delete the persisted rows for
 If you want to debug the engine protocol directly:
 ```bash
 printf '{"id":"1","method":"health","params":{}}\n' | python3 sr-dual-brain-llm/scripts/engine_stdio.py
+```
+
+The engine also supports a streaming method (`process_stream`) which emits intermediate event lines before the final `ok` response:
+```bash
+python3 sr-dual-brain-llm/scripts/engine_stdio.py <<'EOF'
+{"id":"1","method":"process_stream","params":{"session_id":"demo","question":"hello"}}
+EOF
 ```
 
 ## Running the Interactive Orchestrator (Python-only)

@@ -370,6 +370,97 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
     return result
 
 
+async def _handle_process_stream(
+    session: EngineSession,
+    params: Dict[str, Any],
+    *,
+    emit_event,
+) -> Dict[str, Any]:
+    question = str(params.get("question", "")).strip()
+    if not question:
+        raise ValueError("question is required")
+
+    leading = str(params.get("leading_brain", "auto") or "auto").strip().lower()
+    leading_brain: Optional[str]
+    if leading in {"auto", "", "null"}:
+        leading_brain = None
+    elif leading in {"left", "right"}:
+        leading_brain = leading
+    else:
+        raise ValueError("leading_brain must be one of: auto, left, right")
+
+    answer_mode = str(params.get("answer_mode", "plain") or "plain").strip().lower()
+    if answer_mode not in {"plain", "debug", "annotated", "meta"}:
+        raise ValueError("answer_mode must be one of: plain, debug, annotated, meta")
+
+    return_telemetry = bool(params.get("return_telemetry", False))
+    return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
+
+    qid = str(params.get("qid") or uuid.uuid4())
+
+    session.telemetry.clear()
+
+    def on_delta(text: str) -> None:
+        if not text:
+            return
+        emit_event("delta", {"text": str(text)})
+
+    def on_reset() -> None:
+        emit_event("reset", {})
+
+    answer = await session.controller.process(
+        question,
+        leading_brain=leading_brain,
+        qid=qid,
+        answer_mode=answer_mode,
+        on_delta=on_delta,
+        on_reset=on_reset,
+    )
+
+    after_memory = len(session.memory.past_qas)
+    after_episodes = len(session.hippocampus.episodes)
+
+    state_store = session.state_store
+    if state_store is not None and (after_memory > session.persisted_memory or after_episodes > session.persisted_episodes):
+        new_traces = session.memory.past_qas[session.persisted_memory:]
+        new_episodes = session.hippocampus.episodes[session.persisted_episodes:]
+        await state_store.append_memory_traces(session.session_id, new_traces, qid=qid)
+        await state_store.upsert_episodes(session.session_id, new_episodes)
+        session.persisted_memory = len(session.memory.past_qas)
+        session.persisted_episodes = len(session.hippocampus.episodes)
+    if state_store is not None and hasattr(state_store, "append_telemetry_events"):
+        persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
+        if persist_telemetry not in {"0", "false", "no", "off"}:
+            await state_store.append_telemetry_events(
+                session.session_id,
+                list(session.telemetry.events),
+                qid=qid,
+            )
+
+    result: Dict[str, Any] = {
+        "qid": qid,
+        "answer": answer,
+        "session_id": session.session_id,
+        "metrics": _extract_metrics(list(session.telemetry.events)),
+    }
+
+    telemetry_events = list(session.telemetry.events)
+    metrics = result["metrics"]
+    dialogue_flow = session.memory.dialogue_flow(qid)
+    session.remember_trace(
+        qid,
+        metrics=metrics,
+        dialogue_flow=dialogue_flow,
+        telemetry=telemetry_events,
+    )
+
+    if return_dialogue_flow:
+        result["dialogue_flow"] = dialogue_flow
+    if return_telemetry:
+        result["telemetry"] = telemetry_events
+    return result
+
+
 async def _handle_get_trace(
     sessions: Dict[str, EngineSession],
     params: Dict[str, Any],
@@ -729,6 +820,42 @@ async def main() -> None:
                                     "Session already exists with different LLM config; use a new session_id or call reset."
                                 )
                     payload = await _handle_process(session, params)
+                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                elif method == "process_stream":
+                    session_id = str(params.get("session_id", "default") or "default")
+                    left_cfg, right_cfg = _maybe_extract_llm_configs(params)
+                    session = sessions.get(session_id)
+                    if session is None:
+                        session = await EngineSession.create(
+                            session_id,
+                            state_store=state_store,
+                            left_llm_config=left_cfg,
+                            right_llm_config=right_cfg,
+                        )
+                        sessions[session_id] = session
+                    else:
+                        if left_cfg is not None or right_cfg is not None:
+                            requested = (_llm_identity(left_cfg), _llm_identity(right_cfg))
+                            current = (
+                                _llm_identity(session.left.llm_config),
+                                _llm_identity(session.right.llm_config),
+                            )
+                            if requested != current:
+                                raise ValueError(
+                                    "Session already exists with different LLM config; use a new session_id or call reset."
+                                )
+
+                    def emit_event(event: str, payload: Dict[str, Any] | None = None) -> None:
+                        msg: Dict[str, Any] = {"id": req_id, "event": event}
+                        if payload:
+                            msg.update(_jsonable(payload))
+                        print(json.dumps(msg, ensure_ascii=False), flush=True)
+
+                    payload = await _handle_process_stream(
+                        session,
+                        params,
+                        emit_event=emit_event,
+                    )
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "get_trace":
                     payload = await _handle_get_trace(sessions, params)

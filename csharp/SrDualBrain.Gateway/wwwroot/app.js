@@ -326,7 +326,7 @@ function mergeTrace(result, trace) {
   };
 }
 
-async function callProcessStream(body, { onDelta, onFinal }) {
+async function callProcessStream(body, { onDelta, onFinal, onReset }) {
   const res = await fetch("/v1/process/stream", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -368,6 +368,8 @@ async function callProcessStream(body, { onDelta, onFinal }) {
     if (eventName === "delta") {
       const chunk = payload?.text ?? "";
       if (chunk && onDelta) onDelta(chunk);
+    } else if (eventName === "reset") {
+      if (onReset) onReset(payload);
     } else if (eventName === "final") {
       finalResult = payload;
       if (onFinal) onFinal(payload);
@@ -412,6 +414,10 @@ async function onSend() {
         onDelta: (chunk) => {
           streamed += chunk;
           placeholder.querySelector(".bubble__content").textContent = streamed;
+        },
+        onReset: () => {
+          streamed = "";
+          placeholder.querySelector(".bubble__content").textContent = "";
         },
         onFinal: (payload) => {
           if (payload?.answer) {

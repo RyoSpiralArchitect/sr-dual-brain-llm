@@ -8,7 +8,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
@@ -996,6 +996,8 @@ class DualBrainController:
         leading_brain: Optional[str] = None,
         qid: Optional[str] = None,
         answer_mode: str = "plain",
+        on_delta: Optional[Callable[[str], Any]] = None,
+        on_reset: Optional[Callable[[], Any]] = None,
     ) -> str:
         mode = str(answer_mode or "plain").strip().lower()
         emit_debug_sections = mode in {"debug", "annotated", "meta"}
@@ -1063,14 +1065,18 @@ class DualBrainController:
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         inner_steps: List[InnerDialogueStep] = []
         right_lead_notes: Optional[str] = None
+        streamed_initial = False
         if leading == "right" or collaborative_lead:
             try:
                 right_lead_notes = await self.right_model.generate_lead(
                     question,
                     context,
+                    on_delta=on_delta if leading == "right" and on_delta else None,
                 )
             except Exception:  # pragma: no cover - defensive guard
                 right_lead_notes = None
+            if leading == "right" and on_delta and right_lead_notes:
+                streamed_initial = True
             preview_meta = {
                 "requested": True,
                 "collaborative": collaborative_lead,
@@ -1090,7 +1096,13 @@ class DualBrainController:
                 )
             )
         left_lead_preview: Optional[str] = None
-        draft = await self.left_model.generate_answer(question, context)
+        draft = await self.left_model.generate_answer(
+            question,
+            context,
+            on_delta=on_delta if on_delta and not streamed_initial else None,
+        )
+        if on_delta and not streamed_initial:
+            streamed_initial = True
         if collaborative_lead:
             left_lead_preview = draft.split("\n\n", 1)[0][:320]
         left_coherence: Optional[HemisphericCoherence] = None
@@ -1489,18 +1501,28 @@ class DualBrainController:
                     integrated_detail = None
 
                 if integrated_detail:
+                    if on_delta and on_reset:
+                        maybe = on_reset()
+                        if asyncio.iscoroutine(maybe):
+                            await maybe
                     final_answer = await self.left_model.integrate_info_async(
                         question=question,
                         draft=draft,
                         info=integrated_detail,
                         temperature=max(0.2, min(0.6, decision.temperature)),
+                        on_delta=on_delta,
                     )
                 elif right_lead_notes and not detail_notes:
+                    if on_delta and on_reset:
+                        maybe = on_reset()
+                        if asyncio.iscoroutine(maybe):
+                            await maybe
                     final_answer = await self.left_model.integrate_info_async(
                         question=question,
                         draft=draft,
                         info=right_lead_notes,
                         temperature=max(0.2, min(0.6, decision.temperature)),
+                        on_delta=on_delta,
                     )
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source

@@ -139,10 +139,31 @@ app.MapPost("/v1/process/stream", async (HttpContext ctx, PythonEngineClient eng
 
     await WriteSseAsync(ctx.Response, "start", new JsonObject { ["qid"] = qid, ["session_id"] = sessionId }, ct);
 
-    JsonObject result;
+    JsonObject? finalEnvelope = null;
     try
     {
-        result = await engine.CallAsync("process", body, ct);
+        await foreach (var msg in engine.CallStreamAsync("process_stream", body, ct))
+        {
+            if (msg["ok"] is not null)
+            {
+                finalEnvelope = msg;
+                break;
+            }
+
+            var evName = msg["event"]?.GetValue<string>() ?? "";
+            if (evName == "delta")
+            {
+                var text = msg["text"]?.GetValue<string>() ?? "";
+                if (!string.IsNullOrEmpty(text))
+                {
+                    await WriteSseAsync(ctx.Response, "delta", new JsonObject { ["text"] = text }, ct);
+                }
+            }
+            else if (evName == "reset")
+            {
+                await WriteSseAsync(ctx.Response, "reset", new JsonObject(), ct);
+            }
+        }
     }
     catch (OperationCanceledException)
     {
@@ -154,18 +175,31 @@ app.MapPost("/v1/process/stream", async (HttpContext ctx, PythonEngineClient eng
         return;
     }
 
-    var answer = result["answer"]?.GetValue<string>() ?? "";
-    foreach (var chunk in ChunkAnswer(answer))
+    if (finalEnvelope is null)
     {
-        await WriteSseAsync(ctx.Response, "delta", new JsonObject { ["text"] = chunk }, ct);
+        await WriteSseAsync(ctx.Response, "error", new JsonObject { ["message"] = "No final response from engine." }, ct);
+        return;
     }
+
+    var ok = finalEnvelope["ok"]?.GetValue<bool>() ?? false;
+    if (!ok)
+    {
+        var err = finalEnvelope["error"] as JsonObject;
+        var errType = err?["type"]?.GetValue<string>() ?? "EngineError";
+        var errMsg = err?["message"]?.GetValue<string>() ?? "unknown error";
+        await WriteSseAsync(ctx.Response, "error", new JsonObject { ["message"] = $"{errType}: {errMsg}" }, ct);
+        return;
+    }
+
+    var result = finalEnvelope["result"] as JsonObject;
+    var answer = result?["answer"]?.GetValue<string>() ?? "";
 
     var finalPayload = new JsonObject
     {
-        ["qid"] = result["qid"]?.GetValue<string>() ?? qid,
+        ["qid"] = result?["qid"]?.GetValue<string>() ?? qid,
         ["answer"] = answer,
-        ["session_id"] = result["session_id"]?.GetValue<string>() ?? sessionId,
-        ["metrics"] = result["metrics"]?.DeepClone(),
+        ["session_id"] = result?["session_id"]?.GetValue<string>() ?? sessionId,
+        ["metrics"] = result?["metrics"]?.DeepClone(),
     };
     await WriteSseAsync(ctx.Response, "final", finalPayload, ct);
     await WriteSseAsync(ctx.Response, "done", new JsonObject(), ct);
@@ -213,20 +247,6 @@ static bool ParseBool(string? raw, bool defaultValue)
         "0" or "false" or "no" or "off" => false,
         _ => defaultValue,
     };
-}
-
-static IEnumerable<string> ChunkAnswer(string answer)
-{
-    const int chunkSize = 220;
-    if (string.IsNullOrEmpty(answer))
-    {
-        yield break;
-    }
-
-    for (var i = 0; i < answer.Length; i += chunkSize)
-    {
-        yield return answer.Substring(i, Math.Min(chunkSize, answer.Length - i));
-    }
 }
 
 static async Task WriteSseAsync(HttpResponse response, string @event, JsonObject payload, CancellationToken ct)
