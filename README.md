@@ -309,4 +309,4 @@ python3 sr-dual-brain-llm/scripts/run_server.py
 - **Scaling**: multi-engine pool behind the gateway (process pool / queue) + per-session routing
 
 ## License
-See `LICENSE_NOTICE.txt` for third-party notices and licensing information.
+See `LICENSE.txt` for third-party notices and licensing information.
