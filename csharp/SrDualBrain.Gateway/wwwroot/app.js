@@ -14,7 +14,9 @@ const els = {
   llmProvider: $("llmProvider"),
   llmModel: $("llmModel"),
   llmMaxOutputTokens: $("llmMaxOutputTokens"),
+  executiveMode: $("executiveMode"),
   useStreaming: $("useStreaming"),
+  returnExecutive: $("returnExecutive"),
   returnTelemetry: $("returnTelemetry"),
   returnDialogueFlow: $("returnDialogueFlow"),
   traceInline: $("traceInline"),
@@ -25,6 +27,8 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  activeModules: $("activeModules"),
+  executiveMemo: $("executiveMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
 };
@@ -202,6 +206,7 @@ function renderMetrics(response) {
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
+  const executive = response?.executive ?? dialogueFlow?.executive ?? null;
 
   let combined = null;
   let tension = null;
@@ -243,6 +248,45 @@ function renderMetrics(response) {
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
 
+  const modules = metrics?.modules?.active ?? [];
+  if (els.activeModules) {
+    els.activeModules.innerHTML = "";
+    const limit = 14;
+    const shown = Array.isArray(modules) ? modules.slice(0, limit) : [];
+    for (const name of shown) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = String(name);
+      els.activeModules.appendChild(chip);
+    }
+    const rest = Array.isArray(modules) ? modules.length - shown.length : 0;
+    if (rest > 0) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = `+${rest} more`;
+      els.activeModules.appendChild(chip);
+    }
+    if (!shown.length) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = "modules: —";
+      els.activeModules.appendChild(chip);
+    }
+  }
+
+  if (els.executiveMemo) {
+    if (executive) {
+      const memo = executive?.memo ?? "";
+      const directives = executive?.directives ?? null;
+      const meta = `source=${executive?.source ?? "?"} conf=${executive?.confidence ?? "?"} latency=${Math.round(executive?.latency_ms ?? 0)}ms`;
+      const body = memo ? memo : "";
+      const dir = directives ? `\n\n---\nDirectives:\n${JSON.stringify(directives, null, 2)}` : "";
+      els.executiveMemo.textContent = `${body}\n\n---\n${meta}${dir}`.trim();
+    } else {
+      els.executiveMemo.textContent = "—";
+    }
+  }
+
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
   if (els.dialogueFlowRaw) {
     els.dialogueFlowRaw.textContent = JSON.stringify(dialogueFlow, null, 2);
@@ -254,6 +298,8 @@ function renderMetrics(response) {
 async function buildProcessBody(questionText, { includeTraceInline }) {
   const sessionId = (els.sessionId.value || "default").trim() || "default";
   const leading = (els.leadingBrain.value || "auto").trim() || "auto";
+  const executiveMode = (els.executiveMode?.value || "off").trim() || "off";
+  const wantExecutive = !!els.returnExecutive?.checked;
   const wantTelemetry = !!els.returnTelemetry.checked;
   const wantDialogueFlow = !!els.returnDialogueFlow.checked;
   const traceInline = includeTraceInline && !!els.traceInline?.checked;
@@ -262,6 +308,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     session_id: sessionId,
     question: questionText,
     leading_brain: leading,
+    executive_mode: executiveMode,
     return_telemetry: wantTelemetry && traceInline,
     return_dialogue_flow: wantDialogueFlow && traceInline,
   };
@@ -286,7 +333,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     });
   }
 
-  return { sessionId, wantTelemetry, wantDialogueFlow, traceInline, body, llmSig: currentSig };
+  return { sessionId, wantExecutive, wantTelemetry, wantDialogueFlow, traceInline, body, llmSig: currentSig };
 }
 
 async function callProcess(body) {
@@ -303,11 +350,12 @@ async function callProcess(body) {
   return await res.json();
 }
 
-async function fetchTrace(sessionId, qid, { includeTelemetry, includeDialogueFlow }) {
+async function fetchTrace(sessionId, qid, { includeTelemetry, includeDialogueFlow, includeExecutive }) {
   const qs = new URLSearchParams({
     session_id: sessionId,
     include_telemetry: includeTelemetry ? "true" : "false",
     include_dialogue_flow: includeDialogueFlow ? "true" : "false",
+    include_executive: includeExecutive ? "true" : "false",
   });
   const res = await fetch(`/v1/trace/${encodeURIComponent(qid)}?${qs.toString()}`, { cache: "no-store" });
   if (!res.ok) {
@@ -323,6 +371,7 @@ function mergeTrace(result, trace) {
     ...result,
     telemetry: trace.telemetry ?? result.telemetry,
     dialogue_flow: trace.dialogue_flow ?? result.dialogue_flow,
+    executive: trace.executive ?? result.executive,
   };
 }
 
@@ -440,11 +489,13 @@ async function onSend() {
     placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
     renderMetrics(result);
 
-    if ((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) {
+    const hasExecutiveInline = !!(result?.executive || result?.dialogue_flow?.executive);
+    if (((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) || (req.wantExecutive && !hasExecutiveInline)) {
       try {
         const trace = await fetchTrace(req.sessionId, result.qid, {
           includeTelemetry: req.wantTelemetry,
           includeDialogueFlow: req.wantDialogueFlow,
+          includeExecutive: req.wantExecutive,
         });
         const merged = mergeTrace(result, trace);
         renderMetrics(merged);
@@ -477,6 +528,8 @@ els.btnClear.addEventListener("click", () => {
   els.chatLog.innerHTML = "";
   els.telemetryRaw.textContent = "{}";
   if (els.dialogueFlowRaw) els.dialogueFlowRaw.textContent = "{}";
+  if (els.executiveMemo) els.executiveMemo.textContent = "—";
+  if (els.activeModules) els.activeModules.innerHTML = "";
   els.metricsSubtitle.textContent = "—";
   els.mCoherence.textContent = "—";
   els.mTension.textContent = "—";

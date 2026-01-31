@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import difflib
+import json
 import re
 import time
 import uuid
@@ -14,6 +15,7 @@ from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary, SchemaProfile
 from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
+from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -374,6 +376,7 @@ class DualBrainController:
         memory,
         left_model,
         right_model,
+        executive_model: ExecutiveReasonerModel | None = None,
         policy,
         hypothalamus,
         reasoning_dial,
@@ -395,6 +398,7 @@ class DualBrainController:
         self.memory = memory
         self.left_model = left_model
         self.right_model = right_model
+        self.executive_model = executive_model
         self.policy = policy
         self.hypothalamus = hypothalamus
         self.reasoning_dial = reasoning_dial
@@ -998,6 +1002,7 @@ class DualBrainController:
         answer_mode: str = "plain",
         on_delta: Optional[Callable[[str], Any]] = None,
         on_reset: Optional[Callable[[], Any]] = None,
+        executive_mode: str = "off",
     ) -> str:
         mode = str(answer_mode or "plain").strip().lower()
         emit_debug_sections = mode in {"debug", "annotated", "meta"}
@@ -1063,6 +1068,23 @@ class DualBrainController:
             len(self.hippocampus.episodes) if self.hippocampus is not None else 0
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
+        executive_mode_norm = str(executive_mode or "off").strip().lower()
+        if executive_mode_norm not in {"off", "observe", "polish"}:
+            executive_mode_norm = "observe"
+        executive_task: asyncio.Task[ExecutiveAdvice] | None = None
+        executive_payload: Dict[str, Any] | None = None
+        executive_directives: Dict[str, Any] | None = None
+        if self.executive_model is not None and executive_mode_norm != "off":
+            try:
+                executive_task = asyncio.create_task(
+                    self.executive_model.advise(
+                        question=question,
+                        context=context,
+                        focus_keywords=focus_keywords,
+                    )
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                executive_task = None
         inner_steps: List[InnerDialogueStep] = []
         right_lead_notes: Optional[str] = None
         streamed_initial = False
@@ -1500,30 +1522,69 @@ class DualBrainController:
                 if detail_notes and _detail_notes_redundant(draft, detail_notes):
                     integrated_detail = None
 
+                if executive_task is not None:
+                    timeout_ms = max(1500, min(9000, decision.slot_ms * 12))
+                    if executive_mode_norm == "observe":
+                        timeout_ms = max(1200, min(4500, decision.slot_ms * 8))
+                    try:
+                        advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
+                    except asyncio.TimeoutError:
+                        advice = None
+                    except Exception:  # pragma: no cover - defensive guard
+                        advice = None
+                    if advice is not None:
+                        executive_payload = advice.to_payload()
+                        directives = advice.directives
+                        if isinstance(directives, dict):
+                            executive_directives = dict(directives)
+                        self.telemetry.log(
+                            "executive_reasoner",
+                            qid=decision.qid,
+                            confidence=float(advice.confidence),
+                            latency_ms=float(advice.latency_ms),
+                            source=str(advice.source),
+                        )
+
+                integration_parts: List[str] = []
+                has_right_material = False
                 if integrated_detail:
-                    if on_delta and on_reset:
-                        maybe = on_reset()
-                        if asyncio.iscoroutine(maybe):
-                            await maybe
-                    final_answer = await self.left_model.integrate_info_async(
-                        question=question,
-                        draft=draft,
-                        info=integrated_detail,
-                        temperature=max(0.2, min(0.6, decision.temperature)),
-                        on_delta=on_delta,
-                    )
+                    integration_parts.append(str(integrated_detail))
+                    has_right_material = True
                 elif right_lead_notes and not detail_notes:
-                    if on_delta and on_reset:
-                        maybe = on_reset()
-                        if asyncio.iscoroutine(maybe):
-                            await maybe
-                    final_answer = await self.left_model.integrate_info_async(
-                        question=question,
-                        draft=draft,
-                        info=right_lead_notes,
-                        temperature=max(0.2, min(0.6, decision.temperature)),
-                        on_delta=on_delta,
+                    integration_parts.append(str(right_lead_notes))
+                    has_right_material = True
+
+                can_polish = (
+                    executive_mode_norm == "polish"
+                    and bool(executive_directives)
+                    and getattr(self.left_model, "uses_external_llm", False)
+                )
+                if can_polish:
+                    if executive_payload and float(executive_payload.get("confidence") or 0.0) < 0.35:
+                        can_polish = False
+
+                if executive_directives and getattr(self.left_model, "uses_external_llm", False):
+                    try:
+                        directives_json = json.dumps(executive_directives, ensure_ascii=False)
+                    except Exception:
+                        directives_json = str(executive_directives)
+                    integration_parts.append(
+                        "Executive directives (do not output directly):\n" + directives_json
                     )
+
+                if has_right_material or can_polish:
+                    if integration_parts:
+                        if on_delta and on_reset:
+                            maybe = on_reset()
+                            if asyncio.iscoroutine(maybe):
+                                await maybe
+                        final_answer = await self.left_model.integrate_info_async(
+                            question=question,
+                            draft=draft,
+                            info="\n\n".join(integration_parts),
+                            temperature=max(0.2, min(0.6, decision.temperature)),
+                            on_delta=on_delta,
+                        )
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
                 if self.coherence_resonator is not None:
@@ -1579,6 +1640,33 @@ class DualBrainController:
         finally:
             latency_ms = (time.perf_counter() - start) * 1000.0
             self.orchestrator.clear(decision.qid)
+
+        if executive_payload is None and executive_task is not None:
+            advice: ExecutiveAdvice | None = None
+            if executive_task.done():
+                try:
+                    advice = executive_task.result()
+                except Exception:  # pragma: no cover - defensive guard
+                    advice = None
+            else:
+                tail_timeout = 6.0 if executive_mode_norm == "polish" else 2.0
+                try:
+                    advice = await asyncio.wait_for(executive_task, timeout=tail_timeout)
+                except Exception:
+                    advice = None
+
+            if advice is not None:
+                executive_payload = advice.to_payload()
+                directives = advice.directives
+                if isinstance(directives, dict):
+                    executive_directives = dict(directives)
+                self.telemetry.log(
+                    "executive_reasoner",
+                    qid=decision.qid,
+                    confidence=float(advice.confidence),
+                    latency_ms=float(advice.latency_ms),
+                    source=str(advice.source),
+                )
 
         integrated_answer = final_answer
         user_answer = integrated_answer
@@ -2088,6 +2176,7 @@ class DualBrainController:
             leading_brain=leading,
             follow_brain=follow_brain,
             preview=_truncate_text(right_lead_notes or detail_notes),
+            executive=executive_payload,
             steps=steps_payload,
             architecture=architecture_path,
         )

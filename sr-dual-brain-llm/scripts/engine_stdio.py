@@ -31,6 +31,7 @@ from core.auditor import Auditor
 from core.callosum import Callosum
 from core.default_mode_network import DefaultModeNetwork
 from core.dual_brain import DualBrainController
+from core.executive_reasoner import ExecutiveReasonerModel
 from core.hypothalamus import Hypothalamus
 from core.llm_client import LLMConfig
 from core.models import LeftBrainModel, RightBrainModel
@@ -68,8 +69,25 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     policy_ev = _last_event(events, "policy_decision") or {}
     lead_ev = _last_event(events, "leading_brain") or {}
     complete_ev = _last_event(events, "interaction_complete") or {}
+    arch_ev = _last_event(events, "architecture_path") or {}
+    exec_ev = _last_event(events, "executive_reasoner") or {}
 
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
+
+    active_modules: list[str] = []
+    path = arch_ev.get("path") if isinstance(arch_ev, dict) else None
+    if isinstance(path, list):
+        mods = set()
+        for stage in path:
+            if not isinstance(stage, dict):
+                continue
+            modules = stage.get("modules")
+            if not isinstance(modules, list):
+                continue
+            for item in modules:
+                if item:
+                    mods.add(str(item))
+        active_modules = sorted(mods)
 
     metrics: dict[str, Any] = {
         "coherence": {
@@ -85,6 +103,15 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         "leading": lead_ev.get("leading"),
         "latency_ms": complete_ev.get("latency_ms"),
         "reward": complete_ev.get("reward"),
+        "modules": {
+            "active": active_modules,
+            "count": len(active_modules),
+        },
+        "executive": {
+            "confidence": exec_ev.get("confidence"),
+            "latency_ms": exec_ev.get("latency_ms"),
+            "source": exec_ev.get("source"),
+        },
         "telemetry_events": len(events or []),
     }
     return metrics
@@ -156,6 +183,7 @@ class EngineSession:
     callosum: Callosum
     left: LeftBrainModel
     right: RightBrainModel
+    executive: ExecutiveReasonerModel
     policy: RightBrainPolicy
     orchestrator: Orchestrator
     auditor: Auditor
@@ -179,6 +207,7 @@ class EngineSession:
         *,
         metrics: Dict[str, Any],
         dialogue_flow: Any,
+        executive: Any,
         telemetry: list[dict[str, Any]],
     ) -> None:
         self.trace_cache[qid] = {
@@ -186,6 +215,7 @@ class EngineSession:
             "session_id": self.session_id,
             "metrics": metrics,
             "dialogue_flow": dialogue_flow,
+            "executive": executive,
             "telemetry": telemetry,
             "ts": time.time(),
         }
@@ -201,6 +231,7 @@ class EngineSession:
         state_store: Any | None = None,
         left_llm_config: Optional[LLMConfig] = None,
         right_llm_config: Optional[LLMConfig] = None,
+        executive_llm_config: Optional[LLMConfig] = None,
     ) -> "EngineSession":
         memory = SharedMemory()
         hippocampus = TemporalHippocampalIndexing()
@@ -224,6 +255,7 @@ class EngineSession:
         callosum = Callosum()
         left = LeftBrainModel(llm_config=left_llm_config)
         right = RightBrainModel(llm_config=right_llm_config)
+        executive = ExecutiveReasonerModel(llm_config=executive_llm_config)
         policy = RightBrainPolicy()
         orchestrator = Orchestrator(2)
         auditor = Auditor()
@@ -246,6 +278,7 @@ class EngineSession:
             memory=memory,
             left_model=left,
             right_model=right,
+            executive_model=executive,
             policy=policy,
             hypothalamus=hypothalamus,
             reasoning_dial=dial,
@@ -270,6 +303,7 @@ class EngineSession:
             callosum=callosum,
             left=left,
             right=right,
+            executive=executive,
             policy=policy,
             orchestrator=orchestrator,
             auditor=auditor,
@@ -313,6 +347,10 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
     if answer_mode not in {"plain", "debug", "annotated", "meta"}:
         raise ValueError("answer_mode must be one of: plain, debug, annotated, meta")
 
+    executive_mode = str(params.get("executive_mode", "off") or "off").strip().lower()
+    if executive_mode not in {"off", "observe", "polish"}:
+        raise ValueError("executive_mode must be one of: off, observe, polish")
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
 
@@ -325,6 +363,7 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
         leading_brain=leading_brain,
         qid=qid,
         answer_mode=answer_mode,
+        executive_mode=executive_mode,
     )
     after_memory = len(session.memory.past_qas)
     after_episodes = len(session.hippocampus.episodes)
@@ -356,10 +395,14 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
     telemetry_events = list(session.telemetry.events)
     metrics = result["metrics"]
     dialogue_flow = session.memory.dialogue_flow(qid)
+    executive = None
+    if isinstance(dialogue_flow, dict):
+        executive = dialogue_flow.get("executive")
     session.remember_trace(
         qid,
         metrics=metrics,
         dialogue_flow=dialogue_flow,
+        executive=executive,
         telemetry=telemetry_events,
     )
 
@@ -393,6 +436,10 @@ async def _handle_process_stream(
     if answer_mode not in {"plain", "debug", "annotated", "meta"}:
         raise ValueError("answer_mode must be one of: plain, debug, annotated, meta")
 
+    executive_mode = str(params.get("executive_mode", "off") or "off").strip().lower()
+    if executive_mode not in {"off", "observe", "polish"}:
+        raise ValueError("executive_mode must be one of: off, observe, polish")
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
 
@@ -415,6 +462,7 @@ async def _handle_process_stream(
         answer_mode=answer_mode,
         on_delta=on_delta,
         on_reset=on_reset,
+        executive_mode=executive_mode,
     )
 
     after_memory = len(session.memory.past_qas)
@@ -447,10 +495,14 @@ async def _handle_process_stream(
     telemetry_events = list(session.telemetry.events)
     metrics = result["metrics"]
     dialogue_flow = session.memory.dialogue_flow(qid)
+    executive = None
+    if isinstance(dialogue_flow, dict):
+        executive = dialogue_flow.get("executive")
     session.remember_trace(
         qid,
         metrics=metrics,
         dialogue_flow=dialogue_flow,
+        executive=executive,
         telemetry=telemetry_events,
     )
 
@@ -472,6 +524,7 @@ async def _handle_get_trace(
 
     include_telemetry = bool(params.get("include_telemetry", True))
     include_dialogue_flow = bool(params.get("include_dialogue_flow", True))
+    include_executive = bool(params.get("include_executive", True))
 
     session = sessions.get(session_id)
     if session is None:
@@ -492,6 +545,8 @@ async def _handle_get_trace(
         result["dialogue_flow"] = cached.get("dialogue_flow")
     if include_telemetry:
         result["telemetry"] = cached.get("telemetry") or []
+    if include_executive:
+        result["executive"] = cached.get("executive")
     return result
 
 
@@ -702,10 +757,12 @@ def _build_llm_config(provider: str, model: str, params: Dict[str, Any], *, scop
     )
 
 
-def _maybe_extract_llm_configs(params: Dict[str, Any]) -> tuple[Optional[LLMConfig], Optional[LLMConfig]]:
+def _maybe_extract_llm_configs(
+    params: Dict[str, Any],
+) -> tuple[Optional[LLMConfig], Optional[LLMConfig], Optional[LLMConfig]]:
     llm = params.get("llm")
     if llm is None:
-        return None, None
+        return None, None, None
     if not isinstance(llm, dict):
         raise ValueError("llm must be an object")
 
@@ -716,10 +773,12 @@ def _maybe_extract_llm_configs(params: Dict[str, Any]) -> tuple[Optional[LLMConf
 
     left_model = llm.get("left_model") or model
     right_model = llm.get("right_model") or model
+    executive_model = llm.get("executive_model") or llm.get("reasoner_model") or model
 
     left_cfg = _build_llm_config(str(provider), str(left_model), params, scope="LEFT_BRAIN")
     right_cfg = _build_llm_config(str(provider), str(right_model), params, scope="RIGHT_BRAIN")
-    return left_cfg, right_cfg
+    exec_cfg = _build_llm_config(str(provider), str(executive_model), params, scope="EXECUTIVE")
+    return left_cfg, right_cfg, exec_cfg
 
 
 def _llm_identity(config: Optional[LLMConfig]) -> tuple[Optional[str], Optional[str]]:
@@ -798,7 +857,7 @@ async def main() -> None:
             try:
                 if method == "process":
                     session_id = str(params.get("session_id", "default") or "default")
-                    left_cfg, right_cfg = _maybe_extract_llm_configs(params)
+                    left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
                     session = sessions.get(session_id)
                     if session is None:
                         session = await EngineSession.create(
@@ -806,14 +865,20 @@ async def main() -> None:
                             state_store=state_store,
                             left_llm_config=left_cfg,
                             right_llm_config=right_cfg,
+                            executive_llm_config=exec_cfg,
                         )
                         sessions[session_id] = session
                     else:
-                        if left_cfg is not None or right_cfg is not None:
-                            requested = (_llm_identity(left_cfg), _llm_identity(right_cfg))
+                        if left_cfg is not None or right_cfg is not None or exec_cfg is not None:
+                            requested = (
+                                _llm_identity(left_cfg),
+                                _llm_identity(right_cfg),
+                                _llm_identity(exec_cfg),
+                            )
                             current = (
                                 _llm_identity(session.left.llm_config),
                                 _llm_identity(session.right.llm_config),
+                                _llm_identity(session.executive.llm_config),
                             )
                             if requested != current:
                                 raise ValueError(
@@ -823,7 +888,7 @@ async def main() -> None:
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "process_stream":
                     session_id = str(params.get("session_id", "default") or "default")
-                    left_cfg, right_cfg = _maybe_extract_llm_configs(params)
+                    left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
                     session = sessions.get(session_id)
                     if session is None:
                         session = await EngineSession.create(
@@ -831,14 +896,20 @@ async def main() -> None:
                             state_store=state_store,
                             left_llm_config=left_cfg,
                             right_llm_config=right_cfg,
+                            executive_llm_config=exec_cfg,
                         )
                         sessions[session_id] = session
                     else:
-                        if left_cfg is not None or right_cfg is not None:
-                            requested = (_llm_identity(left_cfg), _llm_identity(right_cfg))
+                        if left_cfg is not None or right_cfg is not None or exec_cfg is not None:
+                            requested = (
+                                _llm_identity(left_cfg),
+                                _llm_identity(right_cfg),
+                                _llm_identity(exec_cfg),
+                            )
                             current = (
                                 _llm_identity(session.left.llm_config),
                                 _llm_identity(session.right.llm_config),
+                                _llm_identity(session.executive.llm_config),
                             )
                             if requested != current:
                                 raise ValueError(

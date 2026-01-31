@@ -8,6 +8,8 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  activeModules: $("activeModules"),
+  executiveMemo: $("executiveMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
   btnDock: $("btnDock"),
@@ -23,6 +25,7 @@ function renderMetrics(response) {
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
+  const executive = response?.executive ?? dialogueFlow?.executive ?? null;
 
   const combined = metrics?.coherence?.combined ?? null;
   const tension = metrics?.coherence?.tension ?? null;
@@ -37,6 +40,45 @@ function renderMetrics(response) {
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(Number(latency))}ms`;
+
+  const modules = metrics?.modules?.active ?? [];
+  if (els.activeModules) {
+    els.activeModules.innerHTML = "";
+    const limit = 18;
+    const shown = Array.isArray(modules) ? modules.slice(0, limit) : [];
+    for (const name of shown) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = String(name);
+      els.activeModules.appendChild(chip);
+    }
+    const rest = Array.isArray(modules) ? modules.length - shown.length : 0;
+    if (rest > 0) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = `+${rest} more`;
+      els.activeModules.appendChild(chip);
+    }
+    if (!shown.length) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = "modules: —";
+      els.activeModules.appendChild(chip);
+    }
+  }
+
+  if (els.executiveMemo) {
+    if (executive) {
+      const memo = executive?.memo ?? "";
+      const directives = executive?.directives ?? null;
+      const meta = `source=${executive?.source ?? "?"} conf=${executive?.confidence ?? "?"} latency=${Math.round(executive?.latency_ms ?? 0)}ms`;
+      const body = memo ? memo : "";
+      const dir = directives ? `\n\n---\nDirectives:\n${JSON.stringify(directives, null, 2)}` : "";
+      els.executiveMemo.textContent = `${body}\n\n---\n${meta}${dir}`.trim();
+    } else {
+      els.executiveMemo.textContent = "—";
+    }
+  }
 
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
   if (els.dialogueFlowRaw) {

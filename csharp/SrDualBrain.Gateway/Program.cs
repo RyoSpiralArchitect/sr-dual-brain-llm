@@ -106,6 +106,7 @@ app.MapGet("/v1/trace/{qid}", async (PythonEngineClient engine, HttpRequest requ
 
     var includeTelemetry = ParseBool(request.Query["include_telemetry"], defaultValue: true);
     var includeDialogueFlow = ParseBool(request.Query["include_dialogue_flow"], defaultValue: true);
+    var includeExecutive = ParseBool(request.Query["include_executive"], defaultValue: true);
 
     var result = await engine.CallAsync(
         "get_trace",
@@ -115,6 +116,7 @@ app.MapGet("/v1/trace/{qid}", async (PythonEngineClient engine, HttpRequest requ
             ["qid"] = qid,
             ["include_telemetry"] = includeTelemetry,
             ["include_dialogue_flow"] = includeDialogueFlow,
+            ["include_executive"] = includeExecutive,
         },
         ct);
 

@@ -91,6 +91,7 @@ Query params:
 - `session_id` (default: `"default"`)
 - `include_telemetry` (default: `true`)
 - `include_dialogue_flow` (default: `true`)
+- `include_executive` (default: `true`): include the executive reasoner memo/directives (if available)
 
 ### `POST /v1/reset`
 Resets a session inside the Python engine.
@@ -108,13 +109,17 @@ Request fields:
 - `session_id` (string, default: `"default"`)
 - `leading_brain` (`"auto"|"left"|"right"`, default: `"auto"`)
 - `answer_mode` (`"plain"|"debug"|"annotated"|"meta"`, default: `"plain"`)
+- `executive_mode` (`"off"|"observe"|"polish"`, default: `"off"`)
+  - `off`: no executive reasoner run
+  - `observe`: run executive reasoner and store memo (out-of-band)
+  - `polish`: executive directives may trigger a second-pass integration (stream reset)
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
 - `qid` (string, optional): supply your own ID for dataset runs / trace correlation
 - `llm` (object, optional): select provider/model for the *session* (keys still come from env)
   - `provider` (string, required if `llm` provided): `openai|google|anthropic|mistral|xai|huggingface`
   - `model` (string, required if `llm` provided)
-  - `left_model` / `right_model` (string, optional): per-hemisphere model override
+  - `left_model` / `right_model` / `executive_model` (string, optional): per-role model override
   - Optional request-time knobs (no secrets): `api_base`, `organization`, `max_output_tokens`, `timeout_seconds`, `auto_continue`, `max_continuations`
 
 Response fields:
@@ -128,7 +133,7 @@ Response fields:
 ### `POST /v1/process/stream` (SSE)
 Streams the answer via Server-Sent Events (SSE).
 
-When using an OpenAI-style provider (`openai`, `mistral`, `xai`), `delta` events are emitted from the provider's true token stream (not "chunk the final answer"). The engine may emit a `reset` event if it decides to replace an initial draft with an integrated final answer.
+When using an OpenAI-style provider (`openai`, `mistral`, `xai`), `delta` events are emitted from the provider's true token stream (not "chunk the final answer"). The engine may emit a `reset` event if it replaces an initial draft with an integrated final answer (e.g., after right-brain consultation or `executive_mode=polish`).
 
 SSE events:
 - `start`: `{ qid, session_id }`

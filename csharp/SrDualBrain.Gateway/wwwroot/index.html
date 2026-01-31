@@ -85,12 +85,25 @@
               <span class="field__label">Max output tokens (optional)</span>
               <input id="llmMaxOutputTokens" type="number" min="64" step="1" placeholder="1024" />
             </label>
+
+            <label class="field">
+              <span class="field__label">Executive mode</span>
+              <select id="executiveMode">
+                <option value="off">off</option>
+                <option value="observe" selected>observe (memo only)</option>
+                <option value="polish">polish (may reset stream)</option>
+              </select>
+            </label>
           </div>
 
           <div class="checks">
             <label class="check">
               <input id="useStreaming" type="checkbox" checked />
               <span>Stream answer (SSE)</span>
+            </label>
+            <label class="check">
+              <input id="returnExecutive" type="checkbox" checked />
+              <span>Return executive memo (out-of-band)</span>
             </label>
             <label class="check">
               <input id="returnTelemetry" type="checkbox" />
@@ -142,6 +155,13 @@
               <div class="metric__v" id="mLatency">—</div>
             </div>
           </div>
+
+          <div class="chips" id="activeModules"></div>
+
+          <details class="details">
+            <summary>Executive memo</summary>
+            <pre class="json" id="executiveMemo">—</pre>
+          </details>
 
           <details class="details">
             <summary>Telemetry (raw)</summary>
