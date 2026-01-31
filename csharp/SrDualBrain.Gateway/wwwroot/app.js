@@ -121,20 +121,40 @@ function renderMetrics(response) {
   els.metricsSubtitle.textContent = qid ? `qid ${qid}` : "—";
 
   const telemetry = response?.telemetry ?? [];
-  const coherenceEv = lastEvent(telemetry, "coherence_signal");
-  const policyEv = lastEvent(telemetry, "policy_decision");
-  const leadEv = lastEvent(telemetry, "leading_brain");
-  const completeEv = lastEvent(telemetry, "interaction_complete");
+  const metrics = response?.metrics ?? null;
 
-  const signal = coherenceEv?.signal ?? null;
-  const combined = signal?.combined;
-  const tension = signal?.tension;
-  const routing = signal?.mode;
+  let combined = null;
+  let tension = null;
+  let routing = null;
+  let action = null;
+  let temp = null;
+  let leading = null;
+  let latency = null;
 
-  const action = policyEv?.action;
-  const temp = policyEv?.temperature;
-  const leading = leadEv?.leading;
-  const latency = completeEv?.latency_ms;
+  if (metrics) {
+    combined = metrics?.coherence?.combined ?? null;
+    tension = metrics?.coherence?.tension ?? null;
+    routing = metrics?.coherence?.mode ?? null;
+    action = metrics?.policy?.action ?? null;
+    temp = metrics?.policy?.temperature ?? null;
+    leading = metrics?.leading ?? null;
+    latency = metrics?.latency_ms ?? null;
+  } else {
+    const coherenceEv = lastEvent(telemetry, "coherence_signal");
+    const policyEv = lastEvent(telemetry, "policy_decision");
+    const leadEv = lastEvent(telemetry, "leading_brain");
+    const completeEv = lastEvent(telemetry, "interaction_complete");
+
+    const signal = coherenceEv?.signal ?? null;
+    combined = signal?.combined ?? null;
+    tension = signal?.tension ?? null;
+    routing = signal?.mode ?? null;
+
+    action = policyEv?.action ?? null;
+    temp = policyEv?.temperature ?? null;
+    leading = leadEv?.leading ?? null;
+    latency = completeEv?.latency_ms ?? null;
+  }
 
   els.mCoherence.textContent = combined == null ? "—" : combined.toFixed(3);
   els.mTension.textContent = tension == null ? "—" : tension.toFixed(3);
@@ -206,7 +226,8 @@ async function onSend() {
   try {
     const result = await callProcess(text);
     placeholder.querySelector(".bubble__content").textContent = result.answer || "(no answer)";
-    placeholder.querySelector(".bubble__meta > div:last-child").textContent = result.qid ? `qid ${result.qid}` : "";
+    // Keep chat bubbles clean; qid/metrics are shown in the side panel.
+    placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
     renderMetrics(result);
   } catch (err) {
     placeholder.querySelector(".bubble__content").textContent = String(err);

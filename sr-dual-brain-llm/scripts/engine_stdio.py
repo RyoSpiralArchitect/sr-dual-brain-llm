@@ -55,6 +55,40 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
+def _last_event(events: list[dict[str, Any]], name: str) -> Optional[dict[str, Any]]:
+    for ev in reversed(events or []):
+        if ev.get("event") == name:
+            return ev
+    return None
+
+
+def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
+    coherence_ev = _last_event(events, "coherence_signal") or {}
+    policy_ev = _last_event(events, "policy_decision") or {}
+    lead_ev = _last_event(events, "leading_brain") or {}
+    complete_ev = _last_event(events, "interaction_complete") or {}
+
+    signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
+
+    metrics: dict[str, Any] = {
+        "coherence": {
+            "combined": signal.get("combined"),
+            "tension": signal.get("tension"),
+            "mode": signal.get("mode"),
+        },
+        "policy": {
+            "action": policy_ev.get("action"),
+            "temperature": policy_ev.get("temperature"),
+            "slot_ms": policy_ev.get("slot_ms"),
+        },
+        "leading": lead_ev.get("leading"),
+        "latency_ms": complete_ev.get("latency_ms"),
+        "reward": complete_ev.get("reward"),
+        "telemetry_events": len(events or []),
+    }
+    return metrics
+
+
 class InMemoryTelemetry:
     def __init__(self) -> None:
         self.events: list[dict[str, Any]] = []
@@ -290,6 +324,7 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
         "qid": qid,
         "answer": answer,
         "session_id": session.session_id,
+        "metrics": _extract_metrics(list(session.telemetry.events)),
     }
     if return_dialogue_flow:
         result["dialogue_flow"] = session.memory.dialogue_flow(qid)

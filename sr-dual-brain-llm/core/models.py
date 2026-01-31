@@ -27,6 +27,12 @@ _SYSTEM_GUARDRAILS = (
     "Do not add bracketed debug headings or meta commentary about the system."
 )
 
+_RIGHT_DEEPEN_GUARDRAILS = (
+    "When given a draft, provide complementary additions only.\n"
+    "Do not restate or paraphrase the draft.\n"
+    "Prefer 2-5 concise bullet points of what to add / clarify, or a short suggested follow-up question."
+)
+
 
 class LeftBrainModel:
     def __init__(self, llm_config: Optional[LLMConfig] = None):
@@ -113,6 +119,7 @@ class RightBrainModel:
         if self._llm_client:
             system_parts = []
             system_parts.append(_SYSTEM_GUARDRAILS)
+            system_parts.append(_RIGHT_DEEPEN_GUARDRAILS)
             if context:
                 system_parts.append(f"Context:\n{context}")
             if psychoid_projection:
@@ -120,7 +127,12 @@ class RightBrainModel:
             system = "\n\n".join(system_parts) if system_parts else None
             try:
                 completion = await self._llm_client.complete(
-                    f"{question}\n\nDraft summary:\n{partial_answer}",
+                    (
+                        f"{question}\n\n"
+                        "Draft (for reference only):\n"
+                        f"{partial_answer}\n\n"
+                        "Return only additive notes (no rephrasing)."
+                    ),
                     system=system,
                     temperature=temperature,
                 )

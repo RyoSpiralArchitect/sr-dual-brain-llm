@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import difflib
 import re
 import time
 import uuid
@@ -126,6 +127,27 @@ def _truncate_text(text: Optional[str], limit: int = 160) -> str:
     if len(condensed) <= limit:
         return condensed
     return condensed[: max(0, limit - 3)] + "..."
+
+
+def _normalise_similarity_text(text: str) -> str:
+    return re.sub(r"\s+", "", str(text or "")).strip().lower()
+
+
+def _similarity_ratio(a: str, b: str) -> float:
+    na = _normalise_similarity_text(a)
+    nb = _normalise_similarity_text(b)
+    if not na or not nb:
+        return 0.0
+    return difflib.SequenceMatcher(None, na, nb).ratio()
+
+
+def _detail_notes_redundant(draft: str, detail_notes: str) -> bool:
+    ratio = _similarity_ratio(draft, detail_notes)
+    if ratio < 0.62:
+        return False
+    if len(detail_notes) > len(draft) * 2.2:
+        return False
+    return True
 
 
 def _format_modules(modules: Sequence[str] | None) -> str:
@@ -1444,9 +1466,13 @@ class DualBrainController:
                     decision.state["right_conf"] = call_confidence
                     success = True
 
-                if detail_notes:
-                    final_answer = self.left_model.integrate_info(draft, detail_notes)
-                elif right_lead_notes:
+                integrated_detail = detail_notes
+                if detail_notes and _detail_notes_redundant(draft, detail_notes):
+                    integrated_detail = None
+
+                if integrated_detail:
+                    final_answer = self.left_model.integrate_info(draft, integrated_detail)
+                elif right_lead_notes and not detail_notes:
                     final_answer = self.left_model.integrate_info(draft, right_lead_notes)
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source

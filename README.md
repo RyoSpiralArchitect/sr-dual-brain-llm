@@ -110,6 +110,7 @@ Response fields:
 - `qid` (string)
 - `answer` (string)
 - `session_id` (string)
+- `metrics` (object): lightweight summary (coherence/policy/latency) for UI dashboards
 - `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
 - `telemetry` (array, optional): structured per-module events emitted during the turn
 
