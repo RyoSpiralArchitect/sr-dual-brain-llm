@@ -142,14 +142,149 @@ def _similarity_ratio(a: str, b: str) -> float:
         return 0.0
     return difflib.SequenceMatcher(None, na, nb).ratio()
 
+def _looks_like_coaching_notes(question: str, text: str) -> bool:
+    """Detect "writing coach" style content that should not leak into user replies.
+
+    We only suppress these patterns when the user is *not* asking for writing feedback.
+    """
+
+    q = str(question or "").strip().lower()
+    # If the user explicitly requests wording advice / proofreading, allow coaching.
+    allow_markers = (
+        "rewrite",
+        "rephrase",
+        "proofread",
+        "improve this",
+        "make it sound",
+        "添削",
+        "言い換え",
+        "言い方",
+        "表現",
+        "文章",
+        "文面",
+        "返事",
+    )
+    if any(marker in q for marker in allow_markers):
+        return False
+
+    t = str(text or "").strip()
+    if not t:
+        return False
+
+    lower = t.lower()
+    coaching_markers = (
+        "add a ",
+        "add an ",
+        "consider ",
+        "if the user",
+        "you should",
+        "try to",
+        "make sure to",
+        "time of day",
+        "もう少し",
+        "〜したほうが",
+        "したほうが",
+        "した方が",
+        "時間帯",
+        "推測",
+        "遊び心",
+    )
+    if any(marker in lower for marker in coaching_markers):
+        return True
+
+    for line in t.splitlines():
+        line_norm = line.strip().lower()
+        if not line_norm:
+            continue
+        if line_norm.startswith(("- add ", "- consider ", "add ", "consider ")):
+            return True
+        if line_norm.startswith(("- 「", "-『", "- \"", "- '")) and ("例" in line_norm or "もう少し" in line_norm):
+            return True
+    return False
+
+def _looks_like_internal_debug_line(line: str) -> bool:
+    if not line:
+        return False
+    raw = line.strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if lower.startswith("qid "):
+        return True
+    if lower.startswith("architecture path") or lower.startswith("[architecture path"):
+        return True
+    if lower.startswith("telemetry (raw)") or lower.startswith("[telemetry"):
+        return True
+    if lower.startswith("[") and any(
+        token in lower
+        for token in (
+            "left brain",
+            "right brain",
+            "coherence",
+            "unconscious",
+            "linguistic",
+            "cognitive",
+            "psychoid",
+            "hemisphere",
+            "collaboration",
+            "architecture",
+        )
+    ):
+        return True
+    if "brain timeout" in lower and "draft" in lower:
+        return True
+    return False
+
+
+def _looks_like_writing_coach_line(line: str) -> bool:
+    raw = line.strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+
+    # English coach patterns (avoid blocking normal "consider X" advice).
+    if "if the user" in lower:
+        return True
+    if lower.startswith(("- add a ", "- add an ", "add a ", "add an ")):
+        return True
+    if lower.startswith(("consider noting the time", "- consider noting the time")):
+        return True
+
+    # Japanese coach patterns observed in the wild.
+    if raw.startswith("-") and ("もう少し" in raw or "時間帯" in raw or "推測" in raw or "例：" in raw):
+        return True
+    return False
+
+
+def _sanitize_user_answer(answer: str) -> str:
+    if not answer:
+        return ""
+    lines: List[str] = []
+    for line in str(answer).splitlines():
+        if _looks_like_internal_debug_line(line) or _looks_like_writing_coach_line(line):
+            continue
+        lines.append(line)
+    cleaned = "\n".join(lines).strip()
+    return cleaned or str(answer).strip()
+
 
 def _detail_notes_redundant(draft: str, detail_notes: str) -> bool:
+    if not draft or not detail_notes:
+        return False
+
+    # If right-brain notes come as a bullet list, treat as additive by default.
+    if re.search(r"(^|\n)\s*[-•*]\s+\S", detail_notes):
+        return False
+
     ratio = _similarity_ratio(draft, detail_notes)
-    if ratio < 0.62:
-        return False
-    if len(detail_notes) > len(draft) * 2.2:
-        return False
-    return True
+    if ratio >= 0.62:
+        return len(detail_notes) <= len(draft) * 2.2
+
+    # Conversational paraphrases can be less similar yet still redundant.
+    if ratio >= 0.55 and len(detail_notes) <= len(draft) * 1.6:
+        return True
+
+    return False
 
 
 def _format_modules(modules: Sequence[str] | None) -> str:
@@ -1401,6 +1536,10 @@ class DualBrainController:
                     retained = "right_preview"
                     final_answer = right_lead_notes
                     response_source = "lead"
+                    if _looks_like_coaching_notes(question, final_answer):
+                        retained = "left_draft"
+                        final_answer = draft
+                        response_source = "left_only"
                 inner_steps.append(
                     InnerDialogueStep(
                         phase="consult_skipped",
@@ -1413,6 +1552,54 @@ class DualBrainController:
                         metadata={"reason": f"policy_action_0_{retained}"},
                     )
                 )
+                if executive_task is not None:
+                    timeout_ms = max(1500, min(9000, decision.slot_ms * 12))
+                    if executive_mode_norm == "observe":
+                        timeout_ms = max(1200, min(4500, decision.slot_ms * 8))
+                    try:
+                        advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
+                    except asyncio.TimeoutError:
+                        advice = None
+                    except Exception:  # pragma: no cover - defensive guard
+                        advice = None
+                    if advice is not None:
+                        executive_payload = advice.to_payload()
+                        directives = advice.directives
+                        if isinstance(directives, dict):
+                            executive_directives = dict(directives)
+                        self.telemetry.log(
+                            "executive_reasoner",
+                            qid=decision.qid,
+                            confidence=float(advice.confidence),
+                            latency_ms=float(advice.latency_ms),
+                            source=str(advice.source),
+                        )
+
+                can_polish = (
+                    executive_mode_norm == "polish"
+                    and bool(executive_directives)
+                    and getattr(self.left_model, "uses_external_llm", False)
+                )
+                if can_polish:
+                    if executive_payload and float(executive_payload.get("confidence") or 0.0) < 0.35:
+                        can_polish = False
+
+                if can_polish and executive_directives:
+                    try:
+                        directives_json = json.dumps(executive_directives, ensure_ascii=False)
+                    except Exception:
+                        directives_json = str(executive_directives)
+                    if on_delta and on_reset:
+                        maybe = on_reset()
+                        if asyncio.iscoroutine(maybe):
+                            await maybe
+                    final_answer = await self.left_model.integrate_info_async(
+                        question=question,
+                        draft=final_answer,
+                        info="Executive directives (do not output directly):\n" + directives_json,
+                        temperature=max(0.2, min(0.6, decision.temperature)),
+                        on_delta=on_delta,
+                    )
                 success = True
             else:
                 payload = {
@@ -1521,6 +1708,8 @@ class DualBrainController:
                 integrated_detail = detail_notes
                 if detail_notes and _detail_notes_redundant(draft, detail_notes):
                     integrated_detail = None
+                if integrated_detail and _looks_like_coaching_notes(question, integrated_detail):
+                    integrated_detail = None
 
                 if executive_task is not None:
                     timeout_ms = max(1500, min(9000, decision.slot_ms * 12))
@@ -1551,8 +1740,9 @@ class DualBrainController:
                     integration_parts.append(str(integrated_detail))
                     has_right_material = True
                 elif right_lead_notes and not detail_notes:
-                    integration_parts.append(str(right_lead_notes))
-                    has_right_material = True
+                    if not _looks_like_coaching_notes(question, right_lead_notes):
+                        integration_parts.append(str(right_lead_notes))
+                        has_right_material = True
 
                 can_polish = (
                     executive_mode_norm == "polish"
@@ -1670,6 +1860,8 @@ class DualBrainController:
 
         integrated_answer = final_answer
         user_answer = integrated_answer
+        if not emit_debug_sections:
+            user_answer = _sanitize_user_answer(user_answer)
         if emit_debug_sections:
             if collaborative_lead:
                 right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
