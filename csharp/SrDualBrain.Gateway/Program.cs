@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.ResponseCompression;
 using SrDualBrain.Gateway;
 
 static string? FindRepoRoot(string startDir)
@@ -16,6 +17,11 @@ static string? FindRepoRoot(string startDir)
 }
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "application/json" });
+});
 
 var repoRoot = Environment.GetEnvironmentVariable("DUALBRAIN_REPO_ROOT")
               ?? FindRepoRoot(Directory.GetCurrentDirectory())
@@ -49,8 +55,11 @@ builder.Services.AddSingleton<PythonEngineClient>(sp =>
         defaultTimeout: TimeSpan.FromSeconds(timeoutSeconds));
 });
 
+builder.Services.AddHostedService<EngineWarmupService>();
+
 var app = builder.Build();
 
+app.UseResponseCompression();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 

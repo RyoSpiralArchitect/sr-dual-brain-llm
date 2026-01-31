@@ -69,16 +69,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
             var line = JsonSerializer.Serialize(request, JsonOptions);
             await WriteLineAsync(line, cancellationToken);
 
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(timeout);
-
-            var completed = await Task.WhenAny(tcs.Task, Task.Delay(Timeout.Infinite, timeoutCts.Token));
-            if (completed != tcs.Task)
-            {
-                throw new TimeoutException($"Engine timeout after {timeout.TotalMilliseconds:0}ms (method={method}).");
-            }
-
-            var response = await tcs.Task;
+            var response = await tcs.Task.WaitAsync(timeout, cancellationToken);
             var ok = response["ok"]?.GetValue<bool>() ?? false;
             if (!ok)
             {
@@ -110,7 +101,6 @@ public sealed class PythonEngineClient : IAsyncDisposable
         try
         {
             await proc.StandardInput.WriteLineAsync(line.AsMemory(), cancellationToken);
-            await proc.StandardInput.FlushAsync(cancellationToken);
         }
         finally
         {
@@ -158,6 +148,8 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             throw new InvalidOperationException("Failed to start python engine.");
         }
+        _process.StandardInput.AutoFlush = true;
+        _process.StandardInput.NewLine = "\n";
 
         _stdoutPump = Task.Run(() => PumpStdoutAsync(_process, _cts.Token));
         _stderrPump = Task.Run(() => PumpStderrAsync(_process, _cts.Token));
