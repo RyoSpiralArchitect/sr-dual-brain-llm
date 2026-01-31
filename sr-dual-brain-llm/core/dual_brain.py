@@ -1471,9 +1471,19 @@ class DualBrainController:
                     integrated_detail = None
 
                 if integrated_detail:
-                    final_answer = self.left_model.integrate_info(draft, integrated_detail)
+                    final_answer = await self.left_model.integrate_info_async(
+                        question=question,
+                        draft=draft,
+                        info=integrated_detail,
+                        temperature=max(0.2, min(0.6, decision.temperature)),
+                    )
                 elif right_lead_notes and not detail_notes:
-                    final_answer = self.left_model.integrate_info(draft, right_lead_notes)
+                    final_answer = await self.left_model.integrate_info_async(
+                        question=question,
+                        draft=draft,
+                        info=right_lead_notes,
+                        temperature=max(0.2, min(0.6, decision.temperature)),
+                    )
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
                 if self.coherence_resonator is not None:

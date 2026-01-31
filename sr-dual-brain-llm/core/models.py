@@ -33,6 +33,16 @@ _RIGHT_DEEPEN_GUARDRAILS = (
     "Prefer 2-5 concise bullet points of what to add / clarify, or a short suggested follow-up question."
 )
 
+_INTEGRATION_GUARDRAILS = (
+    "You are producing the final assistant message for the user.\n"
+    "You will be given a draft answer and internal notes from a collaborator.\n"
+    "Incorporate any helpful content from the notes into a single coherent final answer.\n"
+    "Do not output the internal notes verbatim.\n"
+    "Do not output coaching/critique about your own writing.\n"
+    "Do not mention internal orchestration.\n"
+    "Match the user's language and tone unless they requested otherwise."
+)
+
 
 class LeftBrainModel:
     def __init__(self, llm_config: Optional[LLMConfig] = None):
@@ -67,6 +77,37 @@ class LeftBrainModel:
         if not info:
             return draft
         return f"{draft}\n\n{info}"
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+    ) -> str:
+        if not info:
+            return draft
+
+        if not self._llm_client:
+            return self.integrate_info(draft, info)
+
+        system_parts = [_SYSTEM_GUARDRAILS, _INTEGRATION_GUARDRAILS]
+        system = "\n\n".join(system_parts)
+        prompt = (
+            f"User message:\n{question}\n\n"
+            f"Draft answer:\n{draft}\n\n"
+            "Internal collaborator notes (do not output directly):\n"
+            f"{info}\n\n"
+            "Final answer:"
+        )
+        try:
+            completion = await self._llm_client.complete(
+                prompt, system=system, temperature=temperature
+            )
+        except Exception:
+            return self.integrate_info(draft, info)
+        return completion.strip() or draft
 
 class RightBrainModel:
     def __init__(self, llm_config: Optional[LLMConfig] = None):
