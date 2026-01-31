@@ -152,6 +152,40 @@ def test_controller_requests_right_brain_when_confidence_low():
     assert flow_record.get("architecture_count") == len(architecture_path)
 
 
+def test_trivial_chat_skips_consult():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    # Avoid right-preview generation in this unit test.
+    controller._last_leading_brain = "right"
+
+    answer = asyncio.run(controller.process("やあ"))
+
+    assert callosum.payloads == []
+    assert "補足メモ" not in answer
+    inner_events = [payload for evt, payload in telemetry.events if evt == "inner_dialogue_trace"]
+    assert inner_events, "Inner dialogue telemetry should be captured"
+    steps = inner_events[-1]["steps"]
+    assert any(step.get("phase") == "consult_skipped" for step in steps)
+    assert not any(step.get("phase") == "callosum_response" for step in steps)
+
+
 def test_controller_falls_back_to_local_right_model():
     callosum = DummyCallosum(fail=True)
     memory = SharedMemory()

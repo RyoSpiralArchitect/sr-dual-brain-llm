@@ -505,6 +505,69 @@ class PrefrontalCortex:
 
         return FocusSummary(keywords=keywords, relevance=relevance, hippocampal_overlap=hippocampal_overlap)
 
+    @staticmethod
+    def is_trivial_chat_turn(question: str) -> bool:
+        """Return True when the user input is likely lightweight chit-chat.
+
+        This is used as an executive override to avoid unnecessary consults
+        (latency/cost) and reduce "split voice" failure modes on greetings.
+        """
+
+        q = (question or "").strip()
+        if not q:
+            return True
+        if len(q) > 36:
+            return False
+
+        q_lower = q.lower()
+        if re.search(r"\d", q_lower):
+            return False
+        if "http://" in q_lower or "https://" in q_lower:
+            return False
+        if any(token in q_lower for token in ("analy", "analysis", "explain", "derive", "calculate", "proof", "why", "how")):
+            return False
+        if any(token in q for token in ("分析", "計算", "証明", "なぜ", "どうやって")):
+            return False
+
+        exact = {
+            "hi",
+            "hey",
+            "hello",
+            "yo",
+            "sup",
+            "やあ",
+            "こんにちは",
+            "こんばんは",
+            "おはよう",
+            "もしもし",
+            "元気",
+            "元気？",
+            "なに",
+            "なに？",
+            "何",
+            "何？",
+        }
+        if q_lower in exact or q in exact:
+            return True
+
+        if re.fullmatch(r"[!?！？。…]+", q):
+            return True
+
+        starters = (
+            "やあ",
+            "こんにちは",
+            "おはよう",
+            "こんばんは",
+            "もしもし",
+            "hi",
+            "hello",
+            "hey",
+        )
+        if any(q_lower.startswith(prefix) for prefix in starters) and len(q_lower) <= 20:
+            return True
+
+        return False
+
     def gate_context(self, context: str, focus: FocusSummary) -> str:
         if not context:
             return context
@@ -570,4 +633,3 @@ class PrefrontalCortex:
             focus=focus,
             affect=affect,
         )
-

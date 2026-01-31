@@ -1139,7 +1139,8 @@ class DualBrainController:
                 },
             )
         )
-        force_right_lead = leading == "right"
+        explicit_leading = requested_leading in {"left", "right"}
+        force_right_lead = requested_leading == "right"
         decision = self.decide(
             question,
             draft,
@@ -1156,6 +1157,13 @@ class DualBrainController:
         if force_right_lead and decision.action == 0:
             decision.action = 1
             decision.state["right_forced_lead"] = True
+        if (
+            self.prefrontal_cortex is not None
+            and not explicit_leading
+            and self.prefrontal_cortex.is_trivial_chat_turn(question)
+        ):
+            decision.action = 0
+            decision.state["prefrontal_override"] = "trivial_chat"
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
         decision.state["hemisphere_signal"] = hemisphere_signal.to_payload()
@@ -1352,15 +1360,25 @@ class DualBrainController:
         start = time.perf_counter()
         try:
             if decision.action == 0:
+                retained = "left_draft"
+                final_answer = draft
+                response_source = response_source or "left_only"
+                if right_lead_notes and leading == "right":
+                    retained = "right_preview"
+                    final_answer = right_lead_notes
+                    response_source = "lead"
                 inner_steps.append(
                     InnerDialogueStep(
                         phase="consult_skipped",
                         role="left",
-                        content="Policy retained left-brain draft",
-                        metadata={"reason": "policy_action_0"},
+                        content=(
+                            "Policy retained right-brain preview"
+                            if retained == "right_preview"
+                            else "Policy retained left-brain draft"
+                        ),
+                        metadata={"reason": f"policy_action_0_{retained}"},
                     )
                 )
-                response_source = response_source or "left_only"
                 success = True
             else:
                 payload = {
