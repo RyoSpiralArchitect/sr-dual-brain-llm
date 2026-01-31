@@ -6,16 +6,19 @@
     <title>SrDualBrain Gateway</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand__title">SrDualBrain</div>
-        <div class="brand__subtitle">C# REST Gateway → Python Engine</div>
-      </div>
-      <div class="status" id="status">
-        <span class="pill pill--muted">connecting…</span>
-      </div>
-    </header>
+	  <body>
+	    <header class="topbar">
+	      <div class="brand">
+	        <div class="brand__title">SrDualBrain</div>
+	        <div class="brand__subtitle">C# REST Gateway → Python Engine</div>
+	      </div>
+	      <div class="topbar__right">
+	        <button class="btn btn--ghost" id="btnPopMetrics" type="button">Pop out metrics</button>
+	        <div class="status" id="status">
+	          <span class="pill pill--muted">connecting…</span>
+	        </div>
+	      </div>
+	    </header>
 
     <main class="layout">
       <section class="card chat">

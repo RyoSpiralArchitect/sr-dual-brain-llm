@@ -59,6 +59,9 @@ Open:
 
 The UI lets you optionally pin `provider/model` for the session and set `max_output_tokens`.
 
+#### Metrics pop-out
+Click **Pop out metrics** to open a separate metrics monitor window (`/metrics.html`). This keeps the main window chat-focused (no metrics mixed into the chat transcript) while the pop-out window updates live as you send messages. Click **Dock** (or the same topbar button) to bring metrics back.
+
 ### Call it
 ```bash
 curl -s http://127.0.0.1:8080/v1/process \

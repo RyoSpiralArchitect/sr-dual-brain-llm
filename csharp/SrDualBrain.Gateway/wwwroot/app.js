@@ -6,6 +6,7 @@ const els = {
   composer: $("composer"),
   question: $("question"),
   btnSend: $("btnSend"),
+  btnPopMetrics: $("btnPopMetrics"),
   btnClear: $("btnClear"),
   btnReset: $("btnReset"),
   sessionId: $("sessionId"),
@@ -27,6 +28,81 @@ const els = {
 
 let lastLlmSignature = null;
 const sessionLlmSignature = new Map();
+
+let metricsPopout = null;
+let metricsPopoutPoll = null;
+let lastMetricsPayload = null;
+
+function isMetricsPopoutOpen() {
+  return !!metricsPopout && !metricsPopout.closed;
+}
+
+function setMetricsPopoutUi(isOpen) {
+  if (isOpen) {
+    document.body.classList.add("metrics-popout");
+    if (els.btnPopMetrics) els.btnPopMetrics.textContent = "Dock metrics";
+  } else {
+    document.body.classList.remove("metrics-popout");
+    if (els.btnPopMetrics) els.btnPopMetrics.textContent = "Pop out metrics";
+  }
+}
+
+function publishMetricsToPopout(payload) {
+  lastMetricsPayload = payload;
+  if (!payload) return;
+  if (!isMetricsPopoutOpen()) return;
+  try {
+    metricsPopout.postMessage({ type: "srdb.metrics", payload }, window.location.origin);
+  } catch {
+    // ignore
+  }
+}
+
+function dockMetricsPopout({ closeWindow } = { closeWindow: true }) {
+  if (metricsPopoutPoll) {
+    clearInterval(metricsPopoutPoll);
+    metricsPopoutPoll = null;
+  }
+  if (closeWindow && metricsPopout && !metricsPopout.closed) {
+    try {
+      metricsPopout.close();
+    } catch {
+      // ignore
+    }
+  }
+  metricsPopout = null;
+  setMetricsPopoutUi(false);
+}
+
+function openMetricsPopout() {
+  if (isMetricsPopoutOpen()) return;
+
+  const width = 520;
+  const height = 900;
+  const left = Math.max(0, window.screenX + window.outerWidth - width - 20);
+  const top = Math.max(0, window.screenY + 60);
+
+  metricsPopout = window.open(
+    "/metrics.html",
+    "srdb_metrics",
+    `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
+  );
+
+  if (!metricsPopout) {
+    // likely blocked by the browser
+    setStatus("warn", "Pop-up blocked (allow pop-ups to open metrics window)");
+    return;
+  }
+
+  setMetricsPopoutUi(true);
+
+  if (metricsPopoutPoll) clearInterval(metricsPopoutPoll);
+  metricsPopoutPoll = setInterval(() => {
+    if (!isMetricsPopoutOpen()) dockMetricsPopout({ closeWindow: false });
+  }, 500);
+
+  publishMetricsToPopout(lastMetricsPayload);
+}
 
 function setStatus(kind, text) {
   const cls =
@@ -164,6 +240,8 @@ function renderMetrics(response) {
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
 
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
+
+  publishMetricsToPopout(response);
 }
 
 async function callProcess(questionText) {
@@ -276,6 +354,29 @@ els.btnReset.addEventListener("click", async () => {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
   } finally {
     setBusy(false);
+  }
+});
+
+els.btnPopMetrics?.addEventListener("click", () => {
+  if (isMetricsPopoutOpen()) {
+    dockMetricsPopout();
+  } else {
+    openMetricsPopout();
+  }
+});
+
+window.addEventListener("message", (e) => {
+  if (e.origin !== window.location.origin) return;
+  const msg = e.data;
+  if (!msg || typeof msg !== "object") return;
+
+  if (msg.type === "srdb.metrics.ready") {
+    publishMetricsToPopout(lastMetricsPayload);
+    return;
+  }
+
+  if (msg.type === "srdb.metrics.dock") {
+    dockMetricsPopout();
   }
 });
 

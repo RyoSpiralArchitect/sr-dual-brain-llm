@@ -40,6 +40,12 @@ body {
   z-index: 5;
 }
 
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .brand__title {
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -63,6 +69,9 @@ body {
 @media (max-width: 1080px) {
   .layout { grid-template-columns: 1fr; }
 }
+
+body.metrics-popout .layout { grid-template-columns: 1fr; }
+body.metrics-popout .side .card.metrics { display: none; }
 
 .card {
   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
@@ -253,4 +262,3 @@ textarea:focus, input:focus, select:focus { outline: 2px solid rgba(96,165,250,0
   overflow: auto;
   max-height: 320px;
 }
-

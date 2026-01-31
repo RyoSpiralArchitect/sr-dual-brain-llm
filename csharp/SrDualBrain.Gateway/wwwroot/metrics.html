@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SrDualBrain Metrics</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">SrDualBrain</div>
+        <div class="brand__subtitle">Metrics monitor</div>
+      </div>
+      <div class="card__actions">
+        <button class="btn btn--ghost" id="btnDock" type="button">Dock</button>
+      </div>
+    </header>
+
+    <main class="layout" style="grid-template-columns: 1fr; max-width: 720px;">
+      <section class="card metrics">
+        <div class="card__header">
+          <div class="card__title">Metrics</div>
+          <div class="card__subtitle" id="metricsSubtitle">waiting…</div>
+        </div>
+        <div class="metrics__grid">
+          <div class="metric">
+            <div class="metric__k">coherence</div>
+            <div class="metric__v" id="mCoherence">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric__k">tension</div>
+            <div class="metric__v" id="mTension">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric__k">routing</div>
+            <div class="metric__v" id="mRouting">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric__k">action</div>
+            <div class="metric__v" id="mAction">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric__k">temperature</div>
+            <div class="metric__v" id="mTemp">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric__k">latency</div>
+            <div class="metric__v" id="mLatency">—</div>
+          </div>
+        </div>
+
+        <details class="details" open>
+          <summary>Telemetry (raw)</summary>
+          <pre class="json" id="telemetryRaw">{}</pre>
+        </details>
+      </section>
+    </main>
+
+    <script src="/metrics.js"></script>
+  </body>
+</html>
+
