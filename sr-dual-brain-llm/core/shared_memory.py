@@ -245,6 +245,7 @@ class SharedMemory:
         follow_brain: str | None = None,
         preview: str | None = None,
         executive: Dict[str, Any] | None = None,
+        executive_observer: Dict[str, Any] | None = None,
         steps: Iterable[Dict[str, Any]] | None = None,
         architecture: Iterable[Dict[str, Any]] | None = None,
     ) -> None:
@@ -257,6 +258,8 @@ class SharedMemory:
         }
         if executive:
             record["executive"] = dict(executive)
+        if executive_observer:
+            record["executive_observer"] = dict(executive_observer)
         if steps:
             payload = [dict(step) for step in steps]
             record["steps"] = payload

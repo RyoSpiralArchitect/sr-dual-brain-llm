@@ -95,6 +95,14 @@
                 <option value="polish">polish (may reset stream)</option>
               </select>
             </label>
+
+            <label class="field">
+              <span class="field__label">Executive observer (experiment)</span>
+              <select id="executiveObserverMode">
+                <option value="off" selected>off</option>
+                <option value="metrics">metrics (post-turn feedback)</option>
+              </select>
+            </label>
           </div>
 
           <div class="blob">
@@ -178,6 +186,11 @@
           <details class="details">
             <summary>Executive memo</summary>
             <pre class="json" id="executiveMemo">—</pre>
+          </details>
+
+          <details class="details">
+            <summary>Executive observer memo</summary>
+            <pre class="json" id="executiveObserverMemo">—</pre>
           </details>
 
           <details class="details">

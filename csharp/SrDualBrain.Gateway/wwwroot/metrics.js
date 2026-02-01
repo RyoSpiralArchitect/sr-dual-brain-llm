@@ -11,6 +11,7 @@ const els = {
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
   executiveMemo: $("executiveMemo"),
+  executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
   btnDock: $("btnDock"),
@@ -75,6 +76,7 @@ function renderMetrics(response) {
   const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
   const executive = response?.executive ?? dialogueFlow?.executive ?? null;
+  const executiveObserver = response?.executive_observer ?? dialogueFlow?.executive_observer ?? null;
 
   const combined = metrics?.coherence?.combined ?? null;
   const tension = metrics?.coherence?.tension ?? null;
@@ -130,6 +132,22 @@ function renderMetrics(response) {
       els.executiveMemo.textContent = `${body}${mix}\n\n---\n${meta}${dir}`.trim();
     } else {
       els.executiveMemo.textContent = "—";
+    }
+  }
+
+  if (els.executiveObserverMemo) {
+    if (executiveObserver) {
+      const memo = executiveObserver?.memo ?? "";
+      const mixIn = executiveObserver?.mix_in ?? "";
+      const directives = executiveObserver?.directives ?? null;
+      const meta = `source=${executiveObserver?.source ?? "?"} conf=${executiveObserver?.confidence ?? "?"} latency=${Math.round(executiveObserver?.latency_ms ?? 0)}ms`;
+      const mode = executiveObserver?.observer_mode ? `mode=${String(executiveObserver.observer_mode)}` : "";
+      const body = memo ? memo : "";
+      const mix = mixIn ? `\n\n---\nMix-in:\n${String(mixIn)}` : "";
+      const dir = directives ? `\n\n---\nDirectives:\n${JSON.stringify(directives, null, 2)}` : "";
+      els.executiveObserverMemo.textContent = `${body}${mix}\n\n---\n${[meta, mode].filter(Boolean).join(" ")}${dir}`.trim();
+    } else {
+      els.executiveObserverMemo.textContent = "—";
     }
   }
 

@@ -470,6 +470,7 @@ class EngineSession:
         metrics: Dict[str, Any],
         dialogue_flow: Any,
         executive: Any,
+        executive_observer: Any,
         telemetry: list[dict[str, Any]],
     ) -> None:
         self.trace_cache[qid] = {
@@ -478,6 +479,7 @@ class EngineSession:
             "metrics": metrics,
             "dialogue_flow": dialogue_flow,
             "executive": executive,
+            "executive_observer": executive_observer,
             "telemetry": telemetry,
             "ts": time.time(),
         }
@@ -621,6 +623,10 @@ async def _handle_process(
     if executive_mode not in {"off", "observe", "assist", "polish"}:
         raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
+    executive_observer_mode = str(params.get("executive_observer_mode", "off") or "off").strip().lower()
+    if executive_observer_mode not in {"off", "metrics"}:
+        raise ValueError("executive_observer_mode must be one of: off, metrics")
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
 
@@ -642,6 +648,7 @@ async def _handle_process(
         qid=qid,
         answer_mode=answer_mode,
         executive_mode=executive_mode,
+        executive_observer_mode=executive_observer_mode,
         vision_images=vision_images or None,
     )
     after_memory = len(session.memory.past_qas)
@@ -675,13 +682,16 @@ async def _handle_process(
     metrics = result["metrics"]
     dialogue_flow = session.memory.dialogue_flow(qid)
     executive = None
+    executive_observer = None
     if isinstance(dialogue_flow, dict):
         executive = dialogue_flow.get("executive")
+        executive_observer = dialogue_flow.get("executive_observer")
     session.remember_trace(
         qid,
         metrics=metrics,
         dialogue_flow=dialogue_flow,
         executive=executive,
+        executive_observer=executive_observer,
         telemetry=telemetry_events,
     )
 
@@ -723,6 +733,10 @@ async def _handle_process_stream(
     if executive_mode not in {"off", "observe", "assist", "polish"}:
         raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
+    executive_observer_mode = str(params.get("executive_observer_mode", "off") or "off").strip().lower()
+    if executive_observer_mode not in {"off", "metrics"}:
+        raise ValueError("executive_observer_mode must be one of: off, metrics")
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
 
@@ -754,6 +768,7 @@ async def _handle_process_stream(
         on_delta=on_delta,
         on_reset=on_reset,
         executive_mode=executive_mode,
+        executive_observer_mode=executive_observer_mode,
         vision_images=vision_images or None,
     )
 
@@ -788,13 +803,16 @@ async def _handle_process_stream(
     metrics = result["metrics"]
     dialogue_flow = session.memory.dialogue_flow(qid)
     executive = None
+    executive_observer = None
     if isinstance(dialogue_flow, dict):
         executive = dialogue_flow.get("executive")
+        executive_observer = dialogue_flow.get("executive_observer")
     session.remember_trace(
         qid,
         metrics=metrics,
         dialogue_flow=dialogue_flow,
         executive=executive,
+        executive_observer=executive_observer,
         telemetry=telemetry_events,
     )
 
@@ -839,6 +857,7 @@ async def _handle_get_trace(
         result["telemetry"] = cached.get("telemetry") or []
     if include_executive:
         result["executive"] = cached.get("executive")
+        result["executive_observer"] = cached.get("executive_observer")
     return result
 
 

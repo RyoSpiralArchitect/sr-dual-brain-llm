@@ -1166,6 +1166,7 @@ class DualBrainController:
         on_delta: Optional[Callable[[str], Any]] = None,
         on_reset: Optional[Callable[[], Any]] = None,
         executive_mode: str = "off",
+        executive_observer_mode: str = "off",
     ) -> str:
         mode = str(answer_mode or "plain").strip().lower()
         emit_debug_sections = mode in {"debug", "annotated", "meta"}
@@ -1234,6 +1235,9 @@ class DualBrainController:
         executive_mode_norm = str(executive_mode or "off").strip().lower()
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
             executive_mode_norm = "observe"
+        executive_observer_mode_norm = str(executive_observer_mode or "off").strip().lower()
+        if executive_observer_mode_norm not in {"off", "metrics"}:
+            executive_observer_mode_norm = "off"
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
         executive_payload: Dict[str, Any] | None = None
         executive_directives: Dict[str, Any] | None = None
@@ -2458,12 +2462,105 @@ class DualBrainController:
             )
         if self.hippocampus is not None and self.hippocampus.episodes and architecture_path:
             self.hippocampus.episodes[-1].annotations["architecture_path"] = architecture_path
+
+        executive_observer_payload: Dict[str, Any] | None = None
+        if (
+            self.executive_model is not None
+            and executive_observer_mode_norm != "off"
+        ):
+            active_modules: List[str] = []
+            if architecture_path:
+                mods = set()
+                for stage in architecture_path:
+                    if not isinstance(stage, dict):
+                        continue
+                    stage_mods = stage.get("modules")
+                    if not isinstance(stage_mods, list):
+                        continue
+                    for mod in stage_mods:
+                        if mod:
+                            mods.add(str(mod))
+                active_modules = sorted(mods)
+
+            sections: List[str] = []
+            for marker in ("[Working memory]", "[Schema memory]", "[Hippocampal recall]"):
+                if marker in (context or ""):
+                    sections.append(marker.strip("[]"))
+
+            coh_combined = None
+            coh_tension = None
+            coh_mode = None
+            if coherence_signal is not None:
+                coh_combined = float(coherence_signal.combined_score)
+                coh_tension = float(coherence_signal.tension)
+                coh_mode = str(coherence_signal.mode)
+
+            focus_payload = ""
+            if focus is not None:
+                kws = list(focus.keywords[:4]) if focus.keywords else []
+                focus_payload = (
+                    f"focus_keywords={kws} focus_relevance={focus.relevance:.2f} "
+                    f"hippocampal_overlap={focus.hippocampal_overlap:.2f}"
+                ).strip()
+
+            answer_snip = user_answer.replace("\n", " ").strip()
+            if len(answer_snip) > 420:
+                answer_snip = answer_snip[:420] + "..."
+
+            ctx_snip = (context or "").replace("\n", " ").strip()
+            if len(ctx_snip) > 420:
+                ctx_snip = ctx_snip[:420] + "..."
+
+            observer_context = (
+                "Observer report (internal; never show to the user):\n"
+                f"- final_answer_snippet: {answer_snip}\n"
+                f"- policy: action={decision.action} temp={decision.temperature:.2f} slot_ms={decision.slot_ms}\n"
+                f"- coherence: combined={coh_combined} tension={coh_tension} mode={coh_mode}\n"
+                f"- leading={leading} collaborative={bool(collaborative_lead)} reason={selection_reason}\n"
+                f"- memory_sections_in_context: {sections}\n"
+                f"- active_modules: {active_modules[:18]}\n"
+                f"- {focus_payload}\n"
+                f"- context_snippet: {ctx_snip}\n"
+            ).strip()
+
+            try:
+                observer_task = asyncio.create_task(
+                    self.executive_model.advise(
+                        question=question,
+                        context=observer_context,
+                        focus_keywords=focus_keywords,
+                    )
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                observer_task = None
+
+            if observer_task is not None:
+                try:
+                    observer_advice = await asyncio.wait_for(observer_task, timeout=2.5)
+                except asyncio.TimeoutError:
+                    observer_advice = None
+                except asyncio.CancelledError:
+                    observer_advice = None
+                except Exception:  # pragma: no cover - defensive guard
+                    observer_advice = None
+                if observer_advice is not None:
+                    executive_observer_payload = observer_advice.to_payload()
+                    executive_observer_payload["observer_mode"] = executive_observer_mode_norm
+                    self.telemetry.log(
+                        "executive_observer",
+                        qid=decision.qid,
+                        confidence=float(observer_advice.confidence),
+                        latency_ms=float(observer_advice.latency_ms),
+                        source=str(observer_advice.source),
+                        observer_mode=executive_observer_mode_norm,
+                    )
         self.memory.record_dialogue_flow(
             decision.qid,
             leading_brain=leading,
             follow_brain=follow_brain,
             preview=_truncate_text(right_lead_notes or detail_notes),
             executive=executive_payload,
+            executive_observer=executive_observer_payload,
             steps=steps_payload,
             architecture=architecture_path,
         )

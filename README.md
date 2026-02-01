@@ -192,6 +192,9 @@ Open `http://127.0.0.1:8080/`.
   - `observe`: executive memo only (answer unchanged)
   - `assist`: memo + **mix-in blended into answer**
   - `polish`: may apply directives as a second-pass rewrite (may reset streams)
+- `Executive observer (experiment)`:
+  - `off`: disabled
+  - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (never blended into chat)
 
 ### Metrics pane
 - Key numbers: coherence / tension / routing / action / temperature / latency
@@ -230,7 +233,7 @@ Query params:
 - `session_id` (default: `"default"`)
 - `include_telemetry` (default: `true`)
 - `include_dialogue_flow` (default: `true`)
-- `include_executive` (default: `true`): include executive memo/mix-in/directives (if available)
+- `include_executive` (default: `true`): include executive memo/mix-in/directives and any observer memo (if available)
 
 ### `POST /v1/reset`
 Resets a session inside the Python engine.
@@ -253,6 +256,9 @@ Request fields:
   - `observe`: run executive reasoner and store memo (out-of-band only; does not change the answer)
   - `assist`: run executive reasoner and blend a small **user-facing mix-in** into the final answer (memo stays out-of-band)
   - `polish`: executive directives may trigger a second-pass integration (may reset stream)
+- `executive_observer_mode` (`"off"|"metrics"`, default: `"off"`)
+  - `off`: disabled
+  - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (`executive_observer`)
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
 - `qid` (string, optional): supply your own ID for dataset runs / trace correlation

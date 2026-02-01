@@ -621,3 +621,45 @@ def test_executive_assist_injects_mix_in():
     assert left.integrations
     merged = "\n".join(left.integrations)
     assert "Executive mix-in" in merged
+
+
+def test_executive_observer_metrics_stores_memo_out_of_band():
+    callosum = DummyCallosum(fail=True)
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        executive_model=InstantExecutiveModel(mix_in="(observer)"),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    qid = "obs1"
+    answer = asyncio.run(
+        controller.process(
+            "hi",
+            qid=qid,
+            executive_mode="off",
+            executive_observer_mode="metrics",
+        )
+    )
+    assert isinstance(answer, str)
+    assert answer.strip()
+    assert "Observer report" not in answer
+
+    flow = memory.dialogue_flow(qid)
+    assert isinstance(flow, dict)
+    observer = flow.get("executive_observer")
+    assert isinstance(observer, dict)
+    assert observer.get("observer_mode") == "metrics"
+    assert observer.get("memo")

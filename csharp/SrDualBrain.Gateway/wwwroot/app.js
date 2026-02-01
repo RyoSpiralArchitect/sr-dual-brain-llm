@@ -15,6 +15,7 @@ const els = {
   llmModel: $("llmModel"),
   llmMaxOutputTokens: $("llmMaxOutputTokens"),
   executiveMode: $("executiveMode"),
+  executiveObserverMode: $("executiveObserverMode"),
   blobFile: $("blobFile"),
   btnUploadBlob: $("btnUploadBlob"),
   blobChips: $("blobChips"),
@@ -33,6 +34,7 @@ const els = {
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
   executiveMemo: $("executiveMemo"),
+  executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
 };
@@ -285,6 +287,7 @@ function renderMetrics(response) {
   const dialogueFlow = response?.dialogue_flow ?? {};
   const metrics = response?.metrics ?? null;
   const executive = response?.executive ?? dialogueFlow?.executive ?? null;
+  const executiveObserver = response?.executive_observer ?? dialogueFlow?.executive_observer ?? null;
 
   let combined = null;
   let tension = null;
@@ -369,6 +372,22 @@ function renderMetrics(response) {
     }
   }
 
+  if (els.executiveObserverMemo) {
+    if (executiveObserver) {
+      const memo = executiveObserver?.memo ?? "";
+      const mixIn = executiveObserver?.mix_in ?? "";
+      const directives = executiveObserver?.directives ?? null;
+      const meta = `source=${executiveObserver?.source ?? "?"} conf=${executiveObserver?.confidence ?? "?"} latency=${Math.round(executiveObserver?.latency_ms ?? 0)}ms`;
+      const mode = executiveObserver?.observer_mode ? `mode=${String(executiveObserver.observer_mode)}` : "";
+      const body = memo ? memo : "";
+      const mix = mixIn ? `\n\n---\nMix-in:\n${String(mixIn)}` : "";
+      const dir = directives ? `\n\n---\nDirectives:\n${JSON.stringify(directives, null, 2)}` : "";
+      els.executiveObserverMemo.textContent = `${body}${mix}\n\n---\n${[meta, mode].filter(Boolean).join(" ")}${dir}`.trim();
+    } else {
+      els.executiveObserverMemo.textContent = "—";
+    }
+  }
+
   els.telemetryRaw.textContent = JSON.stringify(telemetry, null, 2);
   if (els.dialogueFlowRaw) {
     els.dialogueFlowRaw.textContent = JSON.stringify(dialogueFlow, null, 2);
@@ -381,6 +400,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
   const sessionId = (els.sessionId.value || "default").trim() || "default";
   const leading = (els.leadingBrain.value || "auto").trim() || "auto";
   const executiveMode = (els.executiveMode?.value || "off").trim() || "off";
+  const executiveObserverMode = (els.executiveObserverMode?.value || "off").trim() || "off";
   const wantExecutive = !!els.returnExecutive?.checked;
   const wantTelemetry = !!els.returnTelemetry.checked;
   const wantDialogueFlow = !!els.returnDialogueFlow.checked;
@@ -391,6 +411,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     question: questionText,
     leading_brain: leading,
     executive_mode: executiveMode,
+    executive_observer_mode: executiveObserverMode,
     return_telemetry: wantTelemetry && traceInline,
     return_dialogue_flow: wantDialogueFlow && traceInline,
   };
@@ -462,6 +483,7 @@ function mergeTrace(result, trace) {
     telemetry: trace.telemetry ?? result.telemetry,
     dialogue_flow: trace.dialogue_flow ?? result.dialogue_flow,
     executive: trace.executive ?? result.executive,
+    executive_observer: trace.executive_observer ?? result.executive_observer,
   };
 }
 
@@ -619,7 +641,9 @@ els.btnClear.addEventListener("click", () => {
   els.telemetryRaw.textContent = "{}";
   if (els.dialogueFlowRaw) els.dialogueFlowRaw.textContent = "{}";
   if (els.executiveMemo) els.executiveMemo.textContent = "—";
+  if (els.executiveObserverMemo) els.executiveObserverMemo.textContent = "—";
   if (els.activeModules) els.activeModules.innerHTML = "";
+  if (els.modulePath) els.modulePath.innerHTML = "";
   els.metricsSubtitle.textContent = "—";
   els.mCoherence.textContent = "—";
   els.mTension.textContent = "—";
