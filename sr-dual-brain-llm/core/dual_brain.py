@@ -1250,6 +1250,7 @@ class DualBrainController:
         right_lead_notes: Optional[str] = None
         stream_final_only = bool(on_delta and on_reset)
         emitted_any = False
+        right_preview_task: asyncio.Task[str] | None = None
 
         async def _emit_delta(text: str) -> None:
             nonlocal emitted_any
@@ -1272,35 +1273,13 @@ class DualBrainController:
         delta_cb = _emit_delta if on_delta else None
         if leading == "right" or collaborative_lead:
             try:
-                right_lead_notes = await self.right_model.generate_lead(
-                    question,
-                    context,
-                    on_delta=(
-                        delta_cb
-                        if leading == "right" and delta_cb and not stream_final_only
-                        else None
-                    ),
+                # Run the right-brain prelude in parallel with the left draft. We keep it
+                # internal (no streaming) to avoid "split voice" in the chat UI.
+                right_preview_task = asyncio.create_task(
+                    self.right_model.generate_lead(question, context, on_delta=None)
                 )
             except Exception:  # pragma: no cover - defensive guard
-                right_lead_notes = None
-            preview_meta = {
-                "requested": True,
-                "collaborative": collaborative_lead,
-                "leading_mode": leading,
-            }
-            if right_lead_notes:
-                preview_meta["available"] = True
-                preview_meta["length"] = len(right_lead_notes)
-            else:
-                preview_meta["available"] = False
-            inner_steps.append(
-                InnerDialogueStep(
-                    phase="right_preview",
-                    role="right",
-                    content=_truncate_text(right_lead_notes),
-                    metadata=preview_meta,
-                )
-            )
+                right_preview_task = None
         left_lead_preview: Optional[str] = None
         draft = await self.left_model.generate_answer(
             question,
@@ -1312,6 +1291,33 @@ class DualBrainController:
                 else None
             ),
         )
+        if right_preview_task is not None:
+            if right_preview_task.done():
+                try:
+                    right_lead_notes = right_preview_task.result()
+                except asyncio.CancelledError:
+                    right_lead_notes = None
+                except Exception:  # pragma: no cover - defensive guard
+                    right_lead_notes = None
+            else:
+                right_preview_task.cancel()
+
+            preview_meta = {
+                "requested": True,
+                "collaborative": collaborative_lead,
+                "leading_mode": leading,
+                "available": bool(right_lead_notes),
+            }
+            if right_lead_notes:
+                preview_meta["length"] = len(right_lead_notes)
+            inner_steps.append(
+                InnerDialogueStep(
+                    phase="right_preview",
+                    role="right",
+                    content=_truncate_text(right_lead_notes),
+                    metadata=preview_meta,
+                )
+            )
         if collaborative_lead:
             left_lead_preview = draft.split("\n\n", 1)[0][:320]
         left_coherence: Optional[HemisphericCoherence] = None
@@ -1571,7 +1577,7 @@ class DualBrainController:
 
         final_answer = draft
         detail_notes: Optional[str] = None
-        response_source = "lead" if right_lead_notes else ""
+        response_source = ""
         success = False
         latency_ms = 0.0
         call_error = False
@@ -1583,8 +1589,13 @@ class DualBrainController:
             if decision.action == 0:
                 retained = "left_draft"
                 final_answer = draft
-                response_source = response_source or "left_only"
-                if right_lead_notes and leading == "right" and not vision_images:
+                response_source = "left_only"
+                if (
+                    explicit_leading
+                    and right_lead_notes
+                    and leading == "right"
+                    and not vision_images
+                ):
                     retained = "right_preview"
                     final_answer = right_lead_notes
                     response_source = "lead"
@@ -1611,6 +1622,8 @@ class DualBrainController:
                     try:
                         advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
                     except asyncio.TimeoutError:
+                        advice = None
+                    except asyncio.CancelledError:
                         advice = None
                     except Exception:  # pragma: no cover - defensive guard
                         advice = None
@@ -1768,6 +1781,8 @@ class DualBrainController:
                         advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
                     except asyncio.TimeoutError:
                         advice = None
+                    except asyncio.CancelledError:
+                        advice = None
                     except Exception:  # pragma: no cover - defensive guard
                         advice = None
                     if advice is not None:
@@ -1882,12 +1897,16 @@ class DualBrainController:
             if executive_task.done():
                 try:
                     advice = executive_task.result()
+                except asyncio.CancelledError:
+                    advice = None
                 except Exception:  # pragma: no cover - defensive guard
                     advice = None
             else:
                 tail_timeout = 6.0 if executive_mode_norm == "polish" else 2.0
                 try:
                     advice = await asyncio.wait_for(executive_task, timeout=tail_timeout)
+                except asyncio.CancelledError:
+                    advice = None
                 except Exception:
                     advice = None
 

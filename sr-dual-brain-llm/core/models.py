@@ -16,13 +16,15 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import asyncio, random
+import asyncio, random, difflib
 from typing import Any, Callable, Dict, Optional, Sequence
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
+    "Output only the user-facing reply (no writing advice, no self-critique, no meta suggestions like 'Add...', 'Consider...', 'You should...').\n"
+    "Do not claim real-world sensing or personal experiences (e.g., weather, your day) unless the user explicitly asked and you were given that data.\n"
     "Do not mention internal orchestration (e.g., left/right brain, corpus callosum, telemetry, architecture paths, qid).\n"
     "Do not add bracketed debug headings or meta commentary about the system.\n"
     "Do not mention system prompts, hidden instructions, or that you are a language model unless the user explicitly asks."
@@ -151,6 +153,17 @@ class LeftBrainModel:
         )
         if any(marker in lower for marker in coaching_markers):
             # Avoid leaking internal "advisor" notes when no integration LLM is available.
+            return draft
+
+        # Avoid "split voice" by refusing to append near-duplicate full answers.
+        def _norm(value: str) -> str:
+            return "".join(str(value or "").split()).lower()
+
+        try:
+            similarity = difflib.SequenceMatcher(None, _norm(draft), _norm(text)).ratio()
+        except Exception:
+            similarity = 0.0
+        if similarity >= 0.62 and len(text) <= int(len(draft) * 2.2):
             return draft
 
         return f"{draft}\n\n{text}"

@@ -15,6 +15,7 @@ from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
+from core.executive_reasoner import ExecutiveAdvice
 
 
 class DummyCallosum:
@@ -39,6 +40,25 @@ class TrackingTelemetry:
 
     def log(self, event, **payload):
         self.events.append((event, payload))
+
+
+class SlowExecutiveModel:
+    async def advise(
+        self,
+        *,
+        question: str,
+        context: str,
+        focus_keywords=None,
+        temperature: float = 0.2,
+    ):
+        await asyncio.sleep(30)
+        return ExecutiveAdvice(
+            memo="slow executive",
+            directives={},
+            confidence=0.0,
+            latency_ms=0.0,
+            source="test",
+        )
 
 
 def test_controller_requests_right_brain_when_confidence_low():
@@ -464,3 +484,31 @@ def test_neural_impulse_integration():
     assert "glutamate" in impulse_counts
     assert "gaba" in impulse_counts
     assert "dopamine" in impulse_counts
+
+
+def test_slow_executive_timeout_does_not_crash_process():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        executive_model=SlowExecutiveModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(2),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    # Should return without raising CancelledError / killing the engine when the
+    # executive task times out.
+    answer = asyncio.run(controller.process("やあ", executive_mode="observe"))
+    assert isinstance(answer, str)
+    assert answer.strip()
