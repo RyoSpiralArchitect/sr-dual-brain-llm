@@ -10,6 +10,7 @@ const els = {
   mLatency: $("mLatency"),
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
+  brainActivity: $("brainActivity"),
   executiveMemo: $("executiveMemo"),
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
@@ -62,6 +63,110 @@ function renderModulePath(stages) {
     }
     wrapper.appendChild(chips);
     els.modulePath.appendChild(wrapper);
+  }
+}
+
+function clamp01(x) {
+  const n = Number(x);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function renderBrainActivity(metrics) {
+  if (!els.brainActivity) return;
+  els.brainActivity.innerHTML = "";
+
+  const brain = metrics?.brain ?? null;
+  if (!brain || typeof brain !== "object") {
+    const empty = document.createElement("div");
+    empty.className = "brain__empty";
+    empty.textContent = "—";
+    els.brainActivity.appendChild(empty);
+    return;
+  }
+
+  const pfc = brain?.prefrontal ?? {};
+  const amg = brain?.amygdala ?? {};
+  const basal = brain?.basal_ganglia ?? {};
+  const neuro = brain?.neural ?? {};
+  const psychoid = brain?.psychoid ?? {};
+  const hemi = brain?.hemisphere ?? {};
+
+  const nodes = [
+    {
+      label: "Prefrontal (focus)",
+      meta: `metric=${pfc?.metric ?? "—"} rel=${pfc?.relevance ?? "—"} hip=${pfc?.hippocampal_overlap ?? "—"}`,
+      intensity: clamp01(pfc?.metric),
+      accent: "var(--primary-rgb)",
+    },
+    {
+      label: "Amygdala (risk)",
+      meta: `risk=${amg?.risk ?? "—"} v=${amg?.valence ?? "—"} a=${amg?.arousal ?? "—"}`,
+      intensity: clamp01(amg?.risk),
+      accent: "var(--danger-rgb)",
+    },
+    {
+      label: "Basal ganglia (go)",
+      meta: `go=${basal?.go_probability ?? "—"} dopamine=${basal?.dopamine_level ?? "—"}`,
+      intensity: clamp01(basal?.go_probability),
+      accent: "var(--good-rgb)",
+    },
+    {
+      label: "Basal ganglia (inhibit)",
+      meta: `inh=${basal?.inhibition ?? "—"} action=${basal?.recommended_action ?? "—"}`,
+      intensity: clamp01(basal?.inhibition),
+      accent: "var(--warn-rgb)",
+    },
+    {
+      label: "Hemisphere routing",
+      meta: `mode=${hemi?.mode ?? "—"} intensity=${hemi?.intensity ?? "—"}`,
+      intensity: clamp01(hemi?.intensity),
+      accent: "var(--primary-rgb)",
+    },
+    {
+      label: "Neural impulses",
+      meta: `active=${neuro?.active_ratio ?? "—"} total=${neuro?.total_impulses ?? "—"}`,
+      intensity: clamp01(neuro?.active_ratio),
+      accent: "var(--good-rgb)",
+    },
+    {
+      label: "Psychoid attention",
+      meta: `norm=${psychoid?.norm ?? "—"} tension=${psychoid?.psychoid_tension ?? "—"}`,
+      intensity: clamp01(psychoid?.psychoid_tension),
+      accent: "var(--warn-rgb)",
+    },
+    {
+      label: "Coherence / tension",
+      meta: `coh=${metrics?.coherence?.combined ?? "—"} ten=${metrics?.coherence?.tension ?? "—"}`,
+      intensity: clamp01(metrics?.coherence?.combined),
+      accent: "var(--primary-rgb)",
+    },
+  ];
+
+  for (const node of nodes) {
+    const el = document.createElement("div");
+    el.className = "brain__node";
+    el.style.setProperty("--i", String(node.intensity));
+    el.style.setProperty("--accent", node.accent);
+
+    const title = document.createElement("div");
+    title.className = "brain__label";
+    title.textContent = node.label;
+    el.appendChild(title);
+
+    const meta = document.createElement("div");
+    meta.className = "brain__meta";
+    meta.textContent = node.meta;
+    el.appendChild(meta);
+
+    const bar = document.createElement("div");
+    bar.className = "brain__bar";
+    const fill = document.createElement("div");
+    fill.className = "brain__fill";
+    bar.appendChild(fill);
+    el.appendChild(bar);
+
+    els.brainActivity.appendChild(el);
   }
 }
 
@@ -119,6 +224,7 @@ function renderMetrics(response) {
   }
 
   renderModulePath(metrics?.modules?.stages ?? dialogueFlow?.architecture ?? null);
+  renderBrainActivity(metrics);
 
   if (els.executiveMemo) {
     if (executive) {

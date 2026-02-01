@@ -79,6 +79,14 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     complete_ev = _last_event(events, "interaction_complete") or {}
     arch_ev = _last_event(events, "architecture_path") or {}
     exec_ev = _last_event(events, "executive_reasoner") or {}
+    affect_ev = _last_event(events, "affective_state") or {}
+    focus_ev = _last_event(events, "prefrontal_focus") or {}
+    basal_ev = _last_event(events, "basal_ganglia") or {}
+    unconscious_ev = _last_event(events, "unconscious_field") or {}
+    projection_ev = _last_event(events, "psychoid_attention_projection") or {}
+    neural_ev = _last_event(events, "neural_impulse_activity") or {}
+    hemisphere_ev = _last_event(events, "hemisphere_routing") or {}
+    hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
 
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
 
@@ -111,6 +119,67 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
                     mods.add(str(item))
         active_modules = sorted(mods)
 
+    affect_payload = {
+        "valence": affect_ev.get("valence"),
+        "arousal": affect_ev.get("arousal"),
+        "risk": affect_ev.get("risk"),
+        "novelty": affect_ev.get("novelty"),
+        "hippocampal_density": affect_ev.get("hippocampal_density"),
+    }
+    focus_payload = {}
+    raw_focus = focus_ev.get("focus") if isinstance(focus_ev.get("focus"), dict) else {}
+    if isinstance(raw_focus, dict):
+        focus_payload = {
+            "keywords": raw_focus.get("keywords") if isinstance(raw_focus.get("keywords"), list) else [],
+            "relevance": raw_focus.get("relevance"),
+            "hippocampal_overlap": raw_focus.get("hippocampal_overlap"),
+            "metric": focus_ev.get("metric"),
+        }
+    basal_payload = {}
+    raw_basal = basal_ev.get("signal") if isinstance(basal_ev.get("signal"), dict) else {}
+    if isinstance(raw_basal, dict):
+        basal_payload = {
+            "go_probability": raw_basal.get("go_probability"),
+            "inhibition": raw_basal.get("inhibition"),
+            "dopamine_level": raw_basal.get("dopamine_level"),
+            "recommended_action": raw_basal.get("recommended_action"),
+            "note": raw_basal.get("note"),
+        }
+    unconscious_payload = {}
+    raw_unconscious = unconscious_ev.get("summary") if isinstance(unconscious_ev.get("summary"), dict) else {}
+    if isinstance(raw_unconscious, dict):
+        psychoid = raw_unconscious.get("psychoid_signal") if isinstance(raw_unconscious.get("psychoid_signal"), dict) else {}
+        unconscious_payload = {
+            "top_k": raw_unconscious.get("top_k") if isinstance(raw_unconscious.get("top_k"), list) else [],
+            "stress_released": raw_unconscious.get("stress_released"),
+            "cache_depth": raw_unconscious.get("cache_depth"),
+            "psychoid_tension": psychoid.get("psychoid_tension") if isinstance(psychoid, dict) else None,
+        }
+    projection_payload = {}
+    raw_projection = projection_ev.get("projection") if isinstance(projection_ev.get("projection"), dict) else {}
+    if isinstance(raw_projection, dict):
+        projection_payload = {
+            "norm": raw_projection.get("norm"),
+            "psychoid_tension": raw_projection.get("psychoid_tension"),
+            "chain_length": raw_projection.get("chain_length"),
+        }
+    neural_payload = {}
+    raw_neural = neural_ev.get("activity") if isinstance(neural_ev.get("activity"), dict) else {}
+    if isinstance(raw_neural, dict):
+        network = raw_neural.get("network_activity") if isinstance(raw_neural.get("network_activity"), dict) else {}
+        neural_payload = {
+            "hemisphere": raw_neural.get("hemisphere"),
+            "total_impulses": raw_neural.get("total_impulses"),
+            "stimulus_strength": raw_neural.get("stimulus_strength"),
+            "active_ratio": network.get("active_ratio") if isinstance(network, dict) else None,
+            "avg_membrane_potential": network.get("avg_membrane_potential") if isinstance(network, dict) else None,
+        }
+    hippo_rollup = hippo_rollup_ev.get("rollup") if isinstance(hippo_rollup_ev.get("rollup"), dict) else None
+    hemisphere_payload = {
+        "mode": hemisphere_ev.get("mode"),
+        "intensity": hemisphere_ev.get("intensity"),
+    }
+
     metrics: dict[str, Any] = {
         "coherence": {
             "combined": signal.get("combined"),
@@ -129,6 +198,19 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "active": active_modules,
             "count": len(active_modules),
             "stages": stage_modules,
+        },
+        "brain": {
+            "amygdala": affect_payload,
+            "prefrontal": focus_payload,
+            "basal_ganglia": basal_payload,
+            "unconscious": unconscious_payload,
+            "psychoid": projection_payload,
+            "neural": neural_payload,
+            "hippocampus": {
+                "total": complete_ev.get("hippocampal_total"),
+                "rollup": hippo_rollup,
+            },
+            "hemisphere": hemisphere_payload,
         },
         "executive": {
             "confidence": exec_ev.get("confidence"),
