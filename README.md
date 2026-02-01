@@ -1,36 +1,36 @@
 # SpiralReality Dual Brain LLM
 
-SpiralReality Dual Brain LLM is a research playground for **dual-agent orchestration**: a “left brain” (planner/drafter) and a “right brain” (specialist/deepener) collaborate via an in-memory *corpus callosum* and share a lightweight episodic memory. The goal is to make *why* the system chose a collaboration pattern observable via telemetry, traces, and structured “architecture path” summaries.
+SpiralReality Dual Brain LLM is a research playground for **dual-agent orchestration**: a “left brain” (drafting/speech) and a “right brain” (deepening/lead) collaborate via an in-memory *corpus callosum* while sharing short-term and long-term memory.
+
+The goal is not “AGI”. The goal is **observability**: make it easy to see *why* the system chose a collaboration pattern via metrics, traces, and an explicit “architecture path” view — without mixing those internals into the chat output.
 
 This repository intentionally optimizes for:
 - Experimenting with orchestration policies (when to consult, when to braid, when to stay solo)
-- Inspectable runtime behavior (telemetry, inner-dialogue steps, coherence signals)
-- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over stdio by default, with optional named-pipe IPC)
+- Inspectable runtime behavior (telemetry, inner-dialogue steps, coherence signals, architecture path)
+- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over JSONL by default)
 
-## Architecture (Braided Co-Lead Flow)
-```mermaid
-flowchart TD
-    U[User Input] --> P[Perception Layer<br/>Amygdala + Prefrontal Cortex + Schema Profiler]
-    P --> D[Inner Dialogue Loop<br/>Left/Right Brains + Corpus Callosum]
-    D --> I[Integration & Auditing<br/>Coherence Resonator + Auditor + Default Mode]
-    I --> M[Memory & Consolidation<br/>Shared Memory + Hippocampus + Unconscious Field]
-    M --> R[Final Response]
+## What you can do (today)
+- Run a browser UI with **clean chat** + **separate metrics window**.
+- Watch policy + module activation change as prompts shift from “small talk” to “hard reasoning”.
+- Upload images via `POST /v1/blobs` and reference them on `POST /v1/process` (multimodal plumbing).
+- Inspect any turn via `GET /v1/trace/{qid}` (metrics + dialogue flow + telemetry).
+- Optionally persist memory/telemetry to Postgres.
+
+## Try it (3 minutes)
+
+### 0) (Optional) Set LLM provider/model + API key
+The engine can run without external LLMs (deterministic heuristic fallbacks), but you’ll want real models for quality.
+
+Example (OpenAI-style):
+```bash
+export LLM_PROVIDER=openai
+export LLM_MODEL_ID=gpt-4o-mini
+export OPENAI_API_KEY=sk-...
 ```
 
-By default, `/v1/process` returns a **clean user-facing answer** (no internal debug blocks). The same signals are still available via `telemetry` + `dialogue_flow`, and you can opt-in to debug-style answers via `answer_mode`.
+Tip: if you plan to use images at all, **start with a vision-capable model** even for text-only turns to keep the “thinking substrate” consistent across the session.
 
-## Quick Start (Recommended): REST via C# Gateway
-The recommended research loop is:
-1) C# Minimal API exposes REST endpoints
-2) C# launches and talks to the Python engine over stdio (JSONL) by default
-   - Optional: named-pipe IPC (length-prefixed frames) for faster/larger payloads
-3) Python owns orchestration, memory, and telemetry
-
-### Prerequisites
-- Python 3.10+
-- .NET 8 SDK (ensure `dotnet` is on your `PATH`; on some macOS setups it may live at `/usr/local/share/dotnet/dotnet`)
-
-### Python install
+### 1) Install (Python)
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -43,51 +43,166 @@ pip install -r requirements-pg.txt
 pip install -r requirements-dev.txt
 ```
 
-### Run the gateway
+### 2) Run the gateway (C# REST → Python engine)
+Prereqs:
+- Python 3.10+
+- .NET 8 SDK (`dotnet` on `PATH`; on some macOS setups it may live at `/usr/local/share/dotnet/dotnet`)
+
+Run:
 ```bash
 export DUALBRAIN_REPO_ROOT="$PWD"
 dotnet run --project csharp/SrDualBrain.Gateway --urls http://127.0.0.1:8080
 ```
 
-Optional: switch gateway↔engine IPC to named pipes (recommended for future multimodal / large payload experiments):
+Optional: switch gateway↔engine IPC to named pipes (recommended for multimodal / large payload experiments):
 ```bash
 export DUALBRAIN_ENGINE_TRANSPORT=pipes
 ```
 
 Notes (macOS):
 - .NET named pipes use Unix domain sockets under the hood and have a strict path length limit.
-- If you hit socket path length issues in unusual environments, set `TMPDIR=/tmp/` before running `dotnet run`.
+- If you hit socket path length issues, set `TMPDIR=/tmp/` before running `dotnet run`.
 
 Optional gateway timeout override (useful for long generations / auto-continue):
 ```bash
 export DUALBRAIN_ENGINE_TIMEOUT_SECONDS=120
 ```
 
-### Browser UI (chat + metrics)
+### 3) Open the UI (chat + metrics)
 Open:
 - `http://127.0.0.1:8080/`
 
-The UI lets you optionally pin `provider/model` for the session and set `max_output_tokens`.
+Recommended “research loop”:
+- Keep the **main window** chat-only.
+- Click **Pop out metrics** to open `/metrics.html` in a separate window and monitor:
+  - coherence/tension/routing/policy/latency
+  - active modules
+  - architecture path (stage → modules)
+  - executive memo (out-of-band)
 
-#### Metrics pop-out
-Click **Pop out metrics** to open a separate metrics monitor window (`/metrics.html`). This keeps the main window chat-focused (no metrics mixed into the chat transcript) while the pop-out window updates live as you send messages. Click **Dock** (or the same topbar button) to bring metrics back.
-
-### Call it
+### 4) One curl request (sanity check)
 ```bash
 curl -s http://127.0.0.1:8080/v1/process \
   -H 'content-type: application/json' \
   -d '{
-    "session_id": "demo",
-    "question": "Explain why a dual-agent workflow can improve quality.",
-    "leading_brain": "auto",
+    "session_id":"demo",
+    "question":"Explain (briefly) what the architecture path is.",
+    "leading_brain":"auto",
+    "executive_mode":"assist",
     "return_telemetry": true,
-    "llm": { "provider": "openai", "model": "gpt-4o-mini" }
+    "return_dialogue_flow": true,
+    "llm": { "provider":"openai", "model":"gpt-4o-mini" }
   }'
 ```
 
 Notes:
 - API keys are read from environment variables (do not send keys in requests).
-- `session_id` scopes in-memory state (shared memory + hippocampal episodes) inside the Python engine process.
+- `session_id` scopes memory state inside the Python engine process.
+
+## Architecture (Braided Co-Lead Flow)
+```mermaid
+flowchart TD
+    U[User Input] --> P[Perception Layer<br/>Amygdala + Prefrontal Cortex + Schema Profiler]
+    P --> D[Inner Dialogue Loop<br/>Left/Right Brains + Corpus Callosum]
+    D --> I[Integration & Auditing<br/>Coherence Resonator + Auditor + Default Mode]
+    I --> M[Memory & Consolidation<br/>Working Memory + Shared Memory + Hippocampus]
+    M --> R[Final Response]
+```
+
+By default, `/v1/process` returns a **clean user-facing answer** (no internal debug blocks).
+Everything “internal” lives out-of-band:
+- `metrics` (small, stable UI payload)
+- `dialogue_flow` (inner steps + architecture path)
+- `telemetry` (structured per-module events)
+- `/v1/trace/{qid}` (fetch traces later without polluting the chat output)
+
+## The Python engine: roles + interaction
+
+The core orchestration happens in `sr-dual-brain-llm/core/dual_brain.py` (`DualBrainController.process`).
+
+Treat “brains” as **roles** with strict I/O contracts:
+
+| Role | Responsibility | Output | Where |
+|---|---|---|---|
+| **Left brain (speech/draft)** | Produce the primary user-facing answer draft | Draft answer text | `sr-dual-brain-llm/core/models.py` |
+| **Right brain (deepener/lead)** | Add missing substance; can create a “lead prelude” | Additive notes (not a second full answer) | `sr-dual-brain-llm/core/models.py` |
+| **Corpus callosum** | In-process message bus for right-brain requests/responses | `ASK_DETAIL` / `ASK_LEAD` messages | `sr-dual-brain-llm/core/callosum.py` |
+| **Right worker** | Consumes callosum requests and calls the right model | `notes_sum` / `lead_notes` | `sr-dual-brain-llm/scripts/engine_stdio.py` |
+| **Executive reasoner** | Private meta-control + optional “mix-in” | `memo` (private) + `mix_in` (user-facing micro-addition) + directives | `sr-dual-brain-llm/core/executive_reasoner.py` |
+| **Policy + timing** | Decide whether to consult, set temperature/slot/timeouts | `action`, `temperature`, `slot_ms` | `sr-dual-brain-llm/core/policy*.py`, `sr-dual-brain-llm/core/hypothalamus.py` |
+| **Auditor** | Sanity checks (keep answers clean) | ok/fail | `sr-dual-brain-llm/core/auditor.py` |
+| **Coherence + motifs** | Post-hoc scoring + “why it routed” signals | `coherence_signal` + tags | `sr-dual-brain-llm/core/coherence_resonator.py` |
+
+### Executive “tri-layer” (speech + advice + reasoning)
+This is the “3-layer” structure:
+
+1) **Speech brain** (left): produces the final answer
+2) **Advice brain** (right): produces additive content that can be blended into the answer
+3) **Reasoning brain** (executive): produces:
+   - `memo`: private constraints + priorities (out-of-band only)
+   - `mix_in`: tiny user-facing addition (blended only when `executive_mode=assist`)
+
+Design intent:
+- Keep the **chat transcript clean** (no “writing coach notes”, no internal orchestration talk).
+- Still **observe the system** via the metrics panel and `/v1/trace/{qid}`.
+
+## Memory model (short-term vs long-term)
+
+This repo intentionally separates “sticky memory” from “recent context”:
+
+- **Working memory (PrefrontalCortex)**: short-term, small, clipped summaries of the last few turns. Included only when the question structure suggests it’s needed (language-agnostic heuristics: punctuation, length, digits).  
+  Code: `sr-dual-brain-llm/core/prefrontal_cortex.py`
+- **Shared memory**: lightweight recall of prior Q/A traces.  
+  Code: `sr-dual-brain-llm/core/shared_memory.py`
+- **Hippocampus (episodic memory)**: embedding-backed episodic recall (powerful, but can be noisy if overused).  
+  Code: `sr-dual-brain-llm/core/temporal_hippocampal_indexing.py`
+- **Schema memory (optional, Postgres)**: consolidation output from a deterministic “sleep” job. Intended to be slower-changing and less chatty than raw episodic recall.
+
+Reset behavior:
+- `POST /v1/reset` resets in-process state for a `session_id` (and deletes persisted rows when Postgres is enabled).
+
+## Observability (metrics vs traces)
+
+You’ll see three levels of “what happened”:
+
+1) **`metrics`** (small): coherence/policy/latency + active modules and stage→modules  
+   - `metrics.modules.active`: union of modules seen in the architecture path
+   - `metrics.modules.stages`: ordered stage breakdown (used by the UI “Architecture path” panel)
+2) **`dialogue_flow`** (structured): inner steps + architecture path summary (what modules ran in what order)
+3) **`telemetry`** (raw): per-module event payloads for dashboards/evals
+
+If you stream via SSE (`/v1/process/stream`), fetch traces afterward:
+- `GET /v1/trace/{qid}?session_id=demo&include_telemetry=true&include_dialogue_flow=true`
+
+## UI tour (chat + metrics without pollution)
+
+Open `http://127.0.0.1:8080/`.
+
+### Chat
+- Chat transcript stays **answer-only**.
+- Internal data (executive memo, telemetry, dialogue flow) stays in the metrics pane / pop-out.
+
+### Controls
+- `Session`: scopes memory state inside the engine process.
+- `Leading brain`: `auto|left|right` (force-leading is useful for experiments).
+- `Provider/Model`: optional per-session override (keys still come from env).
+- `Max output tokens`: request-time override (not a secret).
+- `Executive mode`:
+  - `off`: no executive
+  - `observe`: executive memo only (answer unchanged)
+  - `assist`: memo + **mix-in blended into answer**
+  - `polish`: may apply directives as a second-pass rewrite (may reset streams)
+
+### Metrics pane
+- Key numbers: coherence / tension / routing / action / temperature / latency
+- Active modules: quick chip list
+- **Architecture path**: stage-by-stage module timeline (the “what ran” view)
+- Executive memo: out-of-band `memo` + optional `mix_in` + directives metadata
+
+### Metrics pop-out
+Click **Pop out metrics** to open `/metrics.html` in a separate window. This is the recommended “research loop”:
+- Main window: chat only
+- Pop-out: metrics + executive memo + architecture path + traces
 
 ## REST API
 
@@ -97,7 +212,7 @@ Returns gateway + engine health.
 ### `POST /v1/blobs` (multipart upload)
 Uploads a binary blob (e.g., an image) into the Python engine.
 
-This endpoint is intended for future multimodal experiments and uses a separate named-pipe "blob" channel when `DUALBRAIN_ENGINE_TRANSPORT=pipes` is enabled.
+This endpoint is intended for multimodal experiments and uses a separate named-pipe "blob" channel when `DUALBRAIN_ENGINE_TRANSPORT=pipes` is enabled.
 
 Request (multipart/form-data):
 - `session_id` (optional, default `"default"`)
@@ -115,7 +230,7 @@ Query params:
 - `session_id` (default: `"default"`)
 - `include_telemetry` (default: `true`)
 - `include_dialogue_flow` (default: `true`)
-- `include_executive` (default: `true`): include the executive reasoner memo/directives (if available)
+- `include_executive` (default: `true`): include executive memo/mix-in/directives (if available)
 
 ### `POST /v1/reset`
 Resets a session inside the Python engine.
@@ -133,7 +248,7 @@ Request fields:
 - `session_id` (string, default: `"default"`)
 - `leading_brain` (`"auto"|"left"|"right"`, default: `"auto"`)
 - `answer_mode` (`"plain"|"debug"|"annotated"|"meta"`, default: `"plain"`)
-- `executive_mode` (`"off"|"observe"|"polish"`, default: `"off"`)
+- `executive_mode` (`"off"|"observe"|"assist"|"polish"`, default: `"off"`)
   - `off`: no executive reasoner run
   - `observe`: run executive reasoner and store memo (out-of-band only; does not change the answer)
   - `assist`: run executive reasoner and blend a small **user-facing mix-in** into the final answer (memo stays out-of-band)
@@ -155,7 +270,7 @@ Response fields:
 - `qid` (string)
 - `answer` (string)
 - `session_id` (string)
-- `metrics` (object): lightweight summary (coherence/policy/latency) for UI dashboards
+- `metrics` (object): lightweight summary (coherence/policy/latency/modules) for UI dashboards
 - `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
 - `telemetry` (array, optional): structured per-module events emitted during the turn
 
@@ -216,7 +331,7 @@ Request:
 ### Concurrency model
 The gateway currently runs **one Python engine process** and the engine processes requests sequentially (one line in → one line out). This is intentional for determinism during research runs. Scaling options are in the roadmap.
 
-## LLM Configuration
+## LLM configuration
 
 ### Environment variables (recommended)
 The Python engine can call external providers directly via plain HTTP (no SDK deps).
@@ -229,12 +344,12 @@ export OPENAI_API_KEY=sk-...
 ```
 
 Optional overrides:
-- `LEFT_BRAIN_MODEL`, `RIGHT_BRAIN_MODEL`
+- `LEFT_BRAIN_MODEL`, `RIGHT_BRAIN_MODEL`, `EXECUTIVE_MODEL`
 - `LLM_API_BASE` or `<PROVIDER>_API_BASE`
-- `LLM_MAX_OUTPUT_TOKENS` / `LEFT_BRAIN_MAX_TOKENS` / `RIGHT_BRAIN_MAX_TOKENS` (default: 1024)
-- `LLM_TIMEOUT` / `LEFT_BRAIN_TIMEOUT` / `RIGHT_BRAIN_TIMEOUT`
-- `LLM_AUTO_CONTINUE` / `LEFT_BRAIN_AUTO_CONTINUE` / `RIGHT_BRAIN_AUTO_CONTINUE` (default: on)
-- `LLM_MAX_CONTINUATIONS` / `LEFT_BRAIN_MAX_CONTINUATIONS` / `RIGHT_BRAIN_MAX_CONTINUATIONS` (default: 2)
+- `LLM_MAX_OUTPUT_TOKENS` / `LEFT_BRAIN_MAX_TOKENS` / `RIGHT_BRAIN_MAX_TOKENS` / `EXECUTIVE_MAX_TOKENS` (default: 1024)
+- `LLM_TIMEOUT` / `LEFT_BRAIN_TIMEOUT` / `RIGHT_BRAIN_TIMEOUT` / `EXECUTIVE_TIMEOUT`
+- `LLM_AUTO_CONTINUE` / `LEFT_BRAIN_AUTO_CONTINUE` / `RIGHT_BRAIN_AUTO_CONTINUE` / `EXECUTIVE_AUTO_CONTINUE` (default: on)
+- `LLM_MAX_CONTINUATIONS` / `LEFT_BRAIN_MAX_CONTINUATIONS` / `RIGHT_BRAIN_MAX_CONTINUATIONS` / `EXECUTIVE_MAX_CONTINUATIONS` (default: 2)
 - `OPENAI_ORGANIZATION`
 
 Auto-continue will issue follow-up calls when a provider reports that output stopped due to token limits (e.g., OpenAI-style `finish_reason=length`, Anthropic `stop_reason=max_tokens`).
@@ -244,7 +359,23 @@ Use provider-specific keys (e.g., `ANTHROPIC_API_KEY`) or the shared `LLM_API_KE
 
 Supported providers: `openai`, `google`, `anthropic`, `mistral`, `xai`, `huggingface`.
 
-## Postgres-backed Stateful Memory (Optional)
+## Multimodal (images) without base64 in requests
+
+Why this exists:
+- Sending `data:<mime>;base64,...` directly from the browser is slow and bloats logs.
+- Switching models when an image appears can change behavior mid-conversation.
+
+Recommended flow:
+1) Pick a **vision-capable model** from the start (even for text-only).
+2) Upload images via `POST /v1/blobs` (multipart).
+3) Reference them via `attachments` on `POST /v1/process`.
+
+Under the hood:
+- The engine stores blobs on disk under `DUALBRAIN_BLOB_DIR`.
+- The engine converts blobs to data URLs *inside the Python process* (for providers that require it) and keeps a small in-memory cache (`DUALBRAIN_VISION_CACHE_ITEMS`) to avoid repeated base64 work.
+- If you enable `DUALBRAIN_ENGINE_TRANSPORT=pipes`, blob uploads use a dedicated named-pipe channel for higher throughput.
+
+## Postgres-backed stateful memory (optional)
 To persist state across engine restarts, set:
 - `DUALBRAIN_PG_DSN` (e.g., `postgresql://user:pass@localhost:5432/dual_brain`)
 
@@ -273,7 +404,7 @@ On session creation, the engine loads recent schema memories (default: 16) and m
 
 Resetting a session via `POST /v1/reset` will also delete the persisted rows for that session.
 
-## Running without HTTP (Engine JSONL)
+## Running without HTTP (engine JSONL)
 If you want to debug the engine protocol directly:
 ```bash
 printf '{"id":"1","method":"health","params":{}}\n' | python3 sr-dual-brain-llm/scripts/engine_stdio.py
@@ -286,7 +417,7 @@ python3 sr-dual-brain-llm/scripts/engine_stdio.py <<'EOF'
 EOF
 ```
 
-## Running the Interactive Orchestrator (Python-only)
+## Running the interactive orchestrator (Python-only)
 ```bash
 python3 sr-dual-brain-llm/scripts/run_server.py
 ```
@@ -295,22 +426,21 @@ python3 sr-dual-brain-llm/scripts/run_server.py
 - Python tests: `python3 -m pytest -q`
 - C# build: `dotnet build csharp/SrDualBrain.Gateway -c Release`
 
-## Repository Layout
+## Repository layout
 ```
 .
 ├── csharp/
-│   └── SrDualBrain.Gateway/        # C# Minimal API REST gateway (HTTP → Python stdio)
+│   └── SrDualBrain.Gateway/        # C# Minimal API REST gateway (HTTP → Python stdio/pipes)
 ├── docs/                           # Design notes / playbooks
 ├── sr-dual-brain-llm/
 │   ├── core/                       # Orchestration + memory + telemetry modules
-│   ├── dashboard/                  # Experimental UI (not required for REST path)
 │   └── scripts/
 │       ├── engine_stdio.py         # JSONL engine entrypoint (used by the C# gateway)
 │       └── run_server.py           # Interactive CLI loop
 └── tests/
 ```
 
-## Roadmap (Next Research Upgrades)
+## Roadmap (next research upgrades)
 - **Stateful memory backends**:
   - Redis for fast shared state + TTL / decay
   - Postgres for durable episodic traces + queryable analytics
