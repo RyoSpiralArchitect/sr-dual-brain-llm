@@ -39,6 +39,11 @@ const els = {
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
+  btnExportTrace: $("btnExportTrace"),
+  btnExportTelemetry: $("btnExportTelemetry"),
+  btnExportDialogueFlow: $("btnExportDialogueFlow"),
+  btnExportBrainHistory: $("btnExportBrainHistory"),
+  btnExportChat: $("btnExportChat"),
 };
 
 let lastLlmSignature = null;
@@ -50,6 +55,7 @@ let lastMetricsPayload = null;
 let pendingBlobs = [];
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
+const selectedQidBySession = new Map();
 
 function isMetricsPopoutOpen() {
   return !!metricsPopout && !metricsPopout.closed;
@@ -178,6 +184,50 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function nowStamp() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function downloadText(filename, text, { mime = "text/plain" } = {}) {
+  const blob = new Blob([String(text)], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadJson(filename, obj) {
+  downloadText(filename, JSON.stringify(obj, null, 2), { mime: "application/json" });
+}
+
+function openDetailsFor(ids) {
+  for (const id of ids) {
+    const el = $(id);
+    const details = el?.closest?.("details");
+    if (details) details.open = true;
+  }
+}
+
+function collectChatFromDom() {
+  const bubbles = Array.from(els.chatLog?.querySelectorAll?.(".bubble") ?? []);
+  return bubbles.map((bubble) => {
+    const isUser = bubble.classList.contains("bubble--user");
+    const meta = bubble.querySelector(".bubble__meta")?.textContent ?? "";
+    const content = bubble.querySelector(".bubble__content")?.textContent ?? "";
+    return {
+      role: isUser ? "user" : "assistant",
+      meta: meta.trim(),
+      content: content,
+    };
+  });
 }
 
 function appendBubble(role, content, meta = {}) {
@@ -455,6 +505,7 @@ function renderBrainHistory(sessionId) {
   els.brainHistory.innerHTML = "";
 
   const history = getBrainHistory(sessionId);
+  const selectedQid = selectedQidBySession.get(sessionId) || "";
   if (!history.length) {
     const empty = document.createElement("div");
     empty.className = "bh__empty";
@@ -500,13 +551,18 @@ function renderBrainHistory(sessionId) {
     for (let i = 0; i < history.length; i++) {
       const snap = history[i] || {};
       const value = clamp01(snap?.values?.[row.key]);
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
+      cell.type = "button";
       cell.className = "bh__cell";
       cell.style.setProperty("--i", String(value));
       cell.style.setProperty("--accent", row.accent);
       const ts = snap?.ts ? new Date(snap.ts).toLocaleTimeString() : "";
       const qid = String(snap?.qid || "").slice(0, 8);
       cell.title = `${ts}${qid ? ` · qid ${qid}` : ""} · ${row.label}=${value.toFixed(2)}`;
+      if (snap?.qid && selectedQid && snap.qid === selectedQid) {
+        cell.classList.add("bh__cell--selected");
+      }
+      cell.addEventListener("click", () => jumpToTrace(sessionId, snap?.qid));
       cells.appendChild(cell);
     }
     rowEl.appendChild(cells);
@@ -514,9 +570,10 @@ function renderBrainHistory(sessionId) {
   }
 }
 
-function renderMetrics(response) {
+function renderMetrics(response, opts = {}) {
+  const renderSource = opts?.source ?? "live";
   const qid = response?.qid ?? "";
-  els.metricsSubtitle.textContent = qid ? `qid ${qid}` : "—";
+  els.metricsSubtitle.textContent = qid ? `qid ${qid}${renderSource === "trace" ? " · trace" : ""}` : "—";
 
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
@@ -592,8 +649,12 @@ function renderMetrics(response) {
 
   renderModulePath(metrics?.modules?.stages ?? dialogueFlow?.architecture ?? null);
   renderBrainActivity(metrics);
-  upsertBrainHistory(response?.session_id ?? "default", snapshotBrain(metrics, { qid }));
-  renderBrainHistory(response?.session_id ?? "default");
+  const sessionId = response?.session_id ?? "default";
+  selectedQidBySession.set(sessionId, qid || "");
+  if (renderSource !== "trace") {
+    upsertBrainHistory(sessionId, snapshotBrain(metrics, { qid }));
+  }
+  renderBrainHistory(sessionId);
 
   if (els.executiveMemo) {
     if (executive) {
@@ -723,6 +784,80 @@ function mergeTrace(result, trace) {
     dialogue_flow: trace.dialogue_flow ?? result.dialogue_flow,
     executive: trace.executive ?? result.executive,
     executive_observer: trace.executive_observer ?? result.executive_observer,
+  };
+}
+
+function normaliseTraceToPayload(trace, { sessionIdFallback } = {}) {
+  const sid = trace?.session_id ?? sessionIdFallback ?? "default";
+  return {
+    qid: trace?.qid ?? "",
+    session_id: sid,
+    metrics: trace?.metrics ?? {},
+    telemetry: trace?.telemetry ?? [],
+    dialogue_flow: trace?.dialogue_flow ?? {},
+    executive: trace?.executive ?? null,
+    executive_observer: trace?.executive_observer ?? null,
+    ts: trace?.ts ?? null,
+  };
+}
+
+async function jumpToTrace(sessionId, qid) {
+  const sid = (sessionId || "default").trim() || "default";
+  const id = String(qid || "").trim();
+  if (!id) return;
+
+  try {
+    const trace = await fetchTrace(sid, id, {
+      includeTelemetry: true,
+      includeDialogueFlow: true,
+      includeExecutive: true,
+    });
+    if (!trace?.found) {
+      throw new Error("trace not found (engine may have restarted)");
+    }
+    renderMetrics(normaliseTraceToPayload(trace, { sessionIdFallback: sid }), { source: "trace" });
+    openDetailsFor(["executiveMemo", "executiveObserverMemo", "telemetryRaw", "dialogueFlowRaw"]);
+  } catch (err) {
+    setStatus("warn", `trace load failed: ${String(err)}`);
+  }
+}
+
+async function getFullTracePayload(payload) {
+  const base = payload && typeof payload === "object" ? payload : null;
+  const sessionId = (base?.session_id || "default").trim() || "default";
+  const qid = String(base?.qid || "").trim();
+  if (!qid) {
+    throw new Error("No qid available yet.");
+  }
+
+  const hasTelemetry = Array.isArray(base?.telemetry);
+  const hasDialogueFlow = base?.dialogue_flow && typeof base.dialogue_flow === "object";
+  const hasExecutive = base?.executive != null || base?.executive_observer != null;
+  if (hasTelemetry && hasDialogueFlow && hasExecutive) {
+    const clone = { ...base };
+    delete clone._client;
+    return clone;
+  }
+
+  let trace = null;
+  try {
+    trace = await fetchTrace(sessionId, qid, {
+      includeTelemetry: true,
+      includeDialogueFlow: true,
+      includeExecutive: true,
+    });
+  } catch {
+    trace = null;
+  }
+  if (!trace?.found) {
+    const clone = { ...base };
+    delete clone._client;
+    return clone;
+  }
+  return {
+    ...base,
+    ...normaliseTraceToPayload(trace, { sessionIdFallback: sessionId }),
+    _client: undefined,
   };
 }
 
@@ -886,6 +1021,7 @@ els.btnClear.addEventListener("click", () => {
   if (els.brainActivity) els.brainActivity.innerHTML = "";
   if (els.brainHistory) els.brainHistory.innerHTML = "";
   brainHistoryBySession.clear();
+  selectedQidBySession.clear();
   els.metricsSubtitle.textContent = "—";
   els.mCoherence.textContent = "—";
   els.mTension.textContent = "—";
@@ -908,6 +1044,7 @@ els.btnReset.addEventListener("click", async () => {
     pendingBlobs = [];
     renderBlobs();
     brainHistoryBySession.delete(sessionId);
+    selectedQidBySession.delete(sessionId);
     if (els.brainHistory) els.brainHistory.innerHTML = "";
   } catch (err) {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
@@ -961,8 +1098,73 @@ window.addEventListener("message", (e) => {
     return;
   }
 
+  if (msg.type === "srdb.trace.jump") {
+    const payload = msg.payload ?? {};
+    const sessionId = payload?.session_id ?? (els.sessionId.value || "default");
+    const qid = payload?.qid ?? "";
+    jumpToTrace(sessionId, qid);
+    return;
+  }
+
   if (msg.type === "srdb.metrics.dock") {
     dockMetricsPopout();
+  }
+});
+
+els.btnExportTrace?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastMetricsPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_trace_${sid}_${qid}_${nowStamp()}.json`, full);
+  } catch (err) {
+    setStatus("warn", `export trace failed: ${String(err)}`);
+  }
+});
+
+els.btnExportTelemetry?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastMetricsPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_telemetry_${sid}_${qid}_${nowStamp()}.json`, full?.telemetry ?? []);
+  } catch (err) {
+    setStatus("warn", `export telemetry failed: ${String(err)}`);
+  }
+});
+
+els.btnExportDialogueFlow?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastMetricsPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_dialogue_flow_${sid}_${qid}_${nowStamp()}.json`, full?.dialogue_flow ?? {});
+  } catch (err) {
+    setStatus("warn", `export dialogue failed: ${String(err)}`);
+  }
+});
+
+els.btnExportBrainHistory?.addEventListener("click", () => {
+  try {
+    const sessionId = (els.sessionId.value || "default").trim() || "default";
+    const history = getBrainHistory(sessionId);
+    downloadJson(`srdb_brain_history_${sessionId}_${nowStamp()}.json`, {
+      session_id: sessionId,
+      limit: brainHistoryLimit,
+      items: history,
+    });
+  } catch (err) {
+    setStatus("warn", `export brain history failed: ${String(err)}`);
+  }
+});
+
+els.btnExportChat?.addEventListener("click", () => {
+  try {
+    const sessionId = (els.sessionId.value || "default").trim() || "default";
+    const chat = collectChatFromDom();
+    downloadJson(`srdb_chat_${sessionId}_${nowStamp()}.json`, { session_id: sessionId, messages: chat });
+  } catch (err) {
+    setStatus("warn", `export chat failed: ${String(err)}`);
   }
 });
 

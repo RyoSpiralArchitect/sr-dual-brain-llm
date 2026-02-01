@@ -16,11 +16,101 @@ const els = {
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
+  btnExportTrace: $("btnExportTrace"),
+  btnExportTelemetry: $("btnExportTelemetry"),
+  btnExportDialogueFlow: $("btnExportDialogueFlow"),
+  btnExportBrainHistory: $("btnExportBrainHistory"),
   btnDock: $("btnDock"),
 };
 
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
+const selectedQidBySession = new Map();
+
+let lastPayload = null;
+
+function nowStamp() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function downloadText(filename, text, { mime = "text/plain" } = {}) {
+  const blob = new Blob([String(text)], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadJson(filename, obj) {
+  downloadText(filename, JSON.stringify(obj, null, 2), { mime: "application/json" });
+}
+
+async function fetchTrace(sessionId, qid, { includeTelemetry, includeDialogueFlow, includeExecutive }) {
+  const qs = new URLSearchParams({
+    session_id: sessionId,
+    include_telemetry: includeTelemetry ? "true" : "false",
+    include_dialogue_flow: includeDialogueFlow ? "true" : "false",
+    include_executive: includeExecutive ? "true" : "false",
+  });
+  const res = await fetch(`/v1/trace/${encodeURIComponent(qid)}?${qs.toString()}`, { cache: "no-store" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Trace HTTP ${res.status}: ${text}`);
+  }
+  return await res.json();
+}
+
+async function getFullTracePayload(payload) {
+  const base = payload && typeof payload === "object" ? payload : null;
+  const sessionId = (base?.session_id || "default").trim() || "default";
+  const qid = String(base?.qid || "").trim();
+  if (!qid) throw new Error("No qid available yet.");
+
+  const hasTelemetry = Array.isArray(base?.telemetry);
+  const hasDialogueFlow = base?.dialogue_flow && typeof base.dialogue_flow === "object";
+  const hasExecutive = base?.executive != null || base?.executive_observer != null;
+  if (hasTelemetry && hasDialogueFlow && hasExecutive) {
+    const clone = { ...base };
+    delete clone._client;
+    return clone;
+  }
+
+  let trace = null;
+  try {
+    trace = await fetchTrace(sessionId, qid, {
+      includeTelemetry: true,
+      includeDialogueFlow: true,
+      includeExecutive: true,
+    });
+  } catch {
+    trace = null;
+  }
+  if (!trace?.found) {
+    const clone = { ...base };
+    delete clone._client;
+    return clone;
+  }
+
+  const merged = {
+    ...base,
+    qid: trace?.qid ?? qid,
+    session_id: trace?.session_id ?? sessionId,
+    metrics: trace?.metrics ?? {},
+    telemetry: trace?.telemetry ?? [],
+    dialogue_flow: trace?.dialogue_flow ?? {},
+    executive: trace?.executive ?? null,
+    executive_observer: trace?.executive_observer ?? null,
+    ts: trace?.ts ?? null,
+  };
+  delete merged._client;
+  return merged;
+}
 
 function renderModulePath(stages) {
   if (!els.modulePath) return;
@@ -230,6 +320,7 @@ function renderBrainHistory(sessionId) {
   els.brainHistory.innerHTML = "";
 
   const history = getBrainHistory(sessionId);
+  const selectedQid = selectedQidBySession.get(sessionId) || "";
   if (!history.length) {
     const empty = document.createElement("div");
     empty.className = "bh__empty";
@@ -275,13 +366,45 @@ function renderBrainHistory(sessionId) {
     for (let i = 0; i < history.length; i++) {
       const snap = history[i] || {};
       const value = clamp01(snap?.values?.[row.key]);
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
+      cell.type = "button";
       cell.className = "bh__cell";
       cell.style.setProperty("--i", String(value));
       cell.style.setProperty("--accent", row.accent);
       const ts = snap?.ts ? new Date(snap.ts).toLocaleTimeString() : "";
       const qid = String(snap?.qid || "").slice(0, 8);
       cell.title = `${ts}${qid ? ` · qid ${qid}` : ""} · ${row.label}=${value.toFixed(2)}`;
+      if (snap?.qid && selectedQid && snap.qid === selectedQid) {
+        cell.classList.add("bh__cell--selected");
+      }
+      cell.addEventListener("click", async () => {
+        const fullQid = String(snap?.qid || "").trim();
+        if (!fullQid) return;
+        postToOpener({ type: "srdb.trace.jump", payload: { session_id: sessionId, qid: fullQid } });
+        if (!window.opener || window.opener.closed) {
+          try {
+            const trace = await fetchTrace(sessionId, fullQid, {
+              includeTelemetry: true,
+              includeDialogueFlow: true,
+              includeExecutive: true,
+            });
+            if (trace?.found) {
+              renderMetrics({
+                qid: trace?.qid ?? fullQid,
+                session_id: trace?.session_id ?? sessionId,
+                metrics: trace?.metrics ?? {},
+                telemetry: trace?.telemetry ?? [],
+                dialogue_flow: trace?.dialogue_flow ?? {},
+                executive: trace?.executive ?? null,
+                executive_observer: trace?.executive_observer ?? null,
+                ts: trace?.ts ?? null,
+              });
+            }
+          } catch (err) {
+            console.warn("trace jump failed", err);
+          }
+        }
+      });
       cells.appendChild(cell);
     }
     rowEl.appendChild(cells);
@@ -290,11 +413,13 @@ function renderBrainHistory(sessionId) {
 }
 
 function renderMetrics(response) {
+  lastPayload = response;
   const qid = response?.qid ?? "";
   const sessionId = response?.session_id ?? "";
   const stamp = new Date().toLocaleTimeString();
   const subtitle = [qid ? `qid ${qid}` : "", sessionId ? `session ${sessionId}` : "", stamp].filter(Boolean).join(" · ");
   els.metricsSubtitle.textContent = subtitle || "—";
+  selectedQidBySession.set(sessionId || "default", qid || "");
 
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
@@ -405,6 +530,49 @@ window.addEventListener("message", (e) => {
 
   if (msg.type === "srdb.metrics") {
     renderMetrics(msg.payload);
+  }
+});
+
+els.btnExportTrace?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_trace_${sid}_${qid}_${nowStamp()}.json`, full);
+  } catch (err) {
+    console.warn("export trace failed", err);
+  }
+});
+
+els.btnExportTelemetry?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_telemetry_${sid}_${qid}_${nowStamp()}.json`, full?.telemetry ?? []);
+  } catch (err) {
+    console.warn("export telemetry failed", err);
+  }
+});
+
+els.btnExportDialogueFlow?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    downloadJson(`srdb_dialogue_flow_${sid}_${qid}_${nowStamp()}.json`, full?.dialogue_flow ?? {});
+  } catch (err) {
+    console.warn("export dialogue failed", err);
+  }
+});
+
+els.btnExportBrainHistory?.addEventListener("click", () => {
+  try {
+    const sid = (lastPayload?.session_id || "default").trim() || "default";
+    const history = getBrainHistory(sid);
+    downloadJson(`srdb_brain_history_${sid}_${nowStamp()}.json`, { session_id: sid, limit: brainHistoryLimit, items: history });
+  } catch (err) {
+    console.warn("export brain history failed", err);
   }
 });
 
