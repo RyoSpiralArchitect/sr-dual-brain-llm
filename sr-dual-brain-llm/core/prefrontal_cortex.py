@@ -631,13 +631,19 @@ class PrefrontalCortex:
         if re.fullmatch(r"[\W_]+", q, flags=re.UNICODE):
             return True
 
-        # Questions are usually non-trivial unless they're basically just "??".
-        if ("?" in q) or ("？" in q):
-            return stats["alnum"] <= 3
-
         # Low-information short turns (greetings / acknowledgements) tend to live here.
         tokens = re.findall(r"[\w']+", q_lower, flags=re.UNICODE)
         token_count = len([t for t in tokens if t])
+
+        # Questions are usually non-trivial, but ultra-short follow-ups like
+        # "??" / "and you?" / "そっちは？" should still be treated as trivial.
+        if ("?" in q) or ("？" in q):
+            if stats["alnum"] <= 3:
+                return True
+            if token_count <= 2 and stats["alnum"] <= 8:
+                return True
+            return False
+
         if token_count <= 2 and stats["alnum"] <= 8:
             return True
         if token_count == 1 and stats["alnum"] <= 5:

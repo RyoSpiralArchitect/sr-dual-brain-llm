@@ -68,16 +68,23 @@ class EpisodicTrace:
     def payload(self) -> str:
         return f"Q: {self.question}\nA: {self.answer}"
 
-    def summary(self, *, similarity: Optional[float] = None, max_chars: int = 240) -> str:
+    def summary(
+        self,
+        *,
+        similarity: Optional[float] = None,
+        max_chars: int = 240,
+        include_meta: bool = True,
+    ) -> str:
         parts: List[str] = []
-        if similarity is not None:
-            parts.append(f"sim={similarity:.2f}")
-        if self.leading:
-            parts.append(f"lead={self.leading}")
-        if self.collaboration_strength is not None:
-            parts.append(f"collab={self.collaboration_strength:.2f}")
-        if self.selection_reason:
-            parts.append(self.selection_reason)
+        if include_meta:
+            if similarity is not None:
+                parts.append(f"sim={similarity:.2f}")
+            if self.leading:
+                parts.append(f"lead={self.leading}")
+            if self.collaboration_strength is not None:
+                parts.append(f"collab={self.collaboration_strength:.2f}")
+            if self.selection_reason:
+                parts.append(self.selection_reason)
         prefix = f"({'; '.join(parts)}) " if parts else ""
         answer_snippet = self.answer.replace("\n", " ")[:max_chars]
         return f"{prefix}Q: {self.question[:max_chars]} | A: {answer_snippet}"
@@ -153,12 +160,24 @@ class TemporalHippocampalIndexing:
         return [(sim, trace) for _, _, _, sim, trace in scored[:topk]]
 
     def retrieve_summary(
-        self, query: str, topk: int = 3, max_chars: int = 240
+        self,
+        query: str,
+        topk: int = 3,
+        max_chars: int = 240,
+        *,
+        include_meta: bool = True,
     ) -> str:
         hits = self.retrieve(query, topk=topk)
         if not hits:
             return ""
-        parts = [trace.summary(similarity=sim, max_chars=max_chars) for sim, trace in hits]
+        parts = [
+            trace.summary(
+                similarity=(sim if include_meta else None),
+                max_chars=max_chars,
+                include_meta=include_meta,
+            )
+            for sim, trace in hits
+        ]
         return " | ".join(parts)
 
     def collaboration_rollup(self, window: int = 10) -> Dict[str, float]:

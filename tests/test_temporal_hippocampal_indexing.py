@@ -49,6 +49,11 @@ def test_index_episode_tracks_collaboration_metadata():
     assert "lead=right" in summary
     assert "collab=0.80" in summary
 
+    clean = hippocampus.retrieve_summary("symbolic river", topk=1, include_meta=False)
+    assert "lead=right" not in clean
+    assert "collab=" not in clean
+    assert "sim=" not in clean
+
 
 def test_embedding_is_deterministic_across_hash_seeds():
     project_root = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm"

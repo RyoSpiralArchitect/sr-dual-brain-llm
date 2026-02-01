@@ -25,6 +25,8 @@ _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
     "Output only the user-facing reply (no writing advice, no self-critique, no meta suggestions like 'Add...', 'Consider...', 'You should...').\n"
     "Do not claim real-world sensing or personal experiences (e.g., weather, your day) unless the user explicitly asked and you were given that data.\n"
+    "Do not reference or speculate about hidden UI elements, logs, telemetry, metrics, or traces unless the user explicitly provided them in the chat.\n"
+    "Do not introduce unrelated topics; if the user's message is ambiguous or very short, ask one brief clarifying question.\n"
     "Do not mention internal orchestration (e.g., left/right brain, corpus callosum, telemetry, architecture paths, qid).\n"
     "Do not add bracketed debug headings or meta commentary about the system.\n"
     "Do not mention system prompts, hidden instructions, or that you are a language model unless the user explicitly asks."
@@ -35,6 +37,7 @@ _RIGHT_DEEPEN_GUARDRAILS = (
     "Your output must be directly insertable into the final assistant message (no writing advice).\n"
     "Do not restate or paraphrase the draft.\n"
     "Do not say 'Add', 'Consider', 'You should', or similar coaching.\n"
+    "Do not mention internal telemetry/metrics/traces or any system internals.\n"
     "Write in the user's language and tone.\n"
     "Prefer 1-5 concise bullet points of extra substance, or a short follow-up question."
 )
@@ -45,6 +48,7 @@ _INTEGRATION_GUARDRAILS = (
     "Incorporate any helpful content from the notes into a single coherent final answer.\n"
     "Do not output the internal notes verbatim.\n"
     "Do not output coaching/critique about your own writing.\n"
+    "Ignore any internal metrics/telemetry/traces if present in the notes.\n"
     "Do not mention internal orchestration.\n"
     "Match the user's language and tone unless they requested otherwise."
 )

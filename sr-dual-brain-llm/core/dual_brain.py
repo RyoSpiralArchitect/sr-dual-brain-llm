@@ -752,7 +752,9 @@ class DualBrainController:
                 schema_context = ""
         hippocampal_context = ""
         if include_long_term and self.hippocampus is not None:
-            hippocampal_context = self.hippocampus.retrieve_summary(question)
+            hippocampal_context = self.hippocampus.retrieve_summary(
+                question, include_meta=False
+            )
 
         segments = []
         if working_memory_context:

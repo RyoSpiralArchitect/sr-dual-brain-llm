@@ -74,6 +74,7 @@ def test_prefrontal_trivial_chat_detection_uses_structural_cues():
     assert cortex.is_trivial_chat_turn("やあ")
     assert cortex.is_trivial_chat_turn("hi")
     assert cortex.is_trivial_chat_turn("??")
+    assert cortex.is_trivial_chat_turn("特に。そっちは？")
     assert not cortex.is_trivial_chat_turn("詳しく分析してください。")
     assert not cortex.is_trivial_chat_turn("How does this work?")
 
