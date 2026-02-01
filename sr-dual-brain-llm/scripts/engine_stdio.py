@@ -88,6 +88,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     neural_ev = _last_event(events, "neural_impulse_activity") or {}
     hemisphere_ev = _last_event(events, "hemisphere_routing") or {}
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
+    meta_ev = _last_event(events, "metacognition") or {}
 
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
 
@@ -180,6 +181,18 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         "mode": hemisphere_ev.get("mode"),
         "intensity": hemisphere_ev.get("intensity"),
     }
+    metacognition_payload = {}
+    if isinstance(meta_ev, dict):
+        flags = meta_ev.get("flags")
+        metacognition_payload = {
+            "action": meta_ev.get("action"),
+            "flags": flags if isinstance(flags, list) else [],
+            "coverage": meta_ev.get("coverage"),
+            "repetition": meta_ev.get("repetition"),
+            "question_len": meta_ev.get("question_len"),
+            "answer_len": meta_ev.get("answer_len"),
+            "revised_len": meta_ev.get("revised_len"),
+        }
 
     metrics: dict[str, Any] = {
         "coherence": {
@@ -218,6 +231,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "latency_ms": exec_ev.get("latency_ms"),
             "source": exec_ev.get("source"),
         },
+        "metacognition": metacognition_payload,
         "telemetry_events": len(events or []),
     }
     return metrics

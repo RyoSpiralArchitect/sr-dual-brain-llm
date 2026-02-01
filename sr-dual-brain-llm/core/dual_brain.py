@@ -2401,7 +2401,121 @@ class DualBrainController:
             )
         )
 
-        audit_result = self.auditor.check(user_answer)
+        audit_result = self.auditor.check(
+            user_answer,
+            question=question,
+            focus_keywords=tuple(focus_keywords or ()),
+            working_memory_context=str(context_parts.get("working_memory") or ""),
+            is_trivial_chat=bool(is_trivial_chat),
+            allow_debug=bool(emit_debug_sections),
+        )
+        metacognition = audit_result.get("metacognition")
+        if isinstance(metacognition, dict):
+            try:
+                self.telemetry.log(
+                    "metacognition",
+                    qid=decision.qid,
+                    **metacognition,
+                )
+            except Exception:  # pragma: no cover - telemetry is best-effort
+                pass
+            flags = metacognition.get("flags")
+            if isinstance(flags, list):
+                for flag in flags:
+                    if flag:
+                        tags.add(f"metacognition_{flag}")
+            action = metacognition.get("action")
+            if action:
+                tags.add(f"metacognition_action_{action}")
+
+        revised_answer = audit_result.get("revised_answer")
+        if isinstance(revised_answer, str) and revised_answer.strip():
+            user_answer = revised_answer.strip()
+            final_answer = user_answer
+        # Ensure director-provided clarifying question remains present even when the
+        # metacognition layer rewrites the answer (e.g., repetition cleanup).
+        if (
+            not emit_debug_sections
+            and director_append_question
+            and director_append_question not in (user_answer or "")
+        ):
+            base = (user_answer or "").strip()
+            suffix = director_append_question.strip()
+            sep = "\n\n" if base and suffix else ""
+            max_chars: Optional[int] = None
+            if director_max_chars is not None:
+                try:
+                    max_chars = int(director_max_chars)
+                except Exception:
+                    max_chars = None
+                if max_chars is not None:
+                    max_chars = max(80, min(2400, max_chars))
+            if max_chars is not None and max_chars > 0:
+                reserved = len(sep) + len(suffix)
+                if reserved >= max_chars:
+                    if len(suffix) > max_chars:
+                        cutoff = max(0, max_chars - 3)
+                        suffix = suffix[:cutoff].rstrip() + "..."
+                    user_answer = suffix
+                else:
+                    allowed_base = max_chars - reserved
+                    if len(base) > allowed_base:
+                        cutoff = max(0, allowed_base - 3)
+                        base = base[:cutoff].rstrip() + "..."
+                    user_answer = f"{base}{sep}{suffix}".strip()
+            else:
+                user_answer = f"{base}{sep}{suffix}".strip()
+            final_answer = user_answer
+
+        if not emit_debug_sections and isinstance(metacognition, dict):
+            meta_action = str(metacognition.get("action") or "").strip().lower()
+            meta_q = str(metacognition.get("clarifying_question") or "").strip()
+            meta_replace = bool(metacognition.get("clarifying_replace"))
+            if meta_action == "clarify" and meta_q:
+                # Prefer the director's clarifying question when present, to keep the
+                # "executive prefrontal" voice consistent.
+                chosen_q = director_append_question.strip() if director_append_question else meta_q
+                if meta_replace:
+                    user_answer = _sanitize_user_answer(chosen_q).strip()
+                    if director_max_chars is not None and user_answer:
+                        try:
+                            max_chars = int(director_max_chars)
+                        except Exception:
+                            max_chars = None
+                        if max_chars is not None:
+                            max_chars = max(80, min(2400, max_chars))
+                            if len(user_answer) > max_chars:
+                                cutoff = max(0, max_chars - 3)
+                                user_answer = user_answer[:cutoff].rstrip() + "..."
+                    final_answer = user_answer
+                elif chosen_q not in (user_answer or ""):
+                    base = (user_answer or "").strip()
+                    suffix = chosen_q.strip()
+                    sep = "\n\n" if base and suffix else ""
+                    max_chars: Optional[int] = None
+                    if director_max_chars is not None:
+                        try:
+                            max_chars = int(director_max_chars)
+                        except Exception:
+                            max_chars = None
+                        if max_chars is not None:
+                            max_chars = max(80, min(2400, max_chars))
+                    if max_chars is not None and max_chars > 0:
+                        reserved = len(sep) + len(suffix)
+                        if reserved >= max_chars:
+                            if len(suffix) > max_chars:
+                                cutoff = max(0, max_chars - 3)
+                                suffix = suffix[:cutoff].rstrip() + "..."
+                            user_answer = suffix
+                        else:
+                            allowed_base = max_chars - reserved
+                            if len(base) > allowed_base:
+                                cutoff = max(0, allowed_base - 3)
+                                base = base[:cutoff].rstrip() + "..."
+                            user_answer = f"{base}{sep}{suffix}".strip()
+                    else:
+                        user_answer = f"{base}{sep}{suffix}".strip()
+                    final_answer = user_answer
         if not audit_result.get("ok", True):
             user_answer = draft
             final_answer = user_answer

@@ -203,6 +203,53 @@ class ContextCapturingLeft:
         return draft
 
 
+class WeatherClaimLeft:
+    uses_external_llm = False
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        return "元気だよ、ありがとう！今日の天気も良くて、なんだかポジティブな気分が続いてるんだ。君はどう？"
+
+    def estimate_confidence(self, draft: str) -> float:
+        return 0.95
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        return draft
+
+
+class OffTopicLeft:
+    uses_external_llm = False
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        return "猫が好きです。最近は黒猫が特に好きで、写真を見るのが楽しいです。"
+
+    def estimate_confidence(self, draft: str) -> float:
+        return 0.95
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        return draft
+
+
+class AlwaysSkipPolicy:
+    def decide(self, state):  # noqa: ANN001
+        return 0
+
+
 def test_director_can_skip_consult_and_clamp_output():
     callosum = DummyCallosum()
     memory = SharedMemory()
@@ -546,6 +593,69 @@ def test_controller_falls_back_to_local_right_model():
     assert architecture_events, "Architecture path should be logged even on fallback"
     fallback_path = architecture_events[-1]["path"]
     assert any(stage.get("stage") == "inner_dialogue" for stage in fallback_path)
+
+
+def test_metacognition_strips_unasked_weather_claims():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    cortex = PrefrontalCortex()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=WeatherClaimLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=cortex,
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("調子はどう？"))
+
+    assert callosum.payloads == []
+    assert "天気" not in answer
+    assert "元気" in answer
+    meta = [payload for evt, payload in telemetry.events if evt == "metacognition"]
+    assert meta
+    assert "unsupported_sensing" in (meta[-1].get("flags") or [])
+
+
+def test_metacognition_replaces_offtopic_answer_with_clarifying_question():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=OffTopicLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("量子 デコヒーレンス を説明して"))
+
+    assert callosum.payloads == []
+    assert "猫" not in answer
+    assert "デコヒーレンス" in answer
+    meta = [payload for evt, payload in telemetry.events if evt == "metacognition"]
+    assert meta
+    assert meta[-1].get("action") == "clarify"
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():

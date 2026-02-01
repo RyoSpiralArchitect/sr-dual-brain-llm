@@ -8,6 +8,9 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  mMetaAction: $("mMetaAction"),
+  mMetaCoverage: $("mMetaCoverage"),
+  mMetaFlags: $("mMetaFlags"),
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
@@ -597,6 +600,7 @@ function renderMetrics(response) {
   const action = metrics?.policy?.action ?? null;
   const temp = metrics?.policy?.temperature ?? null;
   const latency = metrics?.latency_ms ?? null;
+  const meta = metrics?.metacognition ?? null;
 
   els.mCoherence.textContent = combined == null ? "—" : Number(combined).toFixed(3);
   els.mTension.textContent = tension == null ? "—" : Number(tension).toFixed(3);
@@ -604,6 +608,17 @@ function renderMetrics(response) {
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(Number(latency))}ms`;
+  if (els.mMetaAction) {
+    els.mMetaAction.textContent = meta?.action ? String(meta.action) : "—";
+  }
+  if (els.mMetaCoverage) {
+    const cov = meta?.coverage;
+    els.mMetaCoverage.textContent = cov == null ? "—" : Number(cov).toFixed(2);
+  }
+  if (els.mMetaFlags) {
+    const flags = Array.isArray(meta?.flags) ? meta.flags.map(String).filter(Boolean) : [];
+    els.mMetaFlags.textContent = flags.length ? flags.join(", ") : "—";
+  }
 
   const modules = metrics?.modules?.active ?? [];
   if (els.activeModules) {

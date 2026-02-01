@@ -7,7 +7,7 @@ The goal is not “AGI”. The goal is **observability**: make it easy to see *w
 This repository intentionally optimizes for:
 - Experimenting with orchestration policies (when to consult, when to braid, when to stay solo)
 - Inspectable runtime behavior (telemetry, inner-dialogue steps, coherence signals, architecture path)
-- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over JSONL by default)
+- A stable **REST surface without Python web frameworks** (C# Minimal API gateway → Python engine over stdio/pipes; `pipes` default on macOS/Linux)
 
 ## What you can do (today)
 - Run a browser UI with **clean chat** + **separate metrics window**.
@@ -54,9 +54,14 @@ export DUALBRAIN_REPO_ROOT="$PWD"
 dotnet run --project csharp/SrDualBrain.Gateway --urls http://127.0.0.1:8080
 ```
 
-Optional: switch gateway↔engine IPC to named pipes (recommended for multimodal / large payload experiments):
+IPC transport:
+- macOS/Linux: defaults to `pipes` (Unix domain sockets under the hood) for fast blob/image uploads.
+- Windows: defaults to `stdio` (`pipes` transport is not supported by the current Python engine).
+
+Optional: force a transport explicitly:
 ```bash
-export DUALBRAIN_ENGINE_TRANSPORT=pipes
+export DUALBRAIN_ENGINE_TRANSPORT=pipes  # macOS/Linux only
+export DUALBRAIN_ENGINE_TRANSPORT=stdio  # portable fallback
 ```
 
 Notes (macOS):
@@ -76,6 +81,7 @@ Recommended “research loop”:
 - Keep the **main window** chat-only.
 - Click **Pop out metrics** to open `/metrics.html` in a separate window and monitor:
   - coherence/tension/routing/policy/latency
+  - metacognition (drift / repetition / cleanup)
   - active modules
   - architecture path (stage → modules)
   - executive memo (out-of-band)
@@ -256,11 +262,13 @@ Request fields:
   - `observe`: run executive reasoner and store memo (out-of-band only; does not change the answer)
   - `assist`: run executive reasoner and blend a small **user-facing mix-in** into the final answer (memo stays out-of-band)
   - `polish`: executive directives may trigger a second-pass integration (may reset stream)
-- `executive_observer_mode` (`"off"|"metrics"`, default: `"off"`)
-  - `off`: disabled
-  - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (`executive_observer`)
+- `executive_observer_mode` (`"off"|"director"|"metrics"|"both"`, default: `"off"`)
+  - `director`: pre-turn steering (memory gating + optional clarifying question)
+  - `metrics`: post-turn feedback memo (out-of-band)
+  - `both`: director + post-turn feedback
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
+- `return_executive` (bool, default: `false`)
 - `qid` (string, optional): supply your own ID for dataset runs / trace correlation
 - `llm` (object, optional): select provider/model for the *session* (keys still come from env)
   - `provider` (string, required if `llm` provided): `openai|google|anthropic|mistral|xai|huggingface`
@@ -279,6 +287,7 @@ Response fields:
 - `metrics` (object): lightweight summary (coherence/policy/latency/modules) for UI dashboards
 - `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
 - `telemetry` (array, optional): structured per-module events emitted during the turn
+- `executive` / `executive_observer` (object, optional): out-of-band memos (only when `return_executive=true`)
 
 ### `POST /v1/process/stream` (SSE)
 Streams the answer via Server-Sent Events (SSE).
@@ -288,7 +297,7 @@ To avoid “draft → reset → regenerate” artifacts in the browser, streamin
 SSE events:
 - `start`: `{ qid, session_id }`
 - `delta`: `{ text }`
-- `final`: `{ qid, answer, session_id, metrics }`
+- `final`: `{ qid, answer, session_id, metrics, executive?, executive_observer? }`
 - `done`: `{}`
 - `error`: `{ message }`
 
@@ -379,7 +388,7 @@ Recommended flow:
 Under the hood:
 - The engine stores blobs on disk under `DUALBRAIN_BLOB_DIR`.
 - The engine converts blobs to data URLs *inside the Python process* (for providers that require it) and keeps a small in-memory cache (`DUALBRAIN_VISION_CACHE_ITEMS`) to avoid repeated base64 work.
-- If you enable `DUALBRAIN_ENGINE_TRANSPORT=pipes`, blob uploads use a dedicated named-pipe channel for higher throughput.
+- On macOS/Linux the gateway defaults to `DUALBRAIN_ENGINE_TRANSPORT=pipes`, so blob uploads use a dedicated named-pipe channel for higher throughput.
 
 ## Postgres-backed stateful memory (optional)
 To persist state across engine restarts, set:

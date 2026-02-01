@@ -31,6 +31,9 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  mMetaAction: $("mMetaAction"),
+  mMetaCoverage: $("mMetaCoverage"),
+  mMetaFlags: $("mMetaFlags"),
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
@@ -753,6 +756,7 @@ function renderMetrics(response, opts = {}) {
   let temp = null;
   let leading = null;
   let latency = null;
+  let meta = null;
 
   if (metrics) {
     combined = metrics?.coherence?.combined ?? null;
@@ -762,11 +766,13 @@ function renderMetrics(response, opts = {}) {
     temp = metrics?.policy?.temperature ?? null;
     leading = metrics?.leading ?? null;
     latency = metrics?.latency_ms ?? null;
+    meta = metrics?.metacognition ?? null;
   } else {
     const coherenceEv = lastEvent(telemetry, "coherence_signal");
     const policyEv = lastEvent(telemetry, "policy_decision");
     const leadEv = lastEvent(telemetry, "leading_brain");
     const completeEv = lastEvent(telemetry, "interaction_complete");
+    const metaEv = lastEvent(telemetry, "metacognition");
 
     const signal = coherenceEv?.signal ?? null;
     combined = signal?.combined ?? null;
@@ -777,6 +783,7 @@ function renderMetrics(response, opts = {}) {
     temp = policyEv?.temperature ?? null;
     leading = leadEv?.leading ?? null;
     latency = completeEv?.latency_ms ?? null;
+    meta = metaEv ?? null;
   }
 
   els.mCoherence.textContent = combined == null ? "—" : combined.toFixed(3);
@@ -785,6 +792,19 @@ function renderMetrics(response, opts = {}) {
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
+  if (els.mMetaAction) {
+    const actionValue = meta?.action ?? meta?.metacognition?.action ?? null;
+    els.mMetaAction.textContent = actionValue ? String(actionValue) : "—";
+  }
+  if (els.mMetaCoverage) {
+    const cov = meta?.coverage ?? meta?.metacognition?.coverage ?? null;
+    els.mMetaCoverage.textContent = cov == null ? "—" : Number(cov).toFixed(2);
+  }
+  if (els.mMetaFlags) {
+    const flagsRaw = meta?.flags ?? meta?.metacognition?.flags ?? [];
+    const flags = Array.isArray(flagsRaw) ? flagsRaw.map(String).filter(Boolean) : [];
+    els.mMetaFlags.textContent = flags.length ? flags.join(", ") : "—";
+  }
 
   const modules = metrics?.modules?.active ?? [];
   if (els.activeModules) {
@@ -1198,6 +1218,9 @@ els.btnClear.addEventListener("click", () => {
   els.mAction.textContent = "—";
   els.mTemp.textContent = "—";
   els.mLatency.textContent = "—";
+  if (els.mMetaAction) els.mMetaAction.textContent = "—";
+  if (els.mMetaCoverage) els.mMetaCoverage.textContent = "—";
+  if (els.mMetaFlags) els.mMetaFlags.textContent = "—";
 });
 
 els.btnReset.addEventListener("click", async () => {

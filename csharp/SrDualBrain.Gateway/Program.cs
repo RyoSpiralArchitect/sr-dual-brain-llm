@@ -29,7 +29,17 @@ var repoRoot = Environment.GetEnvironmentVariable("DUALBRAIN_REPO_ROOT")
               ?? FindRepoRoot(AppContext.BaseDirectory)
               ?? Directory.GetCurrentDirectory();
 var pythonExe = Environment.GetEnvironmentVariable("DUALBRAIN_PYTHON") ?? "python3";
-var engineTransport = Environment.GetEnvironmentVariable("DUALBRAIN_ENGINE_TRANSPORT") ?? "stdio";
+var engineTransport = Environment.GetEnvironmentVariable("DUALBRAIN_ENGINE_TRANSPORT");
+if (string.IsNullOrWhiteSpace(engineTransport))
+{
+    // Pipes transport uses .NET NamedPipes (Unix domain sockets on macOS/Linux) + avoids base64-ing images in the browser.
+    engineTransport = OperatingSystem.IsWindows() ? "stdio" : "pipes";
+}
+engineTransport = engineTransport.Trim();
+if (OperatingSystem.IsWindows() && engineTransport.Equals("pipes", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException("DUALBRAIN_ENGINE_TRANSPORT=pipes is not supported on Windows (Python engine uses Unix domain sockets). Use stdio instead.");
+}
 var engineScript = Environment.GetEnvironmentVariable("DUALBRAIN_ENGINE_PATH")
                    ?? Path.Combine(repoRoot, "sr-dual-brain-llm", "scripts", "engine_stdio.py");
 
@@ -107,15 +117,22 @@ app.MapPost("/v1/blobs", async (HttpRequest request, PythonEngineClient engine, 
     }
 
     await using var stream = file.OpenReadStream();
-    var result = await engine.PutBlobAsync(
-        sessionId,
-        stream,
-        length: file.Length,
-        contentType: file.ContentType,
-        fileName: file.FileName,
-        cancellationToken: ct);
+    try
+    {
+        var result = await engine.PutBlobAsync(
+            sessionId,
+            stream,
+            length: file.Length,
+            contentType: file.ContentType,
+            fileName: file.FileName,
+            cancellationToken: ct);
 
-    return Results.Json(result);
+        return Results.Json(result);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
 });
 
 app.MapPost("/v1/process", async (PythonEngineClient engine, JsonObject body, CancellationToken ct) =>
