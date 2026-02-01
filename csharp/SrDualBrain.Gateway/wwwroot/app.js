@@ -93,6 +93,7 @@ function publishMetricsToPopout(payload) {
         qid: h.qid ?? "",
         ts: h.ts ?? 0,
         modules: Array.isArray(h.modules) ? h.modules.map(String) : [],
+        stage_by_module: h.stage_by_module ?? {},
       })),
     };
     metricsPopout.postMessage(
@@ -510,7 +511,20 @@ function snapshotBrain(metrics, { qid }) {
 function snapshotModules(metrics, { qid }) {
   const modules = metrics?.modules?.active ?? [];
   const list = Array.isArray(modules) ? modules.map(String).filter(Boolean) : [];
-  return { qid: qid || "", ts: Date.now(), modules: list };
+  const stageByModule = {};
+  const stages = metrics?.modules?.stages ?? [];
+  if (Array.isArray(stages)) {
+    for (const stage of stages) {
+      const stageKey = String(stage?.stage || "").trim();
+      const mods = Array.isArray(stage?.modules) ? stage.modules : [];
+      for (const mod of mods) {
+        const name = String(mod || "").trim();
+        if (!name) continue;
+        if (!stageByModule[name]) stageByModule[name] = stageKey;
+      }
+    }
+  }
+  return { qid: qid || "", ts: Date.now(), modules: list, stage_by_module: stageByModule };
 }
 
 function upsertBrainHistory(sessionId, snapshot) {
@@ -539,15 +553,15 @@ function upsertModuleHistory(sessionId, snapshot) {
   return history;
 }
 
-function moduleAccent(moduleName) {
-  const name = String(moduleName || "");
-  if (!name) return "var(--primary-rgb)";
-  if (name.includes("Amygdala")) return "var(--danger-rgb)";
-  if (name.includes("BasalGanglia")) return "var(--good-rgb)";
-  if (name.includes("Hypothalamus")) return "var(--warn-rgb)";
-  if (name.includes("Auditor")) return "var(--warn-rgb)";
-  if (name.includes("Unconscious") || name.includes("Psychoid")) return "var(--warn-rgb)";
-  if (name.includes("TemporalHippocampal")) return "var(--good-rgb)";
+function stageAccent(stageName) {
+  const key = String(stageName || "")
+    .trim()
+    .toLowerCase()
+    .replaceAll(" ", "_");
+  if (key === "perception") return "var(--primary-rgb)";
+  if (key === "inner_dialogue" || key === "inner") return "var(--warn-rgb)";
+  if (key === "integration") return "var(--good-rgb)";
+  if (key === "memory") return "var(--memory-rgb)";
   return "var(--primary-rgb)";
 }
 
@@ -660,6 +674,28 @@ function renderModuleHistory(sessionId) {
   head.appendChild(headRight);
   els.moduleHistory.appendChild(head);
 
+  const legend = document.createElement("div");
+  legend.className = "mh__legend";
+  const legendItems = [
+    { label: "perception", accent: "var(--primary-rgb)" },
+    { label: "inner_dialogue", accent: "var(--warn-rgb)" },
+    { label: "integration", accent: "var(--good-rgb)" },
+    { label: "memory", accent: "var(--memory-rgb)" },
+  ];
+  for (const item of legendItems) {
+    const el = document.createElement("div");
+    el.className = "mh__legendItem";
+    const dot = document.createElement("span");
+    dot.className = "mh__legendDot";
+    dot.style.setProperty("--accent", item.accent);
+    const label = document.createElement("span");
+    label.textContent = item.label;
+    el.appendChild(dot);
+    el.appendChild(label);
+    legend.appendChild(el);
+  }
+  els.moduleHistory.appendChild(legend);
+
   for (const mod of modules) {
     const rowEl = document.createElement("div");
     rowEl.className = "mh__row";
@@ -672,10 +708,11 @@ function renderModuleHistory(sessionId) {
 
     const cells = document.createElement("div");
     cells.className = "mh__cells";
-    const accent = moduleAccent(mod);
 
     for (const snap of history) {
       const active = Array.isArray(snap?.modules) ? snap.modules.includes(mod) : false;
+      const stage = snap?.stage_by_module?.[mod] ?? null;
+      const accent = stageAccent(stage);
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "mh__cell";
@@ -683,7 +720,8 @@ function renderModuleHistory(sessionId) {
       cell.style.setProperty("--i", active ? "1" : "0");
       const ts = snap?.ts ? new Date(snap.ts).toLocaleTimeString() : "";
       const qid = String(snap?.qid || "").slice(0, 8);
-      cell.title = `${ts}${qid ? ` · qid ${qid}` : ""} · ${mod}: ${active ? "on" : "off"}`;
+      const stageLabel = stage ? ` · stage ${stage}` : "";
+      cell.title = `${ts}${qid ? ` · qid ${qid}` : ""}${stageLabel} · ${mod}: ${active ? "on" : "off"}`;
       if (snap?.qid && selectedQid && snap.qid === selectedQid) {
         cell.classList.add("mh__cell--selected");
       }
