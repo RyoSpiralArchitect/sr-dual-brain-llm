@@ -11,12 +11,16 @@ const els = {
   activeModules: $("activeModules"),
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
+  brainHistory: $("brainHistory"),
   executiveMemo: $("executiveMemo"),
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
   btnDock: $("btnDock"),
 };
+
+const brainHistoryBySession = new Map();
+const brainHistoryLimit = 24;
 
 function renderModulePath(stages) {
   if (!els.modulePath) return;
@@ -170,6 +174,121 @@ function renderBrainActivity(metrics) {
   }
 }
 
+function getBrainHistory(sessionId) {
+  const key = (sessionId || "default").trim() || "default";
+  let history = brainHistoryBySession.get(key);
+  if (!history) {
+    history = [];
+    brainHistoryBySession.set(key, history);
+  }
+  return history;
+}
+
+function snapshotBrain(metrics, { qid }) {
+  const brain = metrics?.brain ?? null;
+  if (!brain || typeof brain !== "object") return null;
+
+  const pfc = brain?.prefrontal ?? {};
+  const amg = brain?.amygdala ?? {};
+  const basal = brain?.basal_ganglia ?? {};
+  const neuro = brain?.neural ?? {};
+  const psychoid = brain?.psychoid ?? {};
+  const hemi = brain?.hemisphere ?? {};
+
+  return {
+    qid: qid || "",
+    ts: Date.now(),
+    values: {
+      pfc_focus: clamp01(pfc?.metric),
+      amygdala_risk: clamp01(amg?.risk),
+      basal_go: clamp01(basal?.go_probability),
+      basal_inhibit: clamp01(basal?.inhibition),
+      hemisphere: clamp01(hemi?.intensity),
+      neural_active: clamp01(neuro?.active_ratio),
+      psychoid_tension: clamp01(psychoid?.psychoid_tension),
+      coherence: clamp01(metrics?.coherence?.combined),
+      tension: clamp01(metrics?.coherence?.tension),
+    },
+  };
+}
+
+function upsertBrainHistory(sessionId, snapshot) {
+  if (!snapshot) return [];
+  const history = getBrainHistory(sessionId);
+  const last = history.length ? history[history.length - 1] : null;
+  if (last && last.qid && snapshot.qid && last.qid === snapshot.qid) {
+    history[history.length - 1] = snapshot;
+  } else {
+    history.push(snapshot);
+  }
+  while (history.length > brainHistoryLimit) history.shift();
+  return history;
+}
+
+function renderBrainHistory(sessionId) {
+  if (!els.brainHistory) return;
+  els.brainHistory.innerHTML = "";
+
+  const history = getBrainHistory(sessionId);
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.className = "bh__empty";
+    empty.textContent = "—";
+    els.brainHistory.appendChild(empty);
+    return;
+  }
+
+  const head = document.createElement("div");
+  head.className = "bh__head";
+  const headLeft = document.createElement("div");
+  headLeft.textContent = `History (last ${history.length})`;
+  const headRight = document.createElement("div");
+  headRight.className = "bh__hint";
+  headRight.textContent = "oldest → newest";
+  head.appendChild(headLeft);
+  head.appendChild(headRight);
+  els.brainHistory.appendChild(head);
+
+  const rows = [
+    { key: "pfc_focus", label: "PFC focus", accent: "var(--primary-rgb)" },
+    { key: "amygdala_risk", label: "Amygdala risk", accent: "var(--danger-rgb)" },
+    { key: "basal_go", label: "Basal go", accent: "var(--good-rgb)" },
+    { key: "basal_inhibit", label: "Basal inhibit", accent: "var(--warn-rgb)" },
+    { key: "hemisphere", label: "Hemisphere", accent: "var(--primary-rgb)" },
+    { key: "neural_active", label: "Neural active", accent: "var(--good-rgb)" },
+    { key: "psychoid_tension", label: "Psychoid tension", accent: "var(--warn-rgb)" },
+    { key: "coherence", label: "Coherence", accent: "var(--primary-rgb)" },
+    { key: "tension", label: "Tension", accent: "var(--warn-rgb)" },
+  ];
+
+  for (const row of rows) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "bh__row";
+
+    const label = document.createElement("div");
+    label.className = "bh__label";
+    label.textContent = row.label;
+    rowEl.appendChild(label);
+
+    const cells = document.createElement("div");
+    cells.className = "bh__cells";
+    for (let i = 0; i < history.length; i++) {
+      const snap = history[i] || {};
+      const value = clamp01(snap?.values?.[row.key]);
+      const cell = document.createElement("div");
+      cell.className = "bh__cell";
+      cell.style.setProperty("--i", String(value));
+      cell.style.setProperty("--accent", row.accent);
+      const ts = snap?.ts ? new Date(snap.ts).toLocaleTimeString() : "";
+      const qid = String(snap?.qid || "").slice(0, 8);
+      cell.title = `${ts}${qid ? ` · qid ${qid}` : ""} · ${row.label}=${value.toFixed(2)}`;
+      cells.appendChild(cell);
+    }
+    rowEl.appendChild(cells);
+    els.brainHistory.appendChild(rowEl);
+  }
+}
+
 function renderMetrics(response) {
   const qid = response?.qid ?? "";
   const sessionId = response?.session_id ?? "";
@@ -225,6 +344,12 @@ function renderMetrics(response) {
 
   renderModulePath(metrics?.modules?.stages ?? dialogueFlow?.architecture ?? null);
   renderBrainActivity(metrics);
+  if (Array.isArray(response?._client?.brain_history)) {
+    brainHistoryBySession.set(sessionId || "default", response._client.brain_history);
+  } else {
+    upsertBrainHistory(sessionId || "default", snapshotBrain(metrics, { qid }));
+  }
+  renderBrainHistory(sessionId || "default");
 
   if (els.executiveMemo) {
     if (executive) {
