@@ -61,6 +61,56 @@ class SlowExecutiveModel:
         )
 
 
+class InstantExecutiveModel:
+    def __init__(self, *, mix_in: str = "", directives=None):
+        self.mix_in = mix_in
+        self.directives = directives or {"tone": "friendly", "do_not_say": [], "priorities": [], "clarifying_questions": [], "format": []}
+
+    async def advise(
+        self,
+        *,
+        question: str,
+        context: str,
+        focus_keywords=None,
+        temperature: float = 0.2,
+    ):
+        return ExecutiveAdvice(
+            memo="instant executive",
+            directives=self.directives,
+            confidence=0.9,
+            latency_ms=1.0,
+            source="test",
+            mix_in=self.mix_in,
+        )
+
+
+class CaptureLeftModel:
+    uses_external_llm = True
+
+    def __init__(self, *, draft: str = "draft", confidence: float = 0.2):
+        self._draft = draft
+        self._confidence = confidence
+        self.integrations: list[str] = []
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        return self._draft
+
+    def estimate_confidence(self, draft: str) -> float:
+        return self._confidence
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        self.integrations.append(info)
+        return f"{draft}\n\n(INTEGRATED)"
+
+
 def test_controller_requests_right_brain_when_confidence_low():
     callosum = DummyCallosum()
     memory = SharedMemory()
@@ -512,3 +562,62 @@ def test_slow_executive_timeout_does_not_crash_process():
     answer = asyncio.run(controller.process("やあ", executive_mode="observe"))
     assert isinstance(answer, str)
     assert answer.strip()
+
+
+def test_executive_observe_does_not_inject_directives():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    left = CaptureLeftModel(draft="draft", confidence=0.1)
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=left,
+        right_model=RightBrainModel(),
+        executive_model=InstantExecutiveModel(mix_in="(should not appear)", directives={"tone": "robotic"}),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    answer = asyncio.run(controller.process("Explain a complex pattern.", executive_mode="observe"))
+    assert "(INTEGRATED)" in answer
+    assert left.integrations, "Integration should still occur due to right-brain material"
+    merged = "\n".join(left.integrations)
+    assert "Executive directives" not in merged
+    assert "Executive mix-in" not in merged
+
+
+def test_executive_assist_injects_mix_in():
+    callosum = DummyCallosum(fail=True)
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    left = CaptureLeftModel(draft="draft", confidence=0.9)
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=left,
+        right_model=RightBrainModel(),
+        executive_model=InstantExecutiveModel(mix_in="追加の一言です。"),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    answer = asyncio.run(controller.process("やあ", executive_mode="assist"))
+    assert "(INTEGRATED)" in answer
+    assert left.integrations
+    merged = "\n".join(left.integrations)
+    assert "Executive mix-in" in merged

@@ -1230,7 +1230,7 @@ class DualBrainController:
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
         executive_mode_norm = str(executive_mode or "off").strip().lower()
-        if executive_mode_norm not in {"off", "observe", "polish"}:
+        if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
             executive_mode_norm = "observe"
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
         executive_payload: Dict[str, Any] | None = None
@@ -1640,25 +1640,34 @@ class DualBrainController:
                             source=str(advice.source),
                         )
 
-                can_polish = (
+                can_polish = bool(
                     executive_mode_norm == "polish"
                     and bool(executive_directives)
                     and getattr(self.left_model, "uses_external_llm", False)
                 )
-                if can_polish:
-                    if executive_payload and float(executive_payload.get("confidence") or 0.0) < 0.35:
-                        can_polish = False
+                if can_polish and executive_payload and float(executive_payload.get("confidence") or 0.0) < 0.35:
+                    can_polish = False
 
+                integration_parts: List[str] = []
+                if executive_payload and executive_mode_norm == "assist":
+                    mix_in = str(executive_payload.get("mix_in") or "").strip()
+                    if mix_in and not _looks_like_coaching_notes(question, mix_in):
+                        if not _detail_notes_redundant(final_answer, mix_in):
+                            integration_parts.append("Executive mix-in (user-facing):\n" + mix_in)
                 if can_polish and executive_directives:
                     try:
                         directives_json = json.dumps(executive_directives, ensure_ascii=False)
                     except Exception:
                         directives_json = str(executive_directives)
+                    integration_parts.append(
+                        "Executive directives (do not output directly):\n" + directives_json
+                    )
+                if integration_parts:
                     await _emit_reset_if_needed()
                     final_answer = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
-                        info="Executive directives (do not output directly):\n" + directives_json,
+                        info="\n\n".join(integration_parts),
                         temperature=max(0.2, min(0.6, decision.temperature)),
                         on_delta=None if stream_final_only else delta_cb,
                     )
@@ -1800,6 +1809,7 @@ class DualBrainController:
 
                 integration_parts: List[str] = []
                 has_right_material = False
+                has_mix_in_material = False
                 if integrated_detail:
                     integration_parts.append(str(integrated_detail))
                     has_right_material = True
@@ -1817,7 +1827,14 @@ class DualBrainController:
                     if executive_payload and float(executive_payload.get("confidence") or 0.0) < 0.35:
                         can_polish = False
 
-                if executive_directives and getattr(self.left_model, "uses_external_llm", False):
+                if executive_payload and executive_mode_norm == "assist":
+                    mix_in = str(executive_payload.get("mix_in") or "").strip()
+                    if mix_in and not _looks_like_coaching_notes(question, mix_in):
+                        if not _detail_notes_redundant(draft, mix_in):
+                            integration_parts.append("Executive mix-in (user-facing):\n" + mix_in)
+                            has_mix_in_material = True
+
+                if can_polish and executive_directives:
                     try:
                         directives_json = json.dumps(executive_directives, ensure_ascii=False)
                     except Exception:
@@ -1826,7 +1843,7 @@ class DualBrainController:
                         "Executive directives (do not output directly):\n" + directives_json
                     )
 
-                if has_right_material or can_polish:
+                if has_right_material or has_mix_in_material or can_polish:
                     if integration_parts:
                         await _emit_reset_if_needed()
                         final_answer = await self.left_model.integrate_info_async(
@@ -1902,7 +1919,7 @@ class DualBrainController:
                 except Exception:  # pragma: no cover - defensive guard
                     advice = None
             else:
-                tail_timeout = 6.0 if executive_mode_norm == "polish" else 2.0
+                tail_timeout = 6.0 if executive_mode_norm in {"polish", "assist"} else 2.0
                 try:
                     advice = await asyncio.wait_for(executive_task, timeout=tail_timeout)
                 except asyncio.CancelledError:

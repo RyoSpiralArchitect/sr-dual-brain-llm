@@ -9,11 +9,60 @@ const els = {
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
   activeModules: $("activeModules"),
+  modulePath: $("modulePath"),
   executiveMemo: $("executiveMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
   btnDock: $("btnDock"),
 };
+
+function renderModulePath(stages) {
+  if (!els.modulePath) return;
+  els.modulePath.innerHTML = "";
+  const list = Array.isArray(stages) ? stages : [];
+  if (!list.length) {
+    const empty = document.createElement("div");
+    empty.className = "path__empty";
+    empty.textContent = "—";
+    els.modulePath.appendChild(empty);
+    return;
+  }
+
+  const stageLimit = 8;
+  for (const stage of list.slice(0, stageLimit)) {
+    const nameRaw = stage?.stage ?? "";
+    const name = String(nameRaw || "").replaceAll("_", " ") || "stage";
+    const mods = Array.isArray(stage?.modules) ? stage.modules.map(String) : [];
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "path__stage";
+
+    const title = document.createElement("div");
+    title.className = "path__name";
+    title.textContent = name;
+    wrapper.appendChild(title);
+
+    const chips = document.createElement("div");
+    chips.className = "path__modules";
+    const limit = 14;
+    const shown = mods.slice(0, limit);
+    for (const mod of shown) {
+      const chip = document.createElement("span");
+      chip.className = "chip chip--thin";
+      chip.textContent = mod;
+      chips.appendChild(chip);
+    }
+    const rest = mods.length - shown.length;
+    if (rest > 0) {
+      const chip = document.createElement("span");
+      chip.className = "chip chip--thin";
+      chip.textContent = `+${rest} more`;
+      chips.appendChild(chip);
+    }
+    wrapper.appendChild(chips);
+    els.modulePath.appendChild(wrapper);
+  }
+}
 
 function renderMetrics(response) {
   const qid = response?.qid ?? "";
@@ -67,14 +116,18 @@ function renderMetrics(response) {
     }
   }
 
+  renderModulePath(metrics?.modules?.stages ?? dialogueFlow?.architecture ?? null);
+
   if (els.executiveMemo) {
     if (executive) {
       const memo = executive?.memo ?? "";
+      const mixIn = executive?.mix_in ?? "";
       const directives = executive?.directives ?? null;
       const meta = `source=${executive?.source ?? "?"} conf=${executive?.confidence ?? "?"} latency=${Math.round(executive?.latency_ms ?? 0)}ms`;
       const body = memo ? memo : "";
+      const mix = mixIn ? `\n\n---\nMix-in:\n${String(mixIn)}` : "";
       const dir = directives ? `\n\n---\nDirectives:\n${JSON.stringify(directives, null, 2)}` : "";
-      els.executiveMemo.textContent = `${body}\n\n---\n${meta}${dir}`.trim();
+      els.executiveMemo.textContent = `${body}${mix}\n\n---\n${meta}${dir}`.trim();
     } else {
       els.executiveMemo.textContent = "—";
     }

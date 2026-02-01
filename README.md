@@ -135,8 +135,9 @@ Request fields:
 - `answer_mode` (`"plain"|"debug"|"annotated"|"meta"`, default: `"plain"`)
 - `executive_mode` (`"off"|"observe"|"polish"`, default: `"off"`)
   - `off`: no executive reasoner run
-  - `observe`: run executive reasoner and store memo (out-of-band)
-  - `polish`: executive directives may trigger a second-pass integration (stream reset)
+  - `observe`: run executive reasoner and store memo (out-of-band only; does not change the answer)
+  - `assist`: run executive reasoner and blend a small **user-facing mix-in** into the final answer (memo stays out-of-band)
+  - `polish`: executive directives may trigger a second-pass integration (may reset stream)
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
 - `qid` (string, optional): supply your own ID for dataset runs / trace correlation

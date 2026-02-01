@@ -37,6 +37,7 @@ _EXECUTIVE_GUARDRAILS = (
     "Return STRICT JSON only (no markdown, no extra text) with this schema:\n"
     "{\n"
     '  "memo": string,  // short internal memo (<= 1200 chars)\n'
+    '  "mix_in": string,  // OPTIONAL user-facing content to blend into the final reply (<= 480 chars). Must be directly addressed to the user, never writing advice.\n'
     '  "directives": {\n'
     '     "tone": string | null,\n'
     '     "do_not_say": [string],\n'
@@ -71,10 +72,12 @@ class ExecutiveAdvice:
     confidence: float
     latency_ms: float
     source: str
+    mix_in: str = ""
 
     def to_payload(self) -> Dict[str, Any]:
         return {
             "memo": self.memo,
+            "mix_in": self.mix_in,
             "directives": self.directives,
             "confidence": float(self.confidence),
             "latency_ms": float(self.latency_ms),
@@ -151,6 +154,7 @@ class ExecutiveReasonerModel:
 
             payload = _safe_json_object(payload)
             memo = str(payload.get("memo") or "").strip()
+            mix_in = str(payload.get("mix_in") or "").strip()
             directives = payload.get("directives")
             directives_obj = _safe_json_object(directives)
             confidence = payload.get("confidence")
@@ -166,6 +170,7 @@ class ExecutiveReasonerModel:
                 confidence=max(0.0, min(1.0, confidence_value)),
                 latency_ms=latency_ms,
                 source="llm",
+                mix_in=mix_in[:480],
             )
 
         # Heuristic fallback (no LLM configured)
@@ -197,5 +202,5 @@ class ExecutiveReasonerModel:
             confidence=0.25,
             latency_ms=latency_ms,
             source="heuristic",
+            mix_in="",
         )
-

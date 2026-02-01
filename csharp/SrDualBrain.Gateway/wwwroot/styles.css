@@ -265,6 +265,10 @@ textarea:focus, input:focus, select:focus { outline: 2px solid rgba(96,165,250,0
   color: var(--muted);
   font-family: var(--mono);
 }
+.chip--thin {
+  padding: 3px 7px;
+  font-size: 10px;
+}
 
 .metric {
   border: 1px solid var(--border);
@@ -283,6 +287,33 @@ textarea:focus, input:focus, select:focus { outline: 2px solid rgba(96,165,250,0
   cursor: pointer;
   color: var(--muted);
   font-size: 13px;
+}
+.path {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+.path__stage {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.015);
+}
+.path__name {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.path__modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.path__empty {
+  color: var(--muted);
+  font-size: 12px;
 }
 .json {
   margin-top: 10px;

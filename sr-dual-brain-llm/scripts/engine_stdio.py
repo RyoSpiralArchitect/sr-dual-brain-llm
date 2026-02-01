@@ -83,12 +83,26 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
 
     active_modules: list[str] = []
+    stage_modules: list[dict[str, Any]] = []
     path = arch_ev.get("path") if isinstance(arch_ev, dict) else None
     if isinstance(path, list):
         mods = set()
         for stage in path:
             if not isinstance(stage, dict):
                 continue
+            stage_name = stage.get("stage")
+            stage_mods = stage.get("modules")
+            if not isinstance(stage_mods, list):
+                stage_mods_list: list[str] = []
+            else:
+                stage_mods_list = [str(item) for item in stage_mods if item]
+            if stage_name:
+                stage_modules.append(
+                    {
+                        "stage": str(stage_name),
+                        "modules": stage_mods_list,
+                    }
+                )
             modules = stage.get("modules")
             if not isinstance(modules, list):
                 continue
@@ -114,6 +128,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         "modules": {
             "active": active_modules,
             "count": len(active_modules),
+            "stages": stage_modules,
         },
         "executive": {
             "confidence": exec_ev.get("confidence"),
@@ -603,8 +618,8 @@ async def _handle_process(
         raise ValueError("answer_mode must be one of: plain, debug, annotated, meta")
 
     executive_mode = str(params.get("executive_mode", "off") or "off").strip().lower()
-    if executive_mode not in {"off", "observe", "polish"}:
-        raise ValueError("executive_mode must be one of: off, observe, polish")
+    if executive_mode not in {"off", "observe", "assist", "polish"}:
+        raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
@@ -705,8 +720,8 @@ async def _handle_process_stream(
         raise ValueError("answer_mode must be one of: plain, debug, annotated, meta")
 
     executive_mode = str(params.get("executive_mode", "off") or "off").strip().lower()
-    if executive_mode not in {"off", "observe", "polish"}:
-        raise ValueError("executive_mode must be one of: off, observe, polish")
+    if executive_mode not in {"off", "observe", "assist", "polish"}:
+        raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))

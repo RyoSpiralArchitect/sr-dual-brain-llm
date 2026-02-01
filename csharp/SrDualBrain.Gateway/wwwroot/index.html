@@ -91,6 +91,7 @@
               <select id="executiveMode">
                 <option value="off">off</option>
                 <option value="observe" selected>observe (memo only)</option>
+                <option value="assist">assist (mix-in + memo)</option>
                 <option value="polish">polish (may reset stream)</option>
               </select>
             </label>
@@ -168,6 +169,11 @@
           </div>
 
           <div class="chips" id="activeModules"></div>
+
+          <details class="details" open>
+            <summary>Architecture path</summary>
+            <div class="path" id="modulePath"></div>
+          </details>
 
           <details class="details">
             <summary>Executive memo</summary>
