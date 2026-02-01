@@ -40,6 +40,7 @@ const els = {
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
+  btnExportBundle: $("btnExportBundle"),
   btnExportTrace: $("btnExportTrace"),
   btnExportTelemetry: $("btnExportTelemetry"),
   btnExportDialogueFlow: $("btnExportDialogueFlow"),
@@ -1278,6 +1279,53 @@ window.addEventListener("message", (e) => {
 
   if (msg.type === "srdb.metrics.dock") {
     dockMetricsPopout();
+  }
+
+  if (msg.type === "srdb.chat.request") {
+    const req = msg.payload ?? {};
+    const requestId = String(req.request_id || "").trim();
+    const sessionId = String(req.session_id || "").trim();
+    if (!requestId) return;
+    const messages = collectChatFromDom();
+    try {
+      e.source?.postMessage(
+        {
+          type: "srdb.chat.response",
+          payload: {
+            request_id: requestId,
+            session_id: sessionId || null,
+            messages,
+          },
+        },
+        window.location.origin,
+      );
+    } catch {
+      // ignore
+    }
+  }
+});
+
+els.btnExportBundle?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastMetricsPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    const chat = collectChatFromDom();
+    const brainHistory = getBrainHistory(sid);
+    const moduleHistory = getModuleHistory(sid);
+    downloadJson(`srdb_bundle_${sid}_${qid}_${nowStamp()}.json`, {
+      version: "srdb_bundle_v1",
+      exported_at: new Date().toISOString(),
+      session_id: sid,
+      qid: full?.qid ?? "",
+      trace: full,
+      brain_history: { session_id: sid, limit: brainHistoryLimit, items: brainHistory },
+      module_history: { session_id: sid, limit: moduleHistoryLimit, items: moduleHistory },
+      chat: { session_id: sid, messages: chat },
+      client: { llm_signature: lastLlmSignature ?? null },
+    });
+  } catch (err) {
+    setStatus("warn", `export bundle failed: ${String(err)}`);
   }
 });
 

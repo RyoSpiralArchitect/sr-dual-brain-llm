@@ -92,3 +92,20 @@ def test_retrieve_filters_false_positives_without_lexical_overlap():
     # We require lexical overlap to avoid "sticky" irrelevant recalls.
     hits = hippocampus.retrieve("random totally unrelated words", topk=3)
     assert hits == []
+
+
+def test_retrieve_summary_sanitises_internal_and_coaching_lines():
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    hippocampus.index_episode(
+        "q1",
+        "hello there",
+        "こんにちは！\nqid 123\n- Add a warm, informal tone.\n[Hemisphere Routing]\nmode: balanced",
+        leading="left",
+        selection_reason="test",
+    )
+
+    summary = hippocampus.retrieve_summary("hello", topk=1)
+    assert "こんにちは" in summary
+    assert "qid 123" not in summary
+    assert "Add a warm" not in summary
+    assert "Hemisphere" not in summary

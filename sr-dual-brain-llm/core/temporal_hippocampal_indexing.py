@@ -89,6 +89,19 @@ _STOPWORDS = {
     "you",
     "your",
 }
+_INTERNAL_DEBUG_TOKENS = (
+    "left brain",
+    "right brain",
+    "coherence",
+    "unconscious",
+    "linguistic",
+    "cognitive",
+    "psychoid",
+    "hemisphere",
+    "collaboration",
+    "architecture",
+    "telemetry",
+)
 
 
 def _tokenize(text: str) -> List[str]:
@@ -125,6 +138,51 @@ def _stable_hash_64(token: str) -> int:
         person=b"srdb.emb.v1",
     ).digest()
     return int.from_bytes(digest, "little", signed=False)
+
+
+def _looks_like_internal_debug_line(line: str) -> bool:
+    raw = str(line or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if lower.startswith("qid "):
+        return True
+    if lower.startswith("architecture path") or lower.startswith("[architecture path"):
+        return True
+    if lower.startswith("telemetry (raw)") or lower.startswith("[telemetry"):
+        return True
+    if lower.startswith("[") and any(token in lower for token in _INTERNAL_DEBUG_TOKENS):
+        return True
+    if "brain timeout" in lower and "draft" in lower:
+        return True
+    return False
+
+
+def _looks_like_writing_coach_line(line: str) -> bool:
+    raw = str(line or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if "if the user" in lower:
+        return True
+    if lower.startswith(("- add a ", "- add an ", "add a ", "add an ")):
+        return True
+    if lower.startswith(("consider noting the time", "- consider noting the time")):
+        return True
+    if raw.startswith("-") and ("もう少し" in raw or "時間帯" in raw or "推測" in raw or "例：" in raw):
+        return True
+    return False
+
+
+def _sanitize_memory_text(text: str) -> str:
+    if not text:
+        return ""
+    lines: List[str] = []
+    for line in str(text).splitlines():
+        if _looks_like_internal_debug_line(line) or _looks_like_writing_coach_line(line):
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()
 
 
 @dataclass
@@ -164,8 +222,12 @@ class EpisodicTrace:
             if self.selection_reason:
                 parts.append(self.selection_reason)
         prefix = f"({'; '.join(parts)}) " if parts else ""
-        answer_snippet = self.answer.replace("\n", " ")[:max_chars]
-        return f"{prefix}Q: {self.question[:max_chars]} | A: {answer_snippet}"
+        question_clean = _sanitize_memory_text(self.question).replace("\n", " ").strip()
+        answer_clean = _sanitize_memory_text(self.answer).replace("\n", " ").strip()
+        if not question_clean or not answer_clean:
+            return ""
+        answer_snippet = answer_clean[:max_chars]
+        return f"{prefix}Q: {question_clean[:max_chars]} | A: {answer_snippet}"
 
 
 class TemporalHippocampalIndexing:
@@ -290,14 +352,15 @@ class TemporalHippocampalIndexing:
         hits = self.retrieve(query, topk=topk)
         if not hits:
             return ""
-        parts = [
-            trace.summary(
+        parts = []
+        for sim, trace in hits:
+            summary = trace.summary(
                 similarity=(sim if include_meta else None),
                 max_chars=max_chars,
                 include_meta=include_meta,
             )
-            for sim, trace in hits
-        ]
+            if summary:
+                parts.append(summary)
         return " | ".join(parts)
 
     def collaboration_rollup(self, window: int = 10) -> Dict[str, float]:

@@ -2690,13 +2690,16 @@ class DualBrainController:
             follow_brain = "left"
         elif detail_notes or decision.action != 0:
             follow_brain = "right"
+        # Always store "clean" memory, even when the user requested debug/meta output.
+        memory_question = _sanitize_user_answer(question) or str(question or "").strip()
+        memory_answer = _sanitize_user_answer(user_answer) or str(user_answer or "").strip()
         episodic_total = 0
         hippocampal_rollup: Optional[Dict[str, float]] = None
         if self.hippocampus is not None:
             self.hippocampus.index_episode(
                 decision.qid,
-                question,
-                user_answer,
+                memory_question,
+                memory_answer,
                 leading=leading,
                 collaboration_strength=collaboration_profile.strength,
                 selection_reason=selection_reason,
@@ -2723,11 +2726,14 @@ class DualBrainController:
             episodic_total = len(self.hippocampus.episodes)
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
 
-        self.memory.store({"Q": question, "A": user_answer}, tags=tags, qid=decision.qid)
+        if memory_question and memory_answer:
+            self.memory.store(
+                {"Q": memory_question, "A": memory_answer}, tags=tags, qid=decision.qid
+            )
         if self.prefrontal_cortex is not None:
             self.prefrontal_cortex.remember_working_memory(
-                question=question,
-                answer=user_answer,
+                question=memory_question,
+                answer=memory_answer,
                 qid=decision.qid,
             )
 

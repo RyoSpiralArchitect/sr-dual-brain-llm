@@ -26,6 +26,19 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
 _CJK_RE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
+_INTERNAL_DEBUG_TOKENS = (
+    "left brain",
+    "right brain",
+    "coherence",
+    "unconscious",
+    "linguistic",
+    "cognitive",
+    "psychoid",
+    "hemisphere",
+    "collaboration",
+    "architecture",
+    "telemetry",
+)
 
 
 def _tokenize(text: str) -> List[str]:
@@ -64,6 +77,51 @@ def _derive_tags(question: str) -> Tuple[str, ...]:
 
     tokens = [tok for tok in _tokenize(question) if len(tok) > 3]
     return tuple(sorted(set(tokens[:6])))
+
+
+def _looks_like_internal_debug_line(line: str) -> bool:
+    raw = str(line or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if lower.startswith("qid "):
+        return True
+    if lower.startswith("architecture path") or lower.startswith("[architecture path"):
+        return True
+    if lower.startswith("telemetry (raw)") or lower.startswith("[telemetry"):
+        return True
+    if lower.startswith("[") and any(token in lower for token in _INTERNAL_DEBUG_TOKENS):
+        return True
+    if "brain timeout" in lower and "draft" in lower:
+        return True
+    return False
+
+
+def _looks_like_writing_coach_line(line: str) -> bool:
+    raw = str(line or "").strip()
+    if not raw:
+        return False
+    lower = raw.lower()
+    if "if the user" in lower:
+        return True
+    if lower.startswith(("- add a ", "- add an ", "add a ", "add an ")):
+        return True
+    if lower.startswith(("consider noting the time", "- consider noting the time")):
+        return True
+    if raw.startswith("-") and ("もう少し" in raw or "時間帯" in raw or "推測" in raw or "例：" in raw):
+        return True
+    return False
+
+
+def _sanitize_memory_text(text: str) -> str:
+    if not text:
+        return ""
+    lines: List[str] = []
+    for line in str(text).splitlines():
+        if _looks_like_internal_debug_line(line) or _looks_like_writing_coach_line(line):
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()
 
 
 @dataclass(frozen=True)
@@ -119,7 +177,11 @@ class SharedMemory:
     # ------------------------------------------------------------------
     def get_context(self, n: int = 5) -> str:
         return "\n".join(
-            [f"Q:{trace.question} A:{trace.answer}" for trace in self.past_qas[-n:]]
+            [
+                f"Q:{_sanitize_memory_text(trace.question) or trace.question} "
+                f"A:{_sanitize_memory_text(trace.answer) or trace.answer}"
+                for trace in self.past_qas[-n:]
+            ]
         )
 
     # ------------------------------------------------------------------
@@ -175,7 +237,13 @@ class SharedMemory:
             return ""
 
         scored.sort(key=lambda item: item[0], reverse=True)
-        top = [f"Q:{trace.question} A:{trace.answer}" for _, trace in scored[:n]]
+        top: List[str] = []
+        for _, trace in scored[:n]:
+            q = _sanitize_memory_text(trace.question)
+            a = _sanitize_memory_text(trace.answer)
+            if not q or not a:
+                continue
+            top.append(f"Q:{q} A:{a}")
         return "\n".join(top)
 
     def retrieve_schema_related(self, question: str, n: int = 2) -> str:
@@ -216,14 +284,14 @@ class SharedMemory:
             # If nothing matches, fall back to the most recent schema summary.
             item = raw[0]
             if isinstance(item, dict) and item.get("summary"):
-                return str(item.get("summary"))
+                return _sanitize_memory_text(str(item.get("summary") or ""))
             return ""
 
         scored.sort(key=lambda it: it[0], reverse=True)
         top_items = [item for _, item in scored[: max(1, int(n))]]
         summaries: List[str] = []
         for item in top_items:
-            summary = str(item.get("summary") or "").strip()
+            summary = _sanitize_memory_text(str(item.get("summary") or ""))
             if not summary:
                 continue
             summaries.append(summary[:800])

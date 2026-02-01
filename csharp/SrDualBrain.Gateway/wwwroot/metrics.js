@@ -17,6 +17,7 @@ const els = {
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
   dialogueFlowRaw: $("dialogueFlowRaw"),
+  btnExportBundle: $("btnExportBundle"),
   btnExportTrace: $("btnExportTrace"),
   btnExportTelemetry: $("btnExportTelemetry"),
   btnExportDialogueFlow: $("btnExportDialogueFlow"),
@@ -33,6 +34,7 @@ const moduleHistoryBySession = new Map();
 const moduleHistoryLimit = 24;
 
 let lastPayload = null;
+const pendingChatRequests = new Map();
 
 function nowStamp() {
   const d = new Date();
@@ -691,6 +693,25 @@ function postToOpener(msg) {
   }
 }
 
+function requestChatFromOpener(sessionId) {
+  if (!window.opener || window.opener.closed) return Promise.resolve(null);
+  const requestId = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  return new Promise((resolve) => {
+    pendingChatRequests.set(requestId, { resolve, ts: Date.now() });
+    postToOpener({
+      type: "srdb.chat.request",
+      payload: { request_id: requestId, session_id: sessionId || null },
+    });
+    setTimeout(() => {
+      const pending = pendingChatRequests.get(requestId);
+      if (!pending) return;
+      pendingChatRequests.delete(requestId);
+      resolve(null);
+    }, 1200);
+  });
+}
+
 window.addEventListener("message", (e) => {
   if (e.origin !== window.location.origin) return;
   const msg = e.data;
@@ -698,6 +719,44 @@ window.addEventListener("message", (e) => {
 
   if (msg.type === "srdb.metrics") {
     renderMetrics(msg.payload);
+    return;
+  }
+
+  if (msg.type === "srdb.chat.response") {
+    const payload = msg.payload ?? {};
+    const requestId = String(payload?.request_id || "").trim();
+    if (!requestId) return;
+    const pending = pendingChatRequests.get(requestId);
+    if (!pending) return;
+    pendingChatRequests.delete(requestId);
+    const messages = Array.isArray(payload?.messages) ? payload.messages : null;
+    pending.resolve(messages);
+    return;
+  }
+});
+
+els.btnExportBundle?.addEventListener("click", async () => {
+  try {
+    const full = await getFullTracePayload(lastPayload);
+    const sid = (full?.session_id || "default").trim() || "default";
+    const qid = String(full?.qid || "").slice(0, 8) || "trace";
+    const brainHistory = getBrainHistory(sid);
+    const moduleHistory = getModuleHistory(sid);
+    const chatMessages = await requestChatFromOpener(sid);
+    const chat = chatMessages ? { session_id: sid, messages: chatMessages } : null;
+
+    downloadJson(`srdb_bundle_${sid}_${qid}_${nowStamp()}.json`, {
+      version: "srdb_bundle_v1",
+      exported_at: new Date().toISOString(),
+      session_id: sid,
+      qid: full?.qid ?? "",
+      trace: full,
+      brain_history: { session_id: sid, limit: brainHistoryLimit, items: brainHistory },
+      module_history: { session_id: sid, limit: moduleHistoryLimit, items: moduleHistory },
+      chat,
+    });
+  } catch (err) {
+    console.warn("export bundle failed", err);
   }
 });
 

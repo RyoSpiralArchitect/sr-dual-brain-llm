@@ -53,3 +53,36 @@ def test_record_dialogue_flow_tracks_architecture():
     assert record["step_count"] == 1
     assert record["architecture_count"] == 2
     assert record["architecture"][0]["stage"] == "perception"
+
+
+def test_memory_retrieval_sanitises_internal_and_coaching_lines():
+    memory = SharedMemory()
+    memory.store(
+        {
+            "Q": "hello",
+            "A": "こんにちは！\nqid 123\n- Add a warm, informal tone.\n[Hemisphere Routing]\nmode: balanced",
+        }
+    )
+
+    related = memory.retrieve_related("hello", n=1)
+    assert "こんにちは" in related
+    assert "qid 123" not in related
+    assert "Add a warm" not in related
+    assert "Hemisphere" not in related
+
+
+def test_schema_memory_retrieval_sanitises_internal_lines():
+    memory = SharedMemory()
+    memory.put_kv(
+        "schema_memories",
+        [
+            {
+                "summary": "[Architecture Path]\n1. perception...\nUser likes cats.",
+                "tags": ["cats"],
+            }
+        ],
+    )
+
+    out = memory.retrieve_schema_related("cats", n=1)
+    assert "User likes cats" in out
+    assert "Architecture Path" not in out

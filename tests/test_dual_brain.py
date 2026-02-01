@@ -157,6 +157,27 @@ class LongLowConfidenceLeft:
         return draft
 
 
+class NoisyLeft:
+    uses_external_llm = False
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        return "こんにちは！\nqid 123\n- Add a warm, informal tone.\n[Hemisphere Routing]\nmode: balanced"
+
+    def estimate_confidence(self, draft: str) -> float:
+        return 0.9
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        return draft
+
+
 class ContextCapturingLeft:
     uses_external_llm = False
 
@@ -219,6 +240,44 @@ def test_director_can_skip_consult_and_clamp_output():
     flow = memory.dialogue_flow(interaction_ids[-1])
     assert flow and flow.get("executive_observer")
     assert flow["executive_observer"].get("observer_mode") == "director"
+
+
+def test_process_stores_sanitised_memory_even_in_meta_mode():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=NoisyLeft(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    asyncio.run(controller.process("やあ", answer_mode="meta"))
+
+    assert memory.past_qas, "should store a memory trace"
+    stored = memory.past_qas[-1].answer
+    assert "qid 123" not in stored
+    assert "Add a warm" not in stored
+    assert "Hemisphere" not in stored
+
+    assert hippocampus.episodes, "should store a hippocampal episode"
+    epi = hippocampus.episodes[-1].answer
+    assert "qid 123" not in epi
+    assert "Add a warm" not in epi
+    assert "Hemisphere" not in epi
 
 
 def test_compose_context_includes_working_memory_for_trivial_followup_question():
