@@ -157,6 +157,31 @@ class LongLowConfidenceLeft:
         return draft
 
 
+class ContextCapturingLeft:
+    uses_external_llm = False
+
+    def __init__(self):
+        self.contexts: list[str] = []
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        self.contexts.append(str(context or ""))
+        return "draft"
+
+    def estimate_confidence(self, draft: str) -> float:
+        return 0.9
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        return draft
+
+
 def test_director_can_skip_consult_and_clamp_output():
     callosum = DummyCallosum()
     memory = SharedMemory()
@@ -194,6 +219,68 @@ def test_director_can_skip_consult_and_clamp_output():
     flow = memory.dialogue_flow(interaction_ids[-1])
     assert flow and flow.get("executive_observer")
     assert flow["executive_observer"].get("observer_mode") == "director"
+
+
+def test_compose_context_includes_working_memory_for_trivial_followup_question():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    cortex = PrefrontalCortex()
+    cortex.remember_working_memory(question="やあ", answer="こんにちは！", qid="seed")
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=TrackingTelemetry(),
+        hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=cortex,
+        basal_ganglia=BasalGanglia(),
+    )
+
+    context, _, parts = controller._compose_context("特に。そっちは？")
+    assert "[Working memory]" in context
+    assert "Q:やあ" in context
+    assert parts.get("working_memory"), "working memory part should be populated"
+
+
+def test_director_memory_drop_applies_before_left_draft_context():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    hippocampus.index_episode("seed", "分析パターン", "Refer to diffusion and entropy.")
+    left = ContextCapturingLeft()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=left,
+        right_model=RightBrainModel(),
+        director_model=InstantDirectorModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    asyncio.run(controller.process("詳しく分析してください。", executive_observer_mode="director"))
+    assert left.contexts, "left model should have been called"
+    # Director asked to drop long-term memory; the left draft should not receive hippocampal recall.
+    assert "[Hippocampal recall]" not in left.contexts[0]
 
 
 def test_controller_requests_right_brain_when_confidence_low():

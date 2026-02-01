@@ -731,7 +731,6 @@ class DualBrainController:
         is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(question))
         include_working_memory = bool(
             cortex is not None
-            and not is_trivial
             and cortex.should_include_working_memory(question)
         )
         include_long_term = bool(
@@ -1182,6 +1181,7 @@ class DualBrainController:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
+        qid_value = str(qid) if qid else str(uuid.uuid4())
         context, focus, context_parts = self._compose_context(question)
         is_trivial_chat = bool(
             self.prefrontal_cortex is not None
@@ -1275,12 +1275,15 @@ class DualBrainController:
         director_append_question: Optional[str] = None
         if self.director_model is not None and use_director:
             try:
+                has_qmark = ("?" in (question or "")) or ("？" in (question or ""))
                 director_task = asyncio.create_task(
                     self.director_model.advise(
                         question=question,
                         context=context,
                         signals={
                             "is_trivial_chat": is_trivial_chat,
+                            "question_len": len(question or ""),
+                            "question_has_qmark": has_qmark,
                             "hemisphere_mode": hemisphere_mode,
                             "hemisphere_bias": hemisphere_bias,
                             "leading": leading,
@@ -1304,6 +1307,136 @@ class DualBrainController:
         stream_final_only = bool(on_delta and on_reset)
         emitted_any = False
         right_preview_task: asyncio.Task[str] | None = None
+
+        def _rebuild_context_from_parts() -> None:
+            nonlocal context, focus, focus_metric, focus_keywords
+
+            rebuilt: List[str] = []
+            wm_ctx = str(context_parts.get("working_memory") or "")
+            mem_ctx = str(context_parts.get("memory") or "")
+            schema_ctx = str(context_parts.get("schema") or "")
+            hip_ctx = str(context_parts.get("hippocampal") or "")
+
+            if wm_ctx:
+                rebuilt.append(_format_section("Working memory", wm_ctx.splitlines()))
+            if mem_ctx:
+                rebuilt.append(mem_ctx)
+            if schema_ctx:
+                rebuilt.append(f"[Schema memory] {schema_ctx}")
+            if hip_ctx:
+                rebuilt.append(f"[Hippocampal recall] {hip_ctx}")
+
+            context = "\n".join(rebuilt)
+            if self.prefrontal_cortex is not None:
+                focus_memory_context = "\n".join([part for part in (wm_ctx, mem_ctx) if part])
+                focus = self.prefrontal_cortex.synthesise_focus(
+                    question=question,
+                    memory_context=focus_memory_context,
+                    hippocampal_context=hip_ctx,
+                )
+                context = self.prefrontal_cortex.gate_context(context, focus)
+                focus_metric = self.prefrontal_cortex.focus_metric(focus)
+                focus_keywords = list(focus.keywords) if focus.keywords else None
+            else:
+                focus = None
+                focus_metric = 0.0
+                focus_keywords = None
+
+        def _apply_director_memory(control: Dict[str, Any]) -> None:
+            mem = control.get("memory")
+            mem_obj: Dict[str, Any] = mem if isinstance(mem, dict) else {}
+            wm = str(mem_obj.get("working_memory") or "auto").strip().lower()
+            lt = str(mem_obj.get("long_term") or "auto").strip().lower()
+
+            cortex = self.prefrontal_cortex
+            if wm == "drop":
+                context_parts["working_memory"] = ""
+            elif wm == "keep" and not context_parts.get("working_memory") and cortex is not None:
+                context_parts["working_memory"] = cortex.working_memory_context(turns=2)
+
+            if lt == "drop":
+                context_parts["memory"] = ""
+                context_parts["schema"] = ""
+                context_parts["hippocampal"] = ""
+            elif lt == "keep":
+                if not context_parts.get("memory"):
+                    context_parts["memory"] = self.memory.retrieve_related(question)
+                if not context_parts.get("schema"):
+                    try:
+                        context_parts["schema"] = self.memory.retrieve_schema_related(question)
+                    except Exception:  # pragma: no cover - optional feature
+                        context_parts["schema"] = ""
+                if not context_parts.get("hippocampal") and self.hippocampus is not None:
+                    context_parts["hippocampal"] = self.hippocampus.retrieve_summary(
+                        question, include_meta=False
+                    )
+
+            _rebuild_context_from_parts()
+
+        # Director is a pre-turn steering module; to avoid "regen" behavior we apply it
+        # before drafting whenever it's enabled.
+        if director_task is not None and director_payload is None:
+            advice: DirectorAdvice | None = None
+            if is_trivial_chat:
+                # Avoid paying external LLM latency on lightweight turns; structural cues
+                # already give a good "executive control" default.
+                advice = DirectorAdvice(
+                    memo="(Director memo / fast-path)\n- trivial chat: keep WM (if any), drop long-term, skip consult",
+                    control={
+                        "consult": "skip",
+                        "temperature": 0.45,
+                        "max_chars": 280,
+                        "memory": {"working_memory": "keep", "long_term": "drop"},
+                        "append_clarifying_question": None,
+                    },
+                    confidence=0.35,
+                    latency_ms=0.0,
+                    source="fast_path",
+                )
+                director_task.cancel()
+                director_task = None
+            else:
+                try:
+                    # Give the director a real chance (network calls often exceed 350ms).
+                    advice = await asyncio.wait_for(
+                        asyncio.shield(director_task), timeout=1.6
+                    )
+                except asyncio.TimeoutError:
+                    advice = None
+                except asyncio.CancelledError:
+                    advice = None
+                except Exception:  # pragma: no cover - defensive guard
+                    advice = None
+                if advice is None:
+                    director_task.cancel()
+                    director_task = None
+                    advice = DirectorAdvice(
+                        memo="(Director memo / timeout fallback)\n- Proceeding with heuristic steering (no external director output).",
+                        control={
+                            "consult": "auto",
+                            "temperature": None,
+                            "max_chars": None,
+                            "memory": {"working_memory": "auto", "long_term": "auto"},
+                            "append_clarifying_question": None,
+                        },
+                        confidence=0.15,
+                        latency_ms=1600.0,
+                        source="timeout_fallback",
+                    )
+
+            if advice is not None:
+                director_payload = advice.to_payload()
+                director_payload["observer_mode"] = "director"
+                director_control = advice.control if isinstance(advice.control, dict) else {}
+                self.telemetry.log(
+                    "director_reasoner",
+                    qid=qid_value,
+                    confidence=float(advice.confidence),
+                    latency_ms=float(advice.latency_ms),
+                    source=str(advice.source),
+                    phase="pre",
+                )
+                _apply_director_memory(director_control)
 
         async def _emit_delta(text: str) -> None:
             nonlocal emitted_any
@@ -1432,7 +1565,7 @@ class DualBrainController:
             focus_metric,
             hemisphere_mode,
             hemisphere_bias,
-            qid=qid,
+            qid=qid_value,
         )
         if force_right_lead and decision.action == 0:
             decision.action = 1
@@ -1445,7 +1578,9 @@ class DualBrainController:
             decision.action = 0
             decision.state["prefrontal_override"] = "trivial_chat"
 
-        if director_task is not None:
+        # If the director wasn't applied pre-draft (e.g., disabled, missing, or timed out),
+        # try a short post-draft fetch and still apply its steering for the remainder of the turn.
+        if director_task is not None and director_payload is None:
             advice: DirectorAdvice | None = None
             if director_task.done():
                 try:
@@ -1456,9 +1591,8 @@ class DualBrainController:
                     advice = None
             else:
                 try:
-                    advice = await asyncio.wait_for(director_task, timeout=0.35)
+                    advice = await asyncio.wait_for(asyncio.shield(director_task), timeout=0.9)
                 except asyncio.TimeoutError:
-                    director_task.cancel()
                     advice = None
                 except asyncio.CancelledError:
                     advice = None
@@ -1475,72 +1609,58 @@ class DualBrainController:
                     confidence=float(advice.confidence),
                     latency_ms=float(advice.latency_ms),
                     source=str(advice.source),
+                    phase="post",
                 )
+                _apply_director_memory(director_control)
+            else:
+                director_task.cancel()
+                director_task = None
 
-                consult = str(director_control.get("consult") or "auto").strip().lower()
-                if consult == "skip":
-                    decision.action = 0
-                    decision.state["director_consult"] = "skip"
-                elif consult == "force" and not is_trivial_chat:
-                    decision.action = max(1, decision.action)
-                    decision.state["director_consult"] = "force"
+        if director_control is not None:
+            consult = str(director_control.get("consult") or "auto").strip().lower()
+            if consult == "skip":
+                decision.action = 0
+                decision.state["director_consult"] = "skip"
+            elif consult == "force" and not is_trivial_chat:
+                decision.action = max(1, decision.action)
+                decision.state["director_consult"] = "force"
 
-                temp_raw = director_control.get("temperature")
-                if temp_raw is not None and temp_raw != "":
-                    try:
-                        temp_value = float(temp_raw)
-                    except Exception:
-                        temp_value = None
-                    if temp_value is not None:
-                        decision.temperature = max(0.1, min(0.95, temp_value))
-                        decision.state["director_temperature"] = decision.temperature
+            temp_raw = director_control.get("temperature")
+            if temp_raw is not None and temp_raw != "":
+                try:
+                    temp_value = float(temp_raw)
+                except Exception:
+                    temp_value = None
+                if temp_value is not None:
+                    decision.temperature = max(0.1, min(0.95, temp_value))
+                    decision.state["director_temperature"] = decision.temperature
 
-                max_chars_raw = director_control.get("max_chars")
-                if max_chars_raw is not None and max_chars_raw != "":
-                    try:
-                        director_max_chars = int(max_chars_raw)
-                    except Exception:
-                        director_max_chars = None
-                    if director_max_chars is not None:
-                        director_max_chars = max(80, min(2400, director_max_chars))
-                        decision.state["director_max_chars"] = director_max_chars
+            max_chars_raw = director_control.get("max_chars")
+            if max_chars_raw is not None and max_chars_raw != "":
+                try:
+                    director_max_chars = int(max_chars_raw)
+                except Exception:
+                    director_max_chars = None
+                if director_max_chars is not None:
+                    director_max_chars = max(80, min(2400, director_max_chars))
+                    decision.state["director_max_chars"] = director_max_chars
 
-                append_q = str(director_control.get("append_clarifying_question") or "").strip()
-                if append_q:
-                    director_append_question = append_q[:240]
-                    decision.state["director_append_question"] = director_append_question
+            append_q = str(director_control.get("append_clarifying_question") or "").strip()
+            if append_q:
+                director_append_question = append_q[:240]
+                decision.state["director_append_question"] = director_append_question
 
-                mem = director_control.get("memory")
-                mem_obj: Dict[str, Any] = mem if isinstance(mem, dict) else {}
-                wm = str(mem_obj.get("working_memory") or "auto").strip().lower()
-                lt = str(mem_obj.get("long_term") or "auto").strip().lower()
-                if wm == "drop":
-                    context_parts["working_memory"] = ""
-                    decision.state["director_memory_working"] = "drop"
-                if lt == "drop":
-                    context_parts["memory"] = ""
-                    context_parts["schema"] = ""
-                    context_parts["hippocampal"] = ""
-                    decision.state["director_memory_long_term"] = "drop"
-
-                rebuilt: List[str] = []
-                if context_parts.get("working_memory"):
-                    rebuilt.append(
-                        _format_section(
-                            "Working memory",
-                            str(context_parts["working_memory"]).splitlines(),
-                        )
-                    )
-                if context_parts.get("memory"):
-                    rebuilt.append(str(context_parts["memory"]))
-                if context_parts.get("schema"):
-                    rebuilt.append(f"[Schema memory] {context_parts['schema']}")
-                if context_parts.get("hippocampal"):
-                    rebuilt.append(f"[Hippocampal recall] {context_parts['hippocampal']}")
-                if rebuilt:
-                    context = "\n".join(rebuilt)
-                    if self.prefrontal_cortex is not None and focus is not None:
-                        context = self.prefrontal_cortex.gate_context(context, focus)
+            # Apply memory steering (again) to reflect director decisions in observer reports
+            # and subsequent consult calls. Idempotent when already applied pre-draft.
+            _apply_director_memory(director_control)
+            mem = director_control.get("memory")
+            mem_obj: Dict[str, Any] = mem if isinstance(mem, dict) else {}
+            wm = str(mem_obj.get("working_memory") or "auto").strip().lower()
+            lt = str(mem_obj.get("long_term") or "auto").strip().lower()
+            if wm == "drop":
+                decision.state["director_memory_working"] = "drop"
+            if lt == "drop":
+                decision.state["director_memory_long_term"] = "drop"
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
         decision.state["hemisphere_signal"] = hemisphere_signal.to_payload()
