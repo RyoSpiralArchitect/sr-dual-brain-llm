@@ -15,6 +15,7 @@ from .amygdala import Amygdala
 from .basal_ganglia import BasalGanglia
 from .prefrontal_cortex import PrefrontalCortex, FocusSummary, SchemaProfile
 from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
+from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
@@ -512,6 +513,7 @@ class DualBrainController:
         left_model,
         right_model,
         executive_model: ExecutiveReasonerModel | None = None,
+        director_model: DirectorReasonerModel | None = None,
         policy,
         hypothalamus,
         reasoning_dial,
@@ -534,6 +536,7 @@ class DualBrainController:
         self.left_model = left_model
         self.right_model = right_model
         self.executive_model = executive_model
+        self.director_model = director_model
         self.policy = policy
         self.hypothalamus = hypothalamus
         self.reasoning_dial = reasoning_dial
@@ -721,7 +724,7 @@ class DualBrainController:
         except Exception:  # pragma: no cover - defensive guard
             return None
 
-    def _compose_context(self, question: str) -> Tuple[str, FocusSummary | None]:
+    def _compose_context(self, question: str) -> tuple[str, FocusSummary | None, dict[str, str]]:
         """Blend working-memory recall with hippocampal episodic cues."""
 
         cortex = self.prefrontal_cortex
@@ -766,6 +769,12 @@ class DualBrainController:
         if hippocampal_context:
             segments.append(f"[Hippocampal recall] {hippocampal_context}")
         combined = "\n".join(segments)
+        parts = {
+            "working_memory": working_memory_context,
+            "memory": memory_context,
+            "schema": schema_context,
+            "hippocampal": hippocampal_context,
+        }
         focus: FocusSummary | None = None
         if self.prefrontal_cortex is not None:
             focus_memory_context = "\n".join(
@@ -777,7 +786,7 @@ class DualBrainController:
                 hippocampal_context=hippocampal_context,
             )
             combined = self.prefrontal_cortex.gate_context(combined, focus)
-        return combined, focus
+        return combined, focus, parts
 
     def _sense_affect(self, question: str, draft: str) -> Dict[str, float]:
         """Approximate limbic evaluation inspired by the human amygdala."""
@@ -1173,7 +1182,11 @@ class DualBrainController:
         if self.coherence_resonator is not None:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
-        context, focus = self._compose_context(question)
+        context, focus, context_parts = self._compose_context(question)
+        is_trivial_chat = bool(
+            self.prefrontal_cortex is not None
+            and self.prefrontal_cortex.is_trivial_chat_turn(question)
+        )
         hemisphere_signal = self._select_hemisphere_mode(question, focus)
         hemisphere_mode = hemisphere_signal.mode
         hemisphere_bias = hemisphere_signal.bias
@@ -1236,8 +1249,10 @@ class DualBrainController:
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
             executive_mode_norm = "observe"
         executive_observer_mode_norm = str(executive_observer_mode or "off").strip().lower()
-        if executive_observer_mode_norm not in {"off", "metrics"}:
+        if executive_observer_mode_norm not in {"off", "metrics", "director", "both"}:
             executive_observer_mode_norm = "off"
+        use_director = executive_observer_mode_norm in {"director", "both"}
+        use_metrics_observer = executive_observer_mode_norm in {"metrics", "both"}
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
         executive_payload: Dict[str, Any] | None = None
         executive_directives: Dict[str, Any] | None = None
@@ -1252,6 +1267,38 @@ class DualBrainController:
                 )
             except Exception:  # pragma: no cover - defensive guard
                 executive_task = None
+
+        director_task: asyncio.Task[DirectorAdvice] | None = None
+        director_payload: Dict[str, Any] | None = None
+        director_control: Dict[str, Any] | None = None
+        director_max_chars: Optional[int] = None
+        director_append_question: Optional[str] = None
+        if self.director_model is not None and use_director:
+            try:
+                director_task = asyncio.create_task(
+                    self.director_model.advise(
+                        question=question,
+                        context=context,
+                        signals={
+                            "is_trivial_chat": is_trivial_chat,
+                            "hemisphere_mode": hemisphere_mode,
+                            "hemisphere_bias": hemisphere_bias,
+                            "leading": leading,
+                            "collaborative": collaborative_lead,
+                            "collaboration_strength": collaboration_profile.strength,
+                            "focus_relevance": (focus.relevance if focus else None),
+                            "hippocampal_overlap": (focus.hippocampal_overlap if focus else None),
+                            "has_working_memory": bool(context_parts.get("working_memory")),
+                            "has_long_term": bool(
+                                context_parts.get("memory")
+                                or context_parts.get("schema")
+                                or context_parts.get("hippocampal")
+                            ),
+                        },
+                    )
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                director_task = None
         inner_steps: List[InnerDialogueStep] = []
         right_lead_notes: Optional[str] = None
         stream_final_only = bool(on_delta and on_reset)
@@ -1397,6 +1444,103 @@ class DualBrainController:
         ):
             decision.action = 0
             decision.state["prefrontal_override"] = "trivial_chat"
+
+        if director_task is not None:
+            advice: DirectorAdvice | None = None
+            if director_task.done():
+                try:
+                    advice = director_task.result()
+                except asyncio.CancelledError:
+                    advice = None
+                except Exception:  # pragma: no cover - defensive guard
+                    advice = None
+            else:
+                try:
+                    advice = await asyncio.wait_for(director_task, timeout=0.35)
+                except asyncio.TimeoutError:
+                    director_task.cancel()
+                    advice = None
+                except asyncio.CancelledError:
+                    advice = None
+                except Exception:  # pragma: no cover - defensive guard
+                    advice = None
+
+            if advice is not None:
+                director_payload = advice.to_payload()
+                director_payload["observer_mode"] = "director"
+                director_control = advice.control if isinstance(advice.control, dict) else {}
+                self.telemetry.log(
+                    "director_reasoner",
+                    qid=decision.qid,
+                    confidence=float(advice.confidence),
+                    latency_ms=float(advice.latency_ms),
+                    source=str(advice.source),
+                )
+
+                consult = str(director_control.get("consult") or "auto").strip().lower()
+                if consult == "skip":
+                    decision.action = 0
+                    decision.state["director_consult"] = "skip"
+                elif consult == "force" and not is_trivial_chat:
+                    decision.action = max(1, decision.action)
+                    decision.state["director_consult"] = "force"
+
+                temp_raw = director_control.get("temperature")
+                if temp_raw is not None and temp_raw != "":
+                    try:
+                        temp_value = float(temp_raw)
+                    except Exception:
+                        temp_value = None
+                    if temp_value is not None:
+                        decision.temperature = max(0.1, min(0.95, temp_value))
+                        decision.state["director_temperature"] = decision.temperature
+
+                max_chars_raw = director_control.get("max_chars")
+                if max_chars_raw is not None and max_chars_raw != "":
+                    try:
+                        director_max_chars = int(max_chars_raw)
+                    except Exception:
+                        director_max_chars = None
+                    if director_max_chars is not None:
+                        director_max_chars = max(80, min(2400, director_max_chars))
+                        decision.state["director_max_chars"] = director_max_chars
+
+                append_q = str(director_control.get("append_clarifying_question") or "").strip()
+                if append_q:
+                    director_append_question = append_q[:240]
+                    decision.state["director_append_question"] = director_append_question
+
+                mem = director_control.get("memory")
+                mem_obj: Dict[str, Any] = mem if isinstance(mem, dict) else {}
+                wm = str(mem_obj.get("working_memory") or "auto").strip().lower()
+                lt = str(mem_obj.get("long_term") or "auto").strip().lower()
+                if wm == "drop":
+                    context_parts["working_memory"] = ""
+                    decision.state["director_memory_working"] = "drop"
+                if lt == "drop":
+                    context_parts["memory"] = ""
+                    context_parts["schema"] = ""
+                    context_parts["hippocampal"] = ""
+                    decision.state["director_memory_long_term"] = "drop"
+
+                rebuilt: List[str] = []
+                if context_parts.get("working_memory"):
+                    rebuilt.append(
+                        _format_section(
+                            "Working memory",
+                            str(context_parts["working_memory"]).splitlines(),
+                        )
+                    )
+                if context_parts.get("memory"):
+                    rebuilt.append(str(context_parts["memory"]))
+                if context_parts.get("schema"):
+                    rebuilt.append(f"[Schema memory] {context_parts['schema']}")
+                if context_parts.get("hippocampal"):
+                    rebuilt.append(f"[Hippocampal recall] {context_parts['hippocampal']}")
+                if rebuilt:
+                    context = "\n".join(rebuilt)
+                    if self.prefrontal_cortex is not None and focus is not None:
+                        context = self.prefrontal_cortex.gate_context(context, focus)
         decision.state["hemisphere_mode"] = hemisphere_mode
         decision.state["hemisphere_bias_strength"] = hemisphere_bias
         decision.state["hemisphere_signal"] = hemisphere_signal.to_payload()
@@ -1950,6 +2094,38 @@ class DualBrainController:
         user_answer = integrated_answer
         if not emit_debug_sections:
             user_answer = _sanitize_user_answer(user_answer)
+            max_chars: Optional[int] = None
+            if director_max_chars is not None:
+                try:
+                    max_chars = int(director_max_chars)
+                except Exception:
+                    max_chars = None
+                if max_chars is not None:
+                    max_chars = max(80, min(2400, max_chars))
+
+            if director_append_question and director_append_question not in user_answer:
+                base = user_answer.strip()
+                suffix = director_append_question.strip()
+                sep = "\n\n" if base and suffix else ""
+                if max_chars is not None and max_chars > 0:
+                    reserved = len(sep) + len(suffix)
+                    if reserved >= max_chars:
+                        if len(suffix) > max_chars:
+                            cutoff = max(0, max_chars - 3)
+                            suffix = suffix[:cutoff].rstrip() + "..."
+                        user_answer = suffix
+                    else:
+                        allowed_base = max_chars - reserved
+                        if len(base) > allowed_base:
+                            cutoff = max(0, allowed_base - 3)
+                            base = base[:cutoff].rstrip() + "..."
+                        user_answer = f"{base}{sep}{suffix}".strip()
+                else:
+                    user_answer = f"{base}{sep}{suffix}".strip()
+
+            if max_chars is not None and len(user_answer) > max_chars:
+                cutoff = max(0, max_chars - 3)
+                user_answer = user_answer[:cutoff].rstrip() + "..."
         if emit_debug_sections:
             if collaborative_lead:
                 right_block = right_lead_notes or detail_notes or "(Right brain prelude unavailable)"
@@ -2463,11 +2639,8 @@ class DualBrainController:
         if self.hippocampus is not None and self.hippocampus.episodes and architecture_path:
             self.hippocampus.episodes[-1].annotations["architecture_path"] = architecture_path
 
-        executive_observer_payload: Dict[str, Any] | None = None
-        if (
-            self.executive_model is not None
-            and executive_observer_mode_norm != "off"
-        ):
+        executive_observer_payload: Dict[str, Any] | None = director_payload
+        if self.executive_model is not None and use_metrics_observer:
             active_modules: List[str] = []
             if architecture_path:
                 mods = set()
@@ -2544,15 +2717,36 @@ class DualBrainController:
                 except Exception:  # pragma: no cover - defensive guard
                     observer_advice = None
                 if observer_advice is not None:
-                    executive_observer_payload = observer_advice.to_payload()
-                    executive_observer_payload["observer_mode"] = executive_observer_mode_norm
+                    metrics_payload = observer_advice.to_payload()
+                    metrics_payload["observer_mode"] = "metrics"
+                    if executive_observer_payload and executive_observer_payload.get("memo"):
+                        combined_directives: Dict[str, Any] = {
+                            "director": executive_observer_payload.get("directives"),
+                            "observer": metrics_payload.get("directives"),
+                        }
+                        combined_memo = (
+                            f"{executive_observer_payload.get('memo')}\n\n"
+                            "---\n(post-turn)\n"
+                            f"{metrics_payload.get('memo')}"
+                        ).strip()
+                        executive_observer_payload = {
+                            "memo": combined_memo[:2400],
+                            "mix_in": "",
+                            "directives": combined_directives,
+                            "confidence": float(metrics_payload.get("confidence") or 0.0),
+                            "latency_ms": float(metrics_payload.get("latency_ms") or 0.0),
+                            "source": "combined",
+                            "observer_mode": "both",
+                        }
+                    else:
+                        executive_observer_payload = metrics_payload
                     self.telemetry.log(
                         "executive_observer",
                         qid=decision.qid,
                         confidence=float(observer_advice.confidence),
                         latency_ms=float(observer_advice.latency_ms),
                         source=str(observer_advice.source),
-                        observer_mode=executive_observer_mode_norm,
+                        observer_mode="metrics",
                     )
         self.memory.record_dialogue_flow(
             decision.qid,

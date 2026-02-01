@@ -78,6 +78,8 @@ def test_prefrontal_trivial_chat_detection_uses_structural_cues():
     assert not cortex.is_trivial_chat_turn("詳しく分析してください。")
     assert not cortex.is_trivial_chat_turn("How does this work?")
 
+    assert cortex.should_include_working_memory("それはもう聞いたよ")
+
     assert not cortex.should_include_long_term_memory("分離してるね？")
     assert cortex.should_include_long_term_memory("詳しく分析してください。")
 
@@ -96,3 +98,16 @@ def test_working_memory_buffer_rolls_forward():
     assert "Q:q1" not in context
     assert "Q:q2" in context
     assert "Q:q3" in context
+
+
+def test_working_memory_sanitises_internal_or_coaching_lines():
+    cortex = PrefrontalCortex(working_memory_turns=2, working_memory_max_chars=200)
+    cortex.remember_working_memory(
+        question="やあ",
+        answer="こんにちは！\n\n- Add a warm, informal tone.\nqid 123",
+        qid="1",
+    )
+    ctx = cortex.working_memory_context(turns=1)
+    assert "こんにちは！" in ctx
+    assert "Add a warm" not in ctx
+    assert "qid 123" not in ctx

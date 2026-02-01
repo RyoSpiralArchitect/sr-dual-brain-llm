@@ -19,6 +19,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -28,9 +30,85 @@ import numpy as np
 
 EMBEDDING_VERSION = "srdb-blake2b-v1"
 
+_WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
+_KANJI_RE = re.compile(r"[\u4e00-\u9fff]")
+_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "for",
+    "from",
+    "he",
+    "her",
+    "him",
+    "his",
+    "i",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "me",
+    "my",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "she",
+    "so",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "those",
+    "to",
+    "us",
+    "was",
+    "we",
+    "were",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "why",
+    "with",
+    "you",
+    "your",
+}
+
 
 def _tokenize(text: str) -> List[str]:
-    return [t for t in text.replace("\n", " ").replace("\t", " ").split(" ") if t]
+    lowered = (text or "").replace("\n", " ").replace("\t", " ").lower()
+    tokens: List[str] = []
+    for tok in _WORD_RE.findall(lowered):
+        tok = tok.strip()
+        if not tok:
+            continue
+        tokens.append(tok)
+        if _KANJI_RE.search(tok) and len(tok) >= 2:
+            # Add kanji bigrams to recover overlap signals in CJK text without
+            # introducing the noisy hiragana/katakana n-grams that cause
+            # unrelated "sticky" recalls.
+            for i in range(len(tok) - 1):
+                a = tok[i]
+                b = tok[i + 1]
+                if _KANJI_RE.match(a) and _KANJI_RE.match(b):
+                    tokens.append(a + b)
+    return tokens
 
 
 def _normalise_tags(tags: Iterable[str] | None) -> Tuple[str, ...]:
@@ -91,10 +169,41 @@ class EpisodicTrace:
 
 
 class TemporalHippocampalIndexing:
-    def __init__(self, dim: int = 128):
+    def __init__(
+        self,
+        dim: int = 128,
+        *,
+        min_lexical_overlap: float | None = None,
+    ):
         self.dim = dim
         self.episodes: List[EpisodicTrace] = []
         self._eps = 1e-8
+        self._min_lexical_overlap = self._resolve_min_lexical_overlap(min_lexical_overlap)
+
+    @staticmethod
+    def _resolve_min_lexical_overlap(value: float | None) -> float:
+        if value is None:
+            raw = str(os.environ.get("DUALBRAIN_HIPPO_MIN_LEXICAL", "0.0") or "0.0")
+            try:
+                value = float(raw)
+            except Exception:
+                value = 0.0
+        return max(0.0, min(1.0, float(value)))
+
+    @staticmethod
+    def _content_tokens(tokens: List[str]) -> set[str]:
+        filtered: set[str] = set()
+        for tok in tokens or []:
+            tok = str(tok or "").strip().lower()
+            if not tok:
+                continue
+            if tok in _STOPWORDS:
+                continue
+            # Avoid matching purely on punctuation/very short fragments.
+            if len(tok) <= 1:
+                continue
+            filtered.add(tok)
+        return filtered
 
     def _embed(self, text: str) -> np.ndarray:
         v = np.zeros(self.dim, dtype=np.float32)
@@ -146,14 +255,25 @@ class TemporalHippocampalIndexing:
         if not self.episodes:
             return []
         qv = self._embed(query)
-        query_tokens = set(_tokenize(query.lower()))
+        query_tokens = self._content_tokens(_tokenize(query))
+        if not query_tokens:
+            return []
         scored: List[Tuple[float, float, int, float, EpisodicTrace]] = []
         for idx, trace in enumerate(self.episodes):
             sim = float(np.dot(qv, trace.vector))
             lexical = 0.0
             if query_tokens:
-                trace_tokens = set(_tokenize(trace.question.lower()))
-                lexical = len(query_tokens & trace_tokens) / max(len(query_tokens), 1)
+                trace_tokens = self._content_tokens(_tokenize(trace.question))
+                overlap = len(query_tokens & trace_tokens)
+                lexical = overlap / max(len(query_tokens), 1)
+
+            if lexical <= 0.0:
+                # The lightweight embedding uses feature hashing, which can
+                # yield false positives via collisions. Require at least some
+                # lexical overlap to avoid "sticky" irrelevant recalls.
+                continue
+            if lexical < self._min_lexical_overlap:
+                continue
             combined = sim + 0.35 * lexical
             scored.append((combined, lexical, -idx, sim, trace))
         scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)

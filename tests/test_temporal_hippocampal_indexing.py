@@ -81,3 +81,14 @@ def test_embedding_is_deterministic_across_hash_seeds():
     b = run("2")
     assert len(a) == len(b)
     assert all(abs(x - y) < 1e-10 for x, y in zip(a, b))
+
+
+def test_retrieve_filters_false_positives_without_lexical_overlap():
+    hippocampus = TemporalHippocampalIndexing(dim=128)
+    hippocampus.index_episode("q1", "hello there", "general greeting")
+    hippocampus.index_episode("q2", "pascal wager denial", "discussion about the wager")
+
+    # With feature-hashed embeddings, unrelated queries can collide in-vector space.
+    # We require lexical overlap to avoid "sticky" irrelevant recalls.
+    hits = hippocampus.retrieve("random totally unrelated words", topk=3)
+    assert hits == []

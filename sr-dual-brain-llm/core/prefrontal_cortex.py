@@ -27,14 +27,71 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 
+_WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
+_EN_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "but",
+    "by",
+    "for",
+    "from",
+    "he",
+    "her",
+    "him",
+    "his",
+    "i",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "me",
+    "my",
+    "not",
+    "of",
+    "on",
+    "or",
+    "our",
+    "she",
+    "so",
+    "that",
+    "the",
+    "their",
+    "them",
+    "then",
+    "there",
+    "these",
+    "they",
+    "this",
+    "those",
+    "to",
+    "us",
+    "was",
+    "we",
+    "were",
+    "with",
+    "you",
+    "your",
+}
+
+
 def _tokenise(text: str) -> List[str]:
-    return [tok for tok in text.lower().replace("\n", " ").split(" ") if tok]
+    lowered = (text or "").replace("\n", " ").lower()
+    return [tok for tok in _WORD_RE.findall(lowered) if tok]
 
 
 def _top_keywords(tokens: Sequence[str], *, limit: int = 6) -> Tuple[str, ...]:
     seen = []
     for tok in tokens:
-        if len(tok) < 3:
+        if len(tok) < 2:
+            continue
+        if tok.isascii() and tok.isalpha() and tok in _EN_STOPWORDS:
             continue
         if tok in seen:
             continue
@@ -220,6 +277,63 @@ _LABEL_PATTERN = re.compile(
     r"\b(i am|i'm|we are|you are|they are|私は|俺は|私は)\s+(?:a\s+)?(failure|loser|worthless|stupid|useless|無価値|ダメ)\b",
     re.IGNORECASE,
 )
+
+_WM_INTERNAL_PREFIXES = (
+    "qid ",
+    "architecture path",
+    "telemetry",
+)
+
+_WM_INTERNAL_TOKENS = (
+    "left brain",
+    "right brain",
+    "coherence",
+    "unconscious",
+    "linguistic",
+    "cognitive",
+    "psychoid",
+    "hemisphere",
+    "collaboration",
+    "architecture",
+    "metrics",
+    "trace",
+)
+
+
+def _looks_like_working_memory_noise(line: str) -> bool:
+    raw = str(line or "").strip()
+    if not raw:
+        return False
+
+    lowered = raw.lower()
+    if any(lowered.startswith(prefix) for prefix in _WM_INTERNAL_PREFIXES):
+        return True
+    if lowered.startswith("[") and any(token in lowered for token in _WM_INTERNAL_TOKENS):
+        return True
+
+    # Writing-coach style lines should never be fed back as "memory context".
+    if "if the user" in lowered:
+        return True
+    if lowered.startswith(("- add a ", "- add an ", "add a ", "add an ")):
+        return True
+    if lowered.startswith(("consider noting the time", "- consider noting the time")):
+        return True
+    if raw.startswith("-") and ("もう少し" in raw or "時間帯" in raw or "推測" in raw or "例：" in raw):
+        return True
+
+    return False
+
+
+def _sanitize_working_memory_text(text: str) -> str:
+    if not text:
+        return ""
+    kept: List[str] = []
+    for line in str(text).splitlines():
+        if _looks_like_working_memory_noise(line):
+            continue
+        kept.append(line)
+    cleaned = "\n".join(kept).strip()
+    return cleaned or str(text).strip()
 
 
 @dataclass
@@ -494,8 +608,8 @@ class PrefrontalCortex:
         answer: str,
         qid: Optional[str] = None,
     ) -> None:
-        q = (question or "").strip()
-        a = (answer or "").strip()
+        q = _sanitize_working_memory_text(question or "").strip()
+        a = _sanitize_working_memory_text(answer or "").strip()
         if not q or not a:
             return
         if len(q) > self.working_memory_max_chars:
@@ -531,8 +645,9 @@ class PrefrontalCortex:
             return True
 
         stats = PrefrontalCortex._alnum_stats(q)
-        # Moderately short follow-ups sometimes refer to the immediately prior turn.
-        return 10 <= stats["alnum"] <= 28
+        # Follow-ups with limited lexical content often refer to the immediately
+        # prior turn even when they aren't phrased as a question.
+        return 6 <= stats["alnum"] <= 40
 
     @staticmethod
     def should_include_long_term_memory(question: str) -> bool:

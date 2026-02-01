@@ -38,6 +38,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from core.auditor import Auditor
 from core.callosum import Callosum
 from core.default_mode_network import DefaultModeNetwork
+from core.director_reasoner import DirectorReasonerModel
 from core.dual_brain import DualBrainController
 from core.executive_reasoner import ExecutiveReasonerModel
 from core.hypothalamus import Hypothalamus
@@ -528,6 +529,7 @@ class EngineSession:
     left: LeftBrainModel
     right: RightBrainModel
     executive: ExecutiveReasonerModel
+    director: DirectorReasonerModel
     policy: RightBrainPolicy
     orchestrator: Orchestrator
     auditor: Auditor
@@ -602,6 +604,7 @@ class EngineSession:
         left = LeftBrainModel(llm_config=left_llm_config)
         right = RightBrainModel(llm_config=right_llm_config)
         executive = ExecutiveReasonerModel(llm_config=executive_llm_config)
+        director = DirectorReasonerModel(llm_config=executive_llm_config)
         policy = RightBrainPolicy()
         orchestrator = Orchestrator(2)
         auditor = Auditor()
@@ -625,6 +628,7 @@ class EngineSession:
             left_model=left,
             right_model=right,
             executive_model=executive,
+            director_model=director,
             policy=policy,
             hypothalamus=hypothalamus,
             reasoning_dial=dial,
@@ -650,6 +654,7 @@ class EngineSession:
             left=left,
             right=right,
             executive=executive,
+            director=director,
             policy=policy,
             orchestrator=orchestrator,
             auditor=auditor,
@@ -706,8 +711,8 @@ async def _handle_process(
         raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
     executive_observer_mode = str(params.get("executive_observer_mode", "off") or "off").strip().lower()
-    if executive_observer_mode not in {"off", "metrics"}:
-        raise ValueError("executive_observer_mode must be one of: off, metrics")
+    if executive_observer_mode not in {"off", "metrics", "director", "both"}:
+        raise ValueError("executive_observer_mode must be one of: off, metrics, director, both")
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
@@ -820,8 +825,8 @@ async def _handle_process_stream(
         raise ValueError("executive_mode must be one of: off, observe, assist, polish")
 
     executive_observer_mode = str(params.get("executive_observer_mode", "off") or "off").strip().lower()
-    if executive_observer_mode not in {"off", "metrics"}:
-        raise ValueError("executive_observer_mode must be one of: off, metrics")
+    if executive_observer_mode not in {"off", "metrics", "director", "both"}:
+        raise ValueError("executive_observer_mode must be one of: off, metrics, director, both")
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))

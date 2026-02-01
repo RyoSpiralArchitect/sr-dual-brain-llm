@@ -16,6 +16,7 @@ from core.prefrontal_cortex import PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
+from core.director_reasoner import DirectorAdvice
 
 
 class DummyCallosum:
@@ -84,6 +85,30 @@ class InstantExecutiveModel:
         )
 
 
+class InstantDirectorModel:
+    async def advise(
+        self,
+        *,
+        question: str,
+        context: str,
+        signals=None,
+        temperature: float = 0.15,
+    ):
+        return DirectorAdvice(
+            memo="instant director",
+            control={
+                "consult": "skip",
+                "temperature": 0.2,
+                "max_chars": 120,
+                "memory": {"working_memory": "drop", "long_term": "drop"},
+                "append_clarifying_question": "どの話に戻りたい？",
+            },
+            confidence=0.9,
+            latency_ms=1.0,
+            source="test",
+        )
+
+
 class CaptureLeftModel:
     uses_external_llm = True
 
@@ -111,12 +136,72 @@ class CaptureLeftModel:
         return f"{draft}\n\n(INTEGRATED)"
 
 
+class LongLowConfidenceLeft:
+    uses_external_llm = False
+
+    async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:
+        return ("draft " + ("x" * 800)).strip()
+
+    def estimate_confidence(self, draft: str) -> float:
+        return 0.2
+
+    async def integrate_info_async(
+        self,
+        *,
+        question: str,
+        draft: str,
+        info: str,
+        temperature: float = 0.3,
+        on_delta=None,
+    ) -> str:
+        return draft
+
+
+def test_director_can_skip_consult_and_clamp_output():
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    hippocampus.index_episode("seed", "分析パターン", "Refer to diffusion and entropy.")
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LongLowConfidenceLeft(),
+        right_model=RightBrainModel(),
+        director_model=InstantDirectorModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    answer = asyncio.run(controller.process("詳しく分析してください。", executive_observer_mode="director"))
+
+    assert not callosum.payloads, "Director should be able to skip consult"
+    assert len(answer) <= 120
+    assert "どの話に戻りたい？" in answer
+
+    interaction_ids = [
+        payload["qid"] for evt, payload in telemetry.events if evt == "interaction_complete"
+    ]
+    assert interaction_ids
+    flow = memory.dialogue_flow(interaction_ids[-1])
+    assert flow and flow.get("executive_observer")
+    assert flow["executive_observer"].get("observer_mode") == "director"
+
+
 def test_controller_requests_right_brain_when_confidence_low():
     callosum = DummyCallosum()
     memory = SharedMemory()
     telemetry = TrackingTelemetry()
     hippocampus = TemporalHippocampalIndexing(dim=32)
-    hippocampus.index_episode("seed", "analysis pattern", "Refer to diffusion and entropy.")
+    hippocampus.index_episode("seed", "分析パターン", "Refer to diffusion and entropy.")
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
@@ -432,7 +517,7 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     )
 
     question = "Sketch a mythic journey across unknown seas."
-    context, _ = controller._compose_context(question)
+    context, _, _ = controller._compose_context(question)
     draft = asyncio.run(controller.left_model.generate_answer(question, context))
     payload = unconscious_field._payload(question, draft)
     vector = unconscious_field._vectorize(payload)
