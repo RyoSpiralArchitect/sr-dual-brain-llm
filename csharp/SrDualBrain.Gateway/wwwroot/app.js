@@ -35,6 +35,7 @@ const els = {
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
   brainHistory: $("brainHistory"),
+  moduleHistory: $("moduleHistory"),
   executiveMemo: $("executiveMemo"),
   executiveObserverMemo: $("executiveObserverMemo"),
   telemetryRaw: $("telemetryRaw"),
@@ -43,6 +44,7 @@ const els = {
   btnExportTelemetry: $("btnExportTelemetry"),
   btnExportDialogueFlow: $("btnExportDialogueFlow"),
   btnExportBrainHistory: $("btnExportBrainHistory"),
+  btnExportModuleHistory: $("btnExportModuleHistory"),
   btnExportChat: $("btnExportChat"),
 };
 
@@ -55,6 +57,8 @@ let lastMetricsPayload = null;
 let pendingBlobs = [];
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
+const moduleHistoryBySession = new Map();
+const moduleHistoryLimit = 24;
 const selectedQidBySession = new Map();
 
 function isMetricsPopoutOpen() {
@@ -78,11 +82,17 @@ function publishMetricsToPopout(payload) {
   try {
     const sessionId = payload?.session_id ?? "default";
     const history = brainHistoryBySession.get(sessionId) ?? [];
+    const moduleHistory = moduleHistoryBySession.get(sessionId) ?? [];
     const clientState = {
       brain_history: history.map((h) => ({
         qid: h.qid ?? "",
         ts: h.ts ?? 0,
         values: h.values ?? {},
+      })),
+      module_history: moduleHistory.map((h) => ({
+        qid: h.qid ?? "",
+        ts: h.ts ?? 0,
+        modules: Array.isArray(h.modules) ? h.modules.map(String) : [],
       })),
     };
     metricsPopout.postMessage(
@@ -459,6 +469,16 @@ function getBrainHistory(sessionId) {
   return history;
 }
 
+function getModuleHistory(sessionId) {
+  const key = (sessionId || "default").trim() || "default";
+  let history = moduleHistoryBySession.get(key);
+  if (!history) {
+    history = [];
+    moduleHistoryBySession.set(key, history);
+  }
+  return history;
+}
+
 function snapshotBrain(metrics, { qid }) {
   const brain = metrics?.brain ?? null;
   if (!brain || typeof brain !== "object") return null;
@@ -487,6 +507,12 @@ function snapshotBrain(metrics, { qid }) {
   };
 }
 
+function snapshotModules(metrics, { qid }) {
+  const modules = metrics?.modules?.active ?? [];
+  const list = Array.isArray(modules) ? modules.map(String).filter(Boolean) : [];
+  return { qid: qid || "", ts: Date.now(), modules: list };
+}
+
 function upsertBrainHistory(sessionId, snapshot) {
   if (!snapshot) return [];
   const history = getBrainHistory(sessionId);
@@ -498,6 +524,31 @@ function upsertBrainHistory(sessionId, snapshot) {
   }
   while (history.length > brainHistoryLimit) history.shift();
   return history;
+}
+
+function upsertModuleHistory(sessionId, snapshot) {
+  if (!snapshot) return [];
+  const history = getModuleHistory(sessionId);
+  const last = history.length ? history[history.length - 1] : null;
+  if (last && last.qid && snapshot.qid && last.qid === snapshot.qid) {
+    history[history.length - 1] = snapshot;
+  } else {
+    history.push(snapshot);
+  }
+  while (history.length > moduleHistoryLimit) history.shift();
+  return history;
+}
+
+function moduleAccent(moduleName) {
+  const name = String(moduleName || "");
+  if (!name) return "var(--primary-rgb)";
+  if (name.includes("Amygdala")) return "var(--danger-rgb)";
+  if (name.includes("BasalGanglia")) return "var(--good-rgb)";
+  if (name.includes("Hypothalamus")) return "var(--warn-rgb)";
+  if (name.includes("Auditor")) return "var(--warn-rgb)";
+  if (name.includes("Unconscious") || name.includes("Psychoid")) return "var(--warn-rgb)";
+  if (name.includes("TemporalHippocampal")) return "var(--good-rgb)";
+  return "var(--primary-rgb)";
 }
 
 function renderBrainHistory(sessionId) {
@@ -567,6 +618,81 @@ function renderBrainHistory(sessionId) {
     }
     rowEl.appendChild(cells);
     els.brainHistory.appendChild(rowEl);
+  }
+}
+
+function renderModuleHistory(sessionId) {
+  if (!els.moduleHistory) return;
+  els.moduleHistory.innerHTML = "";
+
+  const history = getModuleHistory(sessionId);
+  const selectedQid = selectedQidBySession.get(sessionId) || "";
+
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.className = "mh__empty";
+    empty.textContent = "—";
+    els.moduleHistory.appendChild(empty);
+    return;
+  }
+
+  const counts = new Map();
+  for (const snap of history) {
+    const mods = Array.isArray(snap?.modules) ? snap.modules : [];
+    for (const m of mods) {
+      const k = String(m || "");
+      if (!k) continue;
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  }
+  const modules = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
+    .map(([m]) => m);
+
+  const head = document.createElement("div");
+  head.className = "mh__head";
+  const headLeft = document.createElement("div");
+  headLeft.textContent = `History (last ${history.length})`;
+  const headRight = document.createElement("div");
+  headRight.className = "mh__hint";
+  headRight.textContent = "oldest → newest";
+  head.appendChild(headLeft);
+  head.appendChild(headRight);
+  els.moduleHistory.appendChild(head);
+
+  for (const mod of modules) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "mh__row";
+
+    const label = document.createElement("div");
+    label.className = "mh__label";
+    label.textContent = mod;
+    label.title = mod;
+    rowEl.appendChild(label);
+
+    const cells = document.createElement("div");
+    cells.className = "mh__cells";
+    const accent = moduleAccent(mod);
+
+    for (const snap of history) {
+      const active = Array.isArray(snap?.modules) ? snap.modules.includes(mod) : false;
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "mh__cell";
+      cell.style.setProperty("--accent", accent);
+      cell.style.setProperty("--i", active ? "1" : "0");
+      const ts = snap?.ts ? new Date(snap.ts).toLocaleTimeString() : "";
+      const qid = String(snap?.qid || "").slice(0, 8);
+      cell.title = `${ts}${qid ? ` · qid ${qid}` : ""} · ${mod}: ${active ? "on" : "off"}`;
+      if (snap?.qid && selectedQid && snap.qid === selectedQid) {
+        cell.classList.add("mh__cell--selected");
+      }
+      cell.addEventListener("click", () => jumpToTrace(sessionId, snap?.qid));
+      cells.appendChild(cell);
+    }
+
+    rowEl.appendChild(cells);
+    els.moduleHistory.appendChild(rowEl);
   }
 }
 
@@ -653,8 +779,10 @@ function renderMetrics(response, opts = {}) {
   selectedQidBySession.set(sessionId, qid || "");
   if (renderSource !== "trace") {
     upsertBrainHistory(sessionId, snapshotBrain(metrics, { qid }));
+    upsertModuleHistory(sessionId, snapshotModules(metrics, { qid }));
   }
   renderBrainHistory(sessionId);
+  renderModuleHistory(sessionId);
 
   if (els.executiveMemo) {
     if (executive) {
@@ -1020,7 +1148,9 @@ els.btnClear.addEventListener("click", () => {
   if (els.modulePath) els.modulePath.innerHTML = "";
   if (els.brainActivity) els.brainActivity.innerHTML = "";
   if (els.brainHistory) els.brainHistory.innerHTML = "";
+  if (els.moduleHistory) els.moduleHistory.innerHTML = "";
   brainHistoryBySession.clear();
+  moduleHistoryBySession.clear();
   selectedQidBySession.clear();
   els.metricsSubtitle.textContent = "—";
   els.mCoherence.textContent = "—";
@@ -1044,8 +1174,10 @@ els.btnReset.addEventListener("click", async () => {
     pendingBlobs = [];
     renderBlobs();
     brainHistoryBySession.delete(sessionId);
+    moduleHistoryBySession.delete(sessionId);
     selectedQidBySession.delete(sessionId);
     if (els.brainHistory) els.brainHistory.innerHTML = "";
+    if (els.moduleHistory) els.moduleHistory.innerHTML = "";
   } catch (err) {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
   } finally {
@@ -1155,6 +1287,20 @@ els.btnExportBrainHistory?.addEventListener("click", () => {
     });
   } catch (err) {
     setStatus("warn", `export brain history failed: ${String(err)}`);
+  }
+});
+
+els.btnExportModuleHistory?.addEventListener("click", () => {
+  try {
+    const sessionId = (els.sessionId.value || "default").trim() || "default";
+    const history = getModuleHistory(sessionId);
+    downloadJson(`srdb_module_history_${sessionId}_${nowStamp()}.json`, {
+      session_id: sessionId,
+      limit: moduleHistoryLimit,
+      items: history,
+    });
+  } catch (err) {
+    setStatus("warn", `export module history failed: ${String(err)}`);
   }
 });
 

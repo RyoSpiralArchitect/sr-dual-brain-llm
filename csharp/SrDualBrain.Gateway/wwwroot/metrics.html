@@ -55,6 +55,7 @@
           <button class="btn btn--ghost" id="btnExportTelemetry" type="button">Export telemetry</button>
           <button class="btn btn--ghost" id="btnExportDialogueFlow" type="button">Export dialogue</button>
           <button class="btn btn--ghost" id="btnExportBrainHistory" type="button">Export brain history</button>
+          <button class="btn btn--ghost" id="btnExportModuleHistory" type="button">Export module history</button>
         </div>
 
         <div class="chips" id="activeModules"></div>
@@ -68,6 +69,11 @@
           <summary>Brain activity</summary>
           <div class="brain" id="brainActivity"></div>
           <div class="bh" id="brainHistory"></div>
+        </details>
+
+        <details class="details" open>
+          <summary>Module activity</summary>
+          <div class="mh" id="moduleHistory"></div>
         </details>
 
         <details class="details" open>
