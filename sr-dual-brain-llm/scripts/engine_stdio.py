@@ -16,6 +16,7 @@ Frame format: [u32 little-endian length][UTF-8 JSON payload]
 from __future__ import annotations
 
 import asyncio
+import base64
 import dataclasses
 import hashlib
 import json
@@ -302,6 +303,83 @@ async def _read_blob_frame(
 
     return header, {"data_len": int(data_len)}
 
+def _safe_blob_id(blob_id: str) -> str:
+    blob_id = str(blob_id or "").strip()
+    if not blob_id:
+        raise ValueError("blob_id is empty")
+    lowered = blob_id.lower()
+    allowed = "0123456789abcdef"
+    if not (8 <= len(lowered) <= 64) or any(ch not in allowed for ch in lowered):
+        raise ValueError(f"Invalid blob_id: {blob_id!r}")
+    return blob_id
+
+
+def _encode_blob_data_url(path: Path, *, content_type: str) -> tuple[str, str, int]:
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    b64 = base64.b64encode(data).decode("ascii")
+    ct = str(content_type or "").strip() or "application/octet-stream"
+    return f"data:{ct};base64,{b64}", digest, len(data)
+
+
+async def _resolve_vision_images(
+    session_id: str,
+    attachments: object,
+    *,
+    blob_root: Path,
+    blob_index: Dict[str, Dict[str, Any]],
+    vision_cache: "OrderedDict[str, str]",
+    cache_limit: int,
+) -> list[dict[str, Any]]:
+    if not attachments:
+        return []
+    if not isinstance(attachments, list):
+        raise ValueError("attachments must be an array")
+
+    session_id = str(session_id or "default").strip() or "default"
+    resolved: list[dict[str, Any]] = []
+    for item in attachments:
+        if not isinstance(item, dict):
+            continue
+        blob_id_raw = item.get("blob_id")
+        if not blob_id_raw:
+            continue
+        blob_id = _safe_blob_id(str(blob_id_raw))
+        meta = (blob_index.get(session_id) or {}).get(blob_id) if blob_index else None
+        content_type = str(item.get("content_type") or (meta or {}).get("content_type") or "").strip()
+        file_name = str(item.get("file_name") or (meta or {}).get("file_name") or "").strip() or None
+        sha256 = str((meta or {}).get("sha256") or "").strip() or None
+
+        path = blob_root / session_id / f"{blob_id}.blob"
+        if not path.exists():
+            raise ValueError(f"Attachment not found: session_id={session_id} blob_id={blob_id}")
+
+        data_url = None
+        if sha256 and sha256 in vision_cache:
+            data_url = vision_cache[sha256]
+            # Refresh LRU ordering.
+            vision_cache.move_to_end(sha256)
+        else:
+            data_url, digest, size_bytes = await asyncio.to_thread(
+                _encode_blob_data_url, path, content_type=content_type
+            )
+            sha256 = sha256 or digest
+            if sha256:
+                vision_cache[sha256] = data_url
+                vision_cache.move_to_end(sha256)
+                while len(vision_cache) > max(0, int(cache_limit or 0)):
+                    vision_cache.popitem(last=False)
+        resolved.append(
+            {
+                "blob_id": blob_id,
+                "content_type": content_type or None,
+                "file_name": file_name,
+                "sha256": sha256,
+                "data_url": data_url,
+            }
+        )
+    return resolved
+
 
 async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
     while True:
@@ -498,7 +576,15 @@ class EngineSession:
             pass
 
 
-async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dict[str, Any]:
+async def _handle_process(
+    session: EngineSession,
+    params: Dict[str, Any],
+    *,
+    blob_root: Path,
+    blob_index: Dict[str, Dict[str, Any]],
+    vision_cache: "OrderedDict[str, str]",
+    vision_cache_limit: int,
+) -> Dict[str, Any]:
     question = str(params.get("question", "")).strip()
     if not question:
         raise ValueError("question is required")
@@ -527,12 +613,21 @@ async def _handle_process(session: EngineSession, params: Dict[str, Any]) -> Dic
 
     session.telemetry.clear()
 
+    vision_images = await _resolve_vision_images(
+        session.session_id,
+        params.get("attachments"),
+        blob_root=blob_root,
+        blob_index=blob_index,
+        vision_cache=vision_cache,
+        cache_limit=vision_cache_limit,
+    )
     answer = await session.controller.process(
         question,
         leading_brain=leading_brain,
         qid=qid,
         answer_mode=answer_mode,
         executive_mode=executive_mode,
+        vision_images=vision_images or None,
     )
     after_memory = len(session.memory.past_qas)
     after_episodes = len(session.hippocampus.episodes)
@@ -587,6 +682,10 @@ async def _handle_process_stream(
     params: Dict[str, Any],
     *,
     emit_event,
+    blob_root: Path,
+    blob_index: Dict[str, Dict[str, Any]],
+    vision_cache: "OrderedDict[str, str]",
+    vision_cache_limit: int,
 ) -> Dict[str, Any]:
     question = str(params.get("question", "")).strip()
     if not question:
@@ -624,6 +723,14 @@ async def _handle_process_stream(
     def on_reset() -> None:
         emit_event("reset", {})
 
+    vision_images = await _resolve_vision_images(
+        session.session_id,
+        params.get("attachments"),
+        blob_root=blob_root,
+        blob_index=blob_index,
+        vision_cache=vision_cache,
+        cache_limit=vision_cache_limit,
+    )
     answer = await session.controller.process(
         question,
         leading_brain=leading_brain,
@@ -632,6 +739,7 @@ async def _handle_process_stream(
         on_delta=on_delta,
         on_reset=on_reset,
         executive_mode=executive_mode,
+        vision_images=vision_images or None,
     )
 
     after_memory = len(session.memory.past_qas)
@@ -1105,6 +1213,9 @@ async def main() -> None:
     )
     blob_root.mkdir(parents=True, exist_ok=True)
     blob_index: Dict[str, Dict[str, Any]] = {}
+    vision_cache: "OrderedDict[str, str]" = OrderedDict()
+    vision_cache_limit = int(os.environ.get("DUALBRAIN_VISION_CACHE_ITEMS", "4") or 4)
+    vision_cache_limit = max(0, min(32, vision_cache_limit))
 
     out_queue: "asyncio.Queue[Optional[Dict[str, Any]]]" = asyncio.Queue()
     writer_task = asyncio.create_task(_writer_loop(out_queue, transport))
@@ -1160,7 +1271,14 @@ async def main() -> None:
                                 raise ValueError(
                                     "Session already exists with different LLM config; use a new session_id or call reset."
                                 )
-                    payload = await _handle_process(session, params)
+                    payload = await _handle_process(
+                        session,
+                        params,
+                        blob_root=blob_root,
+                        blob_index=blob_index,
+                        vision_cache=vision_cache,
+                        vision_cache_limit=vision_cache_limit,
+                    )
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "process_stream":
                     session_id = str(params.get("session_id", "default") or "default")
@@ -1202,6 +1320,10 @@ async def main() -> None:
                         session,
                         params,
                         emit_event=emit_event,
+                        blob_root=blob_root,
+                        blob_index=blob_index,
+                        vision_cache=vision_cache,
+                        vision_cache_limit=vision_cache_limit,
                     )
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "get_trace":

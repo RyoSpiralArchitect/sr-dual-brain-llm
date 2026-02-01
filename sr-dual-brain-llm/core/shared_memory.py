@@ -18,16 +18,38 @@
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 
+_WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
+
+
 def _tokenize(text: str) -> List[str]:
     """Lightweight tokeniser used for novelty scoring and retrieval."""
 
-    lowered = text.replace("\n", " ").lower()
-    return [tok for tok in lowered.split(" ") if tok]
+    lowered = (text or "").replace("\n", " ").lower()
+    tokens: List[str] = []
+    for tok in _WORD_RE.findall(lowered):
+        tok = tok.strip()
+        if not tok:
+            continue
+        tokens.append(tok)
+
+        # For CJK, add short character n-grams so that overlap can be detected
+        # even when there are no spaces (useful for Japanese).
+        if _CJK_RE.search(tok) and len(tok) >= 4:
+            grams_added = 0
+            for i in range(len(tok) - 1):
+                tokens.append(tok[i : i + 2])
+                grams_added += 1
+                if grams_added >= 32:
+                    break
+
+    return tokens
 
 
 def _normalise_tags(tags: Iterable[str] | None) -> Tuple[str, ...]:
@@ -109,7 +131,7 @@ class SharedMemory:
         recency_weight: float,
     ) -> float:
         if not q_tokens:
-            return recency_weight
+            return 0.0
 
         trace_tokens = set(trace.question_tokens)
         q_tokens_set = set(q_tokens)
@@ -125,7 +147,11 @@ class SharedMemory:
         if q_tags_set and trace.tags:
             tag_bonus = len(q_tags_set & set(trace.tags)) / max(len(q_tags_set), 1)
 
-        return 0.7 * lexical_score + 0.2 * tag_bonus + 0.1 * recency_weight
+        if lexical_score <= 0.0 and tag_bonus <= 0.0:
+            # Avoid "recency-only" stickiness (especially on short acknowledgements).
+            return 0.0
+
+        return 0.75 * lexical_score + 0.2 * tag_bonus + 0.05 * recency_weight
 
     # ------------------------------------------------------------------
     def retrieve_related(self, question: str, n: int = 3) -> str:
@@ -146,7 +172,7 @@ class SharedMemory:
                 scored.append((score, trace))
 
         if not scored:
-            return self.get_context(n)
+            return ""
 
         scored.sort(key=lambda item: item[0], reverse=True)
         top = [f"Q:{trace.question} A:{trace.answer}" for _, trace in scored[:n]]

@@ -103,6 +103,11 @@ Request (multipart/form-data):
 - `session_id` (optional, default `"default"`)
 - `file` (required)
 
+Notes:
+- The engine stores blobs under `DUALBRAIN_BLOB_DIR` (default: your OS temp dir under `srdb_blobs/`).
+- The browser UI uses this endpoint to upload images and then references them via `attachments` on `/v1/process`.
+- The engine keeps a small in-memory base64 cache for re-used images (`DUALBRAIN_VISION_CACHE_ITEMS`, default: `4`).
+
 ### `GET /v1/trace/{qid}`
 Fetches stored `telemetry` and/or `dialogue_flow` for a prior turn (even if `/v1/process` returned only the clean answer + metrics).
 
@@ -140,6 +145,10 @@ Request fields:
   - `model` (string, required if `llm` provided)
   - `left_model` / `right_model` / `executive_model` (string, optional): per-role model override
   - Optional request-time knobs (no secrets): `api_base`, `organization`, `max_output_tokens`, `timeout_seconds`, `auto_continue`, `max_continuations`
+- `attachments` (array, optional): references previously uploaded blobs (e.g., images) to include as vision inputs
+  - Each item supports: `{ blob_id, content_type, file_name, size_bytes }`
+  - Vision is currently implemented for **OpenAI-style providers** (`openai|mistral|xai`) via `data:<mime>;base64,...` URLs generated inside the Python engine.
+  - Recommendation: always use a **vision-capable model** even for text-only turns to keep behavior stable across “text-only vs. image” conversations.
 
 Response fields:
 - `qid` (string)
@@ -152,12 +161,11 @@ Response fields:
 ### `POST /v1/process/stream` (SSE)
 Streams the answer via Server-Sent Events (SSE).
 
-When using an OpenAI-style provider (`openai`, `mistral`, `xai`), `delta` events are emitted from the provider's true token stream (not "chunk the final answer"). The engine may emit a `reset` event if it replaces an initial draft with an integrated final answer (e.g., after right-brain consultation or `executive_mode=polish`).
+To avoid “draft → reset → regenerate” artifacts in the browser, streaming mode emits the **final integrated answer only**. `delta` events are chunked slices of the final answer (currently ~512 characters per chunk). No `reset` event is emitted.
 
 SSE events:
 - `start`: `{ qid, session_id }`
 - `delta`: `{ text }`
-- `reset`: `{}` (client should clear the current assistant text)
 - `final`: `{ qid, answer, session_id, metrics }`
 - `done`: `{}`
 - `error`: `{ message }`

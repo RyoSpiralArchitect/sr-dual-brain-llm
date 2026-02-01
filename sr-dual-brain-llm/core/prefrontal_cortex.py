@@ -20,7 +20,9 @@
 
 from __future__ import annotations
 
+import time
 import re
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -438,6 +440,13 @@ class FocusSummary:
             "hippocampal_overlap": float(self.hippocampal_overlap),
         }
 
+@dataclass(frozen=True)
+class WorkingMemoryTrace:
+    question: str
+    answer: str
+    qid: Optional[str] = None
+    timestamp: float = field(default_factory=lambda: time.time())
+
 
 class PrefrontalCortex:
     """Approximate the gating and focusing role of the prefrontal cortex."""
@@ -448,10 +457,100 @@ class PrefrontalCortex:
         min_keywords: int = 2,
         gating_threshold: float = 0.25,
         schema_profiler: Optional[SchemaProfiler] = None,
+        working_memory_turns: int = 4,
+        working_memory_max_chars: int = 420,
     ) -> None:
         self.min_keywords = min_keywords
         self.gating_threshold = gating_threshold
         self.schema_profiler = schema_profiler or SchemaProfiler()
+        self._working_memory: "deque[WorkingMemoryTrace]" = deque(
+            maxlen=max(1, int(working_memory_turns))
+        )
+        self.working_memory_max_chars = max(120, int(working_memory_max_chars))
+
+    @staticmethod
+    def _alnum_stats(text: str) -> Dict[str, int]:
+        q = text or ""
+        alnum = 0
+        digits = 0
+        latin = 0
+        kanji = 0
+        for ch in q:
+            if ch.isalnum():
+                alnum += 1
+                if ch.isdigit():
+                    digits += 1
+                code = ord(ch)
+                if 0x4E00 <= code <= 0x9FFF:
+                    kanji += 1
+                if ("a" <= ch <= "z") or ("A" <= ch <= "Z"):
+                    latin += 1
+        return {"alnum": alnum, "digits": digits, "latin": latin, "kanji": kanji}
+
+    def remember_working_memory(
+        self,
+        *,
+        question: str,
+        answer: str,
+        qid: Optional[str] = None,
+    ) -> None:
+        q = (question or "").strip()
+        a = (answer or "").strip()
+        if not q or not a:
+            return
+        if len(q) > self.working_memory_max_chars:
+            q = q[: self.working_memory_max_chars] + "..."
+        if len(a) > self.working_memory_max_chars:
+            a = a[: self.working_memory_max_chars] + "..."
+        self._working_memory.append(WorkingMemoryTrace(question=q, answer=a, qid=qid))
+
+    def working_memory_context(self, *, turns: int = 2) -> str:
+        if not self._working_memory:
+            return ""
+        turns = max(1, min(int(turns), len(self._working_memory)))
+        parts: List[str] = []
+        for trace in list(self._working_memory)[-turns:]:
+            parts.append(f"Q:{trace.question}")
+            parts.append(f"A:{trace.answer}")
+        return "\n".join(parts)
+
+    @staticmethod
+    def should_include_working_memory(question: str) -> bool:
+        """Return True when short-term context is likely needed.
+
+        Avoids language-specific trigger dictionaries; relies on structural cues
+        (question marks, length, etc.).
+        """
+
+        q = (question or "").strip()
+        if not q:
+            return False
+        if "http://" in q or "https://" in q:
+            return False
+        if ("?" in q) or ("？" in q):
+            return True
+
+        stats = PrefrontalCortex._alnum_stats(q)
+        # Moderately short follow-ups sometimes refer to the immediately prior turn.
+        return 10 <= stats["alnum"] <= 28
+
+    @staticmethod
+    def should_include_long_term_memory(question: str) -> bool:
+        """Return True when episodic recall is likely helpful."""
+
+        q = (question or "").strip()
+        if not q:
+            return False
+        if "http://" in q or "https://" in q:
+            return False
+
+        stats = PrefrontalCortex._alnum_stats(q)
+        if stats["digits"] > 0:
+            return True
+        if ("?" in q) or ("？" in q):
+            # For ultra-short follow-ups, long-term recall tends to be noisy.
+            return stats["alnum"] >= 12
+        return stats["alnum"] >= 10
 
     def synthesise_focus(
         self,
@@ -516,54 +615,32 @@ class PrefrontalCortex:
         q = (question or "").strip()
         if not q:
             return True
-        if len(q) > 36:
-            return False
 
         q_lower = q.lower()
-        if re.search(r"\d", q_lower):
-            return False
         if "http://" in q_lower or "https://" in q_lower:
             return False
-        if any(token in q_lower for token in ("analy", "analysis", "explain", "derive", "calculate", "proof", "why", "how")):
-            return False
-        if any(token in q for token in ("分析", "計算", "証明", "なぜ", "どうやって")):
+        if re.search(r"\d", q_lower):
             return False
 
-        exact = {
-            "hi",
-            "hey",
-            "hello",
-            "yo",
-            "sup",
-            "やあ",
-            "こんにちは",
-            "こんばんは",
-            "おはよう",
-            "もしもし",
-            "元気",
-            "元気？",
-            "なに",
-            "なに？",
-            "何",
-            "何？",
-        }
-        if q_lower in exact or q in exact:
+        stats = PrefrontalCortex._alnum_stats(q)
+        if stats["alnum"] <= 0:
+            # Emoji / punctuation-only inputs ("...") are treated as trivial turns.
             return True
 
-        if re.fullmatch(r"[!?！？。…]+", q):
+        # Pure punctuation (including "??") should not trigger long reasoning.
+        if re.fullmatch(r"[\W_]+", q, flags=re.UNICODE):
             return True
 
-        starters = (
-            "やあ",
-            "こんにちは",
-            "おはよう",
-            "こんばんは",
-            "もしもし",
-            "hi",
-            "hello",
-            "hey",
-        )
-        if any(q_lower.startswith(prefix) for prefix in starters) and len(q_lower) <= 20:
+        # Questions are usually non-trivial unless they're basically just "??".
+        if ("?" in q) or ("？" in q):
+            return stats["alnum"] <= 3
+
+        # Low-information short turns (greetings / acknowledgements) tend to live here.
+        tokens = re.findall(r"[\w']+", q_lower, flags=re.UNICODE)
+        token_count = len([t for t in tokens if t])
+        if token_count <= 2 and stats["alnum"] <= 8:
+            return True
+        if token_count == 1 and stats["alnum"] <= 5:
             return True
 
         return False
@@ -581,7 +658,8 @@ class PrefrontalCortex:
         gated: List[str] = []
         for line in lines:
             if line.startswith("[Hippocampal"):
-                gated.append(line)
+                if focus.hippocampal_overlap >= self.gating_threshold / 2:
+                    gated.append(line)
                 continue
             if _line_relevance(line, focus.keywords) >= self.gating_threshold / 2:
                 gated.append(line)

@@ -67,3 +67,31 @@ def test_prefrontal_cortex_profiles_turn_with_affect():
     assert "vulnerable_child" in profile.user_modes
     assert "healthy_adult" in profile.agent_modes
     assert profile.to_dict()["confidence"] >= 0.0
+
+
+def test_prefrontal_trivial_chat_detection_uses_structural_cues():
+    cortex = PrefrontalCortex()
+    assert cortex.is_trivial_chat_turn("やあ")
+    assert cortex.is_trivial_chat_turn("hi")
+    assert cortex.is_trivial_chat_turn("??")
+    assert not cortex.is_trivial_chat_turn("詳しく分析してください。")
+    assert not cortex.is_trivial_chat_turn("How does this work?")
+
+    assert not cortex.should_include_long_term_memory("分離してるね？")
+    assert cortex.should_include_long_term_memory("詳しく分析してください。")
+
+
+def test_working_memory_buffer_rolls_forward():
+    cortex = PrefrontalCortex(working_memory_turns=2, working_memory_max_chars=50)
+    cortex.remember_working_memory(question="q1", answer="a1", qid="1")
+    cortex.remember_working_memory(question="q2", answer="a2", qid="2")
+
+    context = cortex.working_memory_context(turns=2)
+    assert "Q:q1" in context
+    assert "A:a2" in context
+
+    cortex.remember_working_memory(question="q3", answer="a3", qid="3")
+    context = cortex.working_memory_context(turns=2)
+    assert "Q:q1" not in context
+    assert "Q:q2" in context
+    assert "Q:q3" in context

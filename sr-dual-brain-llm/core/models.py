@@ -17,7 +17,7 @@
 # ============================================================================
 
 import asyncio, random
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
 
@@ -47,6 +47,24 @@ _INTEGRATION_GUARDRAILS = (
     "Match the user's language and tone unless they requested otherwise."
 )
 
+def _openai_vision_prompt(
+    text: str,
+    vision_images: Sequence[Dict[str, Any]],
+) -> list[dict[str, Any]]:
+    parts: list[dict[str, Any]] = [{"type": "text", "text": str(text)}]
+    for image in vision_images or ():
+        if not isinstance(image, dict):
+            continue
+        url = str(image.get("data_url") or image.get("url") or "").strip()
+        if not url:
+            continue
+        image_url: dict[str, Any] = {"url": url}
+        detail = image.get("detail")
+        if detail:
+            image_url["detail"] = str(detail)
+        parts.append({"type": "image_url", "image_url": image_url})
+    return parts
+
 
 class LeftBrainModel:
     def __init__(self, llm_config: Optional[LLMConfig] = None):
@@ -59,6 +77,7 @@ class LeftBrainModel:
         input_text: str,
         context: str,
         *,
+        vision_images: Optional[Sequence[Dict[str, Any]]] = None,
         on_delta: Optional[Callable[[str], Any]] = None,
     ) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
@@ -68,15 +87,23 @@ class LeftBrainModel:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
             try:
+                prompt: Any = input_text
+                if vision_images:
+                    provider = str(self.llm_config.provider if self.llm_config else "").lower()
+                    if provider and provider not in {"openai", "mistral", "xai"}:
+                        raise ValueError(
+                            f"Vision inputs are only supported for openai-style providers; got '{provider}'."
+                        )
+                    prompt = _openai_vision_prompt(input_text, vision_images)
                 if hasattr(self._llm_client, "complete_stream"):
                     return await self._llm_client.complete_stream(
-                        input_text,
+                        prompt,
                         system=system,
                         temperature=0.4,
                         on_delta=on_delta,
                     )
                 completion = await self._llm_client.complete(
-                    input_text,
+                    prompt,
                     system=system,
                     temperature=0.4,
                 )

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Pipes;
@@ -237,10 +238,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
             var headerBytes = JsonSerializer.SerializeToUtf8Bytes(header, JsonOptions);
 
-            var writeTask = Task.Run(async () =>
-            {
-                await WriteBlobFrameAsync(blobPipe, headerBytes, content, (uint)length, cancellationToken);
-            }, cancellationToken);
+            var writeTask = WriteBlobFrameAsync(blobPipe, headerBytes, content, (uint)length, cancellationToken);
 
             var result = await CallAsync(
                 "blob_put",
@@ -305,17 +303,25 @@ public sealed class PythonEngineClient : IAsyncDisposable
         await blobPipe.WriteAsync(dataLenBuf, cancellationToken);
 
         var remaining = (long)contentLength;
-        var buffer = new byte[64 * 1024];
-        while (remaining > 0)
+        var pool = ArrayPool<byte>.Shared;
+        var buffer = pool.Rent(256 * 1024);
+        try
         {
-            var toRead = (int)Math.Min(buffer.Length, remaining);
-            var read = await content.ReadAsync(buffer.AsMemory(0, toRead), cancellationToken);
-            if (read <= 0)
+            while (remaining > 0)
             {
-                throw new EndOfStreamException("Unexpected end of blob content stream.");
+                var toRead = (int)Math.Min(buffer.Length, remaining);
+                var read = await content.ReadAsync(buffer.AsMemory(0, toRead), cancellationToken);
+                if (read <= 0)
+                {
+                    throw new EndOfStreamException("Unexpected end of blob content stream.");
+                }
+                await blobPipe.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                remaining -= read;
             }
-            await blobPipe.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
-            remaining -= read;
+        }
+        finally
+        {
+            pool.Return(buffer);
         }
 
         await blobPipe.FlushAsync(cancellationToken);
@@ -384,6 +390,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         try
         {
             var header = new byte[4];
+            var pool = ArrayPool<byte>.Shared;
             while (!cancellationToken.IsCancellationRequested)
             {
                 await ReadExactAsync(pipe, header, cancellationToken);
@@ -397,41 +404,48 @@ public sealed class PythonEngineClient : IAsyncDisposable
                     throw new InvalidOperationException($"Engine frame too large: {len} bytes");
                 }
 
-                var data = new byte[len];
-                await ReadExactAsync(pipe, data, cancellationToken);
-
-                JsonObject? obj;
+                var data = pool.Rent(len);
                 try
                 {
-                    obj = JsonSerializer.Deserialize<JsonObject>(data, JsonOptions);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Failed to parse engine pipe frame ({Len} bytes)", len);
-                    continue;
-                }
+                    await ReadExactAsync(pipe, data.AsMemory(0, len), cancellationToken);
 
-                var id = obj?["id"]?.GetValue<string>();
-                if (id is null)
-                {
-                    continue;
-                }
-
-                var hasOk = obj?["ok"] is not null;
-                if (hasOk && _pending.TryGetValue(id, out var tcs))
-                {
-                    tcs.TrySetResult(obj!);
-                    if (_streams.TryGetValue(id, out var writer))
+                    JsonObject? obj;
+                    try
                     {
-                        writer.TryComplete();
+                        obj = JsonSerializer.Deserialize<JsonObject>(data.AsSpan(0, len), JsonOptions);
                     }
-                    continue;
-                }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to parse engine pipe frame ({Len} bytes)", len);
+                        continue;
+                    }
 
-                var eventName = obj?["event"]?.GetValue<string>();
-                if (!string.IsNullOrWhiteSpace(eventName) && _streams.TryGetValue(id, out var streamWriter))
+                    var id = obj?["id"]?.GetValue<string>();
+                    if (id is null)
+                    {
+                        continue;
+                    }
+
+                    var hasOk = obj?["ok"] is not null;
+                    if (hasOk && _pending.TryGetValue(id, out var tcs))
+                    {
+                        tcs.TrySetResult(obj!);
+                        if (_streams.TryGetValue(id, out var writer))
+                        {
+                            writer.TryComplete();
+                        }
+                        continue;
+                    }
+
+                    var eventName = obj?["event"]?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(eventName) && _streams.TryGetValue(id, out var streamWriter))
+                    {
+                        streamWriter.TryWrite(obj!.DeepClone() as JsonObject ?? obj!);
+                    }
+                }
+                finally
                 {
-                    streamWriter.TryWrite(obj!.DeepClone() as JsonObject ?? obj!);
+                    pool.Return(data);
                 }
             }
         }

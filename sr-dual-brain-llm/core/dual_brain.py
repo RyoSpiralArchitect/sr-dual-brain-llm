@@ -724,17 +724,39 @@ class DualBrainController:
     def _compose_context(self, question: str) -> Tuple[str, FocusSummary | None]:
         """Blend working-memory recall with hippocampal episodic cues."""
 
-        memory_context = self.memory.retrieve_related(question)
+        cortex = self.prefrontal_cortex
+        is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(question))
+        include_working_memory = bool(
+            cortex is not None
+            and not is_trivial
+            and cortex.should_include_working_memory(question)
+        )
+        include_long_term = bool(
+            not is_trivial
+            and (
+                cortex is None
+                or cortex.should_include_long_term_memory(question)
+            )
+        )
+
+        working_memory_context = ""
+        if include_working_memory and cortex is not None:
+            working_memory_context = cortex.working_memory_context(turns=2)
+
+        memory_context = self.memory.retrieve_related(question) if include_long_term else ""
         schema_context = ""
-        try:
-            schema_context = self.memory.retrieve_schema_related(question)
-        except Exception:  # pragma: no cover - optional feature
-            schema_context = ""
+        if include_long_term:
+            try:
+                schema_context = self.memory.retrieve_schema_related(question)
+            except Exception:  # pragma: no cover - optional feature
+                schema_context = ""
         hippocampal_context = ""
-        if self.hippocampus is not None:
+        if include_long_term and self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(question)
 
         segments = []
+        if working_memory_context:
+            segments.append(_format_section("Working memory", working_memory_context.splitlines()))
         if memory_context:
             segments.append(memory_context)
         if schema_context:
@@ -744,9 +766,12 @@ class DualBrainController:
         combined = "\n".join(segments)
         focus: FocusSummary | None = None
         if self.prefrontal_cortex is not None:
+            focus_memory_context = "\n".join(
+                [part for part in (working_memory_context, memory_context) if part]
+            )
             focus = self.prefrontal_cortex.synthesise_focus(
                 question=question,
-                memory_context=memory_context,
+                memory_context=focus_memory_context,
                 hippocampal_context=hippocampal_context,
             )
             combined = self.prefrontal_cortex.gate_context(combined, focus)
@@ -1135,6 +1160,7 @@ class DualBrainController:
         leading_brain: Optional[str] = None,
         qid: Optional[str] = None,
         answer_mode: str = "plain",
+        vision_images: Optional[Sequence[Dict[str, Any]]] = None,
         on_delta: Optional[Callable[[str], Any]] = None,
         on_reset: Optional[Callable[[], Any]] = None,
         executive_mode: str = "off",
@@ -1279,6 +1305,7 @@ class DualBrainController:
         draft = await self.left_model.generate_answer(
             question,
             context,
+            vision_images=vision_images,
             on_delta=(
                 delta_cb
                 if delta_cb and not stream_final_only and not emitted_any
@@ -1557,7 +1584,7 @@ class DualBrainController:
                 retained = "left_draft"
                 final_answer = draft
                 response_source = response_source or "left_only"
-                if right_lead_notes and leading == "right":
+                if right_lead_notes and leading == "right" and not vision_images:
                     retained = "right_preview"
                     final_answer = right_lead_notes
                     response_source = "lead"
@@ -2359,6 +2386,12 @@ class DualBrainController:
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
 
         self.memory.store({"Q": question, "A": user_answer}, tags=tags, qid=decision.qid)
+        if self.prefrontal_cortex is not None:
+            self.prefrontal_cortex.remember_working_memory(
+                question=question,
+                answer=user_answer,
+                qid=decision.qid,
+            )
 
         architecture_path = self._compose_architecture_path(
             focus=focus,

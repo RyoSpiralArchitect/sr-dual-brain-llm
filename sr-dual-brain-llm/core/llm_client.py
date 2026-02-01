@@ -28,6 +28,8 @@ from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
+PromptInput = str | list[dict[str, Any]]
+
 
 @dataclass
 class LLMConfig:
@@ -154,8 +156,18 @@ class LLMClient:
                     raise RuntimeError(f"{self.config.provider} returned {resp.status}: {data}")
                 return data
 
-    async def complete(self, prompt: str, *, system: Optional[str] = None, temperature: float = 0.7) -> str:
+    async def complete(
+        self,
+        prompt: PromptInput,
+        *,
+        system: Optional[str] = None,
+        temperature: float = 0.7,
+    ) -> str:
         provider = self.provider
+        if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
+            raise ValueError(
+                f"Multimodal prompts are only supported for openai-style providers; got '{provider}'."
+            )
         if provider in {"openai", "mistral", "xai"}:
             return await self._openai_style(prompt, system=system, temperature=temperature)
         if provider == "anthropic":
@@ -168,7 +180,7 @@ class LLMClient:
 
     async def complete_stream(
         self,
-        prompt: str,
+        prompt: PromptInput,
         *,
         system: Optional[str] = None,
         temperature: float = 0.7,
@@ -182,6 +194,10 @@ class LLMClient:
         """
 
         provider = self.provider
+        if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
+            raise ValueError(
+                f"Multimodal prompts are only supported for openai-style providers; got '{provider}'."
+            )
         if provider in {"openai", "mistral", "xai"}:
             return await self._openai_style_stream(
                 prompt,
@@ -305,7 +321,7 @@ class LLMClient:
 
     async def _openai_style_stream_call(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         temperature: float,
         on_delta: Optional[Callable[[str], Any]],
@@ -343,7 +359,7 @@ class LLMClient:
 
     async def _openai_style_stream(
         self,
-        prompt: str,
+        prompt: PromptInput,
         *,
         system: Optional[str],
         temperature: float,
@@ -388,7 +404,7 @@ class LLMClient:
 
         return full_text.strip()
 
-    async def _openai_style(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
+    async def _openai_style(self, prompt: PromptInput, *, system: Optional[str], temperature: float) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
         base_messages = []
@@ -396,7 +412,7 @@ class LLMClient:
             base_messages.append({"role": "system", "content": system})
         base_messages.append({"role": "user", "content": prompt})
 
-        async def _call(messages: list[dict[str, str]]) -> tuple[str, Optional[str]]:
+        async def _call(messages: list[dict[str, Any]]) -> tuple[str, Optional[str]]:
             payload = {
                 "model": self.config.model,
                 "messages": messages,
