@@ -627,7 +627,7 @@ def test_metacognition_strips_unasked_weather_claims():
     assert "unsupported_sensing" in (meta[-1].get("flags") or [])
 
 
-def test_metacognition_replaces_offtopic_answer_with_clarifying_question():
+def test_metacognition_flags_offtopic_answer_without_overriding_user_output():
     callosum = DummyCallosum()
     memory = SharedMemory()
     telemetry = TrackingTelemetry()
@@ -651,11 +651,12 @@ def test_metacognition_replaces_offtopic_answer_with_clarifying_question():
     answer = asyncio.run(controller.process("量子 デコヒーレンス を説明して"))
 
     assert callosum.payloads == []
-    assert "猫" not in answer
-    assert "デコヒーレンス" in answer
+    # The answer stays model-authored; metacognition only flags drift out-of-band.
+    assert "猫" in answer
     meta = [payload for evt, payload in telemetry.events if evt == "metacognition"]
     assert meta
     assert meta[-1].get("action") == "clarify"
+    assert meta[-1].get("clarifying_question")
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():

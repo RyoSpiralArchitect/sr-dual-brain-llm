@@ -2271,11 +2271,6 @@ class DualBrainController:
         else:
             final_answer = user_answer
 
-        if stream_final_only and delta_cb and not emitted_any and final_answer:
-            chunk_size = 512
-            for i in range(0, len(final_answer), chunk_size):
-                await _emit_delta(final_answer[i : i + chunk_size])
-
         semantic_tilt = self._evaluate_semantic_tilt(
             question=question,
             final_answer=user_answer,
@@ -2467,59 +2462,15 @@ class DualBrainController:
                 user_answer = f"{base}{sep}{suffix}".strip()
             final_answer = user_answer
 
-        if not emit_debug_sections and isinstance(metacognition, dict):
-            meta_action = str(metacognition.get("action") or "").strip().lower()
-            meta_q = str(metacognition.get("clarifying_question") or "").strip()
-            meta_replace = bool(metacognition.get("clarifying_replace"))
-            if meta_action == "clarify" and meta_q:
-                # Prefer the director's clarifying question when present, to keep the
-                # "executive prefrontal" voice consistent.
-                chosen_q = director_append_question.strip() if director_append_question else meta_q
-                if meta_replace:
-                    user_answer = _sanitize_user_answer(chosen_q).strip()
-                    if director_max_chars is not None and user_answer:
-                        try:
-                            max_chars = int(director_max_chars)
-                        except Exception:
-                            max_chars = None
-                        if max_chars is not None:
-                            max_chars = max(80, min(2400, max_chars))
-                            if len(user_answer) > max_chars:
-                                cutoff = max(0, max_chars - 3)
-                                user_answer = user_answer[:cutoff].rstrip() + "..."
-                    final_answer = user_answer
-                elif chosen_q not in (user_answer or ""):
-                    base = (user_answer or "").strip()
-                    suffix = chosen_q.strip()
-                    sep = "\n\n" if base and suffix else ""
-                    max_chars: Optional[int] = None
-                    if director_max_chars is not None:
-                        try:
-                            max_chars = int(director_max_chars)
-                        except Exception:
-                            max_chars = None
-                        if max_chars is not None:
-                            max_chars = max(80, min(2400, max_chars))
-                    if max_chars is not None and max_chars > 0:
-                        reserved = len(sep) + len(suffix)
-                        if reserved >= max_chars:
-                            if len(suffix) > max_chars:
-                                cutoff = max(0, max_chars - 3)
-                                suffix = suffix[:cutoff].rstrip() + "..."
-                            user_answer = suffix
-                        else:
-                            allowed_base = max_chars - reserved
-                            if len(base) > allowed_base:
-                                cutoff = max(0, allowed_base - 3)
-                                base = base[:cutoff].rstrip() + "..."
-                            user_answer = f"{base}{sep}{suffix}".strip()
-                    else:
-                        user_answer = f"{base}{sep}{suffix}".strip()
-                    final_answer = user_answer
         if not audit_result.get("ok", True):
             user_answer = draft
             final_answer = user_answer
             success = False
+
+        if stream_final_only and delta_cb and not emitted_any and final_answer:
+            chunk_size = 512
+            for i in range(0, len(final_answer), chunk_size):
+                await _emit_delta(final_answer[i : i + chunk_size])
 
         reward = 0.75 if success else 0.45
         if not audit_result.get("ok", True):
