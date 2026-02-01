@@ -711,6 +711,7 @@ async def _handle_process(
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
+    return_executive = bool(params.get("return_executive", False))
 
     qid = str(params.get("qid") or uuid.uuid4())
 
@@ -781,6 +782,9 @@ async def _handle_process(
         result["dialogue_flow"] = dialogue_flow
     if return_telemetry:
         result["telemetry"] = telemetry_events
+    if return_executive:
+        result["executive"] = executive
+        result["executive_observer"] = executive_observer
     return result
 
 
@@ -821,6 +825,7 @@ async def _handle_process_stream(
 
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
+    return_executive = bool(params.get("return_executive", False))
 
     qid = str(params.get("qid") or uuid.uuid4())
 
@@ -902,6 +907,9 @@ async def _handle_process_stream(
         result["dialogue_flow"] = dialogue_flow
     if return_telemetry:
         result["telemetry"] = telemetry_events
+    if return_executive:
+        result["executive"] = executive
+        result["executive_observer"] = executive_observer
     return result
 
 

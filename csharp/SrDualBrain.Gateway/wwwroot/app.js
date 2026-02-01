@@ -518,6 +518,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     leading_brain: leading,
     executive_mode: executiveMode,
     executive_observer_mode: executiveObserverMode,
+    return_executive: wantExecutive,
     return_telemetry: wantTelemetry && traceInline,
     return_dialogue_flow: wantDialogueFlow && traceInline,
   };

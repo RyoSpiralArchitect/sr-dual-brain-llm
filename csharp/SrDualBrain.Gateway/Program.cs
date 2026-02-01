@@ -236,6 +236,8 @@ app.MapPost("/v1/process/stream", async (HttpContext ctx, PythonEngineClient eng
         ["answer"] = answer,
         ["session_id"] = result?["session_id"]?.GetValue<string>() ?? sessionId,
         ["metrics"] = result?["metrics"]?.DeepClone(),
+        ["executive"] = result?["executive"]?.DeepClone(),
+        ["executive_observer"] = result?["executive_observer"]?.DeepClone(),
     };
     await WriteSseAsync(ctx.Response, "final", finalPayload, ct);
     await WriteSseAsync(ctx.Response, "done", new JsonObject(), ct);
