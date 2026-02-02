@@ -278,6 +278,8 @@ class RightBrainModel:
             if context:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
+            max_tokens = 220
+            timeout_seconds = min(float(self.llm_config.timeout_seconds if self.llm_config else 40), 18.0)
             try:
                 if hasattr(self._llm_client, "complete_stream"):
                     return await self._llm_client.complete_stream(
@@ -285,11 +287,15 @@ class RightBrainModel:
                         system=system,
                         temperature=temperature,
                         on_delta=on_delta,
+                        max_output_tokens=max_tokens,
+                        timeout_seconds=timeout_seconds,
                     )
                 completion = await self._llm_client.complete(
                     question,
                     system=system,
                     temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    timeout_seconds=timeout_seconds,
                 )
                 if on_delta:
                     maybe = on_delta(completion)
@@ -324,6 +330,12 @@ class RightBrainModel:
         psychoid_projection: Optional[Dict[str, object]] = None,
     ) -> Dict[str, str]:
         if self._llm_client:
+            budget_norm = str(budget or "small").strip().lower()
+            max_tokens = 450 if budget_norm != "large" else 900
+            timeout_seconds = min(
+                float(self.llm_config.timeout_seconds if self.llm_config else 40),
+                22.0 if budget_norm != "large" else 32.0,
+            )
             system_parts = []
             system_parts.append(_SYSTEM_GUARDRAILS)
             system_parts.append(_RIGHT_DEEPEN_GUARDRAILS)
@@ -342,6 +354,8 @@ class RightBrainModel:
                     ),
                     system=system,
                     temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    timeout_seconds=timeout_seconds,
                 )
                 return {"qid": qid, "notes_sum": completion, "confidence_r": 0.9}
             except Exception:
@@ -384,11 +398,15 @@ class RightBrainModel:
                 f"{draft}\n\n"
                 "Return JSON only."
             )
+            max_tokens = 520
+            timeout_seconds = min(float(self.llm_config.timeout_seconds if self.llm_config else 40), 24.0)
             try:
                 completion = await self._llm_client.complete(
                     prompt,
                     system=system,
                     temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    timeout_seconds=timeout_seconds,
                 )
             except Exception:
                 completion = ""

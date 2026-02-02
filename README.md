@@ -73,6 +73,12 @@ Optional gateway timeout override (useful for long generations / auto-continue):
 export DUALBRAIN_ENGINE_TIMEOUT_SECONDS=120
 ```
 
+Optional engine-side corpus-callosum timeout (bounds right-brain waits):
+```bash
+# Default: 20000 (20s)
+export DUALBRAIN_CALLOSUM_TIMEOUT_MS=20000
+```
+
 ### 3) Open the UI (chat + metrics)
 Open:
 - `http://127.0.0.1:8080/`
@@ -199,7 +205,7 @@ Open `http://127.0.0.1:8080/`.
   - `assist`: memo + **mix-in blended into answer**
   - `polish`: may apply directives as a second-pass rewrite (may reset streams)
 - `System2 mode (reasoning)`:
-  - `auto`: enables the **right-brain critic** only when both left/right are backed by external LLMs and the input looks like a reasoning task
+  - `auto`: enables the **right-brain critic** only when both left/right are backed by external LLMs and the turn looks like a reasoning task (structural complexity + loaded context)
   - `on`: force critic mode (left drafts → right critiques → left revises)
   - `off`: disable critic mode
 - `Executive observer (experiment)`:
@@ -271,7 +277,7 @@ Request fields:
   - `metrics`: post-turn feedback memo (out-of-band)
   - `both`: director + post-turn feedback
 - `system2_mode` (`"auto"|"on"|"off"`, default: `"auto"`)
-  - `auto`: enable critic mode only when both left/right are backed by external LLMs and the input looks like a reasoning task
+  - `auto`: enable critic mode only when both left/right are backed by external LLMs and the turn looks like a reasoning task (structural complexity + loaded context)
   - `on`: force critic mode (left drafts → right critiques → left revises)
   - `off`: disable critic mode
 - `return_telemetry` (bool, default: `false`)

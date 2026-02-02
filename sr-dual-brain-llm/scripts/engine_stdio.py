@@ -668,6 +668,10 @@ class EngineSession:
         telemetry = InMemoryTelemetry()
         trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
         trace_cache_limit = max(4, min(512, trace_cache_limit))
+        callosum_timeout_ms = int(
+            os.environ.get("DUALBRAIN_CALLOSUM_TIMEOUT_MS", "20000") or 20000
+        )
+        callosum_timeout_ms = max(4000, min(120000, callosum_timeout_ms))
 
         controller = DualBrainController(
             callosum=callosum,
@@ -681,6 +685,7 @@ class EngineSession:
             reasoning_dial=dial,
             auditor=auditor,
             orchestrator=orchestrator,
+            default_timeout_ms=callosum_timeout_ms,
             telemetry=telemetry,
             hippocampus=hippocampus,
             unconscious_field=unconscious,

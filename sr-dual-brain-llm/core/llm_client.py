@@ -147,8 +147,15 @@ class LLMClient:
         self.config = config
         self.provider = config.provider
 
-    async def _post_json(self, url: str, payload: Dict[str, object], headers: Dict[str, str]) -> Dict[str, object]:
-        timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+    async def _post_json(
+        self,
+        url: str,
+        payload: Dict[str, object],
+        headers: Dict[str, str],
+        *,
+        timeout_seconds: Optional[float] = None,
+    ) -> Dict[str, object]:
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.config.timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as resp:
                 data = await resp.json(content_type=None)
@@ -162,6 +169,8 @@ class LLMClient:
         *,
         system: Optional[str] = None,
         temperature: float = 0.7,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
     ) -> str:
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
@@ -169,13 +178,37 @@ class LLMClient:
                 f"Multimodal prompts are only supported for openai-style providers; got '{provider}'."
             )
         if provider in {"openai", "mistral", "xai"}:
-            return await self._openai_style(prompt, system=system, temperature=temperature)
+            return await self._openai_style(
+                prompt,
+                system=system,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                timeout_seconds=timeout_seconds,
+            )
         if provider == "anthropic":
-            return await self._anthropic(prompt, system=system, temperature=temperature)
+            return await self._anthropic(
+                prompt,
+                system=system,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                timeout_seconds=timeout_seconds,
+            )
         if provider == "google":
-            return await self._google(prompt, system=system, temperature=temperature)
+            return await self._google(
+                prompt,
+                system=system,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                timeout_seconds=timeout_seconds,
+            )
         if provider == "huggingface":
-            return await self._huggingface(prompt, system=system, temperature=temperature)
+            return await self._huggingface(
+                prompt,
+                system=system,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                timeout_seconds=timeout_seconds,
+            )
         raise ValueError(f"Unsupported provider: {provider}")
 
     async def complete_stream(
@@ -185,6 +218,8 @@ class LLMClient:
         system: Optional[str] = None,
         temperature: float = 0.7,
         on_delta: Optional[Callable[[str], Any]] = None,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
     ) -> str:
         """Stream output tokens as they arrive (when supported).
 
@@ -204,9 +239,17 @@ class LLMClient:
                 system=system,
                 temperature=temperature,
                 on_delta=on_delta,
+                max_output_tokens=max_output_tokens,
+                timeout_seconds=timeout_seconds,
             )
 
-        text = await self.complete(prompt, system=system, temperature=temperature)
+        text = await self.complete(
+            prompt,
+            system=system,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            timeout_seconds=timeout_seconds,
+        )
         if on_delta:
             maybe = on_delta(text)
             if asyncio.iscoroutine(maybe):
@@ -325,6 +368,8 @@ class LLMClient:
         *,
         temperature: float,
         on_delta: Optional[Callable[[str], Any]],
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
     ) -> tuple[str, Optional[str]]:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
@@ -332,7 +377,7 @@ class LLMClient:
             "model": self.config.model,
             "messages": messages,
             "temperature": float(temperature),
-            "max_tokens": self.config.max_output_tokens,
+            "max_tokens": int(max_output_tokens or self.config.max_output_tokens),
             "stream": True,
         }
         headers = {
@@ -344,7 +389,7 @@ class LLMClient:
             headers["OpenAI-Organization"] = self.config.organization
         headers.update(self.config.extra_headers)
 
-        timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.config.timeout_seconds)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as resp:
                 if resp.status >= 400:
@@ -364,16 +409,24 @@ class LLMClient:
         system: Optional[str],
         temperature: float,
         on_delta: Optional[Callable[[str], Any]],
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
     ) -> str:
         base_messages = []
         if system:
             base_messages.append({"role": "system", "content": system})
         base_messages.append({"role": "user", "content": prompt})
 
+        stream_kwargs: Dict[str, Any] = {}
+        if max_output_tokens is not None:
+            stream_kwargs["max_output_tokens"] = max_output_tokens
+        if timeout_seconds is not None:
+            stream_kwargs["timeout_seconds"] = timeout_seconds
         chunk, finish = await self._openai_style_stream_call(
             base_messages,
             temperature=temperature,
             on_delta=on_delta,
+            **stream_kwargs,
         )
         full_text = chunk
 
@@ -395,6 +448,7 @@ class LLMClient:
                 messages,
                 temperature=temperature,
                 on_delta=on_delta,
+                **stream_kwargs,
             )
             if not cont:
                 break
@@ -404,7 +458,15 @@ class LLMClient:
 
         return full_text.strip()
 
-    async def _openai_style(self, prompt: PromptInput, *, system: Optional[str], temperature: float) -> str:
+    async def _openai_style(
+        self,
+        prompt: PromptInput,
+        *,
+        system: Optional[str],
+        temperature: float,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
+    ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
         base_messages = []
@@ -417,7 +479,7 @@ class LLMClient:
                 "model": self.config.model,
                 "messages": messages,
                 "temperature": float(temperature),
-                "max_tokens": self.config.max_output_tokens,
+                "max_tokens": int(max_output_tokens or self.config.max_output_tokens),
             }
             headers = {
                 "Authorization": f"Bearer {self.config.api_key}",
@@ -426,7 +488,12 @@ class LLMClient:
             if self.config.organization:
                 headers["OpenAI-Organization"] = self.config.organization
             headers.update(self.config.extra_headers)
-            data = await self._post_json(url, payload, headers)
+            if timeout_seconds is not None:
+                data = await self._post_json(
+                    url, payload, headers, timeout_seconds=timeout_seconds
+                )
+            else:
+                data = await self._post_json(url, payload, headers)
             choices = data.get("choices") or []
             if not choices or not isinstance(choices, list):
                 return str(data).strip(), None
@@ -466,7 +533,15 @@ class LLMClient:
 
         return full_text.strip()
 
-    async def _anthropic(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
+    async def _anthropic(
+        self,
+        prompt: str,
+        *,
+        system: Optional[str],
+        temperature: float,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
+    ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/v1/messages"
         headers = {
@@ -480,12 +555,17 @@ class LLMClient:
             payload = {
                 "model": self.config.model,
                 "messages": messages,
-                "max_tokens": self.config.max_output_tokens,
+                "max_tokens": int(max_output_tokens or self.config.max_output_tokens),
                 "temperature": float(temperature),
             }
             if system:
                 payload["system"] = system
-            data = await self._post_json(url, payload, headers)
+            if timeout_seconds is not None:
+                data = await self._post_json(
+                    url, payload, headers, timeout_seconds=timeout_seconds
+                )
+            else:
+                data = await self._post_json(url, payload, headers)
             stop_reason = data.get("stop_reason")
             content = data.get("content") or []
             if content and isinstance(content, list):
@@ -523,7 +603,15 @@ class LLMClient:
 
         return full_text.strip()
 
-    async def _google(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
+    async def _google(
+        self,
+        prompt: str,
+        *,
+        system: Optional[str],
+        temperature: float,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
+    ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/models/{self.config.model}:generateContent?key={self.config.api_key}"
         headers = {"Content-Type": "application/json"}
@@ -538,9 +626,12 @@ class LLMClient:
             payload["system_instruction"] = {"parts": [{"text": system}]}
         payload["generationConfig"] = {
             "temperature": float(temperature),
-            "maxOutputTokens": self.config.max_output_tokens,
+            "maxOutputTokens": int(max_output_tokens or self.config.max_output_tokens),
         }
-        data = await self._post_json(url, payload, headers)
+        if timeout_seconds is not None:
+            data = await self._post_json(url, payload, headers, timeout_seconds=timeout_seconds)
+        else:
+            data = await self._post_json(url, payload, headers)
         candidates = data.get("candidates") or []
         if candidates:
             parts = (candidates[0].get("content") or {}).get("parts", [])
@@ -549,7 +640,15 @@ class LLMClient:
                 return "\n".join([t for t in texts if t]).strip()
         return str(data)
 
-    async def _huggingface(self, prompt: str, *, system: Optional[str], temperature: float) -> str:
+    async def _huggingface(
+        self,
+        prompt: str,
+        *,
+        system: Optional[str],
+        temperature: float,
+        max_output_tokens: Optional[int] = None,
+        timeout_seconds: Optional[float] = None,
+    ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/{self.config.model}"
         headers = {
@@ -561,11 +660,14 @@ class LLMClient:
             "options": {"use_cache": True, "wait_for_model": True},
             "parameters": {
                 "temperature": float(temperature),
-                "max_new_tokens": self.config.max_output_tokens,
+                "max_new_tokens": int(max_output_tokens or self.config.max_output_tokens),
                 "return_full_text": False,
             },
         }
-        data = await self._post_json(url, payload, headers)
+        if timeout_seconds is not None:
+            data = await self._post_json(url, payload, headers, timeout_seconds=timeout_seconds)
+        else:
+            data = await self._post_json(url, payload, headers)
         if isinstance(data, list) and data:
             first = data[0]
             if isinstance(first, dict):

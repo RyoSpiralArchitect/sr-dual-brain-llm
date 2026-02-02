@@ -800,10 +800,29 @@ class DualBrainController:
 
     @staticmethod
     def _infer_question_type(question: str) -> str:
-        lowered = question.lower()
-        if any(key in lowered for key in ["why", "なぜ", "proof", "証明"]):
+        q = str(question or "").strip()
+        if not q:
+            return "easy"
+
+        has_qmark = ("?" in q) or ("？" in q)
+        length = len(q)
+
+        # Strong structural cues (language-agnostic).
+        if "```" in q:
             return "hard"
-        if any(key in lowered for key in ["how", "計算", "analyse", "分析"]):
+        if re.search(r"\d", q) and re.search(r"[+\-*/^%]|=", q):
+            return "hard"
+        if any(sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")):
+            return "hard"
+
+        # Complexity by size/structure (works for CJK + Latin).
+        if q.count("\n") >= 2:
+            return "hard" if length >= 360 else "medium"
+        if has_qmark and length >= 90:
+            return "hard"
+        if has_qmark and length >= 32:
+            return "medium"
+        if length >= 240:
             return "medium"
         return "easy"
 
@@ -1197,6 +1216,62 @@ class DualBrainController:
         if system2_norm not in {"auto", "on", "off"}:
             system2_norm = "auto"
 
+        system2_capable = bool(
+            getattr(self.left_model, "uses_external_llm", False)
+            and getattr(self.right_model, "uses_external_llm", False)
+        )
+        system2_active = False
+        system2_reason = "disabled"
+        if system2_norm == "on":
+            system2_active = True
+            system2_reason = "forced_on" if system2_capable else "forced_on_unavailable"
+        elif system2_norm == "off":
+            system2_active = False
+            system2_reason = "forced_off"
+        else:
+            if not system2_capable:
+                system2_active = False
+                system2_reason = "auto_unavailable"
+            elif not is_trivial_chat:
+                q = str(question or "")
+                has_qmark = ("?" in q) or ("？" in q)
+                wm_len = len(str(context_parts.get("working_memory") or ""))
+                mem_len = len(str(context_parts.get("memory") or ""))
+                hip_len = len(str(context_parts.get("hippocampal") or ""))
+                context_signal_len = wm_len + mem_len + hip_len
+
+                q_type_hint = self._infer_question_type(q)
+                if q_type_hint in {"medium", "hard"}:
+                    system2_active = True
+                    system2_reason = f"q_type_{q_type_hint}"
+                # Structural cues: math/code-like inputs and long/loaded questions.
+                elif "```" in q or any(
+                    sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")
+                ):
+                    system2_active = True
+                    system2_reason = "symbolic"
+                elif has_qmark and re.search(r"\d", q):
+                    system2_active = True
+                    system2_reason = "numeric_question"
+                elif has_qmark and len(q) >= 80:
+                    system2_active = True
+                    system2_reason = "long_question"
+                elif has_qmark and context_signal_len >= 240:
+                    # A short question riding on heavy prior context → treat as System2.
+                    system2_active = True
+                    system2_reason = "context_heavy"
+
+        try:
+            self.telemetry.log(
+                "system2_mode",
+                qid=qid_value,
+                mode=system2_norm,
+                enabled=bool(system2_active),
+                reason=system2_reason,
+            )
+        except Exception:  # pragma: no cover - telemetry is best-effort
+            pass
+
         hemisphere_signal = self._select_hemisphere_mode(question, focus)
         hemisphere_mode = hemisphere_signal.mode
         hemisphere_bias = hemisphere_signal.bias
@@ -1214,11 +1289,18 @@ class DualBrainController:
             selection_reason = f"explicit_request_{leading}"
             leading_style = "explicit_request"
         else:
-            collaborative_hint = (
-                hemisphere_mode == "balanced"
-                and hemisphere_bias < 0.45
-                and collaboration_profile.strength >= 0.4
-            )
+            if system2_active:
+                # System2 is builder/critic: keep the draft on the left to avoid a poetic right prelude.
+                leading = "left"
+                selection_reason = "system2_forced" if system2_norm == "on" else "system2_auto"
+                leading_style = "system2"
+                auto_selected_leading = True
+            else:
+                collaborative_hint = (
+                    hemisphere_mode == "balanced"
+                    and hemisphere_bias < 0.45
+                    and collaboration_profile.strength >= 0.4
+                )
             if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
                 leading = "right"
                 selection_reason = "hemisphere_bias_right"
@@ -1244,7 +1326,7 @@ class DualBrainController:
                         if collaboration_profile.strength >= 0.7
                         else "collaborative_braid"
                     )
-            auto_selected_leading = True
+                auto_selected_leading = True
         self._last_leading_brain = leading
         if self.coherence_resonator is not None:
             self.coherence_resonator.retune(hemisphere_mode, intensity=hemisphere_bias)
@@ -1256,50 +1338,6 @@ class DualBrainController:
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
 
-        system2_capable = bool(
-            getattr(self.left_model, "uses_external_llm", False)
-            and getattr(self.right_model, "uses_external_llm", False)
-        )
-        system2_active = False
-        system2_reason = "disabled"
-        if system2_norm == "on":
-            system2_active = True
-            system2_reason = "forced_on" if system2_capable else "forced_on_unavailable"
-        elif system2_norm == "off":
-            system2_active = False
-            system2_reason = "forced_off"
-        else:
-            if not system2_capable:
-                system2_active = False
-                system2_reason = "auto_unavailable"
-            else:
-                q_type_hint = self._infer_question_type(question)
-                if not is_trivial_chat and q_type_hint in {"medium", "hard"}:
-                    system2_active = True
-                    system2_reason = f"q_type_{q_type_hint}"
-                elif not is_trivial_chat:
-                    # Structural cues: math/code-like inputs and long questions.
-                    q = str(question or "")
-                    if "```" in q or any(sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")):
-                        system2_active = True
-                        system2_reason = "symbolic"
-                    elif re.search(r"\d", q) and ("?" in q or "？" in q):
-                        system2_active = True
-                        system2_reason = "numeric_question"
-                    elif len(q) >= 140 and ("?" in q or "？" in q):
-                        system2_active = True
-                        system2_reason = "long_question"
-
-        try:
-            self.telemetry.log(
-                "system2_mode",
-                qid=qid_value,
-                mode=system2_norm,
-                enabled=bool(system2_active),
-                reason=system2_reason,
-            )
-        except Exception:  # pragma: no cover - telemetry is best-effort
-            pass
         executive_mode_norm = str(executive_mode or "off").strip().lower()
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
             executive_mode_norm = "observe"
@@ -2080,7 +2118,16 @@ class DualBrainController:
                         f"{ref.theme} (confidence {float(ref.confidence):.2f})"
                         for ref in default_mode_reflections
                     ]
-                timeout_ms = max(self.default_timeout_ms, decision.slot_ms * 12)
+                budget_norm = str(payload.get("budget") or "small").strip().lower()
+                timeout_scale = 60 if system2_active else 80
+                if budget_norm == "large" and not system2_active:
+                    timeout_scale = 95
+                timeout_ms = int(
+                    min(
+                        float(self.default_timeout_ms),
+                        max(6000.0, float(decision.slot_ms) * float(timeout_scale)),
+                    )
+                )
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 request_meta = {
                     "temperature": round(decision.temperature, 3),
