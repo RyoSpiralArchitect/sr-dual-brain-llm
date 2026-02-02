@@ -193,6 +193,7 @@ Open `http://127.0.0.1:8080/`.
 ### Chat
 - Chat transcript stays **answer-only**.
 - Internal data (executive memo, telemetry, dialogue flow) stays in the metrics pane / pop-out.
+- `Restart engine`: restarts the Python engine process (drops all in-process sessions). Useful after code changes or when recovering from an engine error.
 
 ### Controls
 - `Session`: scopes memory state inside the engine process.
@@ -258,6 +259,9 @@ Request:
 ```json
 { "session_id": "demo" }
 ```
+
+### `POST /v1/engine/restart`
+Restarts the Python engine process. This drops all in-process sessions (equivalent to restarting the gateway for the engine).
 
 ### `POST /v1/process`
 Runs one orchestration turn.

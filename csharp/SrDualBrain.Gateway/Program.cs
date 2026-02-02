@@ -89,6 +89,12 @@ app.MapGet("/v1/health", async (EngineHealthCache engineHealth, CancellationToke
     });
 });
 
+app.MapPost("/v1/engine/restart", async (PythonEngineClient engine, CancellationToken ct) =>
+{
+    await engine.RestartAsync(ct);
+    return Results.Json(new JsonObject { ["ok"] = true });
+});
+
 app.MapPost("/v1/reset", async (PythonEngineClient engine, JsonObject body, CancellationToken ct) =>
 {
     var sessionId = body["session_id"]?.GetValue<string>() ?? "default";

@@ -9,6 +9,7 @@ const els = {
   btnPopMetrics: $("btnPopMetrics"),
   btnClear: $("btnClear"),
   btnReset: $("btnReset"),
+  btnRestartEngine: $("btnRestartEngine"),
   sessionId: $("sessionId"),
   leadingBrain: $("leadingBrain"),
   llmProvider: $("llmProvider"),
@@ -272,6 +273,7 @@ function appendBubble(role, content, meta = {}) {
 function setBusy(isBusy) {
   els.btnSend.disabled = isBusy;
   els.btnReset.disabled = isBusy;
+  if (els.btnRestartEngine) els.btnRestartEngine.disabled = isBusy;
   els.btnClear.disabled = isBusy;
   els.question.disabled = isBusy;
 }
@@ -1256,6 +1258,31 @@ els.btnReset.addEventListener("click", async () => {
     if (els.moduleHistory) els.moduleHistory.innerHTML = "";
   } catch (err) {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
+  } finally {
+    setBusy(false);
+  }
+});
+
+els.btnRestartEngine?.addEventListener("click", async () => {
+  const ok = window.confirm(
+    "Restart the Python engine process?\n\nThis resets all in-process sessions."
+  );
+  if (!ok) return;
+
+  setBusy(true);
+  try {
+    const res = await fetch("/v1/engine/restart", { method: "POST" });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
+    appendBubble("assistant", "engine restarted", { mono: true, right: "engine" });
+    await refreshHealth();
+  } catch (err) {
+    appendBubble("assistant", `engine restart failed: ${err}`, {
+      mono: true,
+      right: "error",
+    });
   } finally {
     setBusy(false);
   }

@@ -104,6 +104,41 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
+    public async Task RestartAsync(CancellationToken cancellationToken)
+    {
+        await _startLock.WaitAsync(cancellationToken);
+        try
+        {
+            try
+            {
+                if (_process is not null && !_process.HasExited)
+                {
+                    _process.Kill(entireProcessTree: true);
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            try
+            {
+                _process?.Dispose();
+            }
+            catch
+            {
+                // ignore
+            }
+
+            _process = null;
+            StartProcess();
+        }
+        finally
+        {
+            _startLock.Release();
+        }
+    }
+
     public async IAsyncEnumerable<JsonObject> CallStreamAsync(
         string method,
         JsonObject? @params,
