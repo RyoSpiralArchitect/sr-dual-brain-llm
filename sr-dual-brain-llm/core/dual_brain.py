@@ -1284,48 +1284,52 @@ class DualBrainController:
         collaborative_lead = False
         selection_reason = "explicit_request"
         leading_style = "explicit_request"
+        collaborative_hint = False
         if requested_leading in {"left", "right"}:
             leading = requested_leading
             selection_reason = f"explicit_request_{leading}"
             leading_style = "explicit_request"
         else:
+            collaborative_hint = (
+                hemisphere_mode == "balanced"
+                and hemisphere_bias < 0.45
+                and collaboration_profile.strength >= 0.4
+            )
+
             if system2_active:
                 # System2 is builder/critic: keep the draft on the left to avoid a poetic right prelude.
                 leading = "left"
-                selection_reason = "system2_forced" if system2_norm == "on" else "system2_auto"
+                selection_reason = (
+                    "system2_forced" if system2_norm == "on" else "system2_auto"
+                )
                 leading_style = "system2"
                 auto_selected_leading = True
             else:
-                collaborative_hint = (
-                    hemisphere_mode == "balanced"
-                    and hemisphere_bias < 0.45
-                    and collaboration_profile.strength >= 0.4
-                )
-            if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
-                leading = "right"
-                selection_reason = "hemisphere_bias_right"
-                leading_style = "hemisphere_bias"
-            elif hemisphere_mode == "left" and hemisphere_bias >= 0.35:
-                leading = "left"
-                selection_reason = "hemisphere_bias_left"
-                leading_style = "hemisphere_bias"
-            else:
-                if self._last_leading_brain == "right":
+                if hemisphere_mode == "right" and hemisphere_bias >= 0.35:
+                    leading = "right"
+                    selection_reason = "hemisphere_bias_right"
+                    leading_style = "hemisphere_bias"
+                elif hemisphere_mode == "left" and hemisphere_bias >= 0.35:
                     leading = "left"
-                elif self._last_leading_brain == "left":
-                    leading = "right"
+                    selection_reason = "hemisphere_bias_left"
+                    leading_style = "hemisphere_bias"
                 else:
-                    leading = "right"
-                selection_reason = "cooperative_rotation"
-                leading_style = "rotation"
-                if collaborative_hint:
-                    collaborative_lead = True
-                    selection_reason = "cooperative_rotation_balanced"
-                    leading_style = (
-                        "collaborative_braid_strong"
-                        if collaboration_profile.strength >= 0.7
-                        else "collaborative_braid"
-                    )
+                    if self._last_leading_brain == "right":
+                        leading = "left"
+                    elif self._last_leading_brain == "left":
+                        leading = "right"
+                    else:
+                        leading = "right"
+                    selection_reason = "cooperative_rotation"
+                    leading_style = "rotation"
+                    if collaborative_hint:
+                        collaborative_lead = True
+                        selection_reason = "cooperative_rotation_balanced"
+                        leading_style = (
+                            "collaborative_braid_strong"
+                            if collaboration_profile.strength >= 0.7
+                            else "collaborative_braid"
+                        )
                 auto_selected_leading = True
         self._last_leading_brain = leading
         if self.coherence_resonator is not None:
