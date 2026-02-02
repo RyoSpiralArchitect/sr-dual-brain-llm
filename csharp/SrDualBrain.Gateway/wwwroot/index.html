@@ -105,6 +105,15 @@
                 <option value="both">both (director + feedback)</option>
               </select>
             </label>
+
+            <label class="field">
+              <span class="field__label">System2 mode (reasoning)</span>
+              <select id="system2Mode">
+                <option value="auto" selected>auto</option>
+                <option value="off">off</option>
+                <option value="on">on (right brain = critic)</option>
+              </select>
+            </label>
           </div>
 
           <div class="blob">
@@ -175,6 +184,10 @@
             <div class="metric">
               <div class="metric__k">latency</div>
               <div class="metric__v" id="mLatency">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric__k">system2</div>
+              <div class="metric__v" id="mSystem2">—</div>
             </div>
             <div class="metric">
               <div class="metric__k">meta action</div>

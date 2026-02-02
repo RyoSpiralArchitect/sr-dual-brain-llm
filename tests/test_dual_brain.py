@@ -256,6 +256,36 @@ class AlwaysConsultPolicy:
         return 1
 
 
+class CriticCallosum(DummyCallosum):
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "issues",
+                "issues": ["Math error: 2+2 is not 5."],
+                "fixes": ["Correct the arithmetic and re-check the conclusion."],
+                "critic_sum": "Issues:\n- Math error: 2+2 is not 5.\nFixes:\n- Correct the arithmetic and re-check the conclusion.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+class OkCriticCallosum(DummyCallosum):
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "ok",
+                "issues": [],
+                "fixes": [],
+                "critic_sum": "No issues detected.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
 def test_director_can_skip_consult_and_clamp_output():
     callosum = DummyCallosum()
     memory = SharedMemory()
@@ -729,6 +759,112 @@ def test_default_mode_reflections_suppressed_after_low_focus_streak():
     assert len(callosum.payloads) == 2
     assert "default_mode_reflections" in callosum.payloads[0]["payload"]
     assert "default_mode_reflections" not in callosum.payloads[1]["payload"]
+
+
+def test_system2_forces_critic_and_revises_answer():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            assert "Reasoning critic notes" in info
+            assert "Math error" in info
+            return "2+2=4"
+
+    callosum = CriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "2+2=4"
+    assert left.integrations == 1
+    assert callosum.payloads, "System2 should trigger a critic call"
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+
+
+def test_system2_skips_revision_when_critic_ok():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "All good."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "SHOULD_NOT_RUN"
+
+    callosum = OkCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "All good."
+    assert left.integrations == 0
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():

@@ -8,6 +8,7 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  mSystem2: $("mSystem2"),
   mMetaAction: $("mMetaAction"),
   mMetaCoverage: $("mMetaCoverage"),
   mMetaFlags: $("mMetaFlags"),
@@ -600,6 +601,7 @@ function renderMetrics(response) {
   const action = metrics?.policy?.action ?? null;
   const temp = metrics?.policy?.temperature ?? null;
   const latency = metrics?.latency_ms ?? null;
+  const system2 = metrics?.system2 ?? null;
   const meta = metrics?.metacognition ?? null;
 
   els.mCoherence.textContent = combined == null ? "—" : Number(combined).toFixed(3);
@@ -608,6 +610,13 @@ function renderMetrics(response) {
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(Number(latency))}ms`;
+  if (els.mSystem2) {
+    const enabled = system2?.enabled ?? null;
+    const mode = system2?.mode ?? null;
+    if (enabled === true) els.mSystem2.textContent = "on";
+    else if (mode) els.mSystem2.textContent = String(mode);
+    else els.mSystem2.textContent = "—";
+  }
   if (els.mMetaAction) {
     els.mMetaAction.textContent = meta?.action ? String(meta.action) : "—";
   }

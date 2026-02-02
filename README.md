@@ -198,6 +198,10 @@ Open `http://127.0.0.1:8080/`.
   - `observe`: executive memo only (answer unchanged)
   - `assist`: memo + **mix-in blended into answer**
   - `polish`: may apply directives as a second-pass rewrite (may reset streams)
+- `System2 mode (reasoning)`:
+  - `auto`: enables the **right-brain critic** only when both left/right are backed by external LLMs and the input looks like a reasoning task
+  - `on`: force critic mode (left drafts → right critiques → left revises)
+  - `off`: disable critic mode
 - `Executive observer (experiment)`:
   - `off`: disabled
   - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (never blended into chat)
@@ -266,6 +270,10 @@ Request fields:
   - `director`: pre-turn steering (memory gating + optional clarifying question)
   - `metrics`: post-turn feedback memo (out-of-band)
   - `both`: director + post-turn feedback
+- `system2_mode` (`"auto"|"on"|"off"`, default: `"auto"`)
+  - `auto`: enable critic mode only when both left/right are backed by external LLMs and the input looks like a reasoning task
+  - `on`: force critic mode (left drafts → right critiques → left revises)
+  - `off`: disable critic mode
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
 - `return_executive` (bool, default: `false`)

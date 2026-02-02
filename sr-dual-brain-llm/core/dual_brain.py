@@ -1171,6 +1171,7 @@ class DualBrainController:
         leading_brain: Optional[str] = None,
         qid: Optional[str] = None,
         answer_mode: str = "plain",
+        system2_mode: str = "auto",
         vision_images: Optional[Sequence[Dict[str, Any]]] = None,
         on_delta: Optional[Callable[[str], Any]] = None,
         on_reset: Optional[Callable[[], Any]] = None,
@@ -1188,6 +1189,14 @@ class DualBrainController:
             self.prefrontal_cortex is not None
             and self.prefrontal_cortex.is_trivial_chat_turn(question)
         )
+        system2_norm = str(system2_mode or "auto").strip().lower()
+        if system2_norm in {"true", "1", "yes"}:
+            system2_norm = "on"
+        elif system2_norm in {"false", "0", "no"}:
+            system2_norm = "off"
+        if system2_norm not in {"auto", "on", "off"}:
+            system2_norm = "auto"
+
         hemisphere_signal = self._select_hemisphere_mode(question, focus)
         hemisphere_mode = hemisphere_signal.mode
         hemisphere_bias = hemisphere_signal.bias
@@ -1246,6 +1255,51 @@ class DualBrainController:
             len(self.hippocampus.episodes) if self.hippocampus is not None else 0
         )
         focus_keywords = list(focus.keywords) if focus and focus.keywords else None
+
+        system2_capable = bool(
+            getattr(self.left_model, "uses_external_llm", False)
+            and getattr(self.right_model, "uses_external_llm", False)
+        )
+        system2_active = False
+        system2_reason = "disabled"
+        if system2_norm == "on":
+            system2_active = True
+            system2_reason = "forced_on" if system2_capable else "forced_on_unavailable"
+        elif system2_norm == "off":
+            system2_active = False
+            system2_reason = "forced_off"
+        else:
+            if not system2_capable:
+                system2_active = False
+                system2_reason = "auto_unavailable"
+            else:
+                q_type_hint = self._infer_question_type(question)
+                if not is_trivial_chat and q_type_hint in {"medium", "hard"}:
+                    system2_active = True
+                    system2_reason = f"q_type_{q_type_hint}"
+                elif not is_trivial_chat:
+                    # Structural cues: math/code-like inputs and long questions.
+                    q = str(question or "")
+                    if "```" in q or any(sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")):
+                        system2_active = True
+                        system2_reason = "symbolic"
+                    elif re.search(r"\d", q) and ("?" in q or "？" in q):
+                        system2_active = True
+                        system2_reason = "numeric_question"
+                    elif len(q) >= 140 and ("?" in q or "？" in q):
+                        system2_active = True
+                        system2_reason = "long_question"
+
+        try:
+            self.telemetry.log(
+                "system2_mode",
+                qid=qid_value,
+                mode=system2_norm,
+                enabled=bool(system2_active),
+                reason=system2_reason,
+            )
+        except Exception:  # pragma: no cover - telemetry is best-effort
+            pass
         executive_mode_norm = str(executive_mode or "off").strip().lower()
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
             executive_mode_norm = "observe"
@@ -1458,7 +1512,7 @@ class DualBrainController:
             emitted_any = False
 
         delta_cb = _emit_delta if on_delta else None
-        if leading == "right" or collaborative_lead:
+        if (leading == "right" or collaborative_lead) and not system2_active:
             try:
                 # Run the right-brain prelude in parallel with the left draft. We keep it
                 # internal (no streaming) to avoid "split voice" in the chat UI.
@@ -1468,9 +1522,21 @@ class DualBrainController:
             except Exception:  # pragma: no cover - defensive guard
                 right_preview_task = None
         left_lead_preview: Optional[str] = None
+
+        left_context = context
+        if system2_active:
+            system2_hint = (
+                "[System2 reasoning mode]\n"
+                "- Prioritize logical correctness over tone.\n"
+                "- Make assumptions explicit.\n"
+                "- If needed, include short step-by-step reasoning, but avoid any meta about tools/prompts.\n"
+                "- Keep the final answer self-contained.\n"
+            )
+            left_context = (f"{context}\n\n{system2_hint}".strip() if context else system2_hint)
+
         draft = await self.left_model.generate_answer(
             question,
-            context,
+            left_context,
             vision_images=vision_images,
             on_delta=(
                 delta_cb
@@ -1568,13 +1634,23 @@ class DualBrainController:
             hemisphere_bias,
             qid=qid_value,
         )
+        decision.state["system2_enabled"] = bool(system2_active)
+        decision.state["system2_mode"] = system2_norm
+        decision.state["system2_reason"] = system2_reason
         if force_right_lead and decision.action == 0:
             decision.action = 1
             decision.state["right_forced_lead"] = True
+        if system2_active and decision.action == 0:
+            decision.action = 1
+            decision.state["system2_forced_consult"] = True
+        if system2_active:
+            decision.temperature = max(0.1, min(0.6, float(decision.temperature)))
+            decision.state["system2_temperature"] = decision.temperature
         if (
             self.prefrontal_cortex is not None
             and not explicit_leading
             and self.prefrontal_cortex.is_trivial_chat_turn(question)
+            and not system2_active
         ):
             decision.action = 0
             decision.state["prefrontal_override"] = "trivial_chat"
@@ -1958,8 +2034,9 @@ class DualBrainController:
                     )
                 success = True
             else:
+                payload_type = "ASK_CRITIC" if system2_active else "ASK_DETAIL"
                 payload = {
-                    "type": "ASK_DETAIL",
+                    "type": payload_type,
                     "qid": decision.qid,
                     "question": question,
                     "draft_sum": draft if len(draft) < 280 else draft[:280],
@@ -1969,6 +2046,12 @@ class DualBrainController:
                     "hemisphere_mode": hemisphere_mode,
                     "hemisphere_bias": hemisphere_bias,
                 }
+                if system2_active:
+                    draft_full = draft
+                    if len(draft_full) > 2400:
+                        draft_full = draft_full[:2397].rstrip() + "..."
+                    payload["draft"] = draft_full
+                    payload["system2"] = True
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
                 if unconscious_summary is not None:
@@ -2025,7 +2108,27 @@ class DualBrainController:
                 finally:
                     self.callosum.slot_ms = original_slot
                 response_source = "callosum"
-                detail_notes = response.get("notes_sum")
+                critic_verdict: Optional[str] = None
+                critic_issues: list[str] = []
+                critic_fixes: list[str] = []
+                if system2_active:
+                    critic_verdict = str(response.get("verdict") or "").strip().lower() or None
+                    issues_raw = response.get("issues")
+                    fixes_raw = response.get("fixes")
+                    if isinstance(issues_raw, list):
+                        critic_issues = [str(item).strip() for item in issues_raw if str(item).strip()]
+                    if isinstance(fixes_raw, list):
+                        critic_fixes = [str(item).strip() for item in fixes_raw if str(item).strip()]
+                    decision.state["right_role"] = "critic"
+                    if critic_verdict:
+                        decision.state["critic_verdict"] = critic_verdict
+                    if critic_issues:
+                        decision.state["critic_issues"] = critic_issues[:12]
+                    if critic_fixes:
+                        decision.state["critic_fixes"] = critic_fixes[:12]
+                    detail_notes = response.get("critic_sum")
+                else:
+                    detail_notes = response.get("notes_sum")
                 call_error = bool(response.get("error"))
                 call_confidence = float(response.get("confidence_r", 0.0) or 0.0)
                 fallback_used = False
@@ -2033,25 +2136,56 @@ class DualBrainController:
                     response_source = "right_model_fallback"
                     fallback_used = True
                     try:
-                        fallback = await self.right_model.deepen(
-                            decision.qid,
-                            question,
-                            draft,
-                            self.memory,
-                            temperature=decision.temperature,
-                            budget=payload["budget"],
-                            context=context,
-                            psychoid_projection=(
-                                psychoid_projection.to_payload()
-                                if psychoid_projection
-                                else None
-                            ),
-                        )
+                        if system2_active:
+                            fallback = await self.right_model.criticise_reasoning(
+                                decision.qid,
+                                question,
+                                payload.get("draft") or draft,
+                                temperature=max(0.1, min(0.35, decision.temperature)),
+                                context=context,
+                                psychoid_projection=(
+                                    psychoid_projection.to_payload()
+                                    if psychoid_projection
+                                    else None
+                                ),
+                            )
+                        else:
+                            fallback = await self.right_model.deepen(
+                                decision.qid,
+                                question,
+                                draft,
+                                self.memory,
+                                temperature=decision.temperature,
+                                budget=payload["budget"],
+                                context=context,
+                                psychoid_projection=(
+                                    psychoid_projection.to_payload()
+                                    if psychoid_projection
+                                    else None
+                                ),
+                            )
                     except Exception as exc:  # pragma: no cover - defensive guard
                         fallback_error = str(exc)
                         final_answer = draft
                     else:
-                        detail_notes = fallback.get("notes_sum")
+                        if system2_active:
+                            decision.state["right_role"] = "critic"
+                            critic_verdict = str(fallback.get("verdict") or "").strip().lower() or None
+                            if critic_verdict:
+                                decision.state["critic_verdict"] = critic_verdict
+                            issues_raw = fallback.get("issues")
+                            fixes_raw = fallback.get("fixes")
+                            if isinstance(issues_raw, list):
+                                critic_issues = [str(item).strip() for item in issues_raw if str(item).strip()]
+                                if critic_issues:
+                                    decision.state["critic_issues"] = critic_issues[:12]
+                            if isinstance(fixes_raw, list):
+                                critic_fixes = [str(item).strip() for item in fixes_raw if str(item).strip()]
+                                if critic_fixes:
+                                    decision.state["critic_fixes"] = critic_fixes[:12]
+                            detail_notes = fallback.get("critic_sum")
+                        else:
+                            detail_notes = fallback.get("notes_sum")
                         fallback_confidence = float(
                             fallback.get("confidence_r", 0.0) or 0.0
                         )
@@ -2062,7 +2196,13 @@ class DualBrainController:
                     success = True
 
                 integrated_detail = detail_notes
-                if detail_notes and _detail_notes_redundant(draft, detail_notes):
+                critic_needs_revision = False
+                if system2_active:
+                    verdict_norm = (critic_verdict or "").strip().lower()
+                    critic_needs_revision = verdict_norm == "issues" or bool(critic_issues)
+                    if not critic_needs_revision:
+                        integrated_detail = None
+                elif detail_notes and _detail_notes_redundant(draft, detail_notes):
                     integrated_detail = None
                 if integrated_detail and _looks_like_coaching_notes(question, integrated_detail):
                     integrated_detail = None
@@ -2096,7 +2236,14 @@ class DualBrainController:
                 has_right_material = False
                 has_mix_in_material = False
                 if integrated_detail:
-                    integration_parts.append(str(integrated_detail))
+                    if system2_active:
+                        integration_parts.append(
+                            "Reasoning critic notes (internal; do not output directly). "
+                            "Revise the draft to address issues and improve correctness:\n"
+                            + str(integrated_detail)
+                        )
+                    else:
+                        integration_parts.append(str(integrated_detail))
                     has_right_material = True
                 elif right_lead_notes and not detail_notes:
                     if not _looks_like_coaching_notes(question, right_lead_notes):
@@ -2162,6 +2309,10 @@ class DualBrainController:
                     "has_detail": bool(detail_notes),
                     "final_source": response_source,
                 }
+                if system2_active:
+                    response_meta["system2"] = True
+                    response_meta["critic_verdict"] = critic_verdict
+                    response_meta["critic_issues"] = len(critic_issues)
                 if fallback_error:
                     response_meta["fallback_error"] = fallback_error
                 if detail_notes:

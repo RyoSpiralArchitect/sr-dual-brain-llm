@@ -55,6 +55,29 @@ async def right_worker(callosum, mem, right_model):
                     await callosum.publish_response(qid, {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]})
                 except Exception as e:
                     await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
+            elif req.get("type") == "ASK_CRITIC":
+                qid = req["qid"]
+                try:
+                    critique = await right_model.criticise_reasoning(
+                        qid,
+                        req.get("question", ""),
+                        req.get("draft", "") or req.get("draft_sum", "") or "",
+                        temperature=req.get("temperature", 0.2),
+                        context=req.get("context"),
+                    )
+                    await callosum.publish_response(
+                        qid,
+                        {
+                            "qid": qid,
+                            "verdict": critique.get("verdict"),
+                            "issues": critique.get("issues"),
+                            "fixes": critique.get("fixes"),
+                            "critic_sum": critique.get("critic_sum"),
+                            "confidence_r": critique.get("confidence_r"),
+                        },
+                    )
+                except Exception as e:
+                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
             elif req.get("type") == "ASK_LEAD":
                 qid = req.get("qid")
                 try:

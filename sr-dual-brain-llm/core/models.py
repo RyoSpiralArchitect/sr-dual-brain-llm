@@ -16,7 +16,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import asyncio, random, difflib
+import asyncio, random, difflib, json
 from typing import Any, Callable, Dict, Optional, Sequence
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
@@ -42,6 +42,22 @@ _RIGHT_DEEPEN_GUARDRAILS = (
     "Prefer 1-5 concise bullet points of extra substance, or a short follow-up question."
 )
 
+_RIGHT_CRITIC_GUARDRAILS = (
+    "You are a rigorous reviewer (critic) for reasoning tasks.\n"
+    "Your job is to find concrete flaws in the draft's reasoning and propose fixes.\n"
+    "Return a SINGLE JSON object with these keys:\n"
+    '  - "verdict": "ok" | "issues"\n'
+    '  - "issues": array of short strings (each a specific problem)\n'
+    '  - "fixes": array of short strings (each a concrete fix)\n'
+    "Rules:\n"
+    "- Do NOT rewrite the full answer.\n"
+    "- Do NOT add writing advice, tone advice, or coaching.\n"
+    "- Do NOT introduce unrelated topics.\n"
+    "- Be specific: point to missing definitions, invalid steps, unstated assumptions, boundary cases, and calculation errors.\n"
+    "- If there are no issues, set verdict='ok' and issues=[], fixes=[].\n"
+    "- Output JSON only (no code fences, no preamble).\n"
+)
+
 _INTEGRATION_GUARDRAILS = (
     "You are producing the final assistant message for the user.\n"
     "You will be given a draft answer and internal notes from a collaborator.\n"
@@ -52,6 +68,25 @@ _INTEGRATION_GUARDRAILS = (
     "Do not mention internal orchestration.\n"
     "Match the user's language and tone unless they requested otherwise."
 )
+
+
+def _extract_json_object(text: str) -> Optional[dict[str, Any]]:
+    raw = str(text or "").strip()
+    if not raw:
+        return None
+    if raw.startswith("```"):
+        # Try to strip code fences.
+        raw = raw.strip("`").strip()
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start < 0 or end < 0 or end <= start:
+        return None
+    blob = raw[start : end + 1].strip()
+    try:
+        obj = json.loads(blob)
+    except Exception:
+        return None
+    return obj if isinstance(obj, dict) else None
 
 def _openai_vision_prompt(
     text: str,
@@ -322,3 +357,89 @@ class RightBrainModel:
             f"- Context hint: {snippet}"
         )
         return {"qid": qid, "notes_sum": detail, "confidence_r": 0.85}
+
+    async def criticise_reasoning(
+        self,
+        qid: str,
+        question: str,
+        draft: str,
+        *,
+        temperature: float = 0.2,
+        context: Optional[str] = None,
+        psychoid_projection: Optional[Dict[str, object]] = None,
+    ) -> Dict[str, Any]:
+        """Return a structured critique for System2-style reasoning corrections."""
+
+        if self._llm_client:
+            system_parts = [_SYSTEM_GUARDRAILS, _RIGHT_CRITIC_GUARDRAILS]
+            if context:
+                system_parts.append(f"Context:\n{context}")
+            if psychoid_projection:
+                system_parts.append(f"Psychoid projection: {psychoid_projection}")
+            system = "\n\n".join(system_parts)
+            prompt = (
+                "User question:\n"
+                f"{question}\n\n"
+                "Draft answer (review for correctness):\n"
+                f"{draft}\n\n"
+                "Return JSON only."
+            )
+            try:
+                completion = await self._llm_client.complete(
+                    prompt,
+                    system=system,
+                    temperature=temperature,
+                )
+            except Exception:
+                completion = ""
+
+            parsed = _extract_json_object(completion) or {}
+            verdict = str(parsed.get("verdict") or "").strip().lower()
+            if verdict not in {"ok", "issues"}:
+                verdict = "issues" if completion.strip() else "issues"
+
+            issues_raw = parsed.get("issues")
+            fixes_raw = parsed.get("fixes")
+            issues = (
+                [str(item).strip() for item in issues_raw if str(item).strip()]
+                if isinstance(issues_raw, list)
+                else []
+            )
+            fixes = (
+                [str(item).strip() for item in fixes_raw if str(item).strip()]
+                if isinstance(fixes_raw, list)
+                else []
+            )
+
+            # Produce a compact internal summary string for the integrator.
+            lines: list[str] = []
+            if issues:
+                lines.append("Issues:")
+                for item in issues[:10]:
+                    lines.append(f"- {item}")
+            if fixes:
+                lines.append("Fixes:")
+                for item in fixes[:10]:
+                    lines.append(f"- {item}")
+            critic_sum = "\n".join(lines).strip()
+            if verdict == "ok" and not critic_sum:
+                critic_sum = "No issues detected."
+            return {
+                "qid": qid,
+                "verdict": verdict,
+                "issues": issues,
+                "fixes": fixes,
+                "critic_sum": critic_sum,
+                "confidence_r": 0.9,
+            }
+
+        # Heuristic fallback (no external LLM available).
+        await asyncio.sleep(0.15 + random.random() * 0.15)
+        return {
+            "qid": qid,
+            "verdict": "issues",
+            "issues": ["(fallback) External critic model unavailable; unable to verify reasoning."],
+            "fixes": ["Consider enabling an external LLM for System2 critic mode."],
+            "critic_sum": "External critic model unavailable.",
+            "confidence_r": 0.35,
+        }

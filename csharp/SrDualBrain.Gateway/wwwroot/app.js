@@ -16,6 +16,7 @@ const els = {
   llmMaxOutputTokens: $("llmMaxOutputTokens"),
   executiveMode: $("executiveMode"),
   executiveObserverMode: $("executiveObserverMode"),
+  system2Mode: $("system2Mode"),
   blobFile: $("blobFile"),
   btnUploadBlob: $("btnUploadBlob"),
   blobChips: $("blobChips"),
@@ -31,6 +32,7 @@ const els = {
   mAction: $("mAction"),
   mTemp: $("mTemp"),
   mLatency: $("mLatency"),
+  mSystem2: $("mSystem2"),
   mMetaAction: $("mMetaAction"),
   mMetaCoverage: $("mMetaCoverage"),
   mMetaFlags: $("mMetaFlags"),
@@ -756,6 +758,7 @@ function renderMetrics(response, opts = {}) {
   let temp = null;
   let leading = null;
   let latency = null;
+  let system2 = null;
   let meta = null;
 
   if (metrics) {
@@ -766,6 +769,7 @@ function renderMetrics(response, opts = {}) {
     temp = metrics?.policy?.temperature ?? null;
     leading = metrics?.leading ?? null;
     latency = metrics?.latency_ms ?? null;
+    system2 = metrics?.system2 ?? null;
     meta = metrics?.metacognition ?? null;
   } else {
     const coherenceEv = lastEvent(telemetry, "coherence_signal");
@@ -792,6 +796,13 @@ function renderMetrics(response, opts = {}) {
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
   els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
+  if (els.mSystem2) {
+    const enabled = system2?.enabled ?? null;
+    const mode = system2?.mode ?? null;
+    if (enabled === true) els.mSystem2.textContent = "on";
+    else if (mode) els.mSystem2.textContent = String(mode);
+    else els.mSystem2.textContent = "—";
+  }
   if (els.mMetaAction) {
     const actionValue = meta?.action ?? meta?.metacognition?.action ?? null;
     els.mMetaAction.textContent = actionValue ? String(actionValue) : "—";
@@ -887,6 +898,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
   const leading = (els.leadingBrain.value || "auto").trim() || "auto";
   const executiveMode = (els.executiveMode?.value || "off").trim() || "off";
   const executiveObserverMode = (els.executiveObserverMode?.value || "off").trim() || "off";
+  const system2Mode = (els.system2Mode?.value || "auto").trim() || "auto";
   const wantExecutive = !!els.returnExecutive?.checked;
   const wantTelemetry = !!els.returnTelemetry.checked;
   const wantDialogueFlow = !!els.returnDialogueFlow.checked;
@@ -898,6 +910,7 @@ async function buildProcessBody(questionText, { includeTraceInline }) {
     leading_brain: leading,
     executive_mode: executiveMode,
     executive_observer_mode: executiveObserverMode,
+    system2_mode: system2Mode,
     return_executive: wantExecutive,
     return_telemetry: wantTelemetry && traceInline,
     return_dialogue_flow: wantDialogueFlow && traceInline,
@@ -1218,6 +1231,7 @@ els.btnClear.addEventListener("click", () => {
   els.mAction.textContent = "—";
   els.mTemp.textContent = "—";
   els.mLatency.textContent = "—";
+  if (els.mSystem2) els.mSystem2.textContent = "—";
   if (els.mMetaAction) els.mMetaAction.textContent = "—";
   if (els.mMetaCoverage) els.mMetaCoverage.textContent = "—";
   if (els.mMetaFlags) els.mMetaFlags.textContent = "—";

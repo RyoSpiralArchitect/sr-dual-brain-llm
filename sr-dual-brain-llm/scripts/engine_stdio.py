@@ -89,6 +89,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     hemisphere_ev = _last_event(events, "hemisphere_routing") or {}
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
     meta_ev = _last_event(events, "metacognition") or {}
+    system2_ev = _last_event(events, "system2_mode") or {}
 
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
 
@@ -193,6 +194,13 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "answer_len": meta_ev.get("answer_len"),
             "revised_len": meta_ev.get("revised_len"),
         }
+    system2_payload = {}
+    if isinstance(system2_ev, dict):
+        system2_payload = {
+            "mode": system2_ev.get("mode"),
+            "enabled": system2_ev.get("enabled"),
+            "reason": system2_ev.get("reason"),
+        }
 
     metrics: dict[str, Any] = {
         "coherence": {
@@ -231,6 +239,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "latency_ms": exec_ev.get("latency_ms"),
             "source": exec_ev.get("source"),
         },
+        "system2": system2_payload,
         "metacognition": metacognition_payload,
         "telemetry_events": len(events or []),
     }
@@ -519,6 +528,30 @@ async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightB
                 )
             except Exception as exc:
                 await callosum.publish_response(qid, {"qid": qid, "error": str(exc)})
+        elif req.get("type") == "ASK_CRITIC":
+            qid = req["qid"]
+            try:
+                critique = await right_model.criticise_reasoning(
+                    qid,
+                    req.get("question", ""),
+                    req.get("draft", "") or req.get("draft_sum", "") or "",
+                    temperature=req.get("temperature", 0.2),
+                    context=req.get("context"),
+                    psychoid_projection=req.get("psychoid_attention_bias"),
+                )
+                await callosum.publish_response(
+                    qid,
+                    {
+                        "qid": qid,
+                        "verdict": critique.get("verdict"),
+                        "issues": critique.get("issues"),
+                        "fixes": critique.get("fixes"),
+                        "critic_sum": critique.get("critic_sum"),
+                        "confidence_r": critique.get("confidence_r"),
+                    },
+                )
+            except Exception as exc:
+                await callosum.publish_response(qid, {"qid": qid, "error": str(exc)})
         elif req.get("type") == "ASK_LEAD":
             qid = req.get("qid")
             try:
@@ -728,6 +761,8 @@ async def _handle_process(
     if executive_observer_mode not in {"off", "metrics", "director", "both"}:
         raise ValueError("executive_observer_mode must be one of: off, metrics, director, both")
 
+    system2_mode = str(params.get("system2_mode", params.get("reasoning_mode", "auto")) or "auto").strip().lower()
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
     return_executive = bool(params.get("return_executive", False))
@@ -749,6 +784,7 @@ async def _handle_process(
         leading_brain=leading_brain,
         qid=qid,
         answer_mode=answer_mode,
+        system2_mode=system2_mode,
         executive_mode=executive_mode,
         executive_observer_mode=executive_observer_mode,
         vision_images=vision_images or None,
@@ -842,6 +878,8 @@ async def _handle_process_stream(
     if executive_observer_mode not in {"off", "metrics", "director", "both"}:
         raise ValueError("executive_observer_mode must be one of: off, metrics, director, both")
 
+    system2_mode = str(params.get("system2_mode", params.get("reasoning_mode", "auto")) or "auto").strip().lower()
+
     return_telemetry = bool(params.get("return_telemetry", False))
     return_dialogue_flow = bool(params.get("return_dialogue_flow", True))
     return_executive = bool(params.get("return_executive", False))
@@ -871,6 +909,7 @@ async def _handle_process_stream(
         leading_brain=leading_brain,
         qid=qid,
         answer_mode=answer_mode,
+        system2_mode=system2_mode,
         on_delta=on_delta,
         on_reset=on_reset,
         executive_mode=executive_mode,
