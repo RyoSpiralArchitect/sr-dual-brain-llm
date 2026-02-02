@@ -24,6 +24,7 @@ from typing import Any, Dict, Sequence
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
 _EN_STOPWORDS = {
     "a",
     "an",
@@ -97,7 +98,23 @@ _UNASKED_SENSING_MARKERS: tuple[str, ...] = (
 
 def _tokenise(text: str) -> list[str]:
     lowered = (text or "").replace("\n", " ").lower()
-    return [tok for tok in _WORD_RE.findall(lowered) if tok]
+    tokens: list[str] = []
+    for tok in _WORD_RE.findall(lowered):
+        tok = tok.strip()
+        if not tok:
+            continue
+        tokens.append(tok)
+
+        # For CJK, add short character n-grams so that overlap can be detected even
+        # when there are no spaces (useful for Japanese).
+        if _CJK_RE.search(tok) and len(tok) >= 4:
+            grams_added = 0
+            for i in range(len(tok) - 1):
+                tokens.append(tok[i : i + 2])
+                grams_added += 1
+                if grams_added >= 32:
+                    break
+    return tokens
 
 
 def _keywords(tokens: Sequence[str], *, limit: int = 8) -> tuple[str, ...]:
@@ -238,7 +255,14 @@ class Auditor:
         coverage = None
         keyword_set: set[str] = set()
         if focus_keywords:
-            keyword_set.update(tok.lower() for tok in focus_keywords if tok)
+            focus_tokens: list[str] = []
+            for kw in focus_keywords:
+                if not kw:
+                    continue
+                focus_tokens.extend(_tokenise(str(kw)))
+                if len(focus_tokens) >= 96:
+                    break
+            keyword_set.update(_keywords(focus_tokens, limit=12))
         else:
             keyword_set.update(_keywords(_tokenise(question_text)))
         answer_tokens = set(_tokenise(revised))

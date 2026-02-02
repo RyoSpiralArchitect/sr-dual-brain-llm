@@ -553,6 +553,7 @@ class DualBrainController:
         self.psychoid_adapter = psychoid_attention_adapter
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
         self._last_leading_brain: Optional[str] = "right"
+        self._default_mode_low_focus_streak = 0
         
         # Neural impulse simulation
         self.neural_integrator = neural_integrator
@@ -1712,6 +1713,7 @@ class DualBrainController:
         unconscious_profile = None
         unconscious_summary: Optional[UnconsciousSummaryModel] = None
         default_mode_reflections: Optional[List[DefaultModeReflection]] = None
+        suppress_default_mode_reflections = False
         psychoid_signal: Optional[PsychoidSignalModel] = None
         psychoid_projection: Optional[PsychoidAttentionProjection] = None
         if self.unconscious_field is not None:
@@ -1782,6 +1784,19 @@ class DualBrainController:
                         qid=decision.qid,
                         reflections=[ref.as_dict() for ref in reflections],
                     )
+        # When executive focus stays low for multiple "easy" turns, treat DMN-style
+        # reflections as internal-only (telemetry ok) to avoid "poetic inertia"
+        # dominating the right-brain consult prompt.
+        low_focus = bool(focus is not None and float(focus.relevance) < 0.02)
+        low_arousal = float(affect.get("arousal", 0.0) or 0.0) <= 0.05
+        is_easy = str(decision.state.get("q_type") or "").lower() == "easy"
+        if low_focus and low_arousal and is_easy:
+            self._default_mode_low_focus_streak += 1
+        else:
+            self._default_mode_low_focus_streak = 0
+        suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2
+        if suppress_default_mode_reflections:
+            decision.state["default_mode_suppressed"] = True
         if focus is not None:
             self.telemetry.log(
                 "prefrontal_focus",
@@ -1977,7 +1992,7 @@ class DualBrainController:
                     vectorised = self.coherence_resonator.vectorise_left()
                     if vectorised:
                         payload["coherence_vector"] = vectorised
-                if default_mode_reflections:
+                if default_mode_reflections and not suppress_default_mode_reflections:
                     payload["default_mode_reflections"] = [
                         f"{ref.theme} (confidence {float(ref.confidence):.2f})"
                         for ref in default_mode_reflections

@@ -28,6 +28,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
 _EN_STOPWORDS = {
     "a",
     "an",
@@ -86,6 +87,22 @@ def _tokenise(text: str) -> List[str]:
     return [tok for tok in _WORD_RE.findall(lowered) if tok]
 
 
+def _tokenise_match(text: str) -> List[str]:
+    """Tokenise for overlap scoring (adds CJK n-grams for Japanese-style text)."""
+
+    surface = _tokenise(text)
+    tokens: List[str] = list(surface)
+    for tok in surface:
+        if _CJK_RE.search(tok) and len(tok) >= 4:
+            grams_added = 0
+            for i in range(len(tok) - 1):
+                tokens.append(tok[i : i + 2])
+                grams_added += 1
+                if grams_added >= 32:
+                    break
+    return tokens
+
+
 def _top_keywords(tokens: Sequence[str], *, limit: int = 6) -> Tuple[str, ...]:
     seen = []
     for tok in tokens:
@@ -104,10 +121,20 @@ def _top_keywords(tokens: Sequence[str], *, limit: int = 6) -> Tuple[str, ...]:
 def _line_relevance(line: str, keywords: Sequence[str]) -> float:
     if not keywords:
         return 0.0
-    tokens = set(_tokenise(line))
+    keyword_tokens: set[str] = set()
+    for kw in keywords:
+        if not kw:
+            continue
+        keyword_tokens.update(_tokenise_match(str(kw)))
+        if len(keyword_tokens) >= 96:
+            break
+    if not keyword_tokens:
+        return 0.0
+
+    tokens = set(_tokenise_match(line))
     if not tokens:
         return 0.0
-    overlap = len(tokens & set(keywords))
+    overlap = len(tokens & keyword_tokens)
     if not overlap:
         return 0.0
     return overlap / max(len(tokens), 1)

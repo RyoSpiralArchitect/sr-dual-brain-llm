@@ -17,6 +17,7 @@ from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
 from core.director_reasoner import DirectorAdvice
+from core.schema import UnconsciousSummaryModel
 
 
 class DummyCallosum:
@@ -248,6 +249,11 @@ class OffTopicLeft:
 class AlwaysSkipPolicy:
     def decide(self, state):  # noqa: ANN001
         return 0
+
+
+class AlwaysConsultPolicy:
+    def decide(self, state):  # noqa: ANN001
+        return 1
 
 
 def test_director_can_skip_consult_and_clamp_output():
@@ -657,6 +663,72 @@ def test_metacognition_flags_offtopic_answer_without_overriding_user_output():
     assert meta
     assert meta[-1].get("action") == "clarify"
     assert meta[-1].get("clarifying_question")
+
+
+def test_default_mode_reflections_suppressed_after_low_focus_streak():
+    class StaticUnconsciousField:
+        def analyse(self, *, question: str, draft: str):  # noqa: ANN001
+            return type("Profile", (), {"top_k": ["self"]})()
+
+        def summary(self, profile):  # noqa: ANN001
+            return UnconsciousSummaryModel(
+                top_k=["self"],
+                archetype_map=[
+                    {"id": "self", "label": "Self", "intensity": 0.95},
+                    {"id": "hero", "label": "Hero", "intensity": 0.12},
+                ],
+                emergent_ideas=[],
+                stress_released=0.0,
+                cache_depth=7,
+                psychoid_signal=None,
+            )
+
+        def integrate_outcome(  # noqa: ANN001
+            self,
+            *,
+            mapping,
+            question: str,
+            draft: str,
+            final_answer: str,
+            success: bool,
+            decision_state=None,
+            affect=None,
+            novelty=None,
+            reward=None,
+        ):
+            return {"seed_cached": True, "stress_delta": 0.0, "cache_depth": 7}
+
+    callosum = DummyCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=AlwaysConsultPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=StaticUnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        default_mode_network=DefaultModeNetwork(
+            cooldown_steps=0,
+            activation_bias=0.0,
+            min_cache_depth=0,
+        ),
+    )
+
+    asyncio.run(controller.process("yo", leading_brain="right"))
+    asyncio.run(controller.process("hi", leading_brain="right"))
+
+    assert len(callosum.payloads) == 2
+    assert "default_mode_reflections" in callosum.payloads[0]["payload"]
+    assert "default_mode_reflections" not in callosum.payloads[1]["payload"]
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
