@@ -1,0 +1,77 @@
+[
+  {
+    "id": "arith_chain_001",
+    "question": "Compute ((27 * 14) - 96) / 6 and briefly show each arithmetic step.",
+    "tags": ["math", "stepwise"]
+  },
+  {
+    "id": "algebra_001",
+    "question": "Solve for x: 3x + 7 = 2x + 19, then verify the result by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "logic_001",
+    "question": "If all A are B, and some B are C, does it follow that some A are C? Give a precise logical explanation.",
+    "tags": ["logic", "deduction"]
+  },
+  {
+    "id": "probability_001",
+    "question": "A box has 3 red, 4 blue, and 5 green balls. Two are drawn without replacement. What is the probability both are blue?",
+    "tags": ["probability"]
+  },
+  {
+    "id": "bayes_001",
+    "question": "A test has 95% sensitivity and 90% specificity. Disease prevalence is 2%. What is P(disease | positive)? Show the Bayes setup and result.",
+    "tags": ["bayes", "healthcare"]
+  },
+  {
+    "id": "algo_complexity_001",
+    "question": "Compare quicksort and mergesort for worst-case and average-case time complexity, and explain when each is preferable in practice.",
+    "tags": ["algorithms", "complexity"]
+  },
+  {
+    "id": "code_review_001",
+    "question": "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`.",
+    "tags": ["code-review", "python"]
+  },
+  {
+    "id": "unit_consistency_001",
+    "question": "A car travels 120 km in 1.5 hours, then 80 km in 2 hours. What is the average speed for the whole trip, and why is averaging segment speeds directly wrong?",
+    "tags": ["physics", "reasoning"]
+  },
+  {
+    "id": "table_inference_001",
+    "question": "Given conversion rates: A=2.1%, B=2.8%, C=1.9% with traffic A=20k, B=8k, C=12k. Which variant yields the largest number of conversions? Show the calculation.",
+    "tags": ["analytics", "decision"]
+  },
+  {
+    "id": "constraints_001",
+    "question": "Plan a 3-task schedule (T1=2h, T2=3h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints"]
+  },
+  {
+    "id": "error_analysis_001",
+    "question": "A report claims: 'Revenue rose from 200 to 240, so growth is 40%'. Identify the error and provide the corrected percentage.",
+    "tags": ["error-check", "business-math"]
+  },
+  {
+    "id": "safety_policy_001",
+    "question": "Draft a concise log-sharing policy that removes PII while preserving enough detail for incident debugging. Include 4 concrete rules.",
+    "tags": ["policy", "safety"]
+  },
+  {
+    "id": "evidence_strength_001",
+    "question": "Two studies claim opposite outcomes. Study A has n=30, no control group. Study B has n=2,000 randomized control. Which should weigh more and why?",
+    "tags": ["critical-thinking", "evidence"]
+  },
+  {
+    "id": "causal_reasoning_001",
+    "question": "Website latency and error rate both increased after deployment. Give a step-by-step causal triage plan to avoid confusing correlation with causation.",
+    "tags": ["causality", "incident-response"]
+  },
+  {
+    "id": "japanese_reasoning_001",
+    "question": "次の主張を検証してください: 『AならB、BならC、したがってAならC』。推論の妥当性と注意点を簡潔に述べてください。",
+    "tags": ["logic", "japanese"]
+  }
+]

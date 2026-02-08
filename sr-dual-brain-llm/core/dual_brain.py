@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import difflib
 import json
+import os
 import re
 import time
 import uuid
@@ -287,6 +288,18 @@ def _issue_signal_score(issue_text: str, *, question: str = "") -> float:
     return score
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return bool(default)
+    text = str(raw).strip().lower()
+    if text in {"1", "true", "yes", "on"}:
+        return True
+    if text in {"0", "false", "no", "off"}:
+        return False
+    return bool(default)
+
+
 def _prioritise_issue_list(
     issues: Sequence[str],
     *,
@@ -314,6 +327,26 @@ def _prioritise_issue_list(
         return []
     selected = sorted(selected, key=lambda row: row[1])[: max(1, int(limit))]
     return [row[2] for row in selected]
+
+
+def _filter_system2_issues(
+    issues: Sequence[str],
+    *,
+    question: str,
+    filter_enabled: bool,
+    keep_at_least: int = 0,
+    filtered_limit: int = 8,
+    raw_limit: int = 12,
+) -> List[str]:
+    base = [str(item) for item in list(issues)[: max(1, int(raw_limit))] if str(item).strip()]
+    if not filter_enabled:
+        return base
+    return _prioritise_issue_list(
+        base,
+        question=question,
+        limit=filtered_limit,
+        keep_at_least=keep_at_least,
+    )
 
 
 def _issue_matches_any(
@@ -1522,6 +1555,10 @@ class DualBrainController:
             system2_norm = "off"
         if system2_norm not in {"auto", "on", "off"}:
             system2_norm = "auto"
+        system2_low_signal_filter = _env_flag(
+            "DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER",
+            True,
+        )
         context_signal_len = 0
 
         system2_capable = bool(
@@ -1576,6 +1613,7 @@ class DualBrainController:
                 mode=system2_norm,
                 enabled=bool(system2_active),
                 reason=system2_reason,
+                low_signal_filter=bool(system2_low_signal_filter),
             )
         except Exception:  # pragma: no cover - telemetry is best-effort
             pass
@@ -1987,6 +2025,7 @@ class DualBrainController:
         decision.state["system2_enabled"] = bool(system2_active)
         decision.state["system2_mode"] = system2_norm
         decision.state["system2_reason"] = system2_reason
+        decision.state["system2_low_signal_filter"] = bool(system2_low_signal_filter)
         if force_right_lead and decision.action == 0:
             decision.action = 1
             decision.state["right_forced_lead"] = True
@@ -2485,10 +2524,10 @@ class DualBrainController:
                 system2_followup_verdict: Optional[str] = None
                 if system2_active:
                     critic_verdict = str(response.get("verdict") or "").strip().lower() or None
-                    critic_issues = _prioritise_issue_list(
+                    critic_issues = _filter_system2_issues(
                         _normalise_issue_list(response.get("issues"), limit=12),
                         question=question,
-                        limit=8,
+                        filter_enabled=system2_low_signal_filter,
                         keep_at_least=1,
                     )
                     critic_fixes = _normalise_issue_list(response.get("fixes"), limit=12)
@@ -2547,13 +2586,13 @@ class DualBrainController:
                             critic_verdict = str(fallback.get("verdict") or "").strip().lower() or None
                             if critic_verdict:
                                 decision.state["critic_verdict"] = critic_verdict
-                            critic_issues = _prioritise_issue_list(
+                            critic_issues = _filter_system2_issues(
                                 _normalise_issue_list(
                                     fallback.get("issues"),
                                     limit=12,
                                 ),
                                 question=question,
-                                limit=8,
+                                filter_enabled=system2_low_signal_filter,
                                 keep_at_least=1,
                             )
                             critic_fixes = _normalise_issue_list(
@@ -2714,13 +2753,13 @@ class DualBrainController:
                         verify_verdict = str(
                             verify_response.get("verdict") or ""
                         ).strip().lower()
-                        verify_issues = _prioritise_issue_list(
+                        verify_issues = _filter_system2_issues(
                             _normalise_issue_list(
                                 verify_response.get("issues"),
                                 limit=12,
                             ),
                             question=question,
-                            limit=8,
+                            filter_enabled=system2_low_signal_filter,
                         )
                         verify_fixes = _normalise_issue_list(
                             verify_response.get("fixes"),
@@ -2754,13 +2793,13 @@ class DualBrainController:
                                 verify_verdict = str(
                                     verify_fallback.get("verdict") or ""
                                 ).strip().lower()
-                                verify_issues = _prioritise_issue_list(
+                                verify_issues = _filter_system2_issues(
                                     _normalise_issue_list(
                                         verify_fallback.get("issues"),
                                         limit=12,
                                     ),
                                     question=question,
-                                    limit=8,
+                                    filter_enabled=system2_low_signal_filter,
                                 )
                                 verify_fixes = _normalise_issue_list(
                                     verify_fallback.get("fixes"),
@@ -2889,13 +2928,13 @@ class DualBrainController:
                             round3_verdict = str(
                                 round3_response.get("verdict") or ""
                             ).strip().lower()
-                            round3_issues = _prioritise_issue_list(
+                            round3_issues = _filter_system2_issues(
                                 _normalise_issue_list(
                                     round3_response.get("issues"),
                                     limit=12,
                                 ),
                                 question=question,
-                                limit=8,
+                                filter_enabled=system2_low_signal_filter,
                             )
                             round3_detail = str(
                                 round3_response.get("critic_sum") or ""
@@ -2925,13 +2964,13 @@ class DualBrainController:
                                     round3_verdict = str(
                                         round3_fallback.get("verdict") or ""
                                     ).strip().lower()
-                                    round3_issues = _prioritise_issue_list(
+                                    round3_issues = _filter_system2_issues(
                                         _normalise_issue_list(
                                             round3_fallback.get("issues"),
                                             limit=12,
                                         ),
                                         question=question,
-                                        limit=8,
+                                        filter_enabled=system2_low_signal_filter,
                                     )
                                     round3_detail = str(
                                         round3_fallback.get("critic_sum") or ""
@@ -3013,6 +3052,7 @@ class DualBrainController:
                             round3_issues_calibrated=decision.state.get(
                                 "system2_issue_count_round3_calibrated"
                             ),
+                            low_signal_filter=bool(system2_low_signal_filter),
                             resolved=bool(system2_resolved),
                             followup_revision=bool(system2_followup_revision),
                             followup_new_issues=list(system2_followup_new_issues),
@@ -3098,6 +3138,7 @@ class DualBrainController:
                         round_target=int(system2_round_target),
                         initial_issues=0,
                         final_issues=0,
+                        low_signal_filter=bool(system2_low_signal_filter),
                         resolved=False,
                         followup_revision=False,
                         followup_new_issues=[],

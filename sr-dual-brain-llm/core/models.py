@@ -438,17 +438,34 @@ class RightBrainModel:
             max_tokens = 520
             timeout_seconds = min(float(self.llm_config.timeout_seconds if self.llm_config else 40), 24.0)
             call_failed = False
-            try:
-                completion = await self._llm_client.complete(
-                    prompt,
-                    system=system,
-                    temperature=temperature,
-                    max_output_tokens=max_tokens,
-                    timeout_seconds=timeout_seconds,
-                )
-            except Exception:
-                completion = ""
-                call_failed = True
+            completion = ""
+            last_error = ""
+            for attempt in range(3):
+                try:
+                    completion = await self._llm_client.complete(
+                        prompt,
+                        system=system,
+                        temperature=temperature,
+                        max_output_tokens=max_tokens,
+                        timeout_seconds=timeout_seconds,
+                    )
+                    call_failed = False
+                    break
+                except Exception as exc:
+                    call_failed = True
+                    completion = ""
+                    last_error = f"{exc.__class__.__name__}: {exc}"
+                    retryable = False
+                    err_text = str(exc).lower()
+                    if any(
+                        marker in err_text
+                        for marker in ("rate limit", "rate_limited", "429", "timeout")
+                    ):
+                        retryable = True
+                    if retryable and attempt < 2:
+                        await asyncio.sleep(0.35 * (2 ** attempt) + random.random() * 0.2)
+                        continue
+                    break
 
             parsed = _extract_json_object(completion) or {}
             verdict = str(parsed.get("verdict") or "").strip().lower()
@@ -479,7 +496,10 @@ class RightBrainModel:
                     fixes = [
                         "Retry later or verify provider API key/network settings."
                     ]
-                    critic_sum = "External critic model unavailable."
+                    if last_error:
+                        critic_sum = f"External critic model unavailable: {last_error}"
+                    else:
+                        critic_sum = "External critic model unavailable."
                 elif completion.strip():
                     issues = [
                         "(fallback) External critic response was unstructured; unable to parse actionable issues."

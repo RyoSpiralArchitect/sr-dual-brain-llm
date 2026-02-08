@@ -613,9 +613,36 @@ function renderMetrics(response) {
   if (els.mSystem2) {
     const enabled = system2?.enabled ?? null;
     const mode = system2?.mode ?? null;
-    if (enabled === true) els.mSystem2.textContent = "on";
-    else if (mode) els.mSystem2.textContent = String(mode);
-    else els.mSystem2.textContent = "—";
+    let label = "—";
+    if (enabled === true) label = "on";
+    else if (mode) label = String(mode);
+
+    const roundsRaw = system2?.rounds;
+    const roundTargetRaw = system2?.round_target;
+    const rounds = Number(roundsRaw);
+    const roundTarget = Number(roundTargetRaw);
+    if (Number.isFinite(rounds)) {
+      if (Number.isFinite(roundTarget)) {
+        label += ` r${Math.max(0, Math.trunc(rounds))}/${Math.max(1, Math.trunc(roundTarget))}`;
+      } else {
+        label += ` r${Math.max(0, Math.trunc(rounds))}`;
+      }
+    }
+
+    const initIssuesRaw = system2?.initial_issues;
+    const finalIssuesRaw = system2?.final_issues;
+    const initIssues = Number(initIssuesRaw);
+    const finalIssues = Number(finalIssuesRaw);
+    if (Number.isFinite(initIssues) && Number.isFinite(finalIssues)) {
+      label += ` ${Math.max(0, Math.trunc(initIssues))}→${Math.max(0, Math.trunc(finalIssues))}`;
+    }
+    if (system2?.resolved === true) {
+      label += " resolved";
+    }
+    if (system2?.followup_revision === true) {
+      label += " +followup";
+    }
+    els.mSystem2.textContent = label;
   }
   if (els.mMetaAction) {
     els.mMetaAction.textContent = meta?.action ? String(meta.action) : "—";

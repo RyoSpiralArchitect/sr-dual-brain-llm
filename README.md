@@ -111,6 +111,24 @@ Notes:
 - API keys are read from environment variables (do not send keys in requests).
 - `session_id` scopes memory state inside the Python engine process.
 
+### 5) System2 benchmark (fixed set + trend tracking)
+To measure reasoning refinement quality over time (`initial_issues -> final_issues`), run:
+
+```bash
+python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
+  --system2-mode on \
+  --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en.json
+```
+
+Outputs:
+- Full report: `sr-dual-brain-llm/samples/system2_benchmark_last.json`
+- History rows (for trend over repeated runs): `sr-dual-brain-llm/samples/system2_benchmark_history.jsonl`
+
+Useful flags:
+- `--limit 5` (quick smoke run)
+- `--shuffle --seed 42` (order randomization)
+- `--history-limit 50` (trend window size)
+
 ## Architecture (Braided Co-Lead Flow)
 ```mermaid
 flowchart TD
@@ -207,8 +225,9 @@ Open `http://127.0.0.1:8080/`.
   - `polish`: may apply directives as a second-pass rewrite (may reset streams)
 - `System2 mode (reasoning)`:
   - `auto`: enables the **right-brain critic** only when both left/right are backed by external LLMs and the turn looks like a reasoning task (structural complexity + loaded context)
-  - `on`: force critic mode (left drafts → right critiques → left revises)
+  - `on`: force critic mode (left drafts → right critiques → left revises → verify pass)
   - `off`: disable critic mode
+  - Metrics panel (`system2`) now shows round progress and issue decay (initial → final) when available.
 - `Executive observer (experiment)`:
   - `off`: disabled
   - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (never blended into chat)
@@ -282,7 +301,7 @@ Request fields:
   - `both`: director + post-turn feedback
 - `system2_mode` (`"auto"|"on"|"off"`, default: `"auto"`)
   - `auto`: enable critic mode only when both left/right are backed by external LLMs and the turn looks like a reasoning task (structural complexity + loaded context)
-  - `on`: force critic mode (left drafts → right critiques → left revises)
+  - `on`: force critic mode (left drafts → right critiques → left revises → verify pass)
   - `off`: disable critic mode
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)

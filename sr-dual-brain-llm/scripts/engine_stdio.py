@@ -90,6 +90,12 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
+    system2_refine_ev = _last_event(events, "system2_refinement") or {}
+    policy_state = (
+        policy_ev.get("state")
+        if isinstance(policy_ev.get("state"), dict)
+        else {}
+    )
 
     signal = coherence_ev.get("signal") if isinstance(coherence_ev.get("signal"), dict) else {}
 
@@ -196,10 +202,52 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         }
     system2_payload = {}
     if isinstance(system2_ev, dict):
+        rounds = system2_refine_ev.get("rounds")
+        if rounds is None:
+            rounds = policy_state.get("system2_rounds")
+        round_target = system2_refine_ev.get("round_target")
+        if round_target is None:
+            round_target = policy_state.get("system2_round_target")
+        initial_issues = system2_refine_ev.get("initial_issues")
+        if initial_issues is None:
+            initial_issues = policy_state.get("system2_issue_count_initial")
+        final_issues = system2_refine_ev.get("final_issues")
+        if final_issues is None:
+            final_issues = policy_state.get("system2_issue_count_final")
+        resolved = system2_refine_ev.get("resolved")
+        if resolved is None:
+            resolved = policy_state.get("system2_resolved")
+        followup_revision = system2_refine_ev.get("followup_revision")
+        if followup_revision is None:
+            followup_revision = policy_state.get("system2_followup_revision")
+        followup_new_issues = system2_refine_ev.get("followup_new_issues")
+        if followup_new_issues is None:
+            followup_new_issues = policy_state.get("system2_followup_new_issues")
+        followup_verdict = system2_refine_ev.get("followup_verdict")
+        if followup_verdict is None:
+            followup_verdict = policy_state.get("system2_followup_verdict")
+        low_signal_filter = system2_refine_ev.get("low_signal_filter")
+        if low_signal_filter is None:
+            low_signal_filter = system2_ev.get("low_signal_filter")
+        if low_signal_filter is None:
+            low_signal_filter = policy_state.get("system2_low_signal_filter")
         system2_payload = {
             "mode": system2_ev.get("mode"),
             "enabled": system2_ev.get("enabled"),
             "reason": system2_ev.get("reason"),
+            "low_signal_filter": low_signal_filter,
+            "rounds": rounds,
+            "round_target": round_target,
+            "initial_issues": initial_issues,
+            "final_issues": final_issues,
+            "resolved": resolved,
+            "followup_revision": followup_revision,
+            "followup_new_issues": (
+                followup_new_issues
+                if isinstance(followup_new_issues, list)
+                else []
+            ),
+            "followup_verdict": followup_verdict,
         }
 
     metrics: dict[str, Any] = {

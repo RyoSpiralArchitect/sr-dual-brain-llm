@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 
 from core.dual_brain import DualBrainController
@@ -1280,6 +1281,78 @@ def test_system2_filters_low_signal_critic_noise():
     assert latest.get("final_issues") == 0
     assert latest.get("resolved") is True
     assert latest.get("followup_new_issues") == []
+
+
+def test_system2_low_signal_filter_can_be_disabled_via_env():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Average speed is (80 + 40) / 2 = 60 km/h."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "Average speed = total distance / total time."
+
+    previous = os.environ.get("DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER")
+    os.environ["DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER"] = "0"
+    try:
+        callosum = LowSignalNoiseCriticCallosum()
+        telemetry = TrackingTelemetry()
+        left = RevisingLeft()
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=left,
+            right_model=RightBrainModel(),
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+
+        answer = asyncio.run(
+            controller.process(
+                "A car travels 120 km in 1.5 hours, then 80 km in 2 hours. What is the average speed?",
+                system2_mode="on",
+            )
+        )
+
+        assert "total distance / total time" in answer
+        assert left.integrations >= 1
+
+        refinement_events = [
+            payload for evt, payload in telemetry.events if evt == "system2_refinement"
+        ]
+        assert refinement_events
+        latest = refinement_events[-1]
+        assert latest.get("initial_issues") == 3
+        assert latest.get("final_issues") == 1
+        assert latest.get("resolved") is False
+    finally:
+        if previous is None:
+            os.environ.pop("DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER", None)
+        else:
+            os.environ["DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER"] = previous
 
 
 def test_system2_timeout_still_emits_measurable_metrics():
