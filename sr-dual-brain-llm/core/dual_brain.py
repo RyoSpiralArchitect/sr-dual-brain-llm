@@ -1059,6 +1059,33 @@ class DualBrainController:
                 schema_context = self.memory.retrieve_schema_related(question)
             except Exception:  # pragma: no cover - optional feature
                 schema_context = ""
+        pitfall_context = ""
+        if include_long_term:
+            try:
+                counts = self.memory.get_kv("system2_pitfall_counts")  # type: ignore[attr-defined]
+                examples = self.memory.get_kv("system2_pitfall_examples")  # type: ignore[attr-defined]
+                if isinstance(counts, dict) and isinstance(examples, dict) and counts:
+                    scored = []
+                    for key, value in counts.items():
+                        try:
+                            count = int(value)
+                        except Exception:
+                            continue
+                        if count <= 0:
+                            continue
+                        scored.append((count, str(key)))
+                    scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
+                    lines: List[str] = []
+                    for count, key in scored[:4]:
+                        example = str(examples.get(key) or "").strip()
+                        if not example:
+                            continue
+                        example = _truncate_text(example, limit=140)
+                        lines.append(f"- (x{count}) {example}")
+                    if lines:
+                        pitfall_context = _format_section("System2 pitfall memory", lines)
+            except Exception:  # pragma: no cover - best-effort
+                pitfall_context = ""
         hippocampal_context = ""
         if include_long_term and self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(
@@ -1072,6 +1099,8 @@ class DualBrainController:
             segments.append(memory_context)
         if schema_context:
             segments.append(f"[Schema memory] {schema_context}")
+        if pitfall_context:
+            segments.append(pitfall_context)
         if hippocampal_context:
             segments.append(f"[Hippocampal recall] {hippocampal_context}")
         combined = "\n".join(segments)
@@ -1079,6 +1108,7 @@ class DualBrainController:
             "working_memory": working_memory_context,
             "memory": memory_context,
             "schema": schema_context,
+            "pitfalls": pitfall_context,
             "hippocampal": hippocampal_context,
         }
         focus: FocusSummary | None = None
@@ -1120,6 +1150,12 @@ class DualBrainController:
             return "hard"
         if any(sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")):
             return "hard"
+        if re.search(
+            r"(推論|妥当性|妥当|論理|論証|検証|証明|演繹|帰納|矛盾|含意|したがって|therefore|validity|logical|inference|deduction|induction|proof)",
+            q,
+            flags=re.IGNORECASE,
+        ):
+            return "hard" if length >= 180 else "medium"
 
         # Complexity by size/structure (works for CJK + Latin).
         if q.count("\n") >= 2:
@@ -2532,6 +2568,9 @@ class DualBrainController:
                     )
                     critic_fixes = _normalise_issue_list(response.get("fixes"), limit=12)
                     decision.state["right_role"] = "critic"
+                    critic_kind = response.get("critic_kind")
+                    if critic_kind:
+                        decision.state["critic_kind"] = str(critic_kind)
                     if critic_verdict:
                         decision.state["critic_verdict"] = critic_verdict
                     if critic_issues:
@@ -2584,6 +2623,9 @@ class DualBrainController:
                         if system2_active:
                             decision.state["right_role"] = "critic"
                             critic_verdict = str(fallback.get("verdict") or "").strip().lower() or None
+                            critic_kind = fallback.get("critic_kind")
+                            if critic_kind:
+                                decision.state["critic_kind"] = str(critic_kind)
                             if critic_verdict:
                                 decision.state["critic_verdict"] = critic_verdict
                             critic_issues = _filter_system2_issues(
@@ -3040,6 +3082,7 @@ class DualBrainController:
                             round_target=int(system2_round_target),
                             initial_issues=int(system2_initial_issue_count),
                             final_issues=int(system2_final_issue_count),
+                            critic_kind=decision.state.get("critic_kind"),
                             verify_issues_raw=decision.state.get(
                                 "system2_issue_count_verify_raw"
                             ),
@@ -3059,6 +3102,58 @@ class DualBrainController:
                             followup_verdict=system2_followup_verdict,
                         )
                     except Exception:  # pragma: no cover - telemetry best-effort
+                        pass
+
+                    # Hippocampus-style pitfall memory: remember recurring issue patterns
+                    # so future critic passes can bias toward known failure modes.
+                    try:
+                        pitfall_raw: List[str] = []
+                        for key in (
+                            "critic_issues",
+                            "system2_followup_new_issues",
+                            "system2_round3_new_issues",
+                        ):
+                            value = decision.state.get(key)
+                            if isinstance(value, list):
+                                pitfall_raw.extend(str(item) for item in value if item)
+
+                        pitfall_scored = []
+                        seen_norm: set[str] = set()
+                        for item in pitfall_raw[:18]:
+                            text = str(item or "").strip()
+                            if not text:
+                                continue
+                            if text.lstrip().lower().startswith("(fallback)"):
+                                continue
+                            norm = _normalise_issue_text(text)
+                            if not norm or norm in seen_norm:
+                                continue
+                            seen_norm.add(norm)
+                            score = _issue_signal_score(text, question=question)
+                            pitfall_scored.append((score, norm, text))
+
+                        pitfall_scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
+                        pitfall_patterns = [
+                            _truncate_text(row[2], limit=160)
+                            for row in pitfall_scored[:6]
+                            if row[0] > 0.0
+                        ]
+                        if pitfall_patterns:
+                            decision.state["system2_pitfall_patterns"] = pitfall_patterns
+                            counts = self.memory.get_kv("system2_pitfall_counts", {})
+                            examples = self.memory.get_kv("system2_pitfall_examples", {})
+                            if not isinstance(counts, dict):
+                                counts = {}
+                            if not isinstance(examples, dict):
+                                examples = {}
+                            for _, norm, original in pitfall_scored[:6]:
+                                counts[norm] = int(counts.get(norm, 0) or 0) + 1
+                                if norm not in examples:
+                                    examples[norm] = _truncate_text(original, limit=180)
+                            self.memory.put_kv("system2_pitfall_counts", counts)
+                            self.memory.put_kv("system2_pitfall_examples", examples)
+                            self.memory.put_kv("system2_pitfall_last", pitfall_patterns)
+                    except Exception:  # pragma: no cover - best-effort
                         pass
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
@@ -3138,6 +3233,7 @@ class DualBrainController:
                         round_target=int(system2_round_target),
                         initial_issues=0,
                         final_issues=0,
+                        critic_kind="timeout",
                         low_signal_filter=bool(system2_low_signal_filter),
                         resolved=False,
                         followup_revision=False,
@@ -3756,6 +3852,11 @@ class DualBrainController:
                     "leading_style": leading_style,
                     "inner_dialogue_trace": steps_payload,
                     "inner_dialogue_steps": len(steps_payload),
+                    **(
+                        {"system2_pitfall_patterns": decision.state.get("system2_pitfall_patterns")}
+                        if decision.state.get("system2_pitfall_patterns")
+                        else {}
+                    ),
                     **(
                         {"schema_profile": schema_profile.to_dict()}
                         if schema_profile is not None

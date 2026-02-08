@@ -1355,6 +1355,63 @@ def test_system2_low_signal_filter_can_be_disabled_via_env():
             os.environ["DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER"] = previous
 
 
+def test_system2_records_pitfall_patterns_in_memory_kv():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Average speed is (80 + 40) / 2 = 60 km/h."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Average speed = total distance / total time."
+
+    callosum = LowSignalNoiseCriticCallosum()
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=RevisingLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        hippocampus=TemporalHippocampalIndexing(dim=32),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "A car travels 120 km in 1.5 hours, then 80 km in 2 hours. What is the average speed?",
+            system2_mode="on",
+        )
+    )
+    assert "total distance / total time" in answer
+
+    counts = memory.get_kv("system2_pitfall_counts")
+    examples = memory.get_kv("system2_pitfall_examples")
+    last = memory.get_kv("system2_pitfall_last")
+    assert isinstance(counts, dict) and counts
+    assert isinstance(examples, dict) and examples
+    assert isinstance(last, list) and last
+
+
 def test_system2_timeout_still_emits_measurable_metrics():
     class RevisingLeft:
         uses_external_llm = True

@@ -212,3 +212,10 @@ __marimo__/
 .vs/
 *.suo
 *.user
+
+# macOS
+.DS_Store
+
+# Benchmark outputs (generated)
+sr-dual-brain-llm/samples/*.json
+sr-dual-brain-llm/samples/*.jsonl

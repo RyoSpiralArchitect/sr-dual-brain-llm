@@ -145,6 +145,7 @@ async def _check_critic_health(
                 draft="2+2=5",
                 temperature=0.15,
                 context="Health check for external critic JSON stability.",
+                allow_micro_fallback=False,
             )
         except Exception as exc:  # pragma: no cover - defensive guard
             failures.append(
