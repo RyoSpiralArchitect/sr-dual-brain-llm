@@ -16,7 +16,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ============================================================================
 
-import asyncio, random, difflib, json
+import asyncio, random, difflib, json, re
 from typing import Any, Callable, Dict, Optional, Sequence
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
@@ -54,6 +54,8 @@ _RIGHT_CRITIC_GUARDRAILS = (
     "- Do NOT add writing advice, tone advice, or coaching.\n"
     "- Do NOT introduce unrelated topics.\n"
     "- Be specific: point to missing definitions, invalid steps, unstated assumptions, boundary cases, and calculation errors.\n"
+    "- Keep issues canonical: merge paraphrases of the same root cause into one issue.\n"
+    "- Prefer <= 6 high-signal issues; avoid micro-fragmentation.\n"
     "- If there are no issues, set verdict='ok' and issues=[], fixes=[].\n"
     "- Output JSON only (no code fences, no preamble).\n"
 )
@@ -87,6 +89,41 @@ def _extract_json_object(text: str) -> Optional[dict[str, Any]]:
     except Exception:
         return None
     return obj if isinstance(obj, dict) else None
+
+
+def _normalise_critic_item(text: str) -> str:
+    value = re.sub(r"\s+", " ", str(text or "")).strip().lower()
+    value = re.sub(r"[\"'`“”‘’]", "", value)
+    value = re.sub(r"[，、。．,;:.!?]+$", "", value)
+    return value
+
+
+def _dedupe_critic_items(items: Any, *, limit: int = 12) -> list[str]:
+    if not isinstance(items, list):
+        return []
+    out: list[str] = []
+    seen_norm: list[str] = []
+    for item in items:
+        text = str(item or "").strip()
+        norm = _normalise_critic_item(text)
+        if not norm:
+            continue
+        duplicated = False
+        for prior in seen_norm:
+            if norm == prior:
+                duplicated = True
+                break
+            # Near-duplicate phrasing from the same critic pass should collapse.
+            if difflib.SequenceMatcher(None, norm, prior).ratio() >= 0.9:
+                duplicated = True
+                break
+        if duplicated:
+            continue
+        out.append(text)
+        seen_norm.append(norm)
+        if len(out) >= limit:
+            break
+    return out
 
 def _openai_vision_prompt(
     text: str,
@@ -400,6 +437,7 @@ class RightBrainModel:
             )
             max_tokens = 520
             timeout_seconds = min(float(self.llm_config.timeout_seconds if self.llm_config else 40), 24.0)
+            call_failed = False
             try:
                 completion = await self._llm_client.complete(
                     prompt,
@@ -410,6 +448,7 @@ class RightBrainModel:
                 )
             except Exception:
                 completion = ""
+                call_failed = True
 
             parsed = _extract_json_object(completion) or {}
             verdict = str(parsed.get("verdict") or "").strip().lower()
@@ -418,16 +457,8 @@ class RightBrainModel:
 
             issues_raw = parsed.get("issues")
             fixes_raw = parsed.get("fixes")
-            issues = (
-                [str(item).strip() for item in issues_raw if str(item).strip()]
-                if isinstance(issues_raw, list)
-                else []
-            )
-            fixes = (
-                [str(item).strip() for item in fixes_raw if str(item).strip()]
-                if isinstance(fixes_raw, list)
-                else []
-            )
+            issues = _dedupe_critic_items(issues_raw, limit=12)
+            fixes = _dedupe_critic_items(fixes_raw, limit=12)
 
             # Produce a compact internal summary string for the integrator.
             lines: list[str] = []
@@ -440,6 +471,23 @@ class RightBrainModel:
                 for item in fixes[:10]:
                     lines.append(f"- {item}")
             critic_sum = "\n".join(lines).strip()
+            if verdict == "issues" and not issues:
+                if call_failed:
+                    issues = [
+                        "(fallback) External critic model unavailable; unable to verify reasoning."
+                    ]
+                    fixes = [
+                        "Retry later or verify provider API key/network settings."
+                    ]
+                    critic_sum = "External critic model unavailable."
+                elif completion.strip():
+                    issues = [
+                        "(fallback) External critic response was unstructured; unable to parse actionable issues."
+                    ]
+                    fixes = [
+                        "Return strict JSON with concrete correctness issues."
+                    ]
+                    critic_sum = "External critic response unstructured."
             if verdict == "ok" and not critic_sum:
                 critic_sum = "No issues detected."
             return {

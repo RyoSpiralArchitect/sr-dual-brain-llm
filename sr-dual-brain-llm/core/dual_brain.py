@@ -143,6 +143,279 @@ def _similarity_ratio(a: str, b: str) -> float:
         return 0.0
     return difflib.SequenceMatcher(None, na, nb).ratio()
 
+
+def _strip_issue_prefix(text: str) -> str:
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return ""
+    cleaned = re.sub(r"^[\-\*\u2022\+\s]+", "", cleaned)
+    cleaned = re.sub(r"^(?:\(|\[)?\d+(?:\)|\])?[.\-:\s]+", "", cleaned)
+    cleaned = re.sub(
+        r"^(?:issue|issues|problem|problems|fix|fixes|note|notes)\s*[:\-]\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
+
+
+def _normalise_issue_text(text: str) -> str:
+    cleaned = _strip_issue_prefix(text)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
+    cleaned = re.sub(r"[\"'`“”‘’]", "", cleaned)
+    cleaned = re.sub(r"[，、。．,;:.!?]+$", "", cleaned)
+    return cleaned
+
+
+def _issue_token_set(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9_]+", str(text or "").lower()))
+
+
+_ISSUE_STOPWORDS = {
+    "a",
+    "an",
+    "the",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "at",
+    "in",
+    "on",
+    "to",
+    "of",
+    "for",
+    "by",
+    "from",
+    "with",
+    "and",
+    "or",
+    "that",
+    "this",
+    "it",
+    "its",
+    "as",
+    "into",
+    "over",
+    "under",
+    "than",
+    "then",
+    "re",
+    "check",
+    "double",
+    "verify",
+    "again",
+    "please",
+    "need",
+    "needs",
+    "should",
+    "must",
+}
+
+
+def _issue_core_tokens(text: str) -> set[str]:
+    tokens = _issue_token_set(text)
+    if not tokens:
+        return set()
+    core = {token for token in tokens if token not in _ISSUE_STOPWORDS and len(token) > 1}
+    return core or tokens
+
+
+_ISSUE_HIGH_SIGNAL_RE = re.compile(
+    r"\b("
+    r"incorrect|wrong|error|bug|invalid|unsafe|security|privacy|pii|"
+    r"contradict|violate|fails?|failure|miscalcul|mismatch|"
+    r"typeerror|indexerror|zero\s*division|null|none|overflow|underflow|"
+    r"off[-\s]?by[-\s]?one|unsound|false"
+    r")\b",
+    flags=re.IGNORECASE,
+)
+
+_ISSUE_MEDIUM_SIGNAL_RE = re.compile(
+    r"\b("
+    r"assumption|assumes|constraint|edge\s*case|boundary|"
+    r"causal|correlation|complexity|proof|logical|consisten|inconsisten"
+    r")\b",
+    flags=re.IGNORECASE,
+)
+
+_ISSUE_LOW_SIGNAL_RE = re.compile(
+    r"\b("
+    r"could\s+(?:briefly|explicitly|also\s+)?(?:clarify|mention|state|rephrase|improve)|"
+    r"preferable|context[-\s]?dependent|overstated|"
+    r"does\s+not\s+explicitly|not\s+explicitly|does\s+not\s+mention|"
+    r"does\s+not\s+clarify|no\s+boundary\s+case|irrelevant|"
+    r"wording|tone|style|concise|brevity|readability|clarity"
+    r")\b",
+    flags=re.IGNORECASE,
+)
+
+_ISSUE_CODE_HINT_RE = re.compile(
+    r"\b(typeerror|indexerror|null|none|len|sum|division|complexity|algorithm)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _issue_signal_score(issue_text: str, *, question: str = "") -> float:
+    norm = _normalise_issue_text(issue_text)
+    if not norm:
+        return -1.0
+
+    score = 1.0
+    if _ISSUE_HIGH_SIGNAL_RE.search(norm):
+        score += 1.8
+    if _ISSUE_MEDIUM_SIGNAL_RE.search(norm):
+        score += 0.8
+    if _ISSUE_LOW_SIGNAL_RE.search(norm):
+        score -= 1.5
+
+    issue_tokens = _issue_core_tokens(norm)
+    question_tokens = _issue_core_tokens(question)
+    if issue_tokens and question_tokens:
+        overlap = len(issue_tokens & question_tokens)
+        if overlap >= 2:
+            score += 0.6
+        elif overlap == 1:
+            score += 0.25
+
+    if "```" in str(question or "") and _ISSUE_CODE_HINT_RE.search(norm):
+        score += 0.5
+
+    return score
+
+
+def _prioritise_issue_list(
+    issues: Sequence[str],
+    *,
+    question: str,
+    limit: int = 8,
+    min_score: float = 0.6,
+    keep_at_least: int = 0,
+) -> List[str]:
+    scored: List[tuple[float, int, str]] = []
+    for idx, item in enumerate(issues):
+        text = _strip_issue_prefix(str(item))
+        if not text:
+            continue
+        scored.append((_issue_signal_score(text, question=question), idx, text))
+
+    if not scored:
+        return []
+
+    # Rank by signal, then keep original ordering among selected items.
+    ranked = sorted(scored, key=lambda row: (row[0], -row[1]), reverse=True)
+    selected = [row for row in ranked if row[0] >= float(min_score)]
+    if not selected and int(keep_at_least) > 0:
+        selected = ranked[: int(keep_at_least)]
+    if not selected:
+        return []
+    selected = sorted(selected, key=lambda row: row[1])[: max(1, int(limit))]
+    return [row[2] for row in selected]
+
+
+def _issue_matches_any(
+    issue_norm: str,
+    previous_norm: Sequence[str],
+    *,
+    threshold: float = 0.92,
+) -> bool:
+    if not issue_norm:
+        return False
+    issue_tokens = _issue_token_set(issue_norm)
+    issue_core_tokens = _issue_core_tokens(issue_norm)
+    for prior in previous_norm:
+        if not prior:
+            continue
+        if issue_norm == prior:
+            return True
+        if len(issue_norm) >= 12 and (issue_norm in prior or prior in issue_norm):
+            return True
+        if _similarity_ratio(issue_norm, prior) >= threshold:
+            return True
+        prior_tokens = _issue_token_set(prior)
+        if issue_tokens and prior_tokens:
+            if min(len(issue_tokens), len(prior_tokens)) >= 4 and (
+                issue_tokens.issubset(prior_tokens)
+                or prior_tokens.issubset(issue_tokens)
+            ):
+                return True
+            overlap = len(issue_tokens & prior_tokens) / float(
+                len(issue_tokens | prior_tokens)
+            )
+            if overlap >= 0.72:
+                return True
+        prior_core_tokens = _issue_core_tokens(prior)
+        if issue_core_tokens and prior_core_tokens:
+            if min(len(issue_core_tokens), len(prior_core_tokens)) >= 3 and (
+                issue_core_tokens.issubset(prior_core_tokens)
+                or prior_core_tokens.issubset(issue_core_tokens)
+            ):
+                return True
+            core_overlap = len(issue_core_tokens & prior_core_tokens) / float(
+                len(issue_core_tokens | prior_core_tokens)
+            )
+            if core_overlap >= 0.66:
+                return True
+    return False
+
+
+def _normalise_issue_list(
+    raw: Any,
+    *,
+    limit: int = 12,
+) -> List[str]:
+    if not isinstance(raw, list):
+        return []
+    out: List[str] = []
+    seen_norm: List[str] = []
+    for item in raw:
+        text = _strip_issue_prefix(str(item))
+        norm = _normalise_issue_text(text)
+        if not norm:
+            continue
+        if _issue_matches_any(norm, seen_norm):
+            continue
+        out.append(text)
+        seen_norm.append(norm)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _novel_issue_items(
+    current: Sequence[str],
+    previous: Sequence[str],
+) -> List[str]:
+    prev_norm = [
+        _normalise_issue_text(item)
+        for item in previous
+        if _normalise_issue_text(item)
+    ]
+    seen_norm: List[str] = []
+    novel: List[str] = []
+    for item in current:
+        cleaned = _strip_issue_prefix(str(item))
+        norm = _normalise_issue_text(item)
+        if not norm:
+            continue
+        if _issue_matches_any(norm, prev_norm):
+            continue
+        if _issue_matches_any(norm, seen_norm):
+            continue
+        seen_norm.append(norm)
+        novel.append(cleaned)
+    return novel
+
+
+def _trim_system2_draft(text: str, limit: int = 2400) -> str:
+    raw = str(text or "").strip()
+    if len(raw) <= limit:
+        return raw
+    return raw[: max(0, limit - 3)].rstrip() + "..."
+
 def _looks_like_coaching_notes(question: str, text: str) -> bool:
     """Detect "writing coach" style content that should not leak into user replies.
 
@@ -826,6 +1099,40 @@ class DualBrainController:
             return "medium"
         return "easy"
 
+    @staticmethod
+    def _system2_round_budget(
+        *,
+        system2_mode: str,
+        q_type: str,
+        question: str,
+        context_signal_len: int,
+        focus_metric: float,
+    ) -> int:
+        rounds = 1
+        q_type_norm = str(q_type or "").strip().lower()
+        if q_type_norm == "hard":
+            rounds = 3
+        elif q_type_norm == "medium":
+            rounds = 2
+
+        q = str(question or "")
+        if "```" in q:
+            rounds = max(rounds, 3)
+        elif re.search(r"\d", q) and re.search(r"[+\-*/^%=]|=", q):
+            rounds = max(rounds, 2)
+        elif len(q) >= 220:
+            rounds = max(rounds, 2)
+
+        if int(context_signal_len or 0) >= 420:
+            rounds = max(rounds, 2)
+        if float(focus_metric or 0.0) >= 0.7:
+            rounds = max(rounds, 2)
+
+        if str(system2_mode or "").strip().lower() == "on":
+            rounds = max(rounds, 2)
+
+        return max(1, min(3, rounds))
+
     def _select_hemisphere_mode(
         self, question: str, focus: FocusSummary | None
     ) -> HemisphericSignal:
@@ -1215,6 +1522,7 @@ class DualBrainController:
             system2_norm = "off"
         if system2_norm not in {"auto", "on", "off"}:
             system2_norm = "auto"
+        context_signal_len = 0
 
         system2_capable = bool(
             getattr(self.left_model, "uses_external_llm", False)
@@ -1685,9 +1993,18 @@ class DualBrainController:
         if system2_active and decision.action == 0:
             decision.action = 1
             decision.state["system2_forced_consult"] = True
+        system2_round_target = 1
         if system2_active:
             decision.temperature = max(0.1, min(0.6, float(decision.temperature)))
             decision.state["system2_temperature"] = decision.temperature
+            system2_round_target = self._system2_round_budget(
+                system2_mode=system2_norm,
+                q_type=str(decision.state.get("q_type") or ""),
+                question=question,
+                context_signal_len=context_signal_len,
+                focus_metric=focus_metric,
+            )
+            decision.state["system2_round_target"] = system2_round_target
         if (
             self.prefrontal_cortex is not None
             and not explicit_leading
@@ -2089,10 +2406,7 @@ class DualBrainController:
                     "hemisphere_bias": hemisphere_bias,
                 }
                 if system2_active:
-                    draft_full = draft
-                    if len(draft_full) > 2400:
-                        draft_full = draft_full[:2397].rstrip() + "..."
-                    payload["draft"] = draft_full
+                    payload["draft"] = _trim_system2_draft(draft, limit=2400)
                     payload["system2"] = True
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
@@ -2162,22 +2476,31 @@ class DualBrainController:
                 critic_verdict: Optional[str] = None
                 critic_issues: list[str] = []
                 critic_fixes: list[str] = []
+                system2_rounds_completed = 1 if system2_active else 0
+                system2_initial_issue_count = 0
+                system2_final_issue_count = 0
+                system2_resolved = False
+                system2_followup_revision = False
+                system2_followup_new_issues: list[str] = []
+                system2_followup_verdict: Optional[str] = None
                 if system2_active:
                     critic_verdict = str(response.get("verdict") or "").strip().lower() or None
-                    issues_raw = response.get("issues")
-                    fixes_raw = response.get("fixes")
-                    if isinstance(issues_raw, list):
-                        critic_issues = [str(item).strip() for item in issues_raw if str(item).strip()]
-                    if isinstance(fixes_raw, list):
-                        critic_fixes = [str(item).strip() for item in fixes_raw if str(item).strip()]
+                    critic_issues = _prioritise_issue_list(
+                        _normalise_issue_list(response.get("issues"), limit=12),
+                        question=question,
+                        limit=8,
+                        keep_at_least=1,
+                    )
+                    critic_fixes = _normalise_issue_list(response.get("fixes"), limit=12)
                     decision.state["right_role"] = "critic"
                     if critic_verdict:
                         decision.state["critic_verdict"] = critic_verdict
                     if critic_issues:
-                        decision.state["critic_issues"] = critic_issues[:12]
+                        decision.state["critic_issues"] = critic_issues
                     if critic_fixes:
-                        decision.state["critic_fixes"] = critic_fixes[:12]
+                        decision.state["critic_fixes"] = critic_fixes
                     detail_notes = response.get("critic_sum")
+                    system2_initial_issue_count = len(critic_issues)
                 else:
                     detail_notes = response.get("notes_sum")
                 call_error = bool(response.get("error"))
@@ -2224,17 +2547,25 @@ class DualBrainController:
                             critic_verdict = str(fallback.get("verdict") or "").strip().lower() or None
                             if critic_verdict:
                                 decision.state["critic_verdict"] = critic_verdict
-                            issues_raw = fallback.get("issues")
-                            fixes_raw = fallback.get("fixes")
-                            if isinstance(issues_raw, list):
-                                critic_issues = [str(item).strip() for item in issues_raw if str(item).strip()]
-                                if critic_issues:
-                                    decision.state["critic_issues"] = critic_issues[:12]
-                            if isinstance(fixes_raw, list):
-                                critic_fixes = [str(item).strip() for item in fixes_raw if str(item).strip()]
-                                if critic_fixes:
-                                    decision.state["critic_fixes"] = critic_fixes[:12]
+                            critic_issues = _prioritise_issue_list(
+                                _normalise_issue_list(
+                                    fallback.get("issues"),
+                                    limit=12,
+                                ),
+                                question=question,
+                                limit=8,
+                                keep_at_least=1,
+                            )
+                            critic_fixes = _normalise_issue_list(
+                                fallback.get("fixes"),
+                                limit=12,
+                            )
+                            if critic_issues:
+                                decision.state["critic_issues"] = critic_issues
+                            if critic_fixes:
+                                decision.state["critic_fixes"] = critic_fixes
                             detail_notes = fallback.get("critic_sum")
+                            system2_initial_issue_count = len(critic_issues)
                         else:
                             detail_notes = fallback.get("notes_sum")
                         fallback_confidence = float(
@@ -2249,8 +2580,7 @@ class DualBrainController:
                 integrated_detail = detail_notes
                 critic_needs_revision = False
                 if system2_active:
-                    verdict_norm = (critic_verdict or "").strip().lower()
-                    critic_needs_revision = verdict_norm == "issues" or bool(critic_issues)
+                    critic_needs_revision = bool(critic_issues)
                     if not critic_needs_revision:
                         integrated_detail = None
                 elif detail_notes and _detail_notes_redundant(draft, detail_notes):
@@ -2290,7 +2620,8 @@ class DualBrainController:
                     if system2_active:
                         integration_parts.append(
                             "Reasoning critic notes (internal; do not output directly). "
-                            "Revise the draft to address issues and improve correctness:\n"
+                            "Revise the draft to address issues and improve correctness. "
+                            "Apply minimal precise edits and avoid introducing new assumptions:\n"
                             + str(integrated_detail)
                         )
                     else:
@@ -2336,6 +2667,359 @@ class DualBrainController:
                             temperature=max(0.2, min(0.6, decision.temperature)),
                             on_delta=None if stream_final_only else delta_cb,
                         )
+                if system2_active:
+                    system2_final_issue_count = len(critic_issues)
+                    system2_resolved = not critic_needs_revision
+
+                    should_verify = bool(
+                        critic_needs_revision
+                        and system2_round_target >= 2
+                        and final_answer
+                        and final_answer.strip()
+                    )
+                    if should_verify:
+                        verify_payload = dict(payload)
+                        verify_payload["type"] = "ASK_CRITIC"
+                        verify_payload["qid"] = decision.qid
+                        verify_payload["system2"] = True
+                        verify_payload["round"] = 2
+                        verify_payload["draft"] = _trim_system2_draft(
+                            final_answer,
+                            limit=2400,
+                        )
+                        verify_payload["draft_sum"] = verify_payload["draft"][:280]
+
+                        verify_timeout_ms = int(
+                            min(
+                                float(self.default_timeout_ms),
+                                max(5000.0, float(timeout_ms) * 0.85),
+                            )
+                        )
+                        verify_call_error = False
+                        verify_fallback_used = False
+                        verify_response: Dict[str, Any] = {}
+                        original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
+                        try:
+                            self.callosum.slot_ms = decision.slot_ms
+                            verify_response = await self.callosum.ask_detail(
+                                verify_payload,
+                                timeout_ms=verify_timeout_ms,
+                            )
+                        except Exception:
+                            verify_call_error = True
+                            verify_response = {}
+                        finally:
+                            self.callosum.slot_ms = original_slot
+
+                        verify_verdict = str(
+                            verify_response.get("verdict") or ""
+                        ).strip().lower()
+                        verify_issues = _prioritise_issue_list(
+                            _normalise_issue_list(
+                                verify_response.get("issues"),
+                                limit=12,
+                            ),
+                            question=question,
+                            limit=8,
+                        )
+                        verify_fixes = _normalise_issue_list(
+                            verify_response.get("fixes"),
+                            limit=12,
+                        )
+                        verify_detail = str(
+                            verify_response.get("critic_sum") or ""
+                        ).strip()
+                        if verify_call_error or bool(verify_response.get("error")):
+                            verify_fallback_used = True
+                        if verify_fallback_used or (
+                            not verify_detail
+                            and verify_verdict not in {"ok", "issues"}
+                        ):
+                            try:
+                                verify_fallback = await self.right_model.criticise_reasoning(
+                                    decision.qid,
+                                    question,
+                                    verify_payload.get("draft") or final_answer,
+                                    temperature=max(0.1, min(0.3, decision.temperature)),
+                                    context=context,
+                                    psychoid_projection=(
+                                        psychoid_projection.to_payload()
+                                        if psychoid_projection
+                                        else None
+                                    ),
+                                )
+                            except Exception:
+                                verify_fallback = {}
+                            else:
+                                verify_verdict = str(
+                                    verify_fallback.get("verdict") or ""
+                                ).strip().lower()
+                                verify_issues = _prioritise_issue_list(
+                                    _normalise_issue_list(
+                                        verify_fallback.get("issues"),
+                                        limit=12,
+                                    ),
+                                    question=question,
+                                    limit=8,
+                                )
+                                verify_fixes = _normalise_issue_list(
+                                    verify_fallback.get("fixes"),
+                                    limit=12,
+                                )
+                                verify_detail = str(
+                                    verify_fallback.get("critic_sum") or ""
+                                ).strip()
+
+                        system2_rounds_completed = max(system2_rounds_completed, 2)
+                        system2_followup_verdict = verify_verdict or None
+                        system2_followup_new_issues = _novel_issue_items(
+                            verify_issues,
+                            critic_issues,
+                        )[:8]
+                        verify_issue_count_raw = len(verify_issues)
+                        verify_issue_count_calibrated = verify_issue_count_raw
+                        if critic_issues and verify_issue_count_raw > len(critic_issues):
+                            max_growth = len(system2_followup_new_issues)
+                            verify_issue_count_calibrated = min(
+                                verify_issue_count_raw,
+                                len(critic_issues) + max_growth,
+                            )
+
+                        has_verify_signal = bool(
+                            verify_verdict in {"ok", "issues"}
+                            or verify_issues
+                            or verify_detail
+                        )
+                        if has_verify_signal:
+                            system2_final_issue_count = verify_issue_count_calibrated
+                            system2_resolved = (
+                                verify_verdict == "ok"
+                                or system2_final_issue_count == 0
+                            )
+                        else:
+                            system2_final_issue_count = len(critic_issues)
+                            system2_resolved = False
+                        decision.state["system2_issue_count_verify_raw"] = int(
+                            verify_issue_count_raw
+                        )
+                        decision.state["system2_issue_count_verify_calibrated"] = int(
+                            verify_issue_count_calibrated
+                        )
+
+                        # For 3-round budgets, run one extra correction pass when unresolved:
+                        # - prioritize genuinely new issues, or
+                        # - otherwise patch persistent unresolved issues.
+                        followup_focus_issues: list[str] = []
+                        followup_instruction = ""
+                        if verify_detail and not system2_resolved and system2_round_target >= 3:
+                            if system2_followup_new_issues:
+                                followup_focus_issues = list(system2_followup_new_issues[:8])
+                                followup_instruction = (
+                                    "Apply only the newly discovered issues and preserve already-correct parts."
+                                )
+                            elif verify_issues and system2_initial_issue_count >= 2:
+                                followup_focus_issues = list(verify_issues[:8])
+                                followup_instruction = (
+                                    "Apply minimal edits to resolve remaining unresolved issues without broad rewrites."
+                                )
+
+                        if followup_focus_issues and verify_detail:
+                            focus_block = "\n".join(
+                                f"- {item}" for item in followup_focus_issues
+                            )
+                            followup_info = (
+                                "Reasoning critic follow-up (internal; do not output directly).\n"
+                                f"{followup_instruction}\n"
+                                "Issue focus list:\n"
+                                f"{focus_block}\n\n"
+                                "Critic details:\n"
+                                f"{verify_detail}"
+                            )
+                            await _emit_reset_if_needed()
+                            final_answer = await self.left_model.integrate_info_async(
+                                question=question,
+                                draft=final_answer,
+                                info=followup_info,
+                                temperature=max(0.2, min(0.52, decision.temperature)),
+                                on_delta=None if stream_final_only else delta_cb,
+                            )
+                            system2_followup_revision = True
+                            system2_resolved = False
+
+                        should_round3_verify = bool(
+                            system2_round_target >= 3
+                            and final_answer
+                            and final_answer.strip()
+                            and not system2_resolved
+                        )
+                        if should_round3_verify:
+                            round3_payload = dict(payload)
+                            round3_payload["type"] = "ASK_CRITIC"
+                            round3_payload["qid"] = decision.qid
+                            round3_payload["system2"] = True
+                            round3_payload["round"] = 3
+                            round3_payload["draft"] = _trim_system2_draft(
+                                final_answer,
+                                limit=2400,
+                            )
+                            round3_payload["draft_sum"] = round3_payload["draft"][:280]
+
+                            round3_timeout_ms = int(
+                                min(
+                                    float(self.default_timeout_ms),
+                                    max(4500.0, float(verify_timeout_ms) * 0.8),
+                                )
+                            )
+                            round3_call_error = False
+                            round3_fallback_used = False
+                            round3_response: Dict[str, Any] = {}
+                            original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
+                            try:
+                                self.callosum.slot_ms = decision.slot_ms
+                                round3_response = await self.callosum.ask_detail(
+                                    round3_payload,
+                                    timeout_ms=round3_timeout_ms,
+                                )
+                            except Exception:
+                                round3_call_error = True
+                                round3_response = {}
+                            finally:
+                                self.callosum.slot_ms = original_slot
+
+                            round3_verdict = str(
+                                round3_response.get("verdict") or ""
+                            ).strip().lower()
+                            round3_issues = _prioritise_issue_list(
+                                _normalise_issue_list(
+                                    round3_response.get("issues"),
+                                    limit=12,
+                                ),
+                                question=question,
+                                limit=8,
+                            )
+                            round3_detail = str(
+                                round3_response.get("critic_sum") or ""
+                            ).strip()
+                            if round3_call_error or bool(round3_response.get("error")):
+                                round3_fallback_used = True
+                            if round3_fallback_used or (
+                                not round3_detail
+                                and round3_verdict not in {"ok", "issues"}
+                            ):
+                                try:
+                                    round3_fallback = await self.right_model.criticise_reasoning(
+                                        decision.qid,
+                                        question,
+                                        round3_payload.get("draft") or final_answer,
+                                        temperature=max(0.1, min(0.25, decision.temperature)),
+                                        context=context,
+                                        psychoid_projection=(
+                                            psychoid_projection.to_payload()
+                                            if psychoid_projection
+                                            else None
+                                        ),
+                                    )
+                                except Exception:
+                                    round3_fallback = {}
+                                else:
+                                    round3_verdict = str(
+                                        round3_fallback.get("verdict") or ""
+                                    ).strip().lower()
+                                    round3_issues = _prioritise_issue_list(
+                                        _normalise_issue_list(
+                                            round3_fallback.get("issues"),
+                                            limit=12,
+                                        ),
+                                        question=question,
+                                        limit=8,
+                                    )
+                                    round3_detail = str(
+                                        round3_fallback.get("critic_sum") or ""
+                                    ).strip()
+
+                            round3_new_issues = _novel_issue_items(
+                                round3_issues,
+                                verify_issues,
+                            )[:8]
+                            round3_issue_count_raw = len(round3_issues)
+                            round3_issue_count_calibrated = round3_issue_count_raw
+                            if verify_issues and round3_issue_count_raw > len(verify_issues):
+                                max_growth = len(round3_new_issues)
+                                round3_issue_count_calibrated = min(
+                                    round3_issue_count_raw,
+                                    len(verify_issues) + max_growth,
+                                )
+
+                            has_round3_signal = bool(
+                                round3_verdict in {"ok", "issues"}
+                                or round3_issues
+                                or round3_detail
+                            )
+                            if has_round3_signal:
+                                system2_final_issue_count = round3_issue_count_calibrated
+                                system2_resolved = (
+                                    round3_verdict == "ok"
+                                    or system2_final_issue_count == 0
+                                )
+                                if round3_verdict:
+                                    system2_followup_verdict = round3_verdict
+                            system2_rounds_completed = max(system2_rounds_completed, 3)
+                            decision.state["system2_issue_count_round3_raw"] = int(
+                                round3_issue_count_raw
+                            )
+                            decision.state["system2_issue_count_round3_calibrated"] = int(
+                                round3_issue_count_calibrated
+                            )
+                            if round3_new_issues:
+                                decision.state["system2_round3_new_issues"] = round3_new_issues
+                            if round3_verdict:
+                                decision.state["system2_round3_verdict"] = round3_verdict
+
+                    decision.state["system2_rounds"] = int(system2_rounds_completed)
+                    decision.state["system2_issue_count_initial"] = int(
+                        system2_initial_issue_count
+                    )
+                    decision.state["system2_issue_count_final"] = int(
+                        system2_final_issue_count
+                    )
+                    decision.state["system2_resolved"] = bool(system2_resolved)
+                    if system2_followup_verdict:
+                        decision.state["system2_followup_verdict"] = (
+                            system2_followup_verdict
+                        )
+                    if system2_followup_new_issues:
+                        decision.state["system2_followup_new_issues"] = (
+                            system2_followup_new_issues
+                        )
+                    if system2_followup_revision:
+                        decision.state["system2_followup_revision"] = True
+                    try:
+                        self.telemetry.log(
+                            "system2_refinement",
+                            qid=decision.qid,
+                            rounds=int(system2_rounds_completed),
+                            round_target=int(system2_round_target),
+                            initial_issues=int(system2_initial_issue_count),
+                            final_issues=int(system2_final_issue_count),
+                            verify_issues_raw=decision.state.get(
+                                "system2_issue_count_verify_raw"
+                            ),
+                            verify_issues_calibrated=decision.state.get(
+                                "system2_issue_count_verify_calibrated"
+                            ),
+                            round3_issues_raw=decision.state.get(
+                                "system2_issue_count_round3_raw"
+                            ),
+                            round3_issues_calibrated=decision.state.get(
+                                "system2_issue_count_round3_calibrated"
+                            ),
+                            resolved=bool(system2_resolved),
+                            followup_revision=bool(system2_followup_revision),
+                            followup_new_issues=list(system2_followup_new_issues),
+                            followup_verdict=system2_followup_verdict,
+                        )
+                    except Exception:  # pragma: no cover - telemetry best-effort
+                        pass
                 if decision.state.get("right_conf"):
                     decision.state["right_source"] = response_source
                 if self.coherence_resonator is not None:
@@ -2364,6 +3048,22 @@ class DualBrainController:
                     response_meta["system2"] = True
                     response_meta["critic_verdict"] = critic_verdict
                     response_meta["critic_issues"] = len(critic_issues)
+                    response_meta["system2_rounds"] = int(
+                        decision.state.get("system2_rounds") or 1
+                    )
+                    response_meta["system2_issue_initial"] = int(
+                        decision.state["system2_issue_count_initial"]
+                        if "system2_issue_count_initial" in decision.state
+                        else len(critic_issues)
+                    )
+                    response_meta["system2_issue_final"] = int(
+                        decision.state["system2_issue_count_final"]
+                        if "system2_issue_count_final" in decision.state
+                        else len(critic_issues)
+                    )
+                    response_meta["system2_resolved"] = bool(
+                        decision.state.get("system2_resolved")
+                    )
                 if fallback_error:
                     response_meta["fallback_error"] = fallback_error
                 if detail_notes:
@@ -2384,6 +3084,28 @@ class DualBrainController:
                 )
         except asyncio.TimeoutError:
             final_answer = draft
+            if system2_active:
+                decision.state["system2_rounds"] = 0
+                decision.state["system2_issue_count_initial"] = 0
+                decision.state["system2_issue_count_final"] = 0
+                decision.state["system2_resolved"] = False
+                decision.state["system2_timeout"] = True
+                try:
+                    self.telemetry.log(
+                        "system2_refinement",
+                        qid=decision.qid,
+                        rounds=0,
+                        round_target=int(system2_round_target),
+                        initial_issues=0,
+                        final_issues=0,
+                        resolved=False,
+                        followup_revision=False,
+                        followup_new_issues=[],
+                        followup_verdict="timeout",
+                        timeout=True,
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
             inner_steps.append(
                 InnerDialogueStep(
                     phase="callosum_timeout",

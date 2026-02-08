@@ -286,6 +286,158 @@ class OkCriticCallosum(DummyCallosum):
         return await super().ask_detail(payload, timeout_ms=timeout_ms)
 
 
+class TwoPhaseCriticCallosum(DummyCallosum):
+    def __init__(self):
+        super().__init__()
+        self.critic_calls = 0
+
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            self.critic_calls += 1
+            if self.critic_calls == 1:
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "issues",
+                    "issues": ["Math error: 2+2 is not 5."],
+                    "fixes": ["Correct the arithmetic and re-check the conclusion."],
+                    "critic_sum": "Issues:\n- Math error: 2+2 is not 5.\nFixes:\n- Correct the arithmetic and re-check the conclusion.",
+                    "confidence_r": 0.9,
+                }
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "ok",
+                "issues": [],
+                "fixes": [],
+                "critic_sum": "No issues detected.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+class RephraseCriticCallosum(DummyCallosum):
+    def __init__(self):
+        super().__init__()
+        self.critic_calls = 0
+
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            self.critic_calls += 1
+            if self.critic_calls == 1:
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "issues",
+                    "issues": ["Step 2 arithmetic is incorrect."],
+                    "fixes": ["Correct step 2 arithmetic and recompute the result."],
+                    "critic_sum": "Issues:\n- Step 2 arithmetic is incorrect.\nFixes:\n- Correct step 2 arithmetic and recompute the result.",
+                    "confidence_r": 0.9,
+                }
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "issues",
+                "issues": [
+                    "Step 2 arithmetic is incorrect (re-check the sum).",
+                    "Arithmetic at step 2 is incorrect.",
+                ],
+                "fixes": ["Re-check step 2 arithmetic."],
+                "critic_sum": "Issues:\n- Step 2 arithmetic is incorrect (re-check the sum).\n- Arithmetic at step 2 is incorrect.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+class PersistentCriticCallosum(DummyCallosum):
+    def __init__(self):
+        super().__init__()
+        self.critic_calls = 0
+
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            self.critic_calls += 1
+            if self.critic_calls <= 2:
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "issues",
+                    "issues": [
+                        "Step 2 arithmetic is incorrect.",
+                        "Final statement contradicts the corrected arithmetic.",
+                    ],
+                    "fixes": [
+                        "Correct step 2 arithmetic.",
+                        "Align the final statement with the corrected arithmetic.",
+                    ],
+                    "critic_sum": (
+                        "Issues:\n"
+                        "- Step 2 arithmetic is incorrect.\n"
+                        "- Final statement contradicts the corrected arithmetic.\n"
+                        "Fixes:\n"
+                        "- Correct step 2 arithmetic.\n"
+                        "- Align the final statement with the corrected arithmetic."
+                    ),
+                    "confidence_r": 0.9,
+                }
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "ok",
+                "issues": [],
+                "fixes": [],
+                "critic_sum": "No issues detected.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+class LowSignalNoiseCriticCallosum(DummyCallosum):
+    def __init__(self):
+        super().__init__()
+        self.critic_calls = 0
+
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            self.critic_calls += 1
+            if self.critic_calls == 1:
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "issues",
+                    "issues": [
+                        "Average speed calculation is incorrect: simple mean of segment speeds is invalid.",
+                        "Could clarify the mechanism in one extra sentence.",
+                        "No boundary case is mentioned.",
+                    ],
+                    "fixes": [
+                        "Compute total distance divided by total time.",
+                        "Add a concise clarification sentence.",
+                    ],
+                    "critic_sum": (
+                        "Issues:\n"
+                        "- Average speed calculation is incorrect: simple mean of segment speeds is invalid.\n"
+                        "- Could clarify the mechanism in one extra sentence.\n"
+                        "- No boundary case is mentioned."
+                    ),
+                    "confidence_r": 0.9,
+                }
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "issues",
+                "issues": ["Could explicitly mention weighted average wording."],
+                "fixes": ["Adjust wording for readability."],
+                "critic_sum": "Could explicitly mention weighted average wording.",
+                "confidence_r": 0.9,
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+class TimeoutCriticCallosum(DummyCallosum):
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            raise asyncio.TimeoutError("simulated critic timeout")
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
 def test_director_can_skip_consult_and_clamp_output():
     callosum = DummyCallosum()
     memory = SharedMemory()
@@ -815,6 +967,70 @@ def test_system2_forces_critic_and_revises_answer():
     assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
 
 
+def test_system2_runs_verification_round_and_tracks_issue_decay():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "2+2=4"
+
+    callosum = TwoPhaseCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "2+2=4"
+    assert left.integrations == 1
+    assert callosum.critic_calls >= 2
+    critic_rounds = [entry["payload"].get("round") for entry in callosum.payloads]
+    assert 2 in critic_rounds
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("round_target", 0) >= 2
+    assert latest.get("rounds", 0) >= 2
+    assert latest.get("initial_issues") == 1
+    assert latest.get("final_issues") == 0
+    assert latest.get("resolved") is True
+
+
 def test_system2_skips_revision_when_critic_ok():
     class RevisingLeft:
         uses_external_llm = True
@@ -865,6 +1081,262 @@ def test_system2_skips_revision_when_critic_ok():
     assert left.integrations == 0
     assert callosum.payloads
     assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+
+
+def test_system2_verification_does_not_overcount_rephrased_issues():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "2+2=4"
+
+    callosum = RephraseCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "2+2=4"
+    assert callosum.critic_calls >= 2
+    # Initial critique-driven revision runs once; no extra revision for rephrased follow-up issues.
+    assert left.integrations == 1
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("initial_issues") == 1
+    assert latest.get("final_issues") == 1
+    assert latest.get("followup_new_issues") == []
+    assert latest.get("followup_revision") is False
+
+
+def test_system2_round3_revises_persistent_issues_once():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            if self.integrations == 1:
+                return "2+2=4 (unchecked)"
+            return "2+2=4"
+
+    callosum = PersistentCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "Check this quickly:\n```python\nprint(2 + 2)\n```",
+            system2_mode="on",
+        )
+    )
+
+    assert answer == "2+2=4"
+    assert left.integrations == 2
+    assert callosum.critic_calls >= 3
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("round_target", 0) >= 3
+    assert latest.get("rounds", 0) >= 3
+    assert latest.get("initial_issues") == 2
+    assert latest.get("final_issues") == 0
+    assert latest.get("resolved") is True
+    assert latest.get("followup_revision") is True
+    assert latest.get("followup_new_issues") == []
+
+
+def test_system2_filters_low_signal_critic_noise():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Average speed is (80 + 40) / 2 = 60 km/h."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "Average speed = total distance / total time."
+
+    callosum = LowSignalNoiseCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "A car travels 120 km in 1.5 hours, then 80 km in 2 hours. What is the average speed?",
+            system2_mode="on",
+        )
+    )
+
+    assert "total distance / total time" in answer
+    assert left.integrations == 1
+    assert callosum.critic_calls >= 2
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("initial_issues") == 1
+    assert latest.get("final_issues") == 0
+    assert latest.get("resolved") is True
+    assert latest.get("followup_new_issues") == []
+
+
+def test_system2_timeout_still_emits_measurable_metrics():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "SHOULD_NOT_RUN_ON_TIMEOUT"
+
+    callosum = TimeoutCriticCallosum()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=RevisingLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "2+2=5"
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("rounds") == 0
+    assert latest.get("initial_issues") == 0
+    assert latest.get("final_issues") == 0
+    assert latest.get("resolved") is False
+    assert latest.get("timeout") is True
 
 
 def test_amygdala_forces_consult_on_sensitive_requests():
