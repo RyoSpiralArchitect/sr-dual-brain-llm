@@ -797,7 +797,7 @@ function renderMetrics(response, opts = {}) {
   els.mRouting.textContent = routing ? String(routing) : (leading ? String(leading) : "—");
   els.mAction.textContent = action == null ? "—" : String(action);
   els.mTemp.textContent = temp == null ? "—" : Number(temp).toFixed(2);
-  els.mLatency.textContent = latency == null ? "—" : `${Math.round(latency)}ms`;
+  els.mLatency.textContent = formatLatencyWithPhases(metrics, latency);
   if (els.mSystem2) {
     const enabled = system2?.enabled ?? null;
     const mode = system2?.mode ?? null;
@@ -920,6 +920,24 @@ function renderMetrics(response, opts = {}) {
   }
 
   publishMetricsToPopout(response);
+}
+
+function formatLatencyWithPhases(metrics, latencyMs) {
+  if (latencyMs == null) return "—";
+  const total = Math.round(Number(latencyMs));
+  if (!Number.isFinite(total)) return "—";
+
+  const phasesRaw = metrics?.latency?.phases_ms;
+  if (!phasesRaw || typeof phasesRaw !== "object") {
+    return `${total}ms`;
+  }
+  const phases = Object.entries(phasesRaw)
+    .map(([name, value]) => [String(name), Number(value)])
+    .filter(([, value]) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, value]) => `${name}:${Math.round(value)}ms`);
+  return phases.length ? `${total}ms (${phases.join(" ")})` : `${total}ms`;
 }
 
 async function buildProcessBody(questionText, { includeTraceInline }) {

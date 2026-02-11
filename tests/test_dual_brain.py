@@ -848,6 +848,28 @@ def test_metacognition_flags_offtopic_answer_without_overriding_user_output():
     assert meta[-1].get("clarifying_question")
 
 
+def test_metacognition_skips_clarify_for_declarative_long_form_prompt():
+    auditor = Auditor()
+    prompt = (
+        "あるところにそれはもう信じられないほど大きな犬がいた。\n"
+        "あまりに大きいので、人々は新種のクマだと信じた。\n"
+        "DNA検査で巨大な犬だと分かった。"
+    )
+
+    result = auditor.check(
+        "猫が好きです。",
+        question=prompt,
+        focus_keywords=("巨大な犬",),
+        working_memory_context="",
+        is_trivial_chat=False,
+        allow_debug=False,
+    )
+    meta = result.get("metacognition") or {}
+    assert "topic_drift" not in (meta.get("flags") or [])
+    assert meta.get("clarifying_question") is None
+    assert meta.get("clarifying_replace") is False
+
+
 def test_default_mode_reflections_suppressed_after_low_focus_streak():
     class StaticUnconsciousField:
         def analyse(self, *, question: str, draft: str):  # noqa: ANN001
@@ -1082,6 +1104,101 @@ def test_system2_skips_revision_when_critic_ok():
     assert left.integrations == 0
     assert callosum.payloads
     assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+
+
+def test_system2_auto_triggers_on_structured_multiline_input():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Plan noted."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.9
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Revised plan."
+
+    callosum = CriticCallosum()
+    telemetry = TrackingTelemetry()
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=RevisingLeft(),
+        right_model=right,
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "What to do is listed.\n- owner missing\n- due date missing\n- stop-doing missing\nLet's make this executable.",
+            system2_mode="auto",
+        )
+    )
+
+    assert answer == "Revised plan."
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is True
+    assert mode_events[-1].get("reason") in {
+        "q_type_medium",
+        "q_type_hard",
+        "structured_list",
+        "multiline_long",
+        "context_heavy",
+        "long_question",
+    }
+
+
+def test_latency_breakdown_event_is_emitted():
+    callosum = DummyCallosum()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=AlwaysConsultPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(),
+    )
+
+    asyncio.run(controller.process("Please summarize this in one line."))
+
+    breakdown = [payload for evt, payload in telemetry.events if evt == "latency_breakdown"]
+    assert breakdown
+    latest = breakdown[-1]
+    phases = latest.get("phases")
+    assert isinstance(phases, dict)
+    assert "left_draft" in phases
+    assert "metacognition" in phases
+    assert latest.get("total_ms") is not None
 
 
 def test_system2_verification_does_not_overcount_rephrased_issues():

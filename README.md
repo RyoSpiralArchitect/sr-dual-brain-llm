@@ -129,6 +129,19 @@ Useful flags:
 - `--shuffle --seed 42` (order randomization)
 - `--history-limit 50` (trend window size)
 
+For mode-to-mode comparison (`off` vs `auto` vs `on`) on the exact same question set:
+
+```bash
+python3 sr-dual-brain-llm/scripts/benchmark_system2_ab.py \
+  --modes off,auto,on \
+  --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en.json
+```
+
+Outputs:
+- Full comparative report: `sr-dual-brain-llm/samples/system2_ab_last.json`
+- History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
+- Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
+
 ## Architecture (Braided Co-Lead Flow)
 ```mermaid
 flowchart TD
@@ -198,6 +211,7 @@ You’ll see three levels of “what happened”:
 1) **`metrics`** (small): coherence/policy/latency + active modules and stage→modules  
    - `metrics.modules.active`: union of modules seen in the architecture path
    - `metrics.modules.stages`: ordered stage breakdown (used by the UI “Architecture path” panel)
+   - `metrics.latency.phases_ms`: per-turn phase breakdown (e.g. `left_draft`, `right_consult`, `integration`, `metacognition`, `executive`)
 2) **`dialogue_flow`** (structured): inner steps + architecture path summary (what modules ran in what order)
 3) **`telemetry`** (raw): per-module event payloads for dashboards/evals
 
@@ -233,7 +247,7 @@ Open `http://127.0.0.1:8080/`.
   - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (never blended into chat)
 
 ### Metrics pane
-- Key numbers: coherence / tension / routing / action / temperature / latency
+- Key numbers: coherence / tension / routing / action / temperature / latency (including top latency phases when available)
 - Active modules: quick chip list
 - **Architecture path**: stage-by-stage module timeline (the “what ran” view)
 - Executive memo: out-of-band `memo` + optional `mix_in` + directives metadata
@@ -322,6 +336,7 @@ Response fields:
 - `answer` (string)
 - `session_id` (string)
 - `metrics` (object): lightweight summary (coherence/policy/latency/modules) for UI dashboards
+  - Includes `latency.total_ms`, `latency.phases_ms`, `latency.accounted_ms`, `latency.other_ms`
 - `dialogue_flow` (object, optional): inner steps + architecture path captured for this turn
 - `telemetry` (array, optional): structured per-module events emitted during the turn
 - `executive` / `executive_observer` (object, optional): out-of-band memos (only when `return_executive=true`)

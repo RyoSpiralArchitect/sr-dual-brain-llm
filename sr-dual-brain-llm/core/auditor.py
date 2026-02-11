@@ -273,12 +273,21 @@ class Auditor:
             len(question_text) >= 12 or len(_tokenise(question_text)) >= 4
         )
         has_qmark = ("?" in question_text) or ("？" in question_text)
+        declarative_long_form = bool(
+            not has_qmark
+            and (
+                ("\n" in question_text and len(question_text) >= 48)
+                or len(question_text) >= 80
+                or len(_tokenise(question_text)) >= 14
+            )
+        )
         min_answer_len = 24 if has_qmark else 24
         answer_has_qmark = ("?" in revised) or ("？" in revised)
         should_check_drift = bool(
             question_substantial
             and len(revised) >= min_answer_len
             and not is_trivial_chat
+            and not declarative_long_form
             and not (answer_has_qmark and len(revised) <= 240)
         )
         if should_check_drift and coverage is not None and coverage < 0.06:

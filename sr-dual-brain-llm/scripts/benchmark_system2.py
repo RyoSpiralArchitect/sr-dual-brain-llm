@@ -108,12 +108,15 @@ def _safe_bool(value: Any) -> Optional[bool]:
 
 _CRITIC_FALLBACK_MARKERS = (
     "(fallback) external critic model unavailable",
+    "(fallback) external critic model not configured",
     "(fallback) external critic response was unstructured",
 )
 
 
 def _is_critic_fallback_issue(issue: Any) -> bool:
     text = str(issue or "").strip().lower()
+    if text.startswith("(fallback)"):
+        return True
     return any(marker in text for marker in _CRITIC_FALLBACK_MARKERS)
 
 
@@ -219,6 +222,8 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     per_case_reduction = []
     rounds_values = []
     latency_values = []
+    phase_latency_totals: Dict[str, float] = {}
+    phase_latency_counts: Dict[str, int] = {}
     followup_count = 0
     for case in measured:
         initial = int(case["initial_issues"])
@@ -231,6 +236,19 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         latency = _safe_float(case.get("latency_ms"))
         if latency is not None:
             latency_values.append(latency)
+        phase_latency = case.get("phase_latency_ms")
+        if isinstance(phase_latency, dict):
+            for phase, value in phase_latency.items():
+                phase_name = str(phase or "").strip()
+                phase_value = _safe_float(value)
+                if not phase_name or phase_value is None:
+                    continue
+                phase_latency_totals[phase_name] = (
+                    phase_latency_totals.get(phase_name, 0.0) + phase_value
+                )
+                phase_latency_counts[phase_name] = (
+                    phase_latency_counts.get(phase_name, 0) + 1
+                )
         if case.get("followup_revision") is True:
             followup_count += 1
 
@@ -253,6 +271,14 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         ),
         "avg_rounds": (statistics.mean(rounds_values) if rounds_values else None),
         "avg_latency_ms": (statistics.mean(latency_values) if latency_values else None),
+        "avg_phase_latency_ms": {
+            phase: (
+                phase_latency_totals[phase] / phase_latency_counts[phase]
+                if phase_latency_counts.get(phase, 0) > 0
+                else None
+            )
+            for phase in sorted(phase_latency_totals.keys())
+        },
         "mean_per_case_reduction_rate": (
             statistics.mean(per_case_reduction) if per_case_reduction else None
         ),
@@ -393,6 +419,12 @@ async def _run_case(
     latency_ms = _safe_float(metrics.get("latency_ms"))
     if latency_ms is None:
         latency_ms = _safe_float(interaction.get("latency_ms"))
+    latency_payload = metrics.get("latency") if isinstance(metrics.get("latency"), dict) else {}
+    phase_latency = (
+        latency_payload.get("phases_ms")
+        if isinstance(latency_payload.get("phases_ms"), dict)
+        else {}
+    )
 
     return {
         "index": index,
@@ -420,6 +452,7 @@ async def _run_case(
             )
         ),
         "latency_ms": latency_ms if latency_ms is not None else elapsed_ms,
+        "phase_latency_ms": phase_latency,
         "error": error_text,
         "answer_preview": (answer[:240] if answer else ""),
     }

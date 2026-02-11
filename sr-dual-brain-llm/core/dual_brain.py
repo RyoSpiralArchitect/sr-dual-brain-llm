@@ -1616,6 +1616,13 @@ class DualBrainController:
             elif not is_trivial_chat:
                 q = str(question or "")
                 has_qmark = ("?" in q) or ("？" in q)
+                line_count = q.count("\n") + 1
+                bullet_hits = len(
+                    re.findall(
+                        r"(?m)^\s*(?:[-*•]|[0-9]{1,2}[.)]|[①-⑳])\s+",
+                        q,
+                    )
+                )
                 wm_len = len(str(context_parts.get("working_memory") or ""))
                 mem_len = len(str(context_parts.get("memory") or ""))
                 hip_len = len(str(context_parts.get("hippocampal") or ""))
@@ -1637,7 +1644,13 @@ class DualBrainController:
                 elif has_qmark and len(q) >= 80:
                     system2_active = True
                     system2_reason = "long_question"
-                elif has_qmark and context_signal_len >= 240:
+                elif line_count >= 3 and bullet_hits >= 2 and len(q) >= 60:
+                    system2_active = True
+                    system2_reason = "structured_list"
+                elif line_count >= 4 and len(q) >= 110:
+                    system2_active = True
+                    system2_reason = "multiline_long"
+                elif context_signal_len >= 180 and len(q) >= 40:
                     # A short question riding on heavy prior context → treat as System2.
                     system2_active = True
                     system2_reason = "context_heavy"
@@ -1786,6 +1799,11 @@ class DualBrainController:
         stream_final_only = bool(on_delta and on_reset)
         emitted_any = False
         right_preview_task: asyncio.Task[str] | None = None
+        phase_latencies_ms: Dict[str, float] = {}
+
+        def _phase_add(name: str, started_at: float) -> None:
+            elapsed = (time.perf_counter() - started_at) * 1000.0
+            phase_latencies_ms[name] = phase_latencies_ms.get(name, 0.0) + elapsed
 
         def _rebuild_context_from_parts() -> None:
             nonlocal context, focus, focus_metric, focus_keywords
@@ -1877,10 +1895,13 @@ class DualBrainController:
             else:
                 try:
                     # Give the director a real chance (network calls often exceed 350ms).
+                    director_wait_started = time.perf_counter()
                     advice = await asyncio.wait_for(
                         asyncio.shield(director_task), timeout=1.6
                     )
+                    _phase_add("executive", director_wait_started)
                 except asyncio.TimeoutError:
+                    _phase_add("executive", director_wait_started)
                     advice = None
                 except asyncio.CancelledError:
                     advice = None
@@ -1958,6 +1979,7 @@ class DualBrainController:
             )
             left_context = (f"{context}\n\n{system2_hint}".strip() if context else system2_hint)
 
+        left_draft_started = time.perf_counter()
         draft = await self.left_model.generate_answer(
             question,
             left_context,
@@ -1968,6 +1990,7 @@ class DualBrainController:
                 else None
             ),
         )
+        _phase_add("left_draft", left_draft_started)
         if right_preview_task is not None:
             if right_preview_task.done():
                 try:
@@ -2102,8 +2125,11 @@ class DualBrainController:
                     advice = None
             else:
                 try:
+                    director_wait_started = time.perf_counter()
                     advice = await asyncio.wait_for(asyncio.shield(director_task), timeout=0.9)
+                    _phase_add("executive", director_wait_started)
                 except asyncio.TimeoutError:
+                    _phase_add("executive", director_wait_started)
                     advice = None
                 except asyncio.CancelledError:
                     advice = None
@@ -2415,8 +2441,11 @@ class DualBrainController:
                     if executive_mode_norm == "observe":
                         timeout_ms = max(1200, min(4500, decision.slot_ms * 8))
                     try:
+                        executive_wait_started = time.perf_counter()
                         advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
+                        _phase_add("executive", executive_wait_started)
                     except asyncio.TimeoutError:
+                        _phase_add("executive", executive_wait_started)
                         advice = None
                     except asyncio.CancelledError:
                         advice = None
@@ -2459,6 +2488,7 @@ class DualBrainController:
                     )
                 if integration_parts:
                     await _emit_reset_if_needed()
+                    integration_started = time.perf_counter()
                     final_answer = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
@@ -2466,6 +2496,7 @@ class DualBrainController:
                         temperature=max(0.2, min(0.6, decision.temperature)),
                         on_delta=None if stream_final_only else delta_cb,
                     )
+                    _phase_add("integration", integration_started)
                 success = True
             else:
                 payload_type = "ASK_CRITIC" if system2_active else "ASK_DETAIL"
@@ -2512,13 +2543,25 @@ class DualBrainController:
                         for ref in default_mode_reflections
                     ]
                 budget_norm = str(payload.get("budget") or "small").strip().lower()
+                q_type_hint = str(decision.state.get("q_type") or "").strip().lower()
                 timeout_scale = 60 if system2_active else 80
+                timeout_floor = 6000.0
+                if system2_active:
+                    if q_type_hint == "hard":
+                        timeout_scale = 56
+                        timeout_floor = 4200.0
+                    elif q_type_hint == "medium":
+                        timeout_scale = 48
+                        timeout_floor = 3600.0
+                    else:
+                        timeout_scale = 42
+                        timeout_floor = 3200.0
                 if budget_norm == "large" and not system2_active:
                     timeout_scale = 95
                 timeout_ms = int(
                     min(
                         float(self.default_timeout_ms),
-                        max(6000.0, float(decision.slot_ms) * float(timeout_scale)),
+                        max(timeout_floor, float(decision.slot_ms) * float(timeout_scale)),
                     )
                 )
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
@@ -2542,6 +2585,7 @@ class DualBrainController:
                         metadata=request_meta,
                     )
                 )
+                consult_started = time.perf_counter()
                 try:
                     self.callosum.slot_ms = decision.slot_ms
                     response = await self.callosum.ask_detail(payload, timeout_ms=timeout_ms)
@@ -2657,6 +2701,7 @@ class DualBrainController:
                 else:
                     decision.state["right_conf"] = call_confidence
                     success = True
+                _phase_add("right_consult", consult_started)
 
                 integrated_detail = detail_notes
                 critic_needs_revision = False
@@ -2674,8 +2719,11 @@ class DualBrainController:
                     if executive_mode_norm == "observe":
                         timeout_ms = max(1200, min(4500, decision.slot_ms * 8))
                     try:
+                        executive_wait_started = time.perf_counter()
                         advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
+                        _phase_add("executive", executive_wait_started)
                     except asyncio.TimeoutError:
+                        _phase_add("executive", executive_wait_started)
                         advice = None
                     except asyncio.CancelledError:
                         advice = None
@@ -2741,6 +2789,7 @@ class DualBrainController:
                 if has_right_material or has_mix_in_material or can_polish:
                     if integration_parts:
                         await _emit_reset_if_needed()
+                        integration_started = time.perf_counter()
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
@@ -2748,6 +2797,7 @@ class DualBrainController:
                             temperature=max(0.2, min(0.6, decision.temperature)),
                             on_delta=None if stream_final_only else delta_cb,
                         )
+                        _phase_add("integration", integration_started)
                 if system2_active:
                     system2_final_issue_count = len(critic_issues)
                     system2_resolved = not critic_needs_revision
@@ -2773,7 +2823,7 @@ class DualBrainController:
                         verify_timeout_ms = int(
                             min(
                                 float(self.default_timeout_ms),
-                                max(5000.0, float(timeout_ms) * 0.85),
+                                max(3200.0, float(timeout_ms) * 0.7),
                             )
                         )
                         verify_call_error = False
@@ -2917,6 +2967,7 @@ class DualBrainController:
                                 f"{verify_detail}"
                             )
                             await _emit_reset_if_needed()
+                            integration_started = time.perf_counter()
                             final_answer = await self.left_model.integrate_info_async(
                                 question=question,
                                 draft=final_answer,
@@ -2924,6 +2975,7 @@ class DualBrainController:
                                 temperature=max(0.2, min(0.52, decision.temperature)),
                                 on_delta=None if stream_final_only else delta_cb,
                             )
+                            _phase_add("integration", integration_started)
                             system2_followup_revision = True
                             system2_resolved = False
 
@@ -2948,7 +3000,7 @@ class DualBrainController:
                             round3_timeout_ms = int(
                                 min(
                                     float(self.default_timeout_ms),
-                                    max(4500.0, float(verify_timeout_ms) * 0.8),
+                                    max(2600.0, float(verify_timeout_ms) * 0.65),
                                 )
                             )
                             round3_call_error = False
@@ -3267,7 +3319,9 @@ class DualBrainController:
             else:
                 tail_timeout = 6.0 if executive_mode_norm in {"polish", "assist"} else 2.0
                 try:
+                    executive_wait_started = time.perf_counter()
                     advice = await asyncio.wait_for(executive_task, timeout=tail_timeout)
+                    _phase_add("executive", executive_wait_started)
                 except asyncio.CancelledError:
                     advice = None
                 except Exception:
@@ -3472,6 +3526,7 @@ class DualBrainController:
             )
         )
 
+        metacognition_started = time.perf_counter()
         audit_result = self.auditor.check(
             user_answer,
             question=question,
@@ -3480,6 +3535,7 @@ class DualBrainController:
             is_trivial_chat=bool(is_trivial_chat),
             allow_debug=bool(emit_debug_sections),
         )
+        _phase_add("metacognition", metacognition_started)
         metacognition = audit_result.get("metacognition")
         if isinstance(metacognition, dict):
             try:
@@ -3981,8 +4037,11 @@ class DualBrainController:
 
             if observer_task is not None:
                 try:
+                    observer_wait_started = time.perf_counter()
                     observer_advice = await asyncio.wait_for(observer_task, timeout=2.5)
+                    _phase_add("executive", observer_wait_started)
                 except asyncio.TimeoutError:
+                    _phase_add("executive", observer_wait_started)
                     observer_advice = None
                 except asyncio.CancelledError:
                     observer_advice = None
@@ -4040,6 +4099,24 @@ class DualBrainController:
             amygdala_override=decision.state.get("amygdala_override", False),
             hippocampal_total=episodic_total,
         )
+        if phase_latencies_ms:
+            phases = {
+                key: round(value, 3)
+                for key, value in sorted(phase_latencies_ms.items())
+                if value > 0.0
+            }
+            if phases:
+                accounted_ms = round(sum(phases.values()), 3)
+                other_ms = round(max(0.0, float(latency_ms) - accounted_ms), 3)
+                decision.state["latency_phases_ms"] = phases
+                self.telemetry.log(
+                    "latency_breakdown",
+                    qid=decision.qid,
+                    phases=phases,
+                    accounted_ms=accounted_ms,
+                    other_ms=other_ms,
+                    total_ms=round(float(latency_ms), 3),
+                )
         if hippocampal_rollup is not None:
             self.telemetry.log(
                 "hippocampal_collaboration",

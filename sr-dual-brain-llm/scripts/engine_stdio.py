@@ -91,6 +91,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
     system2_refine_ev = _last_event(events, "system2_refinement") or {}
+    latency_breakdown_ev = _last_event(events, "latency_breakdown") or {}
     policy_state = (
         policy_ev.get("state")
         if isinstance(policy_ev.get("state"), dict)
@@ -267,6 +268,16 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         },
         "leading": lead_ev.get("leading"),
         "latency_ms": complete_ev.get("latency_ms"),
+        "latency": {
+            "total_ms": complete_ev.get("latency_ms"),
+            "phases_ms": (
+                latency_breakdown_ev.get("phases")
+                if isinstance(latency_breakdown_ev.get("phases"), dict)
+                else {}
+            ),
+            "accounted_ms": latency_breakdown_ev.get("accounted_ms"),
+            "other_ms": latency_breakdown_ev.get("other_ms"),
+        },
         "reward": complete_ev.get("reward"),
         "modules": {
             "active": active_modules,
