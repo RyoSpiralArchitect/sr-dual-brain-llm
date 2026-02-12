@@ -259,6 +259,94 @@ _ISSUE_CODE_HINT_RE = re.compile(
     flags=re.IGNORECASE,
 )
 
+_ARITH_TASK_HINT_RE = re.compile(
+    r"\b(compute|calculate|solve|equation|arithmetic|math|sum|product|difference)\b",
+    flags=re.IGNORECASE,
+)
+_ARITH_NEGATIVE_ASSERT_RE = re.compile(
+    r"\b(incorrect|wrong|error|not|is\s+not|isn't|does\s+not|false)\b",
+    flags=re.IGNORECASE,
+)
+_ARITH_CLAIM_RE = re.compile(
+    r"(-?\d+(?:\.\d+)?)\s*([+\-−*/x×÷])\s*(-?\d+(?:\.\d+)?)"
+    r"(?:\s*(?:=|equals|is|to|should\s+be|should\s+equal|==)\s*|\s+not\s+)?"
+    r"(-?\d+(?:\.\d+)?)",
+    flags=re.IGNORECASE,
+)
+
+
+def _calc_binary_op(left: float, op: str, right: float) -> Optional[float]:
+    op_norm = str(op or "").strip()
+    if op_norm in {"+",}:
+        return left + right
+    if op_norm in {"-", "−"}:
+        return left - right
+    if op_norm in {"*", "x", "×"}:
+        return left * right
+    if op_norm in {"/", "÷"}:
+        if abs(right) < 1e-12:
+            return None
+        return left / right
+    return None
+
+
+def _question_looks_arithmetic(question: str) -> bool:
+    q = str(question or "")
+    if not q.strip():
+        return False
+    if re.search(r"\d", q) and re.search(r"[+\-−*/x×÷=]", q):
+        return True
+    return bool(_ARITH_TASK_HINT_RE.search(q))
+
+
+def _issue_arithmetic_contradiction_penalty(issue_text: str, *, question: str) -> float:
+    if not _question_looks_arithmetic(question):
+        return 0.0
+    text = str(issue_text or "")
+    if not _ARITH_NEGATIVE_ASSERT_RE.search(text):
+        return 0.0
+
+    penalty = 0.0
+    for match in _ARITH_CLAIM_RE.finditer(text):
+        try:
+            left = float(match.group(1))
+            op = str(match.group(2) or "")
+            right = float(match.group(3))
+            claimed = float(match.group(4))
+        except Exception:
+            continue
+        actual = _calc_binary_op(left, op, right)
+        if actual is None:
+            continue
+        if abs(actual - claimed) <= 1e-9:
+            # Strong penalty: self-contradictory arithmetic critiques should be
+            # dropped before verify/follow-up amplification.
+            penalty = max(penalty, 3.0)
+    return penalty
+
+
+def _issue_overlap_with_previous(issue_text: str, previous_issues: Sequence[str]) -> float:
+    norm = _normalise_issue_text(issue_text)
+    if not norm:
+        return 0.0
+    issue_tokens = _issue_core_tokens(norm)
+    if not issue_tokens:
+        return 0.0
+
+    best = 0.0
+    for prev in previous_issues:
+        prev_norm = _normalise_issue_text(prev)
+        if not prev_norm:
+            continue
+        prev_tokens = _issue_core_tokens(prev_norm)
+        if prev_tokens:
+            inter = len(issue_tokens & prev_tokens)
+            union = len(issue_tokens | prev_tokens)
+            if union > 0:
+                best = max(best, inter / float(union))
+            best = max(best, inter / float(min(len(issue_tokens), len(prev_tokens))))
+    return best
+
 
 def _issue_signal_score(issue_text: str, *, question: str = "") -> float:
     norm = _normalise_issue_text(issue_text)
@@ -285,6 +373,8 @@ def _issue_signal_score(issue_text: str, *, question: str = "") -> float:
     if "```" in str(question or "") and _ISSUE_CODE_HINT_RE.search(norm):
         score += 0.5
 
+    score -= _issue_arithmetic_contradiction_penalty(norm, question=question)
+
     return score
 
 
@@ -298,6 +388,44 @@ def _env_flag(name: str, default: bool = False) -> bool:
     if text in {"0", "false", "no", "off"}:
         return False
     return bool(default)
+
+
+def _env_int(
+    name: str,
+    default: int,
+    *,
+    minimum: int | None = None,
+    maximum: int | None = None,
+) -> int:
+    raw = os.environ.get(name)
+    try:
+        value = int(str(raw).strip()) if raw is not None else int(default)
+    except Exception:
+        value = int(default)
+    if minimum is not None:
+        value = max(int(minimum), value)
+    if maximum is not None:
+        value = min(int(maximum), value)
+    return value
+
+
+def _env_float(
+    name: str,
+    default: float,
+    *,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> float:
+    raw = os.environ.get(name)
+    try:
+        value = float(str(raw).strip()) if raw is not None else float(default)
+    except Exception:
+        value = float(default)
+    if minimum is not None:
+        value = max(float(minimum), value)
+    if maximum is not None:
+        value = min(float(maximum), value)
+    return value
 
 
 def _prioritise_issue_list(
@@ -1595,6 +1723,36 @@ class DualBrainController:
             "DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER",
             True,
         )
+        system2_followup_new_issue_cap = _env_int(
+            "DUALBRAIN_SYSTEM2_MAX_NEW_ISSUES",
+            2,
+            minimum=0,
+            maximum=8,
+        )
+        system2_followup_new_issue_min_score = _env_float(
+            "DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_SCORE",
+            1.6,
+            minimum=-1.0,
+            maximum=4.0,
+        )
+        system2_followup_min_overlap = _env_float(
+            "DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_OVERLAP",
+            0.2,
+            minimum=0.0,
+            maximum=1.0,
+        )
+        system2_followup_max_remaining = _env_int(
+            "DUALBRAIN_SYSTEM2_FOLLOWUP_MAX_REMAINING",
+            2,
+            minimum=1,
+            maximum=12,
+        )
+        system2_followup_min_progress = _env_int(
+            "DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_PROGRESS",
+            1,
+            minimum=1,
+            maximum=12,
+        )
         context_signal_len = 0
 
         system2_capable = bool(
@@ -1663,6 +1821,13 @@ class DualBrainController:
                 enabled=bool(system2_active),
                 reason=system2_reason,
                 low_signal_filter=bool(system2_low_signal_filter),
+                followup_new_issue_cap=int(system2_followup_new_issue_cap),
+                followup_new_issue_min_score=float(
+                    system2_followup_new_issue_min_score
+                ),
+                followup_min_overlap=float(system2_followup_min_overlap),
+                followup_max_remaining=int(system2_followup_max_remaining),
+                followup_min_progress=int(system2_followup_min_progress),
             )
         except Exception:  # pragma: no cover - telemetry is best-effort
             pass
@@ -2903,10 +3068,36 @@ class DualBrainController:
 
                         system2_rounds_completed = max(system2_rounds_completed, 2)
                         system2_followup_verdict = verify_verdict or None
-                        system2_followup_new_issues = _novel_issue_items(
+                        followup_new_issues_raw = _novel_issue_items(
                             verify_issues,
                             critic_issues,
-                        )[:8]
+                        )
+                        if system2_low_signal_filter:
+                            system2_followup_new_issues = _prioritise_issue_list(
+                                followup_new_issues_raw,
+                                question=question,
+                                limit=max(1, int(system2_followup_new_issue_cap))
+                                if int(system2_followup_new_issue_cap) > 0
+                                else 1,
+                                min_score=float(system2_followup_new_issue_min_score),
+                                keep_at_least=0,
+                            )
+                            if int(system2_followup_new_issue_cap) <= 0:
+                                system2_followup_new_issues = []
+                        else:
+                            if int(system2_followup_new_issue_cap) <= 0:
+                                system2_followup_new_issues = []
+                            else:
+                                system2_followup_new_issues = followup_new_issues_raw[
+                                    : int(system2_followup_new_issue_cap)
+                                ]
+                        if system2_followup_new_issues and critic_issues:
+                            system2_followup_new_issues = [
+                                item
+                                for item in system2_followup_new_issues
+                                if _issue_overlap_with_previous(item, critic_issues)
+                                >= float(system2_followup_min_overlap)
+                            ]
                         verify_issue_count_raw = len(verify_issues)
                         verify_issue_count_calibrated = verify_issue_count_raw
                         if critic_issues and verify_issue_count_raw > len(critic_issues):
@@ -2936,13 +3127,35 @@ class DualBrainController:
                         decision.state["system2_issue_count_verify_calibrated"] = int(
                             verify_issue_count_calibrated
                         )
+                        followup_progress = max(
+                            0,
+                            int(system2_initial_issue_count)
+                            - int(verify_issue_count_calibrated),
+                        )
+                        followup_eligible = bool(
+                            int(verify_issue_count_calibrated) > 0
+                            and followup_progress >= int(system2_followup_min_progress)
+                            and int(verify_issue_count_calibrated)
+                            <= int(system2_followup_max_remaining)
+                        )
+                        decision.state["system2_followup_progress"] = int(
+                            followup_progress
+                        )
+                        decision.state["system2_followup_eligible"] = bool(
+                            followup_eligible
+                        )
 
                         # For 3-round budgets, run one extra correction pass when unresolved:
                         # - prioritize genuinely new issues, or
                         # - otherwise patch persistent unresolved issues.
                         followup_focus_issues: list[str] = []
                         followup_instruction = ""
-                        if verify_detail and not system2_resolved and system2_round_target >= 3:
+                        if (
+                            verify_detail
+                            and not system2_resolved
+                            and system2_round_target >= 3
+                            and followup_eligible
+                        ):
                             if system2_followup_new_issues:
                                 followup_focus_issues = list(system2_followup_new_issues[:8])
                                 followup_instruction = (
@@ -2984,6 +3197,7 @@ class DualBrainController:
                             and final_answer
                             and final_answer.strip()
                             and not system2_resolved
+                            and bool(system2_followup_revision)
                         )
                         if should_round3_verify:
                             round3_payload = dict(payload)
@@ -3073,7 +3287,33 @@ class DualBrainController:
                             round3_new_issues = _novel_issue_items(
                                 round3_issues,
                                 verify_issues,
-                            )[:8]
+                            )
+                            if system2_low_signal_filter:
+                                round3_new_issues = _prioritise_issue_list(
+                                    round3_new_issues,
+                                    question=question,
+                                    limit=max(1, int(system2_followup_new_issue_cap))
+                                    if int(system2_followup_new_issue_cap) > 0
+                                    else 1,
+                                    min_score=float(system2_followup_new_issue_min_score),
+                                    keep_at_least=0,
+                                )
+                                if int(system2_followup_new_issue_cap) <= 0:
+                                    round3_new_issues = []
+                            else:
+                                if int(system2_followup_new_issue_cap) <= 0:
+                                    round3_new_issues = []
+                                else:
+                                    round3_new_issues = round3_new_issues[
+                                        : int(system2_followup_new_issue_cap)
+                                    ]
+                            if round3_new_issues and verify_issues:
+                                round3_new_issues = [
+                                    item
+                                    for item in round3_new_issues
+                                    if _issue_overlap_with_previous(item, verify_issues)
+                                    >= float(system2_followup_min_overlap)
+                                ]
                             round3_issue_count_raw = len(round3_issues)
                             round3_issue_count_calibrated = round3_issue_count_raw
                             if verify_issues and round3_issue_count_raw > len(verify_issues):
@@ -3148,6 +3388,13 @@ class DualBrainController:
                                 "system2_issue_count_round3_calibrated"
                             ),
                             low_signal_filter=bool(system2_low_signal_filter),
+                            followup_new_issue_cap=int(system2_followup_new_issue_cap),
+                            followup_new_issue_min_score=float(
+                                system2_followup_new_issue_min_score
+                            ),
+                            followup_min_overlap=float(system2_followup_min_overlap),
+                            followup_max_remaining=int(system2_followup_max_remaining),
+                            followup_min_progress=int(system2_followup_min_progress),
                             resolved=bool(system2_resolved),
                             followup_revision=bool(system2_followup_revision),
                             followup_new_issues=list(system2_followup_new_issues),
@@ -3287,6 +3534,13 @@ class DualBrainController:
                         final_issues=0,
                         critic_kind="timeout",
                         low_signal_filter=bool(system2_low_signal_filter),
+                        followup_new_issue_cap=int(system2_followup_new_issue_cap),
+                        followup_new_issue_min_score=float(
+                            system2_followup_new_issue_min_score
+                        ),
+                        followup_min_overlap=float(system2_followup_min_overlap),
+                        followup_max_remaining=int(system2_followup_max_remaining),
+                        followup_min_progress=int(system2_followup_min_progress),
                         resolved=False,
                         followup_revision=False,
                         followup_new_issues=[],

@@ -317,6 +317,13 @@ Request fields:
   - `auto`: enable critic mode only when both left/right are backed by external LLMs and the turn looks like a reasoning task (structural complexity + loaded context)
   - `on`: force critic mode (left drafts → right critiques → left revises → verify pass)
   - `off`: disable critic mode
+  - Optional env tuning (engine):
+    - `DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER` (`1|0`, default: `1`)
+    - `DUALBRAIN_SYSTEM2_MAX_NEW_ISSUES` (`0..8`, default: `2`)
+    - `DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_SCORE` (`-1.0..4.0`, default: `1.6`)
+    - `DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_OVERLAP` (`0.0..1.0`, default: `0.2`)
+    - `DUALBRAIN_SYSTEM2_FOLLOWUP_MAX_REMAINING` (`1..12`, default: `2`)
+    - `DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_PROGRESS` (`1..12`, default: `1`)
 - `return_telemetry` (bool, default: `false`)
 - `return_dialogue_flow` (bool, default: `true`)
 - `return_executive` (bool, default: `false`)
