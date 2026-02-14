@@ -457,6 +457,29 @@ class TimeoutCriticCallosum(DummyCallosum):
         return await super().ask_detail(payload, timeout_ms=timeout_ms)
 
 
+class UnhealthyCriticCallosum(DummyCallosum):
+    def __init__(self):
+        super().__init__()
+        self.critic_calls = 0
+
+    async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+        if payload.get("type") == "ASK_CRITIC":
+            self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+            self.critic_calls += 1
+            return {
+                "qid": payload.get("qid"),
+                "verdict": "issues",
+                "issues": [
+                    "(fallback) External critic model unavailable; unable to verify reasoning."
+                ],
+                "fixes": ["Retry later or verify provider API key/network settings."],
+                "critic_sum": "External critic model unavailable.",
+                "confidence_r": 0.2,
+                "critic_kind": "disabled",
+            }
+        return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
 class FollowupDriftCriticCallosum(DummyCallosum):
     def __init__(self):
         super().__init__()
@@ -1695,6 +1718,73 @@ def test_system2_timeout_still_emits_measurable_metrics():
     assert latest.get("final_issues") == 0
     assert latest.get("resolved") is False
     assert latest.get("timeout") is True
+
+
+def test_system2_unhealthy_critic_stops_followup_rounds():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "SHOULD_NOT_RUN"
+
+    callosum = UnhealthyCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+
+    assert answer == "2+2=5"
+    assert left.integrations == 0
+    assert callosum.critic_calls == 1
+    rounds = [entry["payload"].get("round") for entry in callosum.payloads]
+    assert 2 not in rounds
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("round_target") == 1
+    assert latest.get("round_target_requested", 0) >= 2
+    assert latest.get("rounds") == 1
+    assert latest.get("initial_issues") == 1
+    assert latest.get("final_issues") == 1
+    assert latest.get("resolved") is False
+    assert latest.get("critic_unhealthy") is True
+    assert latest.get("critic_unhealthy_reason") == "critic_kind:disabled"
 
 
 def test_system2_followup_issue_guard_skips_round3_on_low_signal_new_issues():

@@ -577,6 +577,42 @@ def _trim_system2_draft(text: str, limit: int = 2400) -> str:
         return raw
     return raw[: max(0, limit - 3)].rstrip() + "..."
 
+
+_SYSTEM2_CRITIC_UNHEALTHY_MARKERS = (
+    "external critic model unavailable",
+    "external critic model not configured",
+    "unable to verify reasoning",
+    "external critic response unstructured",
+)
+
+_SYSTEM2_CRITIC_UNHEALTHY_KINDS = {
+    "disabled",
+}
+
+
+def _detect_system2_critic_unhealthy_reason(
+    *,
+    critic_kind: Optional[str],
+    issues: Sequence[str],
+    critic_sum: Optional[str],
+) -> Optional[str]:
+    kind = str(critic_kind or "").strip().lower()
+    if kind in _SYSTEM2_CRITIC_UNHEALTHY_KINDS:
+        return f"critic_kind:{kind}"
+
+    text_parts: List[str] = []
+    if critic_sum:
+        text_parts.append(str(critic_sum))
+    text_parts.extend(str(item) for item in issues if str(item).strip())
+    if not text_parts:
+        return None
+
+    merged = " ".join(text_parts).lower()
+    for marker in _SYSTEM2_CRITIC_UNHEALTHY_MARKERS:
+        if marker in merged:
+            return marker
+    return None
+
 def _looks_like_coaching_notes(question: str, text: str) -> bool:
     """Detect "writing coach" style content that should not leak into user replies.
 
@@ -2868,10 +2904,43 @@ class DualBrainController:
                     success = True
                 _phase_add("right_consult", consult_started)
 
+                system2_critic_unhealthy = False
+                system2_critic_unhealthy_reason: Optional[str] = None
+                suppress_critic_revision = False
+                if system2_active:
+                    system2_critic_unhealthy_reason = _detect_system2_critic_unhealthy_reason(
+                        critic_kind=str(decision.state.get("critic_kind") or ""),
+                        issues=critic_issues,
+                        critic_sum=str(detail_notes or ""),
+                    )
+                    system2_critic_unhealthy = bool(system2_critic_unhealthy_reason)
+                    decision.state["system2_critic_unhealthy"] = bool(system2_critic_unhealthy)
+                    if system2_critic_unhealthy:
+                        suppress_critic_revision = True
+                        previous_round_target = int(system2_round_target)
+                        if previous_round_target > 1:
+                            decision.state["system2_round_target_requested"] = previous_round_target
+                        system2_round_target = 1
+                        decision.state["system2_round_target"] = 1
+                        decision.state["system2_critic_unhealthy_reason"] = (
+                            system2_critic_unhealthy_reason
+                        )
+                        try:
+                            self.telemetry.log(
+                                "system2_critic_health",
+                                qid=decision.qid,
+                                healthy=False,
+                                reason=system2_critic_unhealthy_reason,
+                                critic_kind=decision.state.get("critic_kind"),
+                                round_target=int(system2_round_target),
+                            )
+                        except Exception:  # pragma: no cover - telemetry best-effort
+                            pass
+
                 integrated_detail = detail_notes
                 critic_needs_revision = False
                 if system2_active:
-                    critic_needs_revision = bool(critic_issues)
+                    critic_needs_revision = bool(critic_issues) and not suppress_critic_revision
                     if not critic_needs_revision:
                         integrated_detail = None
                 elif detail_notes and _detail_notes_redundant(draft, detail_notes):
@@ -2965,7 +3034,10 @@ class DualBrainController:
                         _phase_add("integration", integration_started)
                 if system2_active:
                     system2_final_issue_count = len(critic_issues)
-                    system2_resolved = not critic_needs_revision
+                    if system2_critic_unhealthy:
+                        system2_resolved = False
+                    else:
+                        system2_resolved = not critic_needs_revision
 
                     should_verify = bool(
                         critic_needs_revision
@@ -3395,6 +3467,11 @@ class DualBrainController:
                             followup_min_overlap=float(system2_followup_min_overlap),
                             followup_max_remaining=int(system2_followup_max_remaining),
                             followup_min_progress=int(system2_followup_min_progress),
+                            critic_unhealthy=bool(system2_critic_unhealthy),
+                            critic_unhealthy_reason=system2_critic_unhealthy_reason,
+                            round_target_requested=decision.state.get(
+                                "system2_round_target_requested"
+                            ),
                             resolved=bool(system2_resolved),
                             followup_revision=bool(system2_followup_revision),
                             followup_new_issues=list(system2_followup_new_issues),
