@@ -1304,6 +1304,145 @@ def test_system2_auto_triggers_on_structured_multiline_input():
     }
 
 
+def test_system2_auto_precision_mode_triggers_short_question():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Initial."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.9
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Revised."
+
+    previous = os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY")
+    os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = "precision"
+    try:
+        callosum = CriticCallosum()
+        telemetry = TrackingTelemetry()
+        right = RightBrainModel()
+        right.uses_external_llm = True
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=RevisingLeft(),
+            right_model=right,
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+
+        answer = asyncio.run(
+            controller.process(
+                "Why did this fail?",
+                system2_mode="auto",
+            )
+        )
+    finally:
+        if previous is None:
+            os.environ.pop("DUALBRAIN_SYSTEM2_PRIORITY", None)
+        else:
+            os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = previous
+
+    assert answer == "Revised."
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is True
+    assert mode_events[-1].get("priority") == "precision"
+    assert mode_events[-1].get("reason") in {"precision_short_question", "q_type_medium"}
+
+
+def test_system2_auto_precision_mode_raises_round_target_for_medium_queries():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "This should be revised."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "Revised."
+
+    previous = os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY")
+    os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = "precision"
+    try:
+        callosum = TwoPhaseCriticCallosum()
+        telemetry = TrackingTelemetry()
+        left = RevisingLeft()
+        right = RightBrainModel()
+        right.uses_external_llm = True
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=left,
+            right_model=right,
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+
+        answer = asyncio.run(
+            controller.process(
+                "Could you explain why this plan is fragile?",
+                system2_mode="auto",
+            )
+        )
+    finally:
+        if previous is None:
+            os.environ.pop("DUALBRAIN_SYSTEM2_PRIORITY", None)
+        else:
+            os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = previous
+
+    assert answer == "Revised."
+    assert left.integrations == 1
+    assert callosum.critic_calls >= 2
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("priority") == "precision"
+    assert latest.get("round_target", 0) >= 3
+
+
 def test_latency_breakdown_event_is_emitted():
     callosum = DummyCallosum()
     telemetry = TrackingTelemetry()

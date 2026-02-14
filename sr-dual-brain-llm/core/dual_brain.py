@@ -1299,13 +1299,20 @@ class DualBrainController:
         }
 
     @staticmethod
-    def _infer_question_type(question: str) -> str:
+    def _infer_question_type(
+        question: str,
+        *,
+        precision_priority: bool = False,
+    ) -> str:
         q = str(question or "").strip()
         if not q:
             return "easy"
 
         has_qmark = ("?" in q) or ("？" in q)
         length = len(q)
+        qmark_hard_len = 72 if precision_priority else 90
+        qmark_medium_len = 24 if precision_priority else 32
+        body_medium_len = 180 if precision_priority else 240
 
         # Strong structural cues (language-agnostic).
         if "```" in q:
@@ -1315,7 +1322,9 @@ class DualBrainController:
         if any(sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")):
             return "hard"
         if re.search(
-            r"(推論|妥当性|妥当|論理|論証|検証|証明|演繹|帰納|矛盾|含意|したがって|therefore|validity|logical|inference|deduction|induction|proof)",
+            r"(推論|妥当性|妥当|論理|論証|検証|証明|演繹|帰納|矛盾|含意|したがって|"
+            r"why|how|reason|justify|trade[- ]?off|counterexample|"
+            r"therefore|validity|logical|inference|deduction|induction|proof)",
             q,
             flags=re.IGNORECASE,
         ):
@@ -1324,11 +1333,13 @@ class DualBrainController:
         # Complexity by size/structure (works for CJK + Latin).
         if q.count("\n") >= 2:
             return "hard" if length >= 360 else "medium"
-        if has_qmark and length >= 90:
-            return "hard"
-        if has_qmark and length >= 32:
+        if precision_priority and q.count("\n") >= 1 and length >= 80:
             return "medium"
-        if length >= 240:
+        if has_qmark and length >= qmark_hard_len:
+            return "hard"
+        if has_qmark and length >= qmark_medium_len:
+            return "medium"
+        if length >= body_medium_len:
             return "medium"
         return "easy"
 
@@ -1340,6 +1351,7 @@ class DualBrainController:
         question: str,
         context_signal_len: int,
         focus_metric: float,
+        priority: str = "balanced",
     ) -> int:
         rounds = 1
         q_type_norm = str(q_type or "").strip().lower()
@@ -1363,6 +1375,19 @@ class DualBrainController:
 
         if str(system2_mode or "").strip().lower() == "on":
             rounds = max(rounds, 2)
+
+        priority_norm = str(priority or "balanced").strip().lower()
+        if priority_norm == "precision":
+            if q_type_norm == "hard":
+                rounds = max(rounds, 3)
+            elif q_type_norm == "medium":
+                rounds = max(rounds, 3)
+            elif len(q) >= 64:
+                rounds = max(rounds, 2)
+            if int(context_signal_len or 0) >= 220:
+                rounds = max(rounds, 2)
+            if float(focus_metric or 0.0) >= 0.45:
+                rounds = max(rounds, 2)
 
         return max(1, min(3, rounds))
 
@@ -1755,31 +1780,37 @@ class DualBrainController:
             system2_norm = "off"
         if system2_norm not in {"auto", "on", "off"}:
             system2_norm = "auto"
+        system2_priority = str(
+            os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY", "balanced")
+        ).strip().lower()
+        if system2_priority not in {"precision", "balanced", "latency"}:
+            system2_priority = "balanced"
+        precision_priority = system2_priority == "precision"
         system2_low_signal_filter = _env_flag(
             "DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER",
             True,
         )
         system2_followup_new_issue_cap = _env_int(
             "DUALBRAIN_SYSTEM2_MAX_NEW_ISSUES",
-            2,
+            3 if precision_priority else 2,
             minimum=0,
             maximum=8,
         )
         system2_followup_new_issue_min_score = _env_float(
             "DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_SCORE",
-            1.6,
+            1.2 if precision_priority else 1.6,
             minimum=-1.0,
             maximum=4.0,
         )
         system2_followup_min_overlap = _env_float(
             "DUALBRAIN_SYSTEM2_FOLLOWUP_MIN_OVERLAP",
-            0.2,
+            0.15 if precision_priority else 0.2,
             minimum=0.0,
             maximum=1.0,
         )
         system2_followup_max_remaining = _env_int(
             "DUALBRAIN_SYSTEM2_FOLLOWUP_MAX_REMAINING",
-            2,
+            3 if precision_priority else 2,
             minimum=1,
             maximum=12,
         )
@@ -1822,7 +1853,10 @@ class DualBrainController:
                 hip_len = len(str(context_parts.get("hippocampal") or ""))
                 context_signal_len = wm_len + mem_len + hip_len
 
-                q_type_hint = self._infer_question_type(q)
+                q_type_hint = self._infer_question_type(
+                    q,
+                    precision_priority=precision_priority,
+                )
                 if q_type_hint in {"medium", "hard"}:
                     system2_active = True
                     system2_reason = f"q_type_{q_type_hint}"
@@ -1848,6 +1882,12 @@ class DualBrainController:
                     # A short question riding on heavy prior context → treat as System2.
                     system2_active = True
                     system2_reason = "context_heavy"
+                elif precision_priority and has_qmark and len(q) >= 16:
+                    system2_active = True
+                    system2_reason = "precision_short_question"
+                elif precision_priority and line_count >= 2 and len(q) >= 45:
+                    system2_active = True
+                    system2_reason = "precision_multiline"
 
         try:
             self.telemetry.log(
@@ -1856,6 +1896,7 @@ class DualBrainController:
                 mode=system2_norm,
                 enabled=bool(system2_active),
                 reason=system2_reason,
+                priority=system2_priority,
                 low_signal_filter=bool(system2_low_signal_filter),
                 followup_new_issue_cap=int(system2_followup_new_issue_cap),
                 followup_new_issue_min_score=float(
@@ -2282,9 +2323,15 @@ class DualBrainController:
             hemisphere_bias,
             qid=qid_value,
         )
+        if precision_priority:
+            decision.state["q_type"] = self._infer_question_type(
+                question,
+                precision_priority=True,
+            )
         decision.state["system2_enabled"] = bool(system2_active)
         decision.state["system2_mode"] = system2_norm
         decision.state["system2_reason"] = system2_reason
+        decision.state["system2_priority"] = system2_priority
         decision.state["system2_low_signal_filter"] = bool(system2_low_signal_filter)
         if force_right_lead and decision.action == 0:
             decision.action = 1
@@ -2302,6 +2349,7 @@ class DualBrainController:
                 question=question,
                 context_signal_len=context_signal_len,
                 focus_metric=focus_metric,
+                priority=system2_priority,
             )
             decision.state["system2_round_target"] = system2_round_target
         if (
@@ -3459,6 +3507,7 @@ class DualBrainController:
                             round3_issues_calibrated=decision.state.get(
                                 "system2_issue_count_round3_calibrated"
                             ),
+                            priority=system2_priority,
                             low_signal_filter=bool(system2_low_signal_filter),
                             followup_new_issue_cap=int(system2_followup_new_issue_cap),
                             followup_new_issue_min_score=float(
