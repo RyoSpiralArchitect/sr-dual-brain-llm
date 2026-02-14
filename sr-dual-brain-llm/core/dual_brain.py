@@ -428,6 +428,27 @@ def _env_float(
     return value
 
 
+def _normalise_system2_priority(value: Optional[str], default: str) -> str:
+    priority = str(value or "").strip().lower()
+    if priority in {"precision", "balanced", "latency"}:
+        return priority
+    return str(default).strip().lower() or "balanced"
+
+
+def _resolve_system2_priority(system2_mode: str) -> str:
+    mode = str(system2_mode or "auto").strip().lower()
+    if mode not in {"auto", "on", "off"}:
+        mode = "auto"
+    mode_default = "precision" if mode == "auto" else "balanced"
+    mode_override = os.environ.get(f"DUALBRAIN_SYSTEM2_PRIORITY_{mode.upper()}")
+    if mode_override is not None:
+        return _normalise_system2_priority(mode_override, mode_default)
+    global_override = os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY")
+    if global_override is not None:
+        return _normalise_system2_priority(global_override, mode_default)
+    return mode_default
+
+
 def _prioritise_issue_list(
     issues: Sequence[str],
     *,
@@ -1780,11 +1801,7 @@ class DualBrainController:
             system2_norm = "off"
         if system2_norm not in {"auto", "on", "off"}:
             system2_norm = "auto"
-        system2_priority = str(
-            os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY", "balanced")
-        ).strip().lower()
-        if system2_priority not in {"precision", "balanced", "latency"}:
-            system2_priority = "balanced"
+        system2_priority = _resolve_system2_priority(system2_norm)
         precision_priority = system2_priority == "precision"
         system2_low_signal_filter = _env_flag(
             "DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER",

@@ -2,7 +2,7 @@ import asyncio
 import os
 import time
 
-from core.dual_brain import DualBrainController
+from core.dual_brain import DualBrainController, _resolve_system2_priority
 from core.shared_memory import SharedMemory
 from core.models import LeftBrainModel, RightBrainModel
 from core.policy import RightBrainPolicy
@@ -1302,6 +1302,117 @@ def test_system2_auto_triggers_on_structured_multiline_input():
         "context_heavy",
         "long_question",
     }
+
+
+def test_system2_priority_defaults_split_auto_precision_on_balanced():
+    keys = (
+        "DUALBRAIN_SYSTEM2_PRIORITY",
+        "DUALBRAIN_SYSTEM2_PRIORITY_AUTO",
+        "DUALBRAIN_SYSTEM2_PRIORITY_ON",
+    )
+    previous = {key: os.environ.get(key) for key in keys}
+    try:
+        for key in keys:
+            os.environ.pop(key, None)
+        assert _resolve_system2_priority("auto") == "precision"
+        assert _resolve_system2_priority("on") == "balanced"
+
+        os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = "latency"
+        assert _resolve_system2_priority("auto") == "latency"
+        assert _resolve_system2_priority("on") == "latency"
+
+        os.environ["DUALBRAIN_SYSTEM2_PRIORITY_AUTO"] = "precision"
+        os.environ["DUALBRAIN_SYSTEM2_PRIORITY_ON"] = "balanced"
+        assert _resolve_system2_priority("auto") == "precision"
+        assert _resolve_system2_priority("on") == "balanced"
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
+def test_system2_on_default_uses_balanced_priority_and_round_target():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Draft."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "Revised."
+
+    keys = (
+        "DUALBRAIN_SYSTEM2_PRIORITY",
+        "DUALBRAIN_SYSTEM2_PRIORITY_AUTO",
+        "DUALBRAIN_SYSTEM2_PRIORITY_ON",
+    )
+    previous = {key: os.environ.get(key) for key in keys}
+    try:
+        for key in keys:
+            os.environ.pop(key, None)
+        callosum = TwoPhaseCriticCallosum()
+        telemetry = TrackingTelemetry()
+        left = RevisingLeft()
+        right = RightBrainModel()
+        right.uses_external_llm = True
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=left,
+            right_model=right,
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+
+        answer = asyncio.run(
+            controller.process(
+                "Could you explain why this plan is fragile?",
+                system2_mode="on",
+            )
+        )
+    finally:
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    assert answer == "Revised."
+    assert left.integrations == 1
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("priority") == "balanced"
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("priority") == "balanced"
+    assert latest.get("round_target") == 2
 
 
 def test_system2_auto_precision_mode_triggers_short_question():
