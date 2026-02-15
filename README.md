@@ -142,6 +142,32 @@ Outputs:
 - History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
 - Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
 
+### Benchmark log (latest runs)
+
+Keep a short log here so benchmark trends are visible without opening JSON files.
+
+| Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result (`on` vs `auto`) | Report |
+|---|---|---|---:|---|---|---|
+| 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
+
+Repro command:
+
+```bash
+PYTHONPATH=sr-dual-brain-llm:/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages \
+LLM_PROVIDER=openai LLM_MODEL_ID=gpt-4o OPENAI_API_KEY=... \
+python3 -u -S sr-dual-brain-llm/scripts/benchmark_system2_ab.py \
+  --modes auto,on \
+  --limit 15 \
+  --critic-health-check on \
+  --critic-health-attempts 3 \
+  --critic-health-min-successes 1 \
+  --critic-health-retries 1 \
+  --critic-health-timeout 40 \
+  --critic-health-rate-limit-backoff 3 \
+  --output sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json \
+  --history sr-dual-brain-llm/samples/system2_ab_history.jsonl
+```
+
 ## Architecture (Braided Co-Lead Flow)
 ```mermaid
 flowchart TD
