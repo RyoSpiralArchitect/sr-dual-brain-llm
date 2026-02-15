@@ -7,7 +7,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scrip
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from benchmark_system2 import _summarise_cases  # noqa: E402
+from benchmark_system2 import _resolve_health_min_successes, _summarise_cases  # noqa: E402
 from benchmark_system2_ab import _build_pairwise  # noqa: E402
 
 
@@ -111,3 +111,13 @@ def test_pairwise_contains_all_case_metric_deltas():
     assert math.isclose(on_vs_auto["system2_activation_rate_delta"], 0.25, rel_tol=1e-9)
     assert math.isclose(on_vs_auto["avg_latency_ms_all_cases_delta"], 1500.0, rel_tol=1e-9)
     assert math.isclose(on_vs_auto["avg_rounds_all_cases_delta"], 0.7, rel_tol=1e-9)
+
+
+def test_resolve_health_min_successes_defaults_and_clamps():
+    assert _resolve_health_min_successes(attempts=1, min_successes=None) == 1
+    assert _resolve_health_min_successes(attempts=3, min_successes=None) == 2
+    assert _resolve_health_min_successes(attempts=5, min_successes=None) == 4
+
+    assert _resolve_health_min_successes(attempts=3, min_successes=1) == 1
+    assert _resolve_health_min_successes(attempts=3, min_successes=10) == 3
+    assert _resolve_health_min_successes(attempts=3, min_successes=0) == 1

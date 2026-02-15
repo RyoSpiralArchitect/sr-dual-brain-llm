@@ -161,6 +161,10 @@ async def _run_mode(
     executive_observer_mode: str,
     critic_health_check: str,
     critic_health_attempts: int,
+    critic_health_min_successes: int | None,
+    critic_health_retries: int,
+    critic_health_timeout: float,
+    critic_health_rate_limit_backoff: float,
     require_critic_health: bool,
 ) -> Dict[str, Any]:
     session_id = f"{session_prefix}-{mode}"
@@ -176,12 +180,22 @@ async def _run_mode(
             critic_health = await _check_critic_health(
                 session=session,
                 attempts=critic_health_attempts,
+                min_successes=critic_health_min_successes,
+                retries_per_attempt=critic_health_retries,
+                timeout_seconds=critic_health_timeout,
+                rate_limit_backoff_seconds=critic_health_rate_limit_backoff,
             )
             print(
-                "[ab] mode={mode} critic_health healthy={healthy} attempts={attempts} provider={provider} model={model}".format(
+                "[ab] mode={mode} critic_health healthy={healthy} successes={successes}/{required} "
+                "attempts={attempts} retries={retries} timeout={timeout} rate_limit_backoff={rate_limit_backoff} provider={provider} model={model}".format(
                     mode=mode,
                     healthy=critic_health.get("healthy"),
+                    successes=critic_health.get("successes"),
+                    required=critic_health.get("required_successes"),
                     attempts=critic_health.get("attempts"),
+                    retries=critic_health.get("retries_per_attempt"),
+                    timeout=critic_health.get("timeout_seconds"),
+                    rate_limit_backoff=critic_health.get("rate_limit_backoff_seconds"),
                     provider=critic_health.get("provider"),
                     model=critic_health.get("model"),
                 )
@@ -274,6 +288,16 @@ async def _run(args: argparse.Namespace) -> int:
             executive_observer_mode=args.executive_observer_mode,
             critic_health_check=critic_health_check,
             critic_health_attempts=int(args.critic_health_attempts),
+            critic_health_min_successes=(
+                int(args.critic_health_min_successes)
+                if args.critic_health_min_successes is not None
+                else None
+            ),
+            critic_health_retries=int(args.critic_health_retries),
+            critic_health_timeout=float(args.critic_health_timeout),
+            critic_health_rate_limit_backoff=float(
+                args.critic_health_rate_limit_backoff
+            ),
             require_critic_health=bool(args.require_critic_health),
         )
 
@@ -293,6 +317,16 @@ async def _run(args: argparse.Namespace) -> int:
             "low_signal_filter": low_signal_filter,
             "critic_health_check": critic_health_check,
             "critic_health_attempts": int(args.critic_health_attempts),
+            "critic_health_min_successes": (
+                int(args.critic_health_min_successes)
+                if args.critic_health_min_successes is not None
+                else None
+            ),
+            "critic_health_retries": int(args.critic_health_retries),
+            "critic_health_timeout": float(args.critic_health_timeout),
+            "critic_health_rate_limit_backoff": float(
+                args.critic_health_rate_limit_backoff
+            ),
             "require_critic_health": bool(args.require_critic_health),
             "question_count": len(questions),
         },
@@ -424,6 +458,30 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Number of preflight critic probes used to judge JSON stability.",
+    )
+    parser.add_argument(
+        "--critic-health-min-successes",
+        type=int,
+        default=None,
+        help="Minimum successful probes required; default is attempts-1.",
+    )
+    parser.add_argument(
+        "--critic-health-retries",
+        type=int,
+        default=1,
+        help="Retry count per health probe when critic output is unstable.",
+    )
+    parser.add_argument(
+        "--critic-health-timeout",
+        type=float,
+        default=32.0,
+        help="Timeout seconds used for critic health probes.",
+    )
+    parser.add_argument(
+        "--critic-health-rate-limit-backoff",
+        type=float,
+        default=2.5,
+        help="Extra backoff seconds applied on health-check rate-limit failures.",
     )
     parser.add_argument(
         "--require-critic-health",

@@ -1456,6 +1456,28 @@ def test_system2_auto_context_heavy_triggers_with_focus_signal():
     assert mode_events[-1].get("reason") == "context_heavy"
 
 
+def test_infer_question_type_marks_operational_reasoning_prompts_as_medium():
+    prompts = [
+        "Compare quicksort and mergesort for worst-case and average-case time complexity, and explain when each is preferable in practice.",
+        "Website latency and error rate both increased after deployment. Give a step-by-step causal triage plan to avoid confusing correlation with causation.",
+    ]
+    for question in prompts:
+        inferred = DualBrainController._infer_question_type(question)
+        assert inferred in {"medium", "hard"}
+
+
+def test_infer_question_type_keeps_brief_code_review_prompt_easy():
+    inferred = DualBrainController._infer_question_type(
+        "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`."
+    )
+    assert inferred == "easy"
+
+
+def test_infer_question_type_keeps_short_casual_review_prompt_easy():
+    inferred = DualBrainController._infer_question_type("Can you review this?")
+    assert inferred == "easy"
+
+
 def test_system2_auto_uses_tighter_timeout_and_draft_budget_than_on():
     class LongDraftLeft:
         uses_external_llm = True

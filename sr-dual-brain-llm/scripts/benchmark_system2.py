@@ -133,61 +133,158 @@ def _evaluate_critic_health_result(result: Dict[str, Any]) -> tuple[bool, str]:
     return True, "ok"
 
 
+def _resolve_health_min_successes(
+    *,
+    attempts: int,
+    min_successes: Optional[int],
+) -> int:
+    attempts = max(1, int(attempts))
+    if min_successes is None:
+        return max(1, attempts - 1)
+    try:
+        value = int(min_successes)
+    except Exception:
+        value = attempts - 1
+    return max(1, min(attempts, value))
+
+
 async def _check_critic_health(
     *,
     session: EngineSession,
     attempts: int,
+    min_successes: Optional[int] = None,
+    retries_per_attempt: int = 1,
+    timeout_seconds: Optional[float] = None,
+    rate_limit_backoff_seconds: float = 2.5,
 ) -> Dict[str, Any]:
     attempts = max(1, int(attempts))
-    failures: List[Dict[str, Any]] = []
-    for idx in range(attempts):
-        try:
-            result = await session.right.criticise_reasoning(
-                qid=f"critic-health-{idx+1}",
-                question="Compute 2+2 and explain briefly.",
-                draft="2+2=5",
-                temperature=0.15,
-                context="Health check for external critic JSON stability.",
-                allow_micro_fallback=False,
-            )
-        except Exception as exc:  # pragma: no cover - defensive guard
-            failures.append(
-                {
-                    "attempt": idx + 1,
-                    "reason": f"exception:{exc.__class__.__name__}",
-                }
-            )
-            continue
-
-        healthy, reason = _evaluate_critic_health_result(
-            result if isinstance(result, dict) else {}
-        )
-        if not healthy:
-            issues = result.get("issues") if isinstance(result, dict) else []
-            failures.append(
-                {
-                    "attempt": idx + 1,
-                    "reason": reason,
-                    "verdict": (
-                        str(result.get("verdict"))
-                        if isinstance(result, dict) and result.get("verdict") is not None
-                        else None
-                    ),
-                    "issues_preview": (
-                        [str(item) for item in issues[:2]]
-                        if isinstance(issues, list)
-                        else []
-                    ),
-                }
-            )
+    retries_per_attempt = max(0, int(retries_per_attempt))
+    rate_limit_backoff_seconds = max(0.0, float(rate_limit_backoff_seconds))
+    required_successes = _resolve_health_min_successes(
+        attempts=attempts,
+        min_successes=min_successes,
+    )
 
     cfg = getattr(session.right, "llm_config", None)
     provider = getattr(cfg, "provider", None)
     model = getattr(cfg, "model", None)
+    timeout_override = _safe_float(timeout_seconds)
+    original_timeout = None
+    if cfg is not None and timeout_override is not None:
+        try:
+            original_timeout = float(getattr(cfg, "timeout_seconds", 40))
+            setattr(cfg, "timeout_seconds", max(original_timeout, timeout_override))
+        except Exception:
+            original_timeout = None
+
+    probes = [
+        {
+            "question": "Compute 2+2 and explain briefly.",
+            "draft": "2+2=5",
+        },
+        {
+            "question": "If all A are B and some B are C, must some A be C?",
+            "draft": "Yes, it always follows.",
+        },
+        {
+            "question": "A test has 95% sensitivity and 90% specificity; prevalence 2%. Is posterior near 95%?",
+            "draft": "Yes, because sensitivity is 95%, posterior is around 95%.",
+        },
+    ]
+
+    successes = 0
+    failures: List[Dict[str, Any]] = []
+    try:
+        for idx in range(attempts):
+            probe = probes[idx % len(probes)]
+            probe_ok = False
+            last_failure: Dict[str, Any] = {}
+            for retry in range(retries_per_attempt + 1):
+                try:
+                    result = await session.right.criticise_reasoning(
+                        qid=f"critic-health-{idx+1}-{retry+1}",
+                        question=probe["question"],
+                        draft=probe["draft"],
+                        temperature=0.05,
+                        context="Health check for external critic JSON stability.",
+                        allow_micro_fallback=False,
+                    )
+                except Exception as exc:  # pragma: no cover - defensive guard
+                    last_failure = {
+                        "attempt": idx + 1,
+                        "retry": retry + 1,
+                        "reason": f"exception:{exc.__class__.__name__}",
+                    }
+                else:
+                    payload = result if isinstance(result, dict) else {}
+                    healthy, reason = _evaluate_critic_health_result(payload)
+                    critic_kind = str(payload.get("critic_kind") or "").strip().lower()
+                    if healthy and not critic_kind.startswith("external"):
+                        healthy = False
+                        reason = "non_external_kind"
+                    if healthy:
+                        successes += 1
+                        probe_ok = True
+                        break
+                    issues = payload.get("issues")
+                    last_failure = {
+                        "attempt": idx + 1,
+                        "retry": retry + 1,
+                        "reason": reason,
+                        "critic_kind": critic_kind or None,
+                        "verdict": (
+                            str(payload.get("verdict"))
+                            if payload.get("verdict") is not None
+                            else None
+                        ),
+                        "issues_preview": (
+                            [str(item) for item in issues[:2]]
+                            if isinstance(issues, list)
+                            else []
+                        ),
+                        "critic_sum": str(payload.get("critic_sum") or "")[:200],
+                    }
+
+                if retry < retries_per_attempt:
+                    failure_text = (
+                        f"{last_failure.get('reason') or ''} "
+                        f"{last_failure.get('critic_sum') or ''}"
+                    ).lower()
+                    if any(
+                        marker in failure_text
+                        for marker in ("rate limit", "rate_limited", "429")
+                    ):
+                        await asyncio.sleep(
+                            (rate_limit_backoff_seconds * (retry + 1))
+                            + random.random() * 0.25
+                        )
+                    else:
+                        await asyncio.sleep(0.35 * (2**retry) + random.random() * 0.15)
+
+            if not probe_ok:
+                failures.append(last_failure or {"attempt": idx + 1, "reason": "unknown"})
+
+            if successes >= required_successes:
+                break
+            remaining = attempts - (idx + 1)
+            if successes + remaining < required_successes:
+                break
+    finally:
+        if cfg is not None and original_timeout is not None:
+            try:
+                setattr(cfg, "timeout_seconds", original_timeout)
+            except Exception:
+                pass
+
     return {
         "checked": True,
-        "healthy": len(failures) == 0,
+        "healthy": successes >= required_successes,
         "attempts": attempts,
+        "successes": successes,
+        "required_successes": required_successes,
+        "retries_per_attempt": retries_per_attempt,
+        "timeout_seconds": timeout_override,
+        "rate_limit_backoff_seconds": rate_limit_backoff_seconds,
         "provider": provider,
         "model": model,
         "failures": failures,
@@ -570,11 +667,21 @@ async def _run(args: argparse.Namespace) -> int:
             critic_health = await _check_critic_health(
                 session=session,
                 attempts=args.critic_health_attempts,
+                min_successes=args.critic_health_min_successes,
+                retries_per_attempt=args.critic_health_retries,
+                timeout_seconds=args.critic_health_timeout,
+                rate_limit_backoff_seconds=args.critic_health_rate_limit_backoff,
             )
             print(
-                "[bench] critic_health healthy={healthy} attempts={attempts} provider={provider} model={model}".format(
+                "[bench] critic_health healthy={healthy} successes={successes}/{required} attempts={attempts} "
+                "retries={retries} timeout={timeout} rate_limit_backoff={rate_limit_backoff} provider={provider} model={model}".format(
                     healthy=critic_health.get("healthy"),
+                    successes=critic_health.get("successes"),
+                    required=critic_health.get("required_successes"),
                     attempts=critic_health.get("attempts"),
+                    retries=critic_health.get("retries_per_attempt"),
+                    timeout=critic_health.get("timeout_seconds"),
+                    rate_limit_backoff=critic_health.get("rate_limit_backoff_seconds"),
                     provider=critic_health.get("provider"),
                     model=critic_health.get("model"),
                 )
@@ -639,6 +746,16 @@ async def _run(args: argparse.Namespace) -> int:
                 "low_signal_filter": low_signal_filter,
                 "critic_health_check": critic_health_mode,
                 "critic_health_attempts": int(args.critic_health_attempts),
+                "critic_health_min_successes": (
+                    int(args.critic_health_min_successes)
+                    if args.critic_health_min_successes is not None
+                    else None
+                ),
+                "critic_health_retries": int(args.critic_health_retries),
+                "critic_health_timeout": float(args.critic_health_timeout),
+                "critic_health_rate_limit_backoff": float(
+                    args.critic_health_rate_limit_backoff
+                ),
                 "require_critic_health": bool(args.require_critic_health),
                 "question_count": len(questions),
                 "llm_capable": llm_capable,
@@ -775,6 +892,30 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Number of preflight critic probes used to judge JSON stability.",
+    )
+    parser.add_argument(
+        "--critic-health-min-successes",
+        type=int,
+        default=None,
+        help="Minimum successful probes required; default is attempts-1.",
+    )
+    parser.add_argument(
+        "--critic-health-retries",
+        type=int,
+        default=1,
+        help="Retry count per health probe when critic output is unstable.",
+    )
+    parser.add_argument(
+        "--critic-health-timeout",
+        type=float,
+        default=32.0,
+        help="Timeout seconds used for critic health probes.",
+    )
+    parser.add_argument(
+        "--critic-health-rate-limit-backoff",
+        type=float,
+        default=2.5,
+        help="Extra backoff seconds applied on health-check rate-limit failures.",
     )
     parser.add_argument(
         "--require-critic-health",

@@ -1352,6 +1352,22 @@ class DualBrainController:
             flags=re.IGNORECASE,
         ):
             return "hard" if length >= 180 else "medium"
+        if re.search(r"`[^`]{8,}`", q) and re.search(
+            r"(review|correctness|edge[- ]?case|bug|fix)",
+            q,
+            flags=re.IGNORECASE,
+        ) and length >= 110:
+            return "medium"
+        if (
+            length >= 64
+            and re.search(
+                r"(compare|comparison|versus|\bvs\.?\b|complexity|causal|causation|"
+                r"correlation|triage|root[- ]?cause|postmortem|preferable)",
+                q,
+                flags=re.IGNORECASE,
+            )
+        ):
+            return "medium"
         if has_qmark and delimiter_hits >= 2 and length >= 42:
             return "medium"
         if delimiter_hits >= 4 and length >= 96:
