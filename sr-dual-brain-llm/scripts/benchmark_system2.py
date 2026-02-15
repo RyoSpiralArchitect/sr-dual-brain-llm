@@ -203,6 +203,11 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         if c.get("initial_issues") is not None and c.get("final_issues") is not None
     ]
     measured_count = len(measured)
+    no_op_cases = [
+        c
+        for c in ok_cases
+        if c.get("initial_issues") is None or c.get("final_issues") is None
+    ]
     system2_enabled_cases = [c for c in ok_cases if c.get("system2_enabled") is True]
 
     sum_initial = sum(int(c["initial_issues"]) for c in measured)
@@ -220,8 +225,11 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     )
 
     per_case_reduction = []
+    per_case_reduction_all = []
     rounds_values = []
+    rounds_values_all = []
     latency_values = []
+    latency_values_all = []
     phase_latency_totals: Dict[str, float] = {}
     phase_latency_counts: Dict[str, int] = {}
     followup_count = 0
@@ -252,12 +260,41 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         if case.get("followup_revision") is True:
             followup_count += 1
 
+    for case in ok_cases:
+        initial_raw = case.get("initial_issues")
+        final_raw = case.get("final_issues")
+        if initial_raw is not None and final_raw is not None and int(initial_raw) > 0:
+            initial = int(initial_raw)
+            final = int(final_raw)
+            per_case_reduction_all.append((initial - final) / initial)
+        else:
+            per_case_reduction_all.append(0.0)
+
+        rounds_all = _safe_float(case.get("rounds"))
+        rounds_values_all.append(rounds_all if rounds_all is not None else 0.0)
+
+        latency_all = _safe_float(case.get("latency_ms"))
+        if latency_all is not None:
+            latency_values_all.append(latency_all)
+
+    ok_count = len(ok_cases)
+    activation_rate = (
+        len(system2_enabled_cases) / ok_count if ok_count > 0 else None
+    )
+    measured_case_rate = measured_count / ok_count if ok_count > 0 else None
+    resolved_issue_share_all = (
+        len(resolved_issue_cases) / ok_count if ok_count > 0 else None
+    )
+
     return {
         "total_cases": total,
         "ok_cases": len(ok_cases),
         "error_cases": total - len(ok_cases),
         "system2_enabled_cases": len(system2_enabled_cases),
+        "system2_activation_rate": activation_rate,
         "measured_cases": measured_count,
+        "measured_case_rate": measured_case_rate,
+        "no_op_cases": len(no_op_cases),
         "sum_initial_issues": sum_initial,
         "sum_final_issues": sum_final,
         "net_issue_reduction": net_reduction,
@@ -265,12 +302,19 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "issue_cases": issue_cases_count,
         "resolved_issue_cases": len(resolved_issue_cases),
         "resolved_issue_rate": resolved_issue_rate,
+        "resolved_issue_share_all_cases": resolved_issue_share_all,
         "followup_revision_cases": followup_count,
         "followup_revision_rate": (
             followup_count / measured_count if measured_count > 0 else None
         ),
         "avg_rounds": (statistics.mean(rounds_values) if rounds_values else None),
+        "avg_rounds_all_cases": (
+            statistics.mean(rounds_values_all) if rounds_values_all else None
+        ),
         "avg_latency_ms": (statistics.mean(latency_values) if latency_values else None),
+        "avg_latency_ms_all_cases": (
+            statistics.mean(latency_values_all) if latency_values_all else None
+        ),
         "avg_phase_latency_ms": {
             phase: (
                 phase_latency_totals[phase] / phase_latency_counts[phase]
@@ -281,6 +325,11 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         },
         "mean_per_case_reduction_rate": (
             statistics.mean(per_case_reduction) if per_case_reduction else None
+        ),
+        "mean_per_case_reduction_rate_all_cases": (
+            statistics.mean(per_case_reduction_all)
+            if per_case_reduction_all
+            else None
         ),
     }
 
@@ -325,6 +374,8 @@ def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     rates = []
     resolved_rates = []
+    rates_all = []
+    resolved_share_all = []
     for row in history:
         rate = _safe_float(_pick("summary.issue_reduction_rate", row))
         if rate is not None:
@@ -332,6 +383,12 @@ def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
         rr = _safe_float(_pick("summary.resolved_issue_rate", row))
         if rr is not None:
             resolved_rates.append(rr)
+        rate_all = _safe_float(_pick("summary.mean_per_case_reduction_rate_all_cases", row))
+        if rate_all is not None:
+            rates_all.append(rate_all)
+        resolved_all = _safe_float(_pick("summary.resolved_issue_share_all_cases", row))
+        if resolved_all is not None:
+            resolved_share_all.append(resolved_all)
     latest = history[-1]
     return {
         "runs": len(history),
@@ -339,6 +396,12 @@ def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
         "mean_issue_reduction_rate": (statistics.mean(rates) if rates else None),
         "mean_resolved_issue_rate": (
             statistics.mean(resolved_rates) if resolved_rates else None
+        ),
+        "mean_issue_reduction_rate_all_cases": (
+            statistics.mean(rates_all) if rates_all else None
+        ),
+        "mean_resolved_issue_share_all_cases": (
+            statistics.mean(resolved_share_all) if resolved_share_all else None
         ),
     }
 
@@ -609,21 +672,34 @@ async def _run(args: argparse.Namespace) -> int:
             print(f"[bench] appended history: {history_path}")
 
         print(
-            "[bench] summary measured={measured} reduction_rate={reduction} resolved_rate={resolved} "
-            "avg_rounds={rounds} avg_latency_ms={latency}".format(
+            "[bench] summary measured={measured}/{ok} activation={activation} no_op={no_op} "
+            "reduction_rate={reduction} resolved_rate={resolved} "
+            "reduction_all={reduction_all} resolved_all={resolved_all} "
+            "avg_rounds={rounds} avg_rounds_all={rounds_all} "
+            "avg_latency_ms={latency} avg_latency_ms_all={latency_all}".format(
                 measured=summary.get("measured_cases"),
+                ok=summary.get("ok_cases"),
+                activation=summary.get("system2_activation_rate"),
+                no_op=summary.get("no_op_cases"),
                 reduction=summary.get("issue_reduction_rate"),
                 resolved=summary.get("resolved_issue_rate"),
+                reduction_all=summary.get("mean_per_case_reduction_rate_all_cases"),
+                resolved_all=summary.get("resolved_issue_share_all_cases"),
                 rounds=summary.get("avg_rounds"),
+                rounds_all=summary.get("avg_rounds_all_cases"),
                 latency=summary.get("avg_latency_ms"),
+                latency_all=summary.get("avg_latency_ms_all_cases"),
             )
         )
         if history_trend.get("runs", 0) > 0:
             print(
-                "[bench] trend runs={runs} mean_reduction_rate={rr} mean_resolved_rate={sr}".format(
+                "[bench] trend runs={runs} mean_reduction_rate={rr} mean_resolved_rate={sr} "
+                "mean_reduction_rate_all={rr_all} mean_resolved_share_all={sr_all}".format(
                     runs=history_trend.get("runs"),
                     rr=history_trend.get("mean_issue_reduction_rate"),
                     sr=history_trend.get("mean_resolved_issue_rate"),
+                    rr_all=history_trend.get("mean_issue_reduction_rate_all_cases"),
+                    sr_all=history_trend.get("mean_resolved_issue_share_all_cases"),
                 )
             )
 

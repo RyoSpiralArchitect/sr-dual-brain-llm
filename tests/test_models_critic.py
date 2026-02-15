@@ -83,6 +83,26 @@ def test_criticise_reasoning_uses_micro_critic_on_provider_failure_for_supported
     assert str(result.get("critic_kind") or "").startswith("micro")
 
 
+def test_criticise_reasoning_micro_critic_handles_short_backtick_arithmetic():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-5",
+            "Compute `2+2`.",
+            "Result is 5.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    issues = result.get("issues")
+    assert isinstance(issues, list) and issues
+    assert any("4" in str(item) for item in issues)
+    assert str(result.get("critic_kind") or "").startswith("micro")
+
+
 def test_criticise_reasoning_can_disable_micro_critic_fallback():
     model = RightBrainModel()
     model._llm_client = _FailingLLMClient()

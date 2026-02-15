@@ -107,13 +107,33 @@ def _build_pairwise(summary_by_mode: Dict[str, Dict[str, Any]]) -> Dict[str, Dic
                 _safe_float(left.get("resolved_issue_rate")),
                 _safe_float(right.get("resolved_issue_rate")),
             ),
+            "mean_per_case_reduction_rate_all_cases_delta": _delta(
+                _safe_float(left.get("mean_per_case_reduction_rate_all_cases")),
+                _safe_float(right.get("mean_per_case_reduction_rate_all_cases")),
+            ),
+            "resolved_issue_share_all_cases_delta": _delta(
+                _safe_float(left.get("resolved_issue_share_all_cases")),
+                _safe_float(right.get("resolved_issue_share_all_cases")),
+            ),
+            "system2_activation_rate_delta": _delta(
+                _safe_float(left.get("system2_activation_rate")),
+                _safe_float(right.get("system2_activation_rate")),
+            ),
             "avg_latency_ms_delta": _delta(
                 _safe_float(left.get("avg_latency_ms")),
                 _safe_float(right.get("avg_latency_ms")),
             ),
+            "avg_latency_ms_all_cases_delta": _delta(
+                _safe_float(left.get("avg_latency_ms_all_cases")),
+                _safe_float(right.get("avg_latency_ms_all_cases")),
+            ),
             "avg_rounds_delta": _delta(
                 _safe_float(left.get("avg_rounds")),
                 _safe_float(right.get("avg_rounds")),
+            ),
+            "avg_rounds_all_cases_delta": _delta(
+                _safe_float(left.get("avg_rounds_all_cases")),
+                _safe_float(right.get("avg_rounds_all_cases")),
             ),
             "avg_phase_latency_ms_delta": _phase_delta_map(left, right),
             "error_cases_delta": _delta(
@@ -300,10 +320,14 @@ async def _run(args: argparse.Namespace) -> int:
         history = _load_history(history_path, limit=max(1, int(args.history_limit)))
         trend = _history_trend(history)
         print(
-            "[ab] trend runs={runs} mean_issue_reduction_rate={rate} mean_resolved_issue_rate={resolved}".format(
+            "[ab] trend runs={runs} mean_issue_reduction_rate={rate} mean_resolved_issue_rate={resolved} "
+            "mean_issue_reduction_rate_all_cases={rate_all} "
+            "mean_resolved_issue_share_all_cases={resolved_all}".format(
                 runs=trend.get("runs"),
                 rate=trend.get("mean_issue_reduction_rate"),
                 resolved=trend.get("mean_resolved_issue_rate"),
+                rate_all=trend.get("mean_issue_reduction_rate_all_cases"),
+                resolved_all=trend.get("mean_resolved_issue_share_all_cases"),
             )
         )
         print(f"[ab] appended history: {history_path}")
@@ -311,14 +335,24 @@ async def _run(args: argparse.Namespace) -> int:
     for mode in modes:
         summary = summary_by_mode.get(mode, {})
         print(
-            "[ab] summary mode={mode} measured={measured} reduction_rate={reduction} "
-            "resolved_rate={resolved} avg_rounds={rounds} avg_latency_ms={latency}".format(
+            "[ab] summary mode={mode} measured={measured}/{ok} activation={activation} no_op={no_op} "
+            "reduction_rate={reduction} resolved_rate={resolved} "
+            "reduction_all={reduction_all} resolved_all={resolved_all} "
+            "avg_rounds={rounds} avg_rounds_all={rounds_all} "
+            "avg_latency_ms={latency} avg_latency_ms_all={latency_all}".format(
                 mode=mode,
                 measured=summary.get("measured_cases"),
+                ok=summary.get("ok_cases"),
+                activation=summary.get("system2_activation_rate"),
+                no_op=summary.get("no_op_cases"),
                 reduction=summary.get("issue_reduction_rate"),
                 resolved=summary.get("resolved_issue_rate"),
+                reduction_all=summary.get("mean_per_case_reduction_rate_all_cases"),
+                resolved_all=summary.get("resolved_issue_share_all_cases"),
                 rounds=summary.get("avg_rounds"),
+                rounds_all=summary.get("avg_rounds_all_cases"),
                 latency=summary.get("avg_latency_ms"),
+                latency_all=summary.get("avg_latency_ms_all_cases"),
             )
         )
 

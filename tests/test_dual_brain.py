@@ -13,7 +13,7 @@ from core.orchestrator import Orchestrator
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
 
 from core.unconscious_field import LatentSeed, UnconsciousField
-from core.prefrontal_cortex import PrefrontalCortex
+from core.prefrontal_cortex import FocusSummary, PrefrontalCortex
 from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
@@ -1304,6 +1304,219 @@ def test_system2_auto_triggers_on_structured_multiline_input():
     }
 
 
+def test_system2_auto_context_heavy_requires_focus_signal():
+    class LowFocusPrefrontal(PrefrontalCortex):
+        def synthesise_focus(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            memory_context: str,
+            hippocampal_context: str = "",
+        ) -> FocusSummary:
+            return FocusSummary(
+                keywords=("ownership", "constraint"),
+                relevance=0.01,
+                hippocampal_overlap=0.0,
+            )
+
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Draft."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.9
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Revised."
+
+    callosum = CriticCallosum()
+    telemetry = TrackingTelemetry()
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    memory = SharedMemory()
+    long_blob = ("dependency ownership sequencing constraints timeline risk mitigation " * 8).strip()
+    for idx in range(6):
+        memory.store({"Q": f"context-{idx} {long_blob}", "A": long_blob})
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=RevisingLeft(),
+        right_model=right,
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=LowFocusPrefrontal(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "align ownership, timing, and dependency sequencing for rollout",
+            system2_mode="auto",
+        )
+    )
+
+    assert answer in {"Draft.", "Revised."}
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is False
+    assert mode_events[-1].get("reason") == "disabled"
+    if callosum.payloads:
+        assert callosum.payloads[0]["payload"].get("type") != "ASK_CRITIC"
+
+
+def test_system2_auto_context_heavy_triggers_with_focus_signal():
+    class HighFocusPrefrontal(PrefrontalCortex):
+        def synthesise_focus(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            memory_context: str,
+            hippocampal_context: str = "",
+        ) -> FocusSummary:
+            return FocusSummary(
+                keywords=("ownership", "timing", "dependency"),
+                relevance=0.25,
+                hippocampal_overlap=0.2,
+            )
+
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Draft."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.9
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Revised."
+
+    callosum = CriticCallosum()
+    telemetry = TrackingTelemetry()
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    memory = SharedMemory()
+    long_blob = ("dependency ownership sequencing constraints timeline risk mitigation " * 8).strip()
+    for idx in range(6):
+        memory.store({"Q": f"context-{idx} {long_blob}", "A": long_blob})
+
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=memory,
+        left_model=RevisingLeft(),
+        right_model=right,
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=HighFocusPrefrontal(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "align ownership, timing, and dependency sequencing for rollout",
+            system2_mode="auto",
+        )
+    )
+
+    assert answer == "Revised."
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is True
+    assert mode_events[-1].get("reason") == "context_heavy"
+
+
+def test_system2_auto_uses_tighter_timeout_and_draft_budget_than_on():
+    class LongDraftLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "R" * 4200
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return draft
+
+    def run_once(mode: str) -> tuple[int, int]:
+        callosum = OkCriticCallosum()
+        telemetry = TrackingTelemetry()
+        right = RightBrainModel()
+        right.uses_external_llm = True
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=LongDraftLeft(),
+            right_model=right,
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+        asyncio.run(
+            controller.process(
+                "Why is this rollout plan fragile, and how should we prioritize mitigation while keeping dependencies and ownership clear?",
+                system2_mode=mode,
+            )
+        )
+        assert callosum.payloads
+        first = callosum.payloads[0]
+        assert first["payload"].get("type") == "ASK_CRITIC"
+        return int(first.get("timeout_ms") or 0), len(str(first["payload"].get("draft") or ""))
+
+    auto_timeout, auto_draft_len = run_once("auto")
+    on_timeout, on_draft_len = run_once("on")
+
+    assert auto_timeout > 0 and on_timeout > 0
+    assert auto_timeout < on_timeout
+    assert auto_draft_len <= 1700
+    assert auto_draft_len < on_draft_len <= 2400
+
+
 def test_system2_priority_defaults_split_auto_precision_on_balanced():
     keys = (
         "DUALBRAIN_SYSTEM2_PRIORITY",
@@ -1481,7 +1694,7 @@ def test_system2_auto_precision_mode_triggers_short_question():
     assert mode_events[-1].get("reason") in {"precision_short_question", "q_type_medium"}
 
 
-def test_system2_auto_precision_mode_raises_round_target_for_medium_queries():
+def test_system2_auto_precision_mode_keeps_medium_round_target_at_two():
     class RevisingLeft:
         uses_external_llm = True
 
@@ -1543,6 +1756,79 @@ def test_system2_auto_precision_mode_raises_round_target_for_medium_queries():
             os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = previous
 
     assert answer == "Revised."
+    assert left.integrations == 1
+    assert callosum.critic_calls >= 2
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("priority") == "precision"
+    assert latest.get("round_target") == 2
+
+
+def test_system2_auto_precision_mode_keeps_hard_round_target_at_three():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "2+2=4"
+
+    previous = os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY")
+    os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = "precision"
+    try:
+        callosum = TwoPhaseCriticCallosum()
+        telemetry = TrackingTelemetry()
+        left = RevisingLeft()
+        right = RightBrainModel()
+        right.uses_external_llm = True
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=left,
+            right_model=right,
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="evaluative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=telemetry,
+            unconscious_field=UnconsciousField(),
+            prefrontal_cortex=PrefrontalCortex(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+
+        answer = asyncio.run(
+            controller.process(
+                "Compute ((27 * 14) - 96) / 6 and briefly show each arithmetic step.",
+                system2_mode="auto",
+            )
+        )
+    finally:
+        if previous is None:
+            os.environ.pop("DUALBRAIN_SYSTEM2_PRIORITY", None)
+        else:
+            os.environ["DUALBRAIN_SYSTEM2_PRIORITY"] = previous
+
+    assert answer == "2+2=4"
     assert left.integrations == 1
     assert callosum.critic_calls >= 2
     refinement_events = [
@@ -1917,6 +2203,9 @@ def test_system2_timeout_still_emits_measurable_metrics():
     class RevisingLeft:
         uses_external_llm = True
 
+        def __init__(self):
+            self.integrations = 0
+
         async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
             return "2+2=5"
 
@@ -1932,9 +2221,151 @@ def test_system2_timeout_still_emits_measurable_metrics():
             temperature: float = 0.3,
             on_delta=None,
         ) -> str:
-            return "SHOULD_NOT_RUN_ON_TIMEOUT"
+            self.integrations += 1
+            return "2+2=4"
 
     callosum = TimeoutCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute `2+2`?", system2_mode="on"))
+
+    assert answer == "2+2=4"
+    assert left.integrations == 1
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("rounds") == 1
+    assert latest.get("initial_issues") >= 1
+    assert latest.get("final_issues") == 0
+    assert latest.get("resolved") is True
+    assert latest.get("timeout") is True
+    assert latest.get("timeout_recovered") is True
+    assert str(latest.get("timeout_recovery_source") or "").startswith("micro:")
+
+
+def test_system2_timeout_without_micro_still_counts_one_round():
+    class LeftNonNumeric:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "This argument form is valid when premises are true."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "SHOULD_NOT_RUN_FOR_NON_MICRO_TIMEOUT"
+
+    callosum = TimeoutCriticCallosum()
+    telemetry = TrackingTelemetry()
+    left = LeftNonNumeric()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=left,
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "In a syllogism A→B and B→C, is A→C valid?",
+            system2_mode="on",
+        )
+    )
+
+    assert answer == "This argument form is valid when premises are true."
+    assert left.integrations == 0
+    refinement_events = [
+        payload for evt, payload in telemetry.events if evt == "system2_refinement"
+    ]
+    assert refinement_events
+    latest = refinement_events[-1]
+    assert latest.get("rounds") == 1
+    assert latest.get("initial_issues") == 0
+    assert latest.get("final_issues") == 0
+    assert latest.get("timeout") is True
+    assert latest.get("timeout_recovered") is False
+
+
+def test_system2_hard_timeout_wrapper_limits_callosum_latency():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Result is 100."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Result is 47."
+
+    class HangingCriticCallosum(DummyCallosum):
+        async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+            if payload.get("type") == "ASK_CRITIC":
+                self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+                await asyncio.sleep(0.8)
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "ok",
+                    "issues": [],
+                    "fixes": [],
+                    "critic_sum": "No issues detected.",
+                    "confidence_r": 0.9,
+                }
+            return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+    callosum = HangingCriticCallosum()
     telemetry = TrackingTelemetry()
     controller = DualBrainController(
         callosum=callosum,
@@ -1950,24 +2381,28 @@ def test_system2_timeout_still_emits_measurable_metrics():
         unconscious_field=UnconsciousField(),
         prefrontal_cortex=PrefrontalCortex(),
         basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        default_timeout_ms=120,
     )
 
-    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+    started = time.perf_counter()
+    answer = asyncio.run(
+        controller.process(
+            "Compute ((27 * 14) - 96) / 6 and briefly show each arithmetic step.",
+            system2_mode="on",
+        )
+    )
+    elapsed = time.perf_counter() - started
 
-    assert answer == "2+2=5"
+    assert elapsed < 1.25
+    assert answer == "Result is 47."
     assert callosum.payloads
-    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
-
     refinement_events = [
         payload for evt, payload in telemetry.events if evt == "system2_refinement"
     ]
     assert refinement_events
     latest = refinement_events[-1]
-    assert latest.get("rounds") == 0
-    assert latest.get("initial_issues") == 0
-    assert latest.get("final_issues") == 0
-    assert latest.get("resolved") is False
     assert latest.get("timeout") is True
+    assert latest.get("timeout_recovered") is True
 
 
 def test_system2_unhealthy_critic_stops_followup_rounds():

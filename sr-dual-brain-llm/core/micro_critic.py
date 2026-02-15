@@ -228,12 +228,12 @@ def _micro_arithmetic(question: str, draft: str) -> Optional[MicroCriticResult]:
     q = str(question or "")
     # Prefer expressions in backticks.
     expr = None
-    m = re.search(r"`([^`]{5,160})`", q)
+    m = re.search(r"`([^`]{3,160})`", q)
     if m:
         expr = m.group(1)
     if expr is None:
         # Find a parenthesized/operator-heavy substring.
-        candidates = re.findall(r"[\d\(\)\s\+\-\*\/\.\^]{8,160}", q)
+        candidates = re.findall(r"[\d\(\)\s\+\-\*\/\.\^]{3,160}", q)
         for cand in candidates:
             if re.search(r"\d", cand) and re.search(r"[+\-\*\/\^]", cand):
                 expr = cand.strip()
@@ -461,4 +461,3 @@ def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCritic
         if result is not None:
             return result
     return None
-

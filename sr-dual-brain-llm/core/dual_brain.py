@@ -31,6 +31,7 @@ from .neural_impulse import (
     Neuron,
     NeurotransmitterType,
 )
+from .micro_critic import micro_criticise_reasoning
 
 
 _RIGHT_HEMISPHERE_KEYWORDS = {
@@ -1331,9 +1332,10 @@ class DualBrainController:
 
         has_qmark = ("?" in q) or ("？" in q)
         length = len(q)
-        qmark_hard_len = 72 if precision_priority else 90
-        qmark_medium_len = 24 if precision_priority else 32
-        body_medium_len = 180 if precision_priority else 240
+        qmark_hard_len = 68 if precision_priority else 84
+        qmark_medium_len = 20 if precision_priority else 26
+        body_medium_len = 160 if precision_priority else 200
+        delimiter_hits = len(re.findall(r"[,、，;；:：]", q))
 
         # Strong structural cues (language-agnostic).
         if "```" in q:
@@ -1350,6 +1352,10 @@ class DualBrainController:
             flags=re.IGNORECASE,
         ):
             return "hard" if length >= 180 else "medium"
+        if has_qmark and delimiter_hits >= 2 and length >= 42:
+            return "medium"
+        if delimiter_hits >= 4 and length >= 96:
+            return "medium"
 
         # Complexity by size/structure (works for CJK + Latin).
         if q.count("\n") >= 2:
@@ -1376,6 +1382,7 @@ class DualBrainController:
     ) -> int:
         rounds = 1
         q_type_norm = str(q_type or "").strip().lower()
+        mode_norm = str(system2_mode or "").strip().lower()
         if q_type_norm == "hard":
             rounds = 3
         elif q_type_norm == "medium":
@@ -1394,7 +1401,7 @@ class DualBrainController:
         if float(focus_metric or 0.0) >= 0.7:
             rounds = max(rounds, 2)
 
-        if str(system2_mode or "").strip().lower() == "on":
+        if mode_norm == "on":
             rounds = max(rounds, 2)
 
         priority_norm = str(priority or "balanced").strip().lower()
@@ -1402,7 +1409,10 @@ class DualBrainController:
             if q_type_norm == "hard":
                 rounds = max(rounds, 3)
             elif q_type_norm == "medium":
-                rounds = max(rounds, 3)
+                if mode_norm != "auto":
+                    rounds = max(rounds, 3)
+                else:
+                    rounds = max(rounds, 2)
             elif len(q) >= 64:
                 rounds = max(rounds, 2)
             if int(context_signal_len or 0) >= 220:
@@ -1869,6 +1879,11 @@ class DualBrainController:
                 mem_len = len(str(context_parts.get("memory") or ""))
                 hip_len = len(str(context_parts.get("hippocampal") or ""))
                 context_signal_len = wm_len + mem_len + hip_len
+                focus_relevance = float(focus.relevance) if focus is not None else 0.0
+                focus_overlap = (
+                    float(focus.hippocampal_overlap) if focus is not None else 0.0
+                )
+                delimiter_hits = len(re.findall(r"[,、，;；:：]", q))
 
                 q_type_hint = self._infer_question_type(
                     q,
@@ -1895,7 +1910,12 @@ class DualBrainController:
                 elif line_count >= 4 and len(q) >= 110:
                     system2_active = True
                     system2_reason = "multiline_long"
-                elif context_signal_len >= 180 and len(q) >= 40:
+                elif (
+                    context_signal_len >= 260
+                    and 48 <= len(q) <= 180
+                    and (delimiter_hits >= 2 or line_count >= 2)
+                    and (focus_relevance >= 0.08 or focus_overlap >= 0.08)
+                ):
                     # A short question riding on heavy prior context → treat as System2.
                     system2_active = True
                     system2_reason = "context_heavy"
@@ -2214,6 +2234,22 @@ class DualBrainController:
             if asyncio.iscoroutine(maybe):
                 await maybe
             emitted_any = False
+
+        async def _ask_callosum_with_timeout(
+            payload_obj: Dict[str, Any],
+            *,
+            timeout_ms: int,
+        ) -> Dict[str, Any]:
+            original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
+            hard_timeout_s = max(0.35, float(timeout_ms) / 1000.0 + 0.2)
+            try:
+                self.callosum.slot_ms = decision.slot_ms
+                return await asyncio.wait_for(
+                    self.callosum.ask_detail(payload_obj, timeout_ms=timeout_ms),
+                    timeout=hard_timeout_s,
+                )
+            finally:
+                self.callosum.slot_ms = original_slot
 
         delta_cb = _emit_delta if on_delta else None
         if (leading == "right" or collaborative_lead) and not system2_active:
@@ -2777,8 +2813,22 @@ class DualBrainController:
                     "hemisphere_mode": hemisphere_mode,
                     "hemisphere_bias": hemisphere_bias,
                 }
+                q_type_hint = str(decision.state.get("q_type") or "").strip().lower()
+                system2_draft_limit = 2400
                 if system2_active:
-                    payload["draft"] = _trim_system2_draft(draft, limit=2400)
+                    if system2_norm == "auto":
+                        if q_type_hint == "hard":
+                            system2_draft_limit = 1700
+                        elif q_type_hint == "medium":
+                            system2_draft_limit = 1400
+                        else:
+                            system2_draft_limit = 1200
+                    elif q_type_hint == "medium":
+                        system2_draft_limit = 2200
+                    payload["draft"] = _trim_system2_draft(
+                        draft,
+                        limit=system2_draft_limit,
+                    )
                     payload["system2"] = True
                 if focus is not None and focus.keywords:
                     payload["focus_keywords"] = list(focus.keywords[:5])
@@ -2809,7 +2859,6 @@ class DualBrainController:
                         for ref in default_mode_reflections
                     ]
                 budget_norm = str(payload.get("budget") or "small").strip().lower()
-                q_type_hint = str(decision.state.get("q_type") or "").strip().lower()
                 timeout_scale = 60 if system2_active else 80
                 timeout_floor = 6000.0
                 if system2_active:
@@ -2822,6 +2871,12 @@ class DualBrainController:
                     else:
                         timeout_scale = 42
                         timeout_floor = 3200.0
+                    if system2_norm == "auto":
+                        timeout_scale = max(
+                            32,
+                            int(round(float(timeout_scale) * 0.78)),
+                        )
+                        timeout_floor = max(2200.0, timeout_floor - 900.0)
                 if budget_norm == "large" and not system2_active:
                     timeout_scale = 95
                 timeout_ms = int(
@@ -2830,7 +2885,6 @@ class DualBrainController:
                         max(timeout_floor, float(decision.slot_ms) * float(timeout_scale)),
                     )
                 )
-                original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 request_meta = {
                     "temperature": round(decision.temperature, 3),
                     "budget": payload["budget"],
@@ -2852,11 +2906,7 @@ class DualBrainController:
                     )
                 )
                 consult_started = time.perf_counter()
-                try:
-                    self.callosum.slot_ms = decision.slot_ms
-                    response = await self.callosum.ask_detail(payload, timeout_ms=timeout_ms)
-                finally:
-                    self.callosum.slot_ms = original_slot
+                response = await _ask_callosum_with_timeout(payload, timeout_ms=timeout_ms)
                 response_source = "callosum"
                 critic_verdict: Optional[str] = None
                 critic_issues: list[str] = []
@@ -3098,6 +3148,10 @@ class DualBrainController:
                         )
                         _phase_add("integration", integration_started)
                 if system2_active:
+                    verify_draft_limit = max(
+                        1200,
+                        min(2400, int(system2_draft_limit) + 300),
+                    )
                     system2_final_issue_count = len(critic_issues)
                     if system2_critic_unhealthy:
                         system2_resolved = False
@@ -3118,31 +3172,28 @@ class DualBrainController:
                         verify_payload["round"] = 2
                         verify_payload["draft"] = _trim_system2_draft(
                             final_answer,
-                            limit=2400,
+                            limit=verify_draft_limit,
                         )
                         verify_payload["draft_sum"] = verify_payload["draft"][:280]
 
+                        verify_timeout_floor = 2600.0 if system2_norm == "auto" else 3200.0
                         verify_timeout_ms = int(
                             min(
                                 float(self.default_timeout_ms),
-                                max(3200.0, float(timeout_ms) * 0.7),
+                                max(verify_timeout_floor, float(timeout_ms) * 0.7),
                             )
                         )
                         verify_call_error = False
                         verify_fallback_used = False
                         verify_response: Dict[str, Any] = {}
-                        original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                         try:
-                            self.callosum.slot_ms = decision.slot_ms
-                            verify_response = await self.callosum.ask_detail(
+                            verify_response = await _ask_callosum_with_timeout(
                                 verify_payload,
                                 timeout_ms=verify_timeout_ms,
                             )
                         except Exception:
                             verify_call_error = True
                             verify_response = {}
-                        finally:
-                            self.callosum.slot_ms = original_slot
 
                         verify_verdict = str(
                             verify_response.get("verdict") or ""
@@ -3344,31 +3395,28 @@ class DualBrainController:
                             round3_payload["round"] = 3
                             round3_payload["draft"] = _trim_system2_draft(
                                 final_answer,
-                                limit=2400,
+                                limit=verify_draft_limit,
                             )
                             round3_payload["draft_sum"] = round3_payload["draft"][:280]
 
+                            round3_timeout_floor = 2200.0 if system2_norm == "auto" else 2600.0
                             round3_timeout_ms = int(
                                 min(
                                     float(self.default_timeout_ms),
-                                    max(2600.0, float(verify_timeout_ms) * 0.65),
+                                    max(round3_timeout_floor, float(verify_timeout_ms) * 0.65),
                                 )
                             )
                             round3_call_error = False
                             round3_fallback_used = False
                             round3_response: Dict[str, Any] = {}
-                            original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                             try:
-                                self.callosum.slot_ms = decision.slot_ms
-                                round3_response = await self.callosum.ask_detail(
+                                round3_response = await _ask_callosum_with_timeout(
                                     round3_payload,
                                     timeout_ms=round3_timeout_ms,
                                 )
                             except Exception:
                                 round3_call_error = True
                                 round3_response = {}
-                            finally:
-                                self.callosum.slot_ms = original_slot
 
                             round3_verdict = str(
                                 round3_response.get("verdict") or ""
@@ -3662,20 +3710,115 @@ class DualBrainController:
         except asyncio.TimeoutError:
             final_answer = draft
             if system2_active:
-                decision.state["system2_rounds"] = 0
-                decision.state["system2_issue_count_initial"] = 0
-                decision.state["system2_issue_count_final"] = 0
-                decision.state["system2_resolved"] = False
+                # Count the timed-out critic attempt as a completed round to keep
+                # System2 observability stable (avoid ambiguous 0-round records).
+                timeout_rounds = 1
+                timeout_initial_issues = 0
+                timeout_final_issues = 0
+                timeout_resolved = False
+                timeout_recovered = False
+                timeout_recovery_source: Optional[str] = None
+                timeout_followup_revision = False
+                micro_result = None
+                try:
+                    micro_result = micro_criticise_reasoning(question, draft)
+                except Exception:
+                    micro_result = None
+
+                if micro_result is not None:
+                    timeout_recovered = True
+                    timeout_recovery_source = f"micro:{micro_result.domain}"
+                    timeout_rounds = 1
+                    timeout_initial_issues = len(micro_result.issues)
+                    timeout_final_issues = timeout_initial_issues
+                    timeout_resolved = (
+                        micro_result.verdict == "ok" or timeout_initial_issues == 0
+                    )
+                    decision.state["right_role"] = "critic"
+                    decision.state["critic_kind"] = "micro_timeout_fallback"
+                    decision.state["critic_verdict"] = micro_result.verdict
+                    decision.state["critic_issues"] = list(micro_result.issues)
+                    if micro_result.fixes:
+                        decision.state["critic_fixes"] = list(micro_result.fixes)
+                    decision.state["right_conf"] = float(
+                        micro_result.confidence_r
+                    )
+                    decision.state["right_source"] = "micro_timeout_fallback"
+                    if micro_result.issues:
+                        try:
+                            await _emit_reset_if_needed()
+                            integration_started = time.perf_counter()
+                            final_answer = await self.left_model.integrate_info_async(
+                                question=question,
+                                draft=draft,
+                                info=(
+                                    "Reasoning critic notes (internal; do not output directly). "
+                                    "Revise the draft to address issues and improve correctness. "
+                                    "Apply minimal precise edits and avoid introducing new assumptions:\n"
+                                    + str(micro_result.critic_sum or "")
+                                ),
+                                temperature=max(0.2, min(0.6, decision.temperature)),
+                                on_delta=None if stream_final_only else delta_cb,
+                            )
+                            _phase_add("integration", integration_started)
+                            timeout_followup_revision = True
+                            post_micro = micro_criticise_reasoning(
+                                question,
+                                final_answer,
+                            )
+                            if post_micro is not None:
+                                timeout_final_issues = len(post_micro.issues)
+                                timeout_resolved = (
+                                    post_micro.verdict == "ok"
+                                    or timeout_final_issues == 0
+                                )
+                        except Exception:
+                            timeout_followup_revision = False
+                    success = True
+                    inner_steps.append(
+                        InnerDialogueStep(
+                            phase="system2_timeout_recovery",
+                            role="critic",
+                            content=_truncate_text(micro_result.critic_sum, 180),
+                            metadata={
+                                "source": timeout_recovery_source,
+                                "initial_issues": timeout_initial_issues,
+                                "final_issues": timeout_final_issues,
+                                "resolved": timeout_resolved,
+                                "revision": timeout_followup_revision,
+                            },
+                        )
+                    )
+
+                decision.state["system2_rounds"] = int(timeout_rounds)
+                decision.state["system2_issue_count_initial"] = int(
+                    timeout_initial_issues
+                )
+                decision.state["system2_issue_count_final"] = int(
+                    timeout_final_issues
+                )
+                decision.state["system2_resolved"] = bool(timeout_resolved)
                 decision.state["system2_timeout"] = True
+                decision.state["system2_timeout_recovered"] = bool(timeout_recovered)
+                if timeout_recovery_source:
+                    decision.state["system2_timeout_recovery_source"] = (
+                        timeout_recovery_source
+                    )
+                if timeout_followup_revision:
+                    decision.state["system2_followup_revision"] = True
                 try:
                     self.telemetry.log(
                         "system2_refinement",
                         qid=decision.qid,
-                        rounds=0,
+                        rounds=int(timeout_rounds),
                         round_target=int(system2_round_target),
-                        initial_issues=0,
-                        final_issues=0,
-                        critic_kind="timeout",
+                        initial_issues=int(timeout_initial_issues),
+                        final_issues=int(timeout_final_issues),
+                        critic_kind=(
+                            decision.state.get("critic_kind")
+                            if timeout_recovered
+                            else "timeout"
+                        ),
                         low_signal_filter=bool(system2_low_signal_filter),
                         followup_new_issue_cap=int(system2_followup_new_issue_cap),
                         followup_new_issue_min_score=float(
@@ -3684,11 +3827,13 @@ class DualBrainController:
                         followup_min_overlap=float(system2_followup_min_overlap),
                         followup_max_remaining=int(system2_followup_max_remaining),
                         followup_min_progress=int(system2_followup_min_progress),
-                        resolved=False,
-                        followup_revision=False,
+                        resolved=bool(timeout_resolved),
+                        followup_revision=bool(timeout_followup_revision),
                         followup_new_issues=[],
                         followup_verdict="timeout",
                         timeout=True,
+                        timeout_recovered=bool(timeout_recovered),
+                        timeout_recovery_source=timeout_recovery_source,
                     )
                 except Exception:  # pragma: no cover - telemetry best-effort
                     pass
@@ -3697,7 +3842,13 @@ class DualBrainController:
                     phase="callosum_timeout",
                     role="coordinator",
                     content="Right brain consult timed out",
-                    metadata={"timeout_ms": timeout_ms, "slot_ms": decision.slot_ms},
+                    metadata={
+                        "timeout_ms": timeout_ms,
+                        "slot_ms": decision.slot_ms,
+                        "recovered": bool(
+                            decision.state.get("system2_timeout_recovered", False)
+                        ),
+                    },
                 )
             )
         finally:
