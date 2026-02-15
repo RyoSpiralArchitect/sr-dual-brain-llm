@@ -599,6 +599,83 @@ def _trim_system2_draft(text: str, limit: int = 2400) -> str:
         return raw
     return raw[: max(0, limit - 3)].rstrip() + "..."
 
+def _infer_system2_domain(question: str) -> str:
+    q = str(question or "")
+    q_lower = q.lower()
+    if re.search(r"\breview\b", q_lower) and (
+        "snippet" in q_lower
+        or "python" in q_lower
+        or re.search(r"`[^`]{8,}`", q) is not None
+    ):
+        return "code_review"
+    if re.search(
+        r"(latency|error rate|after deployment|deployment|postmortem|triage|"
+        r"root[- ]?cause|correlation|causation|causal)",
+        q_lower,
+    ):
+        return "causal_triage"
+    if re.search(r"(all\s+a\s+are\s+b|some\s+b\s+are\s+c|does\s+it\s+follow)", q_lower):
+        return "logic"
+    return "general"
+
+
+def _system2_revision_guidance(domain: str) -> str:
+    domain_norm = str(domain or "").strip().lower()
+    if domain_norm == "code_review":
+        return (
+            "Domain hint: code review.\n"
+            "- Do not assume the input is a list; treat it as an iterable.\n"
+            "- Cover correctness + edge cases: empty input, non-numeric items, and one-pass iterables.\n"
+            "- If you propose a fix, state the intended behavior (e.g., raise ValueError on empty).\n"
+        )
+    if domain_norm == "causal_triage":
+        return (
+            "Domain hint: incident triage / causal reasoning.\n"
+            "- Avoid assuming specific tooling (feature flags, staging repro); phrase as conditional: \"if available\".\n"
+            "- Separate observe → hypothesize → test → confirm. Keep steps actionable.\n"
+            "- Include how to distinguish new vs existing errors, and what to do with profiling diffs.\n"
+        )
+    if domain_norm == "logic":
+        return (
+            "Domain hint: formal logic.\n"
+            "- Be precise about quantifiers (all/some) and provide a counterexample if invalid.\n"
+        )
+    return (
+        "Domain hint: general reasoning.\n"
+        "- Address each issue explicitly; if information is missing, state what is missing and give a safe conditional next step.\n"
+    )
+
+
+def _format_system2_revision_notes(
+    *,
+    question: str,
+    issues: Sequence[str],
+    fixes: Sequence[str],
+    critic_sum: str,
+) -> str:
+    domain = _infer_system2_domain(question)
+    guidance = _system2_revision_guidance(domain)
+    issue_block = "\n".join(f"- {item}" for item in issues if str(item).strip()) or "- (none)"
+    fix_block = "\n".join(f"- {item}" for item in fixes if str(item).strip()) or "- (none)"
+    detail = str(critic_sum or "").strip()
+    if not detail:
+        detail = "(no critic summary)"
+    return (
+        "Reasoning critic notes (internal; do not output directly).\n"
+        "Goal: improve correctness and resolve the issues.\n"
+        f"{guidance}\n"
+        "Constraints:\n"
+        "- Fix EACH issue explicitly, or state what info is missing and give a safe conditional alternative.\n"
+        "- Avoid introducing hard assumptions; use conditional language for environment/tooling specifics.\n"
+        "- Prefer concise, structured output.\n\n"
+        "Issues (must address):\n"
+        f"{issue_block}\n\n"
+        "Fix suggestions (if helpful):\n"
+        f"{fix_block}\n\n"
+        "Critic summary:\n"
+        f"{detail}"
+    )
+
 
 _SYSTEM2_CRITIC_UNHEALTHY_MARKERS = (
     "external critic model unavailable",
@@ -1353,11 +1430,12 @@ class DualBrainController:
         ):
             return "hard" if length >= 180 else "medium"
         if re.search(r"`[^`]{8,}`", q) and re.search(
-            r"(review|correctness|edge[- ]?case|bug|fix)",
+            r"(review|correctness|edge[- ]?case|bug|fix|snippet)",
             q,
             flags=re.IGNORECASE,
-        ) and length >= 110:
-            return "medium"
+        ):
+            # Inline code + review language is a strong signal even when the prompt is short.
+            return "hard" if length >= 260 else "medium"
         if (
             length >= 64
             and re.search(
@@ -3113,10 +3191,12 @@ class DualBrainController:
                 if integrated_detail:
                     if system2_active:
                         integration_parts.append(
-                            "Reasoning critic notes (internal; do not output directly). "
-                            "Revise the draft to address issues and improve correctness. "
-                            "Apply minimal precise edits and avoid introducing new assumptions:\n"
-                            + str(integrated_detail)
+                            _format_system2_revision_notes(
+                                question=question,
+                                issues=critic_issues,
+                                fixes=critic_fixes,
+                                critic_sum=str(integrated_detail),
+                            )
                         )
                     else:
                         integration_parts.append(str(integrated_detail))
@@ -3155,11 +3235,16 @@ class DualBrainController:
                     if integration_parts:
                         await _emit_reset_if_needed()
                         integration_started = time.perf_counter()
+                        integration_temperature = max(0.2, min(0.6, decision.temperature))
+                        if system2_active and integrated_detail:
+                            integration_temperature = max(
+                                0.15, min(0.35, float(decision.temperature))
+                            )
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
                             info="\n\n".join(integration_parts),
-                            temperature=max(0.2, min(0.6, decision.temperature)),
+                            temperature=integration_temperature,
                             on_delta=None if stream_final_only else delta_cb,
                         )
                         _phase_add("integration", integration_started)
@@ -3385,11 +3470,14 @@ class DualBrainController:
                             )
                             await _emit_reset_if_needed()
                             integration_started = time.perf_counter()
+                            followup_temperature = max(
+                                0.15, min(0.32, float(decision.temperature))
+                            )
                             final_answer = await self.left_model.integrate_info_async(
                                 question=question,
                                 draft=final_answer,
                                 info=followup_info,
-                                temperature=max(0.2, min(0.52, decision.temperature)),
+                                temperature=followup_temperature,
                                 on_delta=None if stream_final_only else delta_cb,
                             )
                             _phase_add("integration", integration_started)

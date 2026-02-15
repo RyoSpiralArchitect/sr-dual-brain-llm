@@ -430,14 +430,102 @@ def _micro_code_review_avg(question: str, draft: str) -> Optional[MicroCriticRes
         return None
     d = str(draft or "").lower()
     mentions_empty = any(tok in d for tok in ("empty", "len==0", "len == 0", "zero", "zerodivision"))
-    if mentions_empty:
-        return _critic_payload(domain="code_review", issues=[], fixes=[], confidence=0.68)
-    issues = ["Edge case missing: empty list causes ZeroDivisionError (len(nums)==0)."]
-    fixes = [
-        "Handle empty input (raise ValueError or return 0/None) before dividing by len(nums).",
-        "Consider validating numeric types if this is a public utility.",
-    ]
-    return _critic_payload(domain="code_review", issues=issues, fixes=fixes, confidence=0.82)
+    mentions_iterable_contract = any(
+        tok in d
+        for tok in (
+            "iterable",
+            "generator",
+            "iterator",
+            "__len__",
+            "sequence",
+            "convert to list",
+            "list(",
+        )
+    )
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not mentions_empty:
+        issues.append("Edge case missing: empty input causes ZeroDivisionError (len(nums)==0).")
+        fixes.append("Handle empty input (raise ValueError or return 0/None) before dividing by len(nums).")
+    if not mentions_iterable_contract:
+        issues.append("Edge case missing: iterators/generators (no len) will fail; the input contract should be clarified.")
+        fixes.append("Clarify the contract (requires a sized sequence), or convert once (nums=list(nums)) / implement a one-pass mean.")
+    if not issues:
+        return _critic_payload(domain="code_review", issues=[], fixes=[], confidence=0.7)
+    fixes.append("Consider validating numeric types if this is a public utility.")
+    return _critic_payload(domain="code_review", issues=issues[:6], fixes=fixes[:8], confidence=0.85)
+
+def _micro_causal_triage_plan(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    if not ("latency" in q_lower and "error" in q_lower and "deployment" in q_lower):
+        return None
+
+    d_lower = str(draft or "").lower()
+    step_hits = len(
+        re.findall(r"(?m)^\s*(?:\d{1,2}[.)]|[-*•])\s+", str(draft or ""))
+    )
+    has_steps = step_hits >= 3 or ("step" in d_lower and step_hits >= 2)
+    has_baseline = any(
+        tok in d_lower
+        for tok in (
+            "baseline",
+            "before",
+            "after",
+            "pre-",
+            "post",
+            "regression",
+            "compare",
+        )
+    )
+    has_isolation = any(
+        tok in d_lower
+        for tok in (
+            "isolate",
+            "one at a time",
+            "experiment",
+            "canary",
+            "rollback",
+            "revert",
+            "bisect",
+            "disable",
+        )
+    )
+    has_confounders = any(
+        tok in d_lower
+        for tok in (
+            "traffic",
+            "load",
+            "upstream",
+            "dependency",
+            "network",
+            "third-party",
+            "cdn",
+        )
+    )
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not has_steps:
+        issues.append("Plan is not clearly step-by-step; missing ordered triage steps.")
+        fixes.append("Use a numbered sequence: observe/baseline → isolate change → test hypotheses → confirm/mitigate.")
+    if not has_baseline:
+        issues.append("Missing a before/after baseline comparison to anchor causality claims.")
+        fixes.append("Start by comparing metrics pre vs post deployment (latency percentiles + error signatures) with a clear timeframe.")
+    if not has_isolation:
+        issues.append("Missing an isolation/experiment step (change one factor at a time) to avoid correlation→causation leaps.")
+        fixes.append("Add a controlled isolation step: rollback/canary/bisect/config toggle (if available) to test candidate causes.")
+    if not has_confounders and (not has_baseline or not has_isolation):
+        issues.append("Missing explicit confounder checks (traffic spikes, upstream dependencies, etc.).")
+        fixes.append("Check external factors (traffic mix, upstream latency/errors, infra/network changes) before attributing causation.")
+
+    if not issues:
+        return _critic_payload(domain="causal_triage", issues=[], fixes=[], confidence=0.7)
+    return _critic_payload(
+        domain="causal_triage",
+        issues=issues[:5],
+        fixes=fixes[:8],
+        confidence=0.82,
+    )
 
 
 def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCriticResult]:
@@ -445,6 +533,7 @@ def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCritic
 
     detectors = (
         _micro_code_review_avg,
+        _micro_causal_triage_plan,
         _micro_linear_equation,
         _micro_average_speed,
         _micro_revenue_growth,
