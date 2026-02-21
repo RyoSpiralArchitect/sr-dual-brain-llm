@@ -29,6 +29,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from benchmark_system2 import (  # noqa: E402
     _append_history,
     _check_critic_health,
+    _filter_questions,
     _history_trend,
     _load_history,
     _load_questions,
@@ -251,6 +252,11 @@ async def _run(args: argparse.Namespace) -> int:
         raise FileNotFoundError(f"Questions file not found: {questions_path}")
 
     questions = _load_questions(questions_path)
+    questions = _filter_questions(
+        questions,
+        only_ids=getattr(args, "only_ids", None),
+        only_tags=getattr(args, "only_tags", None),
+    )
     if args.shuffle:
         rng = random.Random(int(args.seed))
         rng.shuffle(questions)
@@ -273,6 +279,10 @@ async def _run(args: argparse.Namespace) -> int:
 
     print(f"[ab] run_id={run_id}")
     print(f"[ab] questions={len(questions)} source={questions_path}")
+    if getattr(args, "only_ids", None):
+        print(f"[ab] filter only_ids={args.only_ids}")
+    if getattr(args, "only_tags", None):
+        print(f"[ab] filter only_tags={args.only_tags}")
     print(f"[ab] modes={modes}")
     print(f"[ab] system2_low_signal_filter={low_signal_filter}")
 
@@ -315,6 +325,8 @@ async def _run(args: argparse.Namespace) -> int:
             "executive_mode": args.executive_mode,
             "executive_observer_mode": args.executive_observer_mode,
             "low_signal_filter": low_signal_filter,
+            "only_ids": getattr(args, "only_ids", None),
+            "only_tags": getattr(args, "only_tags", None),
             "critic_health_check": critic_health_check,
             "critic_health_attempts": int(args.critic_health_attempts),
             "critic_health_min_successes": (
@@ -487,6 +499,16 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--require-critic-health",
         action="store_true",
         help="Abort benchmark when critic health check fails.",
+    )
+    parser.add_argument(
+        "--only-ids",
+        default=None,
+        help="Comma separated question ids to run (e.g., logic_001,code_review_001).",
+    )
+    parser.add_argument(
+        "--only-tags",
+        default=None,
+        help="Comma separated tags; run questions that match any tag.",
     )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--shuffle", action="store_true")

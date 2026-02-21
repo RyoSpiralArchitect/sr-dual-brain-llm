@@ -75,6 +75,35 @@ def _load_questions(path: Path) -> List[Dict[str, Any]]:
     return out
 
 
+def _filter_questions(
+    questions: List[Dict[str, Any]],
+    *,
+    only_ids: str | None,
+    only_tags: str | None,
+) -> List[Dict[str, Any]]:
+    ids = {tok.strip() for tok in str(only_ids or "").split(",") if tok.strip()}
+    tags = {
+        tok.strip().lower()
+        for tok in str(only_tags or "").split(",")
+        if tok.strip()
+    }
+
+    out = list(questions)
+    if ids:
+        out = [q for q in out if str(q.get("id") or "").strip() in ids]
+    if tags:
+        filtered: List[Dict[str, Any]] = []
+        for q in out:
+            raw_tags = q.get("tags")
+            if not isinstance(raw_tags, list):
+                raw_tags = []
+            norm = {str(tag).strip().lower() for tag in raw_tags if str(tag).strip()}
+            if norm.intersection(tags):
+                filtered.append(q)
+        out = filtered
+    return out
+
+
 def _last_event(events: List[Dict[str, Any]], name: str) -> Dict[str, Any]:
     for ev in reversed(events):
         if ev.get("event") == name:
@@ -624,6 +653,11 @@ async def _run(args: argparse.Namespace) -> int:
         raise FileNotFoundError(f"Questions file not found: {questions_path}")
 
     questions = _load_questions(questions_path)
+    questions = _filter_questions(
+        questions,
+        only_ids=getattr(args, "only_ids", None),
+        only_tags=getattr(args, "only_tags", None),
+    )
     if args.shuffle:
         rng = random.Random(int(args.seed))
         rng.shuffle(questions)
@@ -644,6 +678,10 @@ async def _run(args: argparse.Namespace) -> int:
     print(f"[bench] run_id={run_id}")
     print(f"[bench] session_id={session_id}")
     print(f"[bench] questions={len(questions)} source={questions_path}")
+    if getattr(args, "only_ids", None):
+        print(f"[bench] filter only_ids={args.only_ids}")
+    if getattr(args, "only_tags", None):
+        print(f"[bench] filter only_tags={args.only_tags}")
     print(
         "[bench] system2_low_signal_filter={mode}".format(
             mode=low_signal_filter
@@ -921,6 +959,16 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--require-critic-health",
         action="store_true",
         help="Abort benchmark when critic health check fails.",
+    )
+    parser.add_argument(
+        "--only-ids",
+        default=None,
+        help="Comma separated question ids to run (e.g., logic_001,code_review_001).",
+    )
+    parser.add_argument(
+        "--only-tags",
+        default=None,
+        help="Comma separated tags; run questions that match any tag.",
     )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--shuffle", action="store_true")
