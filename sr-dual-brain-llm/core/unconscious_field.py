@@ -68,12 +68,23 @@ try:  # Optional imports (graceful)
 except Exception:  # pragma: no cover
     HAVE_NUMPY = False
 
-try:  # Optional imports (graceful)
-    import matplotlib.pyplot as plt  # type: ignore
+plt = None
+HAVE_MPL = False
 
+
+def _lazy_import_mpl():  # pragma: no cover - optional dependency
+    global HAVE_MPL, plt
+    if HAVE_MPL and plt is not None:
+        return plt
+    try:
+        import matplotlib.pyplot as plt_mod  # type: ignore
+    except Exception:
+        HAVE_MPL = False
+        plt = None
+        return None
     HAVE_MPL = True
-except Exception:  # pragma: no cover
-    HAVE_MPL = False
+    plt = plt_mod
+    return plt_mod
 
 
 # ---------------------------------------------------------------------------
@@ -830,20 +841,21 @@ def export_csv(path: str, events: List[EventMapping]) -> None:
 
 
 def plot_polar(path: str, events: List[EventMapping], title: str = "SpiralArchetopos — Polar (r, θ)") -> None:
-    if not HAVE_MPL:  # pragma: no cover
+    plt_mod = _lazy_import_mpl()
+    if plt_mod is None:  # pragma: no cover
         raise RuntimeError("matplotlib is not available for plotting")
     thetas = [ev.geometry.theta for ev in events]
     rs = [ev.geometry.r for ev in events]
     labels = [ev.event_id for ev in events]
-    plt.figure(figsize=(6, 6))
-    ax = plt.subplot(111, projection="polar")
+    plt_mod.figure(figsize=(6, 6))
+    ax = plt_mod.subplot(111, projection="polar")
     ax.plot(thetas, rs, marker="o")
     for th, r, lab in zip(thetas, rs, labels):
         ax.text(th, r, lab)
     ax.set_title(title)
-    plt.tight_layout()
-    plt.savefig(path, dpi=160)
-    plt.close()
+    plt_mod.tight_layout()
+    plt_mod.savefig(path, dpi=160)
+    plt_mod.close()
 
 
 # ---------------------------------------------------------------------------
