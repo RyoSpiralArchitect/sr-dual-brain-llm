@@ -141,6 +141,30 @@ def _build_pairwise(summary_by_mode: Dict[str, Dict[str, Any]]) -> Dict[str, Dic
                 _safe_float(left.get("error_cases")),
                 _safe_float(right.get("error_cases")),
             ),
+            "acc_override_consult_rate_delta": _delta(
+                _safe_float(left.get("acc_override_consult_rate")),
+                _safe_float(right.get("acc_override_consult_rate")),
+            ),
+            "acc_system2_bump_rate_delta": _delta(
+                _safe_float(left.get("acc_system2_bump_rate")),
+                _safe_float(right.get("acc_system2_bump_rate")),
+            ),
+            "acc_temperature_drop_avg_delta": _delta(
+                _safe_float(left.get("acc_temperature_drop_avg")),
+                _safe_float(right.get("acc_temperature_drop_avg")),
+            ),
+            "cerebellum_applied_rate_delta": _delta(
+                _safe_float(left.get("cerebellum_applied_rate")),
+                _safe_float(right.get("cerebellum_applied_rate")),
+            ),
+            "cerebellum_issue_reduction_rate_delta": _delta(
+                _safe_float(left.get("cerebellum_issue_reduction_rate")),
+                _safe_float(right.get("cerebellum_issue_reduction_rate")),
+            ),
+            "cerebellum_resolved_issue_rate_delta": _delta(
+                _safe_float(left.get("cerebellum_resolved_issue_rate")),
+                _safe_float(right.get("cerebellum_resolved_issue_rate")),
+            ),
         }
 
     pairs = [("auto", "off"), ("on", "off"), ("on", "auto")]

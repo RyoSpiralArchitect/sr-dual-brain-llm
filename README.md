@@ -30,6 +30,9 @@ export OPENAI_API_KEY=sk-...
 
 Tip: if you plan to use images at all, **start with a vision-capable model** even for text-only turns to keep the “thinking substrate” consistent across the session.
 
+Security note:
+- Never paste real API keys into chat logs, issues, or this repository. If a key is ever exposed, revoke/rotate it immediately.
+
 ### 1) Install (Python)
 ```bash
 python3 -m venv .venv
@@ -142,6 +145,32 @@ Outputs:
 - History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
 - Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
 
+### 6) ACC + Cerebellum controls (optional)
+This repo includes an ACC-like conflict monitor + cerebellum-like micro-correction loop.
+
+When the deterministic micro-critic finds a high-confidence inconsistency, ACC can:
+- force a right-brain consult (even if policy would skip)
+- lower temperature (bias toward precision)
+- bump `system2_mode=auto` into System2 when it would otherwise stay off (if both hemispheres have external LLMs configured)
+
+Enable (suggested):
+```bash
+export DUALBRAIN_ACC_OVERRIDE_CONSULT=1
+export DUALBRAIN_ACC_TEMPERATURE_DROP=0.25
+export DUALBRAIN_ACC_SYSTEM2_BUMP=1
+```
+
+Tuning (optional):
+```bash
+export DUALBRAIN_ACC_CONFLICT_THRESHOLD=0.75
+export DUALBRAIN_ACC_MICRO_MIN_CONFIDENCE=0.86
+export DUALBRAIN_ACC_MICRO_MAX_ISSUES=6
+```
+
+Benchmark reports now also include summary keys for these loops (when active):
+- `acc_override_consult_rate`, `acc_system2_bump_rate`, `acc_temperature_drop_avg`
+- `cerebellum_applied_rate`, `cerebellum_issue_reduction_rate`, `cerebellum_resolved_issue_rate`
+
 ### Benchmark log (latest runs)
 
 Keep a short log here so benchmark trends are visible without opening JSON files.
@@ -149,6 +178,12 @@ Keep a short log here so benchmark trends are visible without opening JSON files
 | Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result (`on` vs `auto`) | Report |
 |---|---|---|---:|---|---|---|
 | 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
+
+Single-mode runs:
+
+| Date (UTC) | Provider / Model | Mode | N | LLM capable | Critic health gate | Key result | Report |
+|---|---|---|---:|---|---|---|---|
+| 2026-02-25 | (none; micro-only) | `on` | 15 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.3529`, `resolved_issue_rate=0.4286`, `avg_latency_ms_all_cases=404.28ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 
 Repro command:
 

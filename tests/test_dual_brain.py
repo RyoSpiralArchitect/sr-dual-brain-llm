@@ -1240,6 +1240,268 @@ def test_system2_skips_revision_when_critic_ok():
     assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
 
 
+def test_cerebellum_micro_correction_repairs_arithmetic_without_system2():
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            assert "Cerebellar micro-correction" in info
+            assert "[micro:arithmetic]" in info
+            return "2+2=4"
+
+    controller = DualBrainController(
+        callosum=DummyCallosum(),
+        memory=SharedMemory(),
+        left_model=RevisingLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="conservative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=TrackingTelemetry(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="auto"))
+
+    assert answer == "2+2=4"
+    assert controller.left_model.integrations == 1
+
+
+def test_cerebellum_micro_correction_respects_system2_off(monkeypatch):
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "SHOULD_NOT_RUN"
+
+    monkeypatch.setenv("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", "1")
+    monkeypatch.setenv("DUALBRAIN_ACC_MONITOR", "1")
+
+    controller = DualBrainController(
+        callosum=DummyCallosum(),
+        memory=SharedMemory(),
+        left_model=RevisingLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="conservative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=TrackingTelemetry(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2?", system2_mode="off"))
+
+    assert answer == "2+2=5"
+    assert controller.left_model.integrations == 0
+
+
+def test_acc_override_consult_triggers_right_brain_consult(monkeypatch):
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "2+2=4"
+
+    monkeypatch.setenv("DUALBRAIN_ACC_OVERRIDE_CONSULT", "1")
+    monkeypatch.setenv("DUALBRAIN_ACC_CONFLICT_THRESHOLD", "0.6")
+
+    callosum = DummyCallosum()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=RevisingLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="conservative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=TrackingTelemetry(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("Compute 2+2", system2_mode="auto"))
+
+    assert answer == "2+2=4"
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_DETAIL"
+    assert controller.left_model.integrations == 1
+
+
+def test_acc_temperature_drop_lowers_consult_temperature(monkeypatch):
+    class WrongMathLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return draft
+
+    monkeypatch.setenv("DUALBRAIN_ACC_OVERRIDE_CONSULT", "1")
+    monkeypatch.setenv("DUALBRAIN_ACC_CONFLICT_THRESHOLD", "0.6")
+
+    def _run_with_drop(drop: float) -> float:
+        monkeypatch.setenv("DUALBRAIN_ACC_TEMPERATURE_DROP", str(drop))
+        callosum = DummyCallosum()
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=WrongMathLeft(),
+            right_model=RightBrainModel(),
+            policy=AlwaysSkipPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="conservative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=TrackingTelemetry(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+        asyncio.run(controller.process("Compute 2+2", system2_mode="auto"))
+        assert callosum.payloads
+        return float(callosum.payloads[0]["payload"].get("temperature"))
+
+    baseline = _run_with_drop(0.0)
+    lowered = _run_with_drop(0.25)
+    assert lowered < baseline
+
+
+def test_acc_system2_bump_promotes_easy_numeric_to_system2(monkeypatch):
+    class PercentLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = 0
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "20 percent of 50 is 12."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations += 1
+            return "20 percent of 50 is 10."
+
+    class PercentCriticCallosum(DummyCallosum):
+        async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+            if payload.get("type") == "ASK_CRITIC":
+                self.payloads.append({"payload": payload, "timeout_ms": timeout_ms})
+                return {
+                    "qid": payload.get("qid"),
+                    "verdict": "issues",
+                    "issues": ["20 percent of 50 should be 10, not 12."],
+                    "fixes": ["Compute 50 * 0.2 = 10."],
+                    "critic_sum": "Issues:\n- 20 percent of 50 should be 10, not 12.\nFixes:\n- Compute 50 * 0.2 = 10.",
+                    "confidence_r": 0.9,
+                }
+            return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+    monkeypatch.setenv("DUALBRAIN_ACC_SYSTEM2_BUMP", "1")
+    monkeypatch.setenv("DUALBRAIN_ACC_CONFLICT_THRESHOLD", "0.6")
+
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    callosum = PercentCriticCallosum()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=PercentLeft(),
+        right_model=right,
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="conservative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=TrackingTelemetry(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(controller.process("20 percent of 50", system2_mode="auto"))
+
+    assert answer == "20 percent of 50 is 10."
+    assert callosum.payloads
+    assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
+    assert controller.left_model.integrations == 1
+
+
 def test_system2_auto_triggers_on_structured_multiline_input():
     class RevisingLeft:
         uses_external_llm = True

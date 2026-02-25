@@ -58,7 +58,13 @@ def test_index_episode_tracks_collaboration_metadata():
 def test_embedding_is_deterministic_across_hash_seeds():
     project_root = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm"
     env = os.environ.copy()
-    env["PYTHONPATH"] = f"{project_root}{os.pathsep}{env.get('PYTHONPATH', '')}"
+    # Run the subprocess with `-S` (no site initialization) to avoid flaky
+    # third-party startup hooks on some environments. We explicitly pass through
+    # any site-packages already on *this* interpreter's path so dependencies like
+    # numpy remain importable.
+    site_paths = [p for p in sys.path if p and "site-packages" in p]
+    env_paths = [str(project_root), *site_paths, env.get("PYTHONPATH", "")]
+    env["PYTHONPATH"] = os.pathsep.join([p for p in env_paths if p])
 
     script = (
         "import json; "
@@ -70,7 +76,11 @@ def test_embedding_is_deterministic_across_hash_seeds():
     def run(seed: str) -> list[float]:
         run_env = dict(env)
         run_env["PYTHONHASHSEED"] = seed
-        out = subprocess.check_output([sys.executable, "-c", script], env=run_env, text=True)
+        out = subprocess.check_output(
+            [sys.executable, "-S", "-c", script],
+            env=run_env,
+            text=True,
+        )
         marker = "EMBED="
         for line in reversed(out.splitlines()):
             if line.startswith(marker):

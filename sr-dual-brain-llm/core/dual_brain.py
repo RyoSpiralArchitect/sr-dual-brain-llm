@@ -31,6 +31,8 @@ from .neural_impulse import (
     Neuron,
     NeurotransmitterType,
 )
+from .anterior_cingulate import AnteriorCingulateCortex
+from .cerebellum import Cerebellum
 from .micro_critic import micro_criticise_reasoning
 
 
@@ -1099,6 +1101,8 @@ class DualBrainController:
         psychoid_attention_adapter: Optional[PsychoidAttentionAdapter] = None,
         coherence_resonator: Optional[CoherenceResonator] = None,
         neural_integrator: Optional[NeuralIntegrator] = None,
+        anterior_cingulate_cortex: Optional[AnteriorCingulateCortex] = None,
+        cerebellum: Optional[Cerebellum] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -1121,6 +1125,8 @@ class DualBrainController:
         self.default_mode_network = default_mode_network
         self.psychoid_adapter = psychoid_attention_adapter
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
+        self.anterior_cingulate_cortex = anterior_cingulate_cortex or AnteriorCingulateCortex()
+        self.cerebellum = cerebellum or Cerebellum()
         self._last_leading_brain: Optional[str] = "right"
         self._default_mode_low_focus_streak = 0
         
@@ -1429,13 +1435,18 @@ class DualBrainController:
             flags=re.IGNORECASE,
         ):
             return "hard" if length >= 180 else "medium"
-        if re.search(r"`[^`]{8,}`", q) and re.search(
+        inline_code = re.search(r"`([^`]{8,})`", q)
+        if inline_code and re.search(
             r"(review|correctness|edge[- ]?case|bug|fix|snippet)",
             q,
             flags=re.IGNORECASE,
         ):
-            # Inline code + review language is a strong signal even when the prompt is short.
-            return "hard" if length >= 260 else "medium"
+            # Inline code + review language is a useful signal, but very short
+            # snippets are often "easy" even when correctness is mentioned.
+            code_len = len(inline_code.group(1))
+            if length < 140 and code_len < 80:
+                return "easy"
+            return "hard" if (length >= 260 or code_len >= 220) else "medium"
         if (
             length >= 64
             and re.search(
@@ -1676,6 +1687,10 @@ class DualBrainController:
         path.append(dialogue_entry)
 
         integration_modules = ["CoherenceResonator", "Auditor"]
+        if self.anterior_cingulate_cortex is not None:
+            integration_modules.append("AnteriorCingulateCortex")
+        if self.cerebellum is not None:
+            integration_modules.append("Cerebellum")
         if self.default_mode_network is not None:
             integration_modules.append("DefaultModeNetwork")
         if self.psychoid_adapter is not None:
@@ -2470,6 +2485,118 @@ class DualBrainController:
             hemisphere_bias,
             qid=qid_value,
         )
+        # ACC conflict-driven control (optional): use deterministic micro-critic + ACC signal
+        # to modulate consult/system2/temperature when the draft appears inconsistent.
+        acc_override_consult = _env_flag("DUALBRAIN_ACC_OVERRIDE_CONSULT", False)
+        acc_system2_bump = _env_flag("DUALBRAIN_ACC_SYSTEM2_BUMP", False)
+        acc_temp_drop = _env_float(
+            "DUALBRAIN_ACC_TEMPERATURE_DROP",
+            0.0,
+            minimum=0.0,
+            maximum=0.6,
+        )
+        acc_control_enabled = bool(
+            (acc_override_consult or acc_system2_bump or acc_temp_drop > 0.0)
+            and not is_trivial_chat
+            and draft
+            and str(draft).strip()
+            and self.anterior_cingulate_cortex is not None
+        )
+        if acc_control_enabled:
+            micro_pre = None
+            try:
+                micro_pre = micro_criticise_reasoning(question, draft)
+            except Exception:
+                micro_pre = None
+            acc_signal_pre = None
+            if micro_pre is not None:
+                try:
+                    acc_signal_pre = self.anterior_cingulate_cortex.monitor(
+                        question=question,
+                        draft=draft,
+                        left_confidence=float(confidence or 0.0),
+                        micro=micro_pre,
+                    )
+                except Exception:  # pragma: no cover - best-effort
+                    acc_signal_pre = None
+            if acc_signal_pre is not None and micro_pre is not None:
+                acc_payload_pre = acc_signal_pre.to_payload()
+                decision.state["acc_conflict_pre"] = acc_payload_pre
+                try:
+                    self.telemetry.log(
+                        "acc_control_signal",
+                        qid=decision.qid,
+                        signal=acc_payload_pre,
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
+
+                threshold = _env_float(
+                    "DUALBRAIN_ACC_CONFLICT_THRESHOLD",
+                    0.75,
+                    minimum=0.0,
+                    maximum=1.0,
+                )
+                min_micro_conf = _env_float(
+                    "DUALBRAIN_ACC_MICRO_MIN_CONFIDENCE",
+                    0.86,
+                    minimum=0.0,
+                    maximum=1.0,
+                )
+                max_micro_issues = _env_int(
+                    "DUALBRAIN_ACC_MICRO_MAX_ISSUES",
+                    6,
+                    minimum=1,
+                    maximum=12,
+                )
+                eligible = bool(
+                    micro_pre.verdict == "issues"
+                    and float(micro_pre.confidence_r) >= float(min_micro_conf)
+                    and len(micro_pre.issues or []) <= int(max_micro_issues)
+                    and float(acc_signal_pre.conflict_level) >= float(threshold)
+                )
+                if eligible:
+                    if acc_temp_drop > 0.0:
+                        base_temp = float(decision.temperature)
+                        new_temp = max(
+                            0.1,
+                            min(
+                                0.95,
+                                base_temp - float(acc_temp_drop) * float(acc_signal_pre.conflict_level),
+                            ),
+                        )
+                        if new_temp < base_temp:
+                            decision.temperature = new_temp
+                            decision.state["acc_temperature"] = {
+                                "base": float(base_temp),
+                                "adjusted": float(new_temp),
+                                "drop": float(base_temp - new_temp),
+                                "conflict": float(acc_signal_pre.conflict_level),
+                                "domain": str(micro_pre.domain),
+                            }
+                    if acc_override_consult and decision.action == 0 and self.right_model is not None:
+                        decision.action = 1
+                        decision.state["acc_override_consult"] = True
+                    if (
+                        acc_system2_bump
+                        and system2_norm == "auto"
+                        and not system2_active
+                        and system2_capable
+                    ):
+                        system2_active = True
+                        system2_reason = "acc_bump"
+                        decision.state["acc_system2_bump"] = True
+                        try:
+                            self.telemetry.log(
+                                "acc_system2_bump",
+                                qid=decision.qid,
+                                conflict=float(acc_signal_pre.conflict_level),
+                                micro_domain=str(micro_pre.domain),
+                                micro_confidence=float(micro_pre.confidence_r),
+                                micro_issues=int(len(micro_pre.issues or [])),
+                            )
+                        except Exception:  # pragma: no cover - telemetry best-effort
+                            pass
         if precision_priority:
             decision.state["q_type"] = self._infer_question_type(
                 question,
@@ -3991,6 +4118,143 @@ class DualBrainController:
                     latency_ms=float(advice.latency_ms),
                     source=str(advice.source),
                 )
+
+        # ACC conflict monitoring + cerebellar micro-correction:
+        # - only when System2 is inactive,
+        # - and only in System2 auto mode (avoid surprising extra LLM passes when forced off),
+        # - and only when the left model can do safe integration (external LLM available).
+        if (
+            not system2_active
+            and system2_norm == "auto"
+            and not is_trivial_chat
+            and final_answer
+            and str(final_answer).strip()
+        ):
+            acc_enabled = _env_flag("DUALBRAIN_ACC_MONITOR", True)
+            cerebellum_enabled = _env_flag("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", True)
+            micro_result = None
+            if acc_enabled or cerebellum_enabled:
+                try:
+                    micro_result = micro_criticise_reasoning(question, final_answer)
+                except Exception:
+                    micro_result = None
+
+            if acc_enabled and self.anterior_cingulate_cortex is not None:
+                try:
+                    acc_signal = self.anterior_cingulate_cortex.monitor(
+                        question=question,
+                        draft=final_answer,
+                        left_confidence=float(confidence or 0.0),
+                        micro=micro_result,
+                    )
+                except Exception:  # pragma: no cover - best-effort
+                    acc_signal = None
+                if acc_signal is not None:
+                    acc_payload = acc_signal.to_payload()
+                    decision.state["acc_conflict"] = acc_payload
+                    try:
+                        self.telemetry.log(
+                            "acc_conflict_monitor",
+                            qid=decision.qid,
+                            signal=acc_payload,
+                        )
+                    except Exception:  # pragma: no cover - telemetry best-effort
+                        pass
+
+            can_micro_correct = bool(
+                cerebellum_enabled
+                and micro_result is not None
+                and getattr(self.left_model, "uses_external_llm", False)
+                and self.cerebellum is not None
+            )
+            if can_micro_correct and micro_result is not None:
+                min_conf = _env_float(
+                    "DUALBRAIN_CEREBELLUM_MICRO_MIN_CONFIDENCE",
+                    float(getattr(self.cerebellum, "min_confidence", 0.88)),
+                    minimum=0.0,
+                    maximum=1.0,
+                )
+                max_issues = _env_int(
+                    "DUALBRAIN_CEREBELLUM_MICRO_MAX_ISSUES",
+                    int(getattr(self.cerebellum, "max_issues", 4)),
+                    minimum=1,
+                    maximum=12,
+                )
+                if (
+                    micro_result.verdict == "issues"
+                    and float(micro_result.confidence_r) >= float(min_conf)
+                    and len(micro_result.issues) <= int(max_issues)
+                ):
+                    correction_started = time.perf_counter()
+                    cerebellum_applied = False
+                    resolved = False
+                    initial_issues = len(micro_result.issues)
+                    final_issues = initial_issues
+                    try:
+                        await _emit_reset_if_needed()
+                        revised = await self.left_model.integrate_info_async(
+                            question=question,
+                            draft=final_answer,
+                            info=self.cerebellum.build_internal_notes(micro_result),
+                            temperature=max(
+                                0.15, min(0.35, float(decision.temperature))
+                            ),
+                            on_delta=None if stream_final_only else delta_cb,
+                        )
+                    except Exception:  # pragma: no cover - defensive guard
+                        revised = final_answer
+                    else:
+                        if revised and revised.strip() and revised != final_answer:
+                            cerebellum_applied = True
+                            final_answer = revised
+                        try:
+                            post_micro = micro_criticise_reasoning(question, final_answer)
+                        except Exception:
+                            post_micro = None
+                        if post_micro is not None:
+                            final_issues = len(post_micro.issues)
+                            resolved = bool(
+                                post_micro.verdict == "ok" or final_issues == 0
+                            )
+                    finally:
+                        _phase_add("cerebellum", correction_started)
+
+                    decision.state["cerebellum_micro"] = {
+                        "applied": bool(cerebellum_applied),
+                        "domain": str(micro_result.domain),
+                        "initial_issues": int(initial_issues),
+                        "final_issues": int(final_issues),
+                        "resolved": bool(resolved),
+                        "confidence": float(micro_result.confidence_r),
+                    }
+                    try:
+                        self.telemetry.log(
+                            "cerebellum_micro_correction",
+                            qid=decision.qid,
+                            applied=bool(cerebellum_applied),
+                            domain=str(micro_result.domain),
+                            initial_issues=int(initial_issues),
+                            final_issues=int(final_issues),
+                            resolved=bool(resolved),
+                            confidence=float(micro_result.confidence_r),
+                        )
+                    except Exception:  # pragma: no cover - telemetry best-effort
+                        pass
+                    inner_steps.append(
+                        InnerDialogueStep(
+                            phase="cerebellum_micro",
+                            role="cerebellum",
+                            content=_truncate_text(micro_result.critic_sum, 180),
+                            metadata={
+                                "applied": bool(cerebellum_applied),
+                                "domain": str(micro_result.domain),
+                                "initial_issues": int(initial_issues),
+                                "final_issues": int(final_issues),
+                                "resolved": bool(resolved),
+                                "confidence": float(micro_result.confidence_r),
+                            },
+                        )
+                    )
 
         integrated_answer = final_answer
         user_answer = integrated_answer

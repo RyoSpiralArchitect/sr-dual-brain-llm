@@ -412,6 +412,52 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         len(resolved_issue_cases) / ok_count if ok_count > 0 else None
     )
 
+    acc_conflict_values = [
+        float(c["acc_conflict_level"])
+        for c in ok_cases
+        if c.get("acc_conflict_level") is not None
+    ]
+    acc_override_cases = [c for c in ok_cases if c.get("acc_override_consult") is True]
+    acc_system2_bump_cases = [c for c in ok_cases if c.get("acc_system2_bump") is True]
+    acc_temp_drops = [
+        float(c["acc_temperature_drop"])
+        for c in ok_cases
+        if c.get("acc_temperature_drop") is not None
+    ]
+
+    cerebellum_applied_cases = [
+        c for c in ok_cases if c.get("cerebellum_applied") is True
+    ]
+    cerebellum_resolved_cases = [
+        c for c in ok_cases if c.get("cerebellum_resolved") is True
+    ]
+    cerebellum_measured = [
+        c
+        for c in ok_cases
+        if c.get("cerebellum_initial_issues") is not None
+        and c.get("cerebellum_final_issues") is not None
+    ]
+    cerebellum_sum_initial = sum(int(c["cerebellum_initial_issues"]) for c in cerebellum_measured)
+    cerebellum_sum_final = sum(int(c["cerebellum_final_issues"]) for c in cerebellum_measured)
+    cerebellum_net_reduction = cerebellum_sum_initial - cerebellum_sum_final
+    cerebellum_reduction_rate = (
+        cerebellum_net_reduction / cerebellum_sum_initial
+        if cerebellum_sum_initial > 0
+        else None
+    )
+    cerebellum_issue_cases = [
+        c for c in cerebellum_measured if int(c["cerebellum_initial_issues"]) > 0
+    ]
+    cerebellum_issue_cases_count = len(cerebellum_issue_cases)
+    cerebellum_resolved_issue_cases = [
+        c for c in cerebellum_issue_cases if int(c["cerebellum_final_issues"]) == 0
+    ]
+    cerebellum_resolved_issue_rate = (
+        len(cerebellum_resolved_issue_cases) / cerebellum_issue_cases_count
+        if cerebellum_issue_cases_count > 0
+        else None
+    )
+
     return {
         "total_cases": total,
         "ok_cases": len(ok_cases),
@@ -457,6 +503,36 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
             if per_case_reduction_all
             else None
         ),
+        "acc_conflict_signal_cases": len(acc_conflict_values),
+        "acc_conflict_level_avg": (
+            statistics.mean(acc_conflict_values) if acc_conflict_values else None
+        ),
+        "acc_override_consult_cases": len(acc_override_cases),
+        "acc_override_consult_rate": (
+            len(acc_override_cases) / ok_count if ok_count > 0 else None
+        ),
+        "acc_system2_bump_cases": len(acc_system2_bump_cases),
+        "acc_system2_bump_rate": (
+            len(acc_system2_bump_cases) / ok_count if ok_count > 0 else None
+        ),
+        "acc_temperature_drop_avg": (
+            statistics.mean(acc_temp_drops) if acc_temp_drops else None
+        ),
+        "cerebellum_applied_cases": len(cerebellum_applied_cases),
+        "cerebellum_applied_rate": (
+            len(cerebellum_applied_cases) / ok_count if ok_count > 0 else None
+        ),
+        "cerebellum_resolved_cases": len(cerebellum_resolved_cases),
+        "cerebellum_resolved_rate": (
+            len(cerebellum_resolved_cases) / ok_count if ok_count > 0 else None
+        ),
+        "cerebellum_measured_cases": len(cerebellum_measured),
+        "cerebellum_sum_initial_issues": cerebellum_sum_initial,
+        "cerebellum_sum_final_issues": cerebellum_sum_final,
+        "cerebellum_net_issue_reduction": cerebellum_net_reduction,
+        "cerebellum_issue_reduction_rate": cerebellum_reduction_rate,
+        "cerebellum_issue_cases": cerebellum_issue_cases_count,
+        "cerebellum_resolved_issue_rate": cerebellum_resolved_issue_rate,
     }
 
 
@@ -615,6 +691,34 @@ async def _run_case(
         else {}
     )
 
+    acc_conflict_level = None
+    acc_conflict_payload = policy_state.get("acc_conflict_pre")
+    if isinstance(acc_conflict_payload, dict):
+        acc_conflict_level = _safe_float(acc_conflict_payload.get("conflict_level"))
+    acc_override_consult = _safe_bool(policy_state.get("acc_override_consult"))
+    acc_system2_bump = _safe_bool(policy_state.get("acc_system2_bump"))
+    acc_temperature_drop = None
+    acc_temp_payload = policy_state.get("acc_temperature")
+    if isinstance(acc_temp_payload, dict):
+        acc_temperature_drop = _safe_float(acc_temp_payload.get("drop"))
+
+    cerebellum_payload = policy_state.get("cerebellum_micro")
+    cerebellum_applied = None
+    cerebellum_resolved = None
+    cerebellum_initial_issues = None
+    cerebellum_final_issues = None
+    cerebellum_domain = None
+    cerebellum_confidence = None
+    if isinstance(cerebellum_payload, dict):
+        cerebellum_applied = _safe_bool(cerebellum_payload.get("applied"))
+        cerebellum_resolved = _safe_bool(cerebellum_payload.get("resolved"))
+        cerebellum_initial_issues = _safe_int(cerebellum_payload.get("initial_issues"))
+        cerebellum_final_issues = _safe_int(cerebellum_payload.get("final_issues"))
+        cerebellum_domain = (
+            str(cerebellum_payload.get("domain") or "").strip() or None
+        )
+        cerebellum_confidence = _safe_float(cerebellum_payload.get("confidence"))
+
     return {
         "index": index,
         "id": question_entry.get("id") or f"q{index:03d}",
@@ -644,6 +748,16 @@ async def _run_case(
         "phase_latency_ms": phase_latency,
         "error": error_text,
         "answer_preview": (answer[:240] if answer else ""),
+        "acc_conflict_level": acc_conflict_level,
+        "acc_override_consult": acc_override_consult,
+        "acc_system2_bump": acc_system2_bump,
+        "acc_temperature_drop": acc_temperature_drop,
+        "cerebellum_applied": cerebellum_applied,
+        "cerebellum_resolved": cerebellum_resolved,
+        "cerebellum_initial_issues": cerebellum_initial_issues,
+        "cerebellum_final_issues": cerebellum_final_issues,
+        "cerebellum_domain": cerebellum_domain,
+        "cerebellum_confidence": cerebellum_confidence,
     }
 
 
