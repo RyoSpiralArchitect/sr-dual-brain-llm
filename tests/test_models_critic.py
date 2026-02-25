@@ -621,3 +621,147 @@ def test_criticise_reasoning_micro_critic_handles_speed_unit_miles_per_hour_phra
     assert isinstance(issues, list) and issues
     assert any("96.5606" in str(item) for item in issues)
     assert str(result.get("critic_kind") or "").startswith("micro")
+
+
+def test_criticise_reasoning_micro_critic_handles_logic_all_some_inference():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-31",
+            "If all A are B, and some B are C, does it follow that some A are C? Give a precise logical explanation.",
+            "Yes, it follows.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("invalid" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_logic_affirming_consequent():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-32",
+            "Is this inference valid? If P then Q. Q. Therefore P. Explain the fallacy (or justify if valid).",
+            "Valid inference (modus ponens).",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("consequent" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_logic_demorgan_not_and():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-33",
+            "Use De Morgan's laws to rewrite: NOT (A AND B). Provide an equivalent expression.",
+            "Equivalent: NOT A AND NOT B.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("de morgan" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_algo_sort_complexity():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-34",
+            "Compare quicksort and mergesort for worst-case and average-case time complexity, and explain when each is preferable in practice.",
+            "Both are O(n).",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("quicksort" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_constraints_single_worker_schedule():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-35",
+            "Plan a 3-task schedule (T1=2h, T2=3h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+            "Schedule: T2 then T1 then T3.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("makespan" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_policy_pii_log_sharing_rules():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-36",
+            "Draft a concise log-sharing policy that removes PII while preserving enough detail for incident debugging. Include 4 concrete rules.",
+            "- Remove PII.\n- Keep some context.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("4" in str(item) for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_evidence_strength_study_quality():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-37",
+            "Two studies claim opposite outcomes. Study A has n=30, no control group. Study B has n=2,000 randomized control. Which should weigh more and why?",
+            "Study A should weigh more.",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("study b" in str(item).lower() for item in (result.get("issues") or []))
+
+
+def test_criticise_reasoning_micro_critic_handles_japanese_implication_transitivity():
+    model = RightBrainModel()
+    model._llm_client = _FailingLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+
+    result = asyncio.run(
+        model.criticise_reasoning(
+            "qid-38",
+            "次の主張を検証してください: 『AならB、BならC、したがってAならC』。推論の妥当性と注意点を簡潔に述べてください。",
+            "誤りです。",
+        )
+    )
+
+    assert result.get("verdict") == "issues"
+    assert str(result.get("critic_kind") or "").startswith("micro")
+    assert any("valid" in str(item).lower() for item in (result.get("issues") or []))

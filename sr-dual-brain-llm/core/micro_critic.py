@@ -1561,7 +1561,7 @@ def _micro_code_review_avg(question: str, draft: str) -> Optional[MicroCriticRes
         fixes.append("Clarify the contract (requires a sized sequence), or convert once (nums=list(nums)) / implement a one-pass mean.")
     if not issues:
         return _critic_payload(domain="code_review", issues=[], fixes=[], confidence=0.7)
-    fixes.append("Consider validating numeric types if this is a public utility.")
+    fixes.append("Validate numeric types if this is a public utility.")
     return _critic_payload(domain="code_review", issues=issues[:6], fixes=fixes[:8], confidence=0.85)
 
 def _micro_causal_triage_plan(question: str, draft: str) -> Optional[MicroCriticResult]:
@@ -1622,7 +1622,7 @@ def _micro_causal_triage_plan(question: str, draft: str) -> Optional[MicroCritic
         fixes.append("Start by comparing metrics pre vs post deployment (latency percentiles + error signatures) with a clear timeframe.")
     if not has_isolation:
         issues.append("Missing an isolation/experiment step (change one factor at a time) to avoid correlation→causation leaps.")
-        fixes.append("Add a controlled isolation step: rollback/canary/bisect/config toggle (if available) to test candidate causes.")
+        fixes.append("Include a controlled isolation step: rollback/canary/bisect/config toggle (if available) to test candidate causes.")
     if not has_confounders and (not has_baseline or not has_isolation):
         issues.append("Missing explicit confounder checks (traffic spikes, upstream dependencies, etc.).")
         fixes.append("Check external factors (traffic mix, upstream latency/errors, infra/network changes) before attributing causation.")
@@ -1636,6 +1636,361 @@ def _micro_causal_triage_plan(question: str, draft: str) -> Optional[MicroCritic
         confidence=0.82,
     )
 
+def _micro_logic_all_some_inference(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    all_pairs = re.findall(r"\ball\s+([a-z])\s+are\s+([a-z])\b", q_lower)
+    some_pairs = re.findall(r"\bsome\s+([a-z])\s+are\s+([a-z])\b", q_lower)
+    if len(all_pairs) != 1 or len(some_pairs) < 2:
+        return None
+    x, y = all_pairs[0]
+    premise = next((pair for pair in some_pairs if pair[0] == y), None)
+    if not premise:
+        return None
+    _, z = premise
+    if not any(pair[0] == x and pair[1] == z for pair in some_pairs):
+        return None
+
+    d_lower = str(draft or "").lower()
+    invalid_markers = (
+        "does not follow",
+        "doesn't follow",
+        "not necessarily",
+        "cannot conclude",
+        "can't conclude",
+        "cannot infer",
+        "can't infer",
+        "not implied",
+        "not entailed",
+        "does not entail",
+        "doesn't entail",
+        "counterexample",
+        "反例",
+        "必ずしも",
+        "導けない",
+        "導出できない",
+        "成り立たない",
+    )
+    valid_markers = (
+        "it follows",
+        "therefore some a are c",
+        "must be",
+        "necessarily",
+        "valid inference",
+        "entailed",
+        "導ける",
+        "導出できる",
+        "成り立つ",
+    )
+
+    mentions_invalid = any(marker in d_lower for marker in invalid_markers)
+    mentions_valid = any(marker in d_lower for marker in valid_markers)
+    issues: list[str] = []
+    fixes: list[str] = []
+    if mentions_valid and not mentions_invalid:
+        issues.append(f"Inference is invalid: from ∀({x}→{y}) and ∃({y}∧{z}) you cannot conclude ∃({x}∧{z}).")
+        fixes.append(
+            f"State the correct conclusion: it does NOT follow; {x} could be a subset of {y} disjoint from {z}."
+        )
+        fixes.append(f"Give a counterexample (e.g., {x}={{1}}, {y}={{1,2}}, {z}={{2}}).")
+    elif not mentions_invalid:
+        issues.append(f"Missing a clear yes/no conclusion about whether some {x} are {z} follows.")
+        fixes.append("Answer explicitly: it does NOT follow; provide a short counterexample and explain quantifiers.")
+
+    if not issues:
+        return _critic_payload(domain="logic_syllogism", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="logic_syllogism", issues=issues[:4], fixes=fixes[:8], confidence=0.86)
+
+
+def _micro_logic_affirming_consequent(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    m = re.search(r"\bif\s+([a-z])\s+then\s+([a-z])\b", q_lower)
+    if not m:
+        return None
+    p = m.group(1)
+    q = m.group(2)
+    if f"therefore {p}" not in q_lower:
+        return None
+    q_hits = len(re.findall(rf"(?<![a-z]){re.escape(q)}(?![a-z])", q_lower))
+    if q_hits < 2:
+        return None
+
+    d_lower = str(draft or "").lower()
+    invalid_markers = (
+        "affirming the consequent",
+        "fallacy",
+        "invalid",
+        "does not follow",
+        "doesn't follow",
+        "not necessarily",
+        "counterexample",
+        "後件肯定",
+        "誤謬",
+        "反例",
+    )
+    valid_markers = ("valid", "modus ponens", "therefore p is true", "q implies p")
+
+    mentions_invalid = any(marker in d_lower for marker in invalid_markers)
+    mentions_valid = any(marker in d_lower for marker in valid_markers)
+    issues: list[str] = []
+    fixes: list[str] = []
+    if mentions_valid and not mentions_invalid:
+        issues.append(f"This is not a valid inference: it affirms the consequent (If {p}→{q}, {q}, therefore {p}).")
+        fixes.append("Label it: affirming the consequent (invalid).")
+        fixes.append("Provide a counterexample: If it rains then ground is wet; ground is wet; it may still not be raining.")
+    elif not mentions_invalid:
+        issues.append("Missing the key point: the inference is invalid (affirming the consequent) and needs a counterexample.")
+        fixes.append("State it's invalid (affirming the consequent) and include a short counterexample.")
+
+    if not issues:
+        return _critic_payload(domain="logic_fallacy", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="logic_fallacy", issues=issues[:4], fixes=fixes[:8], confidence=0.88)
+
+
+def _micro_logic_demorgan_not_and(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    m = re.search(r"\bnot\s*\(\s*([a-z])\s*(?:and|&&|∧)\s*([a-z])\s*\)", q_lower)
+    if not m:
+        if "de morgan" not in q_lower:
+            return None
+        x, y = "a", "b"
+    else:
+        x, y = m.group(1), m.group(2)
+
+    raw = str(draft or "")
+    d_lower = raw.lower()
+    has_not_x = bool(re.search(rf"(?:\bnot\s*{re.escape(x)}\b|[!¬~]\s*{re.escape(x)}\b)", d_lower))
+    has_not_y = bool(re.search(rf"(?:\bnot\s*{re.escape(y)}\b|[!¬~]\s*{re.escape(y)}\b)", d_lower))
+    has_or = (" or " in d_lower) or ("||" in raw) or ("∨" in raw)
+    has_and = (" and " in d_lower) or ("&&" in raw) or ("∧" in raw)
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not (has_not_x and has_not_y and has_or) or (has_and and not has_or):
+        issues.append(f"De Morgan rewrite is incorrect or missing: ¬({x} ∧ {y}) should become (¬{x}) ∨ (¬{y}).")
+        fixes.append(f"Rewrite as: NOT {x} OR NOT {y} (¬{x} ∨ ¬{y}).")
+
+    if not issues:
+        return _critic_payload(domain="logic_demorgan", issues=[], fixes=[], confidence=0.8)
+    return _critic_payload(domain="logic_demorgan", issues=issues[:3], fixes=fixes[:6], confidence=0.9)
+
+
+def _micro_algo_sort_complexity(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    if not ("quicksort" in q_lower and "mergesort" in q_lower):
+        return None
+
+    d_lower = str(draft or "").lower()
+    has_nlogn = bool(re.search(r"(?:n\s*log\s*n|nlogn|o\(\s*n\s*log\s*n\s*\))", d_lower))
+    has_n2 = bool(re.search(r"(?:n\s*\^\s*2|n\*\s*n|n2|n²|o\(\s*n\s*\^\s*2\s*\))", d_lower))
+    quick_mentions = ("quicksort" in d_lower) or ("quick sort" in d_lower)
+    merge_mentions = ("mergesort" in d_lower) or ("merge sort" in d_lower)
+    practice_markers = (
+        "in-place",
+        "in place",
+        "extra memory",
+        "stable",
+        "unstable",
+        "cache",
+        "linked list",
+        "external",
+    )
+    mentions_practice = any(marker in d_lower for marker in practice_markers)
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not (quick_mentions and merge_mentions and has_nlogn):
+        issues.append("Missing core comparison details (name both sorts and include the O(n log n) baseline).")
+        fixes.append("Summarize: Quicksort avg O(n log n), worst O(n^2); Mergesort avg/worst O(n log n).")
+    if not has_n2:
+        issues.append("Missing quicksort worst-case: O(n^2) (e.g., bad pivots / adversarial order).")
+        fixes.append("State quicksort worst-case is O(n^2) (mitigate with randomized/median-of-three pivots).")
+    if not mentions_practice:
+        issues.append("Missing practical trade-offs (memory/stability/in-place/external sorting).")
+        fixes.append("Mention trade-offs: quicksort often in-place + cache-friendly; mergesort stable but needs extra memory (arrays) / good for linked lists & external sort.")
+
+    if not issues:
+        return _critic_payload(domain="algo_complexity", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="algo_complexity", issues=issues[:5], fixes=fixes[:8], confidence=0.84)
+
+
+def _micro_constraints_single_worker_schedule(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    if "one worker" not in q_lower:
+        return None
+    t1_m = re.search(r"\bt1\s*=\s*(\d+(?:\.\d+)?)\s*h\b", q_lower)
+    t2_m = re.search(r"\bt2\s*=\s*(\d+(?:\.\d+)?)\s*h\b", q_lower)
+    t3_m = re.search(r"\bt3\s*=\s*(\d+(?:\.\d+)?)\s*h\b", q_lower)
+    if not (t1_m and t2_m and t3_m):
+        return None
+    t1 = _safe_float(t1_m.group(1))
+    t2 = _safe_float(t2_m.group(1))
+    t3 = _safe_float(t3_m.group(1))
+    if t1 is None or t2 is None or t3 is None:
+        return None
+    total = t1 + t2 + t3
+    if total <= 0:
+        return None
+
+    d_lower = str(draft or "").lower()
+    mentions_total = _draft_mentions_value(draft, total)
+    mentions_order = bool(re.search(r"t1.*(?:->|→|then|before).*t2", d_lower)) or ("t2 after t1" in d_lower)
+    has_tasks = all(tok in d_lower for tok in ("t1", "t2", "t3"))
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not mentions_total:
+        issues.append(f"With one worker, makespan is fixed at T1+T2+T3 = {total:g}h; state the completion time.")
+        fixes.append(f"State makespan: {total:g}h total (single worker, no parallelism).")
+    if not mentions_order or not has_tasks:
+        issues.append("Schedule must respect the precedence (T2 after T1) and include all tasks.")
+        fixes.append(f"Provide a valid order, e.g., T3 (0–{t3:g}h) → T1 ({t3:g}–{t3+t1:g}h) → T2 ({t3+t1:g}–{total:g}h).")
+
+    if not issues:
+        return _critic_payload(domain="constraints_schedule", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="constraints_schedule", issues=issues[:4], fixes=fixes[:8], confidence=0.88)
+
+
+def _micro_policy_pii_log_sharing(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    if not ("log-sharing policy" in q_lower and "pii" in q_lower and "4" in q_lower and "rule" in q_lower):
+        return None
+
+    d_lower = str(draft or "").lower()
+    bullet_hits = len(re.findall(r"(?m)^\s*(?:\d{1,2}[.)]|[-*•])\s+", str(draft or "")))
+    bullet_hits += len(re.findall(r"(?im)^\s*rule\s*\d+\b", str(draft or "")))
+    has_4_rules = bullet_hits >= 4
+    privacy_markers = ("pii", "redact", "mask", "hash", "anonym", "email", "phone", "ssn", "ip")
+    debug_markers = ("request id", "correlation", "trace", "timestamp", "error", "stack", "endpoint")
+    has_privacy = any(marker in d_lower for marker in privacy_markers)
+    has_debug = any(marker in d_lower for marker in debug_markers)
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if not has_4_rules:
+        issues.append("Policy must include 4 concrete rules (bullet/numbered).")
+        fixes.append("Provide 4 rules as bullets or numbered items.")
+    if not has_privacy:
+        issues.append("Missing concrete PII handling (redaction/masking/hashing of identifiers).")
+        fixes.append("Include explicit PII redaction rules (emails/phones/IPs/usernames → mask/hash/remove).")
+    if not has_debug:
+        issues.append("Missing debugging-preserving fields (timestamps/request IDs/trace or correlation IDs).")
+        fixes.append("Retain non-PII debugging fields: timestamp, request_id/correlation_id, endpoint, error codes, sanitized stack traces.")
+
+    if not issues:
+        return _critic_payload(domain="policy_pii_logs", issues=[], fixes=[], confidence=0.7)
+    return _critic_payload(domain="policy_pii_logs", issues=issues[:5], fixes=fixes[:8], confidence=0.82)
+
+
+def _micro_evidence_strength_study_quality(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q_lower = str(question or "").lower()
+    if not ("study a" in q_lower and "study b" in q_lower):
+        return None
+
+    def _parse_n(segment: str) -> Optional[int]:
+        m = re.search(r"\bn\s*=\s*([0-9][0-9,]*)\b", segment)
+        if not m:
+            return None
+        try:
+            return int(m.group(1).replace(",", ""))
+        except Exception:
+            return None
+
+    a_match = re.search(r"study a(.*?)(?:study b|$)", q_lower, flags=re.DOTALL)
+    seg_a = a_match.group(1) if a_match else ""
+    seg_b = q_lower.split("study b", 1)[1] if "study b" in q_lower else ""
+    na = _parse_n(seg_a)
+    nb = _parse_n(seg_b)
+    if na is None or nb is None:
+        return None
+
+    a_has_rct = any(tok in seg_a for tok in ("random", "randomized", "rct")) and ("control" in seg_a)
+    b_has_rct = any(tok in seg_b for tok in ("random", "randomized", "rct")) and ("control" in seg_b)
+    a_no_control = ("no control" in seg_a) or ("without control" in seg_a)
+    b_no_control = ("no control" in seg_b) or ("without control" in seg_b)
+
+    prefer = None
+    if b_has_rct and a_no_control:
+        prefer = "b"
+    elif a_has_rct and b_no_control:
+        prefer = "a"
+    else:
+        return None
+
+    d_lower = str(draft or "").lower()
+    mentions_a = bool(re.search(r"\bstudy\s*a\b", d_lower))
+    mentions_b = bool(re.search(r"\bstudy\s*b\b", d_lower))
+    quality_markers = (
+        "random",
+        "randomized",
+        "rct",
+        "control group",
+        "control",
+        "sample size",
+        "n=",
+        "bias",
+        "confound",
+    )
+    mentions_quality = any(marker in d_lower for marker in quality_markers)
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if prefer == "b":
+        if not mentions_b:
+            issues.append("Conclusion should weigh Study B more than Study A (RCT/control + reduced bias).")
+            fixes.append("Prefer Study B: randomized control reduces bias/confounding; larger n improves power.")
+        elif not mentions_quality:
+            issues.append("Missing justification (randomization/control group + sample size/bias).")
+            fixes.append("Justify: RCT + large n increases internal validity and statistical power; no-control small-n is highly biased.")
+    else:
+        if not mentions_a:
+            issues.append("Conclusion should weigh Study A more than Study B (RCT/control + reduced bias).")
+            fixes.append("Prefer Study A: randomized control reduces bias/confounding; larger n improves power.")
+        elif not mentions_quality:
+            issues.append("Missing justification (randomization/control group + sample size/bias).")
+            fixes.append("Justify: RCT + large n increases internal validity and statistical power; no-control small-n is highly biased.")
+
+    if not issues:
+        return _critic_payload(domain="evidence_strength", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="evidence_strength", issues=issues[:4], fixes=fixes[:8], confidence=0.9)
+
+
+def _micro_japanese_implication_transitivity(question: str, draft: str) -> Optional[MicroCriticResult]:
+    q = str(question or "")
+    pairs = re.findall(r"([A-Za-z])なら([A-Za-z])", q)
+    if len(pairs) != 3:
+        return None
+    (a, b), (b2, c), (a2, c2) = pairs
+    if not (a == a2 and b == b2 and c == c2):
+        return None
+
+    d_lower = str(draft or "").lower()
+    valid_markers = (
+        "valid",
+        "hypothetical syllogism",
+        "transit",
+        "推移",
+        "推移律",
+        "妥当",
+        "仮言三段論法",
+    )
+    invalid_markers = ("invalid", "fallacy", "不適", "誤り", "成り立たない", "導けない")
+    mentions_valid = any(marker in d_lower for marker in valid_markers)
+    mentions_invalid = any(marker in d_lower for marker in invalid_markers)
+
+    issues: list[str] = []
+    fixes: list[str] = []
+    if mentions_invalid and not mentions_valid:
+        issues.append("The implication chain A→B, B→C ⇒ A→C is logically valid (hypothetical syllogism / transitivity).")
+        fixes.append(f"State it's valid (推移律 / 仮言三段論法): {a}なら{b} かつ {b}なら{c} なら {a}なら{c}.")
+        fixes.append("Note caution: meanings/conditions for B must stay consistent in natural language.")
+    elif not mentions_valid:
+        issues.append("Missing a clear validity judgment (it is valid as a logical implication chain).")
+        fixes.append("State validity: 妥当（推移律/仮言三段論法）。注意: 自然言語ではBの意味のズレ等に注意。")
+
+    if not issues:
+        return _critic_payload(domain="japanese_logic", issues=[], fixes=[], confidence=0.72)
+    return _critic_payload(domain="japanese_logic", issues=issues[:4], fixes=fixes[:8], confidence=0.9)
+
 
 def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCriticResult]:
     """Return MicroCriticResult when a supported, high-confidence check applies."""
@@ -1643,6 +1998,14 @@ def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCritic
     detectors = (
         _micro_code_review_avg,
         _micro_causal_triage_plan,
+        _micro_logic_all_some_inference,
+        _micro_logic_affirming_consequent,
+        _micro_logic_demorgan_not_and,
+        _micro_algo_sort_complexity,
+        _micro_constraints_single_worker_schedule,
+        _micro_policy_pii_log_sharing,
+        _micro_evidence_strength_study_quality,
+        _micro_japanese_implication_transitivity,
         _micro_linear_equation,
         _micro_average_speed,
         _micro_revenue_growth,

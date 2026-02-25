@@ -1,0 +1,177 @@
+[
+  {
+    "id": "logic_all_some_001",
+    "question": "If all A are B, and some B are C, does it follow that some A are C? Give a precise logical explanation.",
+    "tags": ["logic", "deduction", "open-ended"]
+  },
+  {
+    "id": "logic_all_some_002",
+    "question": "If all X are Y, and some Y are Z, does it follow that some X are Z? Answer precisely and give a counterexample if not.",
+    "tags": ["logic", "deduction", "open-ended"]
+  },
+  {
+    "id": "logic_all_some_003",
+    "question": "If all M are N, and some N are O, does it follow that some M are O? Give a precise logical explanation.",
+    "tags": ["logic", "deduction", "open-ended"]
+  },
+  {
+    "id": "logic_all_some_004",
+    "question": "If all P are Q, and some Q are R, does it follow that some P are R? Explain using quantifiers or a counterexample.",
+    "tags": ["logic", "deduction", "open-ended"]
+  },
+  {
+    "id": "logic_affirm_conseq_001",
+    "question": "Is this inference valid? If P then Q. Q. Therefore P. Explain the fallacy (or justify if valid).",
+    "tags": ["logic", "fallacy", "open-ended"]
+  },
+  {
+    "id": "logic_affirm_conseq_002",
+    "question": "Is this inference valid? If R then S. S. Therefore R. Explain the fallacy (or justify if valid).",
+    "tags": ["logic", "fallacy", "open-ended"]
+  },
+  {
+    "id": "logic_affirm_conseq_003",
+    "question": "Is this inference valid? If X then Y. Y. Therefore X. Explain the fallacy (or justify if valid).",
+    "tags": ["logic", "fallacy", "open-ended"]
+  },
+  {
+    "id": "logic_affirm_conseq_004",
+    "question": "Is this inference valid? If A then B. B. Therefore A. Explain the fallacy (or justify if valid).",
+    "tags": ["logic", "fallacy", "open-ended"]
+  },
+  {
+    "id": "logic_demorgan_001",
+    "question": "Use De Morgan's laws to rewrite: NOT (A AND B). Provide an equivalent expression.",
+    "tags": ["logic", "equivalence", "open-ended"]
+  },
+  {
+    "id": "logic_demorgan_002",
+    "question": "Use De Morgan's laws to rewrite: NOT (P AND Q). Provide an equivalent expression.",
+    "tags": ["logic", "equivalence", "open-ended"]
+  },
+  {
+    "id": "logic_demorgan_003",
+    "question": "Use De Morgan's laws to rewrite: NOT (X AND Y). Provide an equivalent expression.",
+    "tags": ["logic", "equivalence", "open-ended"]
+  },
+  {
+    "id": "logic_demorgan_004",
+    "question": "Use De Morgan's laws to rewrite: NOT (R AND S). Provide an equivalent expression.",
+    "tags": ["logic", "equivalence", "open-ended"]
+  },
+  {
+    "id": "algo_sort_001",
+    "question": "Compare quicksort and mergesort for worst-case and average-case time complexity, and explain when each is preferable in practice.",
+    "tags": ["algorithms", "complexity", "open-ended"]
+  },
+  {
+    "id": "algo_sort_002",
+    "question": "Compare quicksort and mergesort: mention average-case vs worst-case time complexity, plus memory usage and stability.",
+    "tags": ["algorithms", "complexity", "open-ended"]
+  },
+  {
+    "id": "algo_sort_003",
+    "question": "Quicksort vs mergesort: what are the worst-case scenarios and typical mitigations? Include big-O and a practical note.",
+    "tags": ["algorithms", "complexity", "open-ended"]
+  },
+  {
+    "id": "algo_sort_004",
+    "question": "Which is preferable for external sorting: quicksort or mergesort? Explain using complexity and memory characteristics.",
+    "tags": ["algorithms", "complexity", "open-ended"]
+  },
+  {
+    "id": "algo_sort_005",
+    "question": "Compare quicksort and mergesort in a production setting: average-case, worst-case, and when to pick each.",
+    "tags": ["algorithms", "complexity", "open-ended"]
+  },
+  {
+    "id": "constraints_single_worker_001",
+    "question": "Plan a 3-task schedule (T1=2h, T2=3h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints", "open-ended"]
+  },
+  {
+    "id": "constraints_single_worker_002",
+    "question": "Plan a 3-task schedule (T1=1.5h, T2=0.5h, T3=2h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints", "open-ended"]
+  },
+  {
+    "id": "constraints_single_worker_003",
+    "question": "Plan a 3-task schedule (T1=4h, T2=1h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints", "open-ended"]
+  },
+  {
+    "id": "constraints_single_worker_004",
+    "question": "Plan a 3-task schedule (T1=0.25h, T2=0.75h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints", "open-ended"]
+  },
+  {
+    "id": "constraints_single_worker_005",
+    "question": "Plan a 3-task schedule (T1=3h, T2=2h, T3=0.5h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints", "open-ended"]
+  },
+  {
+    "id": "causal_triage_001",
+    "question": "Website latency and error rate both increased after deployment. Give a step-by-step causal triage plan to avoid confusing correlation with causation.",
+    "tags": ["causality", "incident-response", "open-ended"]
+  },
+  {
+    "id": "causal_triage_002",
+    "question": "After deployment, latency and error rate increased. Provide a numbered causal triage plan with baseline comparison and isolation steps.",
+    "tags": ["causality", "incident-response", "open-ended"]
+  },
+  {
+    "id": "causal_triage_003",
+    "question": "Deployment completed at 10:00. Latency and error rate rose shortly after. Outline a causal triage plan (steps) to test hypotheses and rule out confounders.",
+    "tags": ["causality", "incident-response", "open-ended"]
+  },
+  {
+    "id": "policy_pii_logs_001",
+    "question": "Draft a concise log-sharing policy that removes PII while preserving enough detail for incident debugging. Include 4 concrete rules.",
+    "tags": ["policy", "safety", "open-ended"]
+  },
+  {
+    "id": "policy_pii_logs_002",
+    "question": "Draft a log-sharing policy for incident response that removes PII but preserves debugging value. Include 4 rules and mention request IDs and redaction.",
+    "tags": ["policy", "safety", "open-ended"]
+  },
+  {
+    "id": "policy_pii_logs_003",
+    "question": "Draft a log-sharing policy (PII-safe) for sharing logs externally. Include 4 concrete rules and specify what to hash or mask.",
+    "tags": ["policy", "safety", "open-ended"]
+  },
+  {
+    "id": "evidence_strength_001",
+    "question": "Two studies claim opposite outcomes. Study A has n=30, no control group. Study B has n=2,000 randomized control. Which should weigh more and why?",
+    "tags": ["critical-thinking", "evidence", "open-ended"]
+  },
+  {
+    "id": "evidence_strength_002",
+    "question": "Two studies claim opposite outcomes. Study A has n=80, no control group. Study B has n=1,200 randomized control. Which should weigh more and why?",
+    "tags": ["critical-thinking", "evidence", "open-ended"]
+  },
+  {
+    "id": "evidence_strength_003",
+    "question": "Two studies disagree. Study A has n=150, no control group. Study B has n=600 randomized control. Which should weigh more and why?",
+    "tags": ["critical-thinking", "evidence", "open-ended"]
+  },
+  {
+    "id": "japanese_reasoning_001",
+    "question": "次の主張を検証してください: 『AならB、BならC、したがってAならC』。推論の妥当性と注意点を簡潔に述べてください。",
+    "tags": ["logic", "japanese", "open-ended"]
+  },
+  {
+    "id": "japanese_reasoning_002",
+    "question": "次の主張を検証してください: 『PならQ、QならR、したがってPならR』。推論の妥当性と注意点を簡潔に述べてください。",
+    "tags": ["logic", "japanese", "open-ended"]
+  },
+  {
+    "id": "japanese_reasoning_003",
+    "question": "次の主張を検証してください: 『XならY、YならZ、したがってXならZ』。推論の妥当性と注意点を簡潔に述べてください。",
+    "tags": ["logic", "japanese", "open-ended"]
+  },
+  {
+    "id": "code_review_avg_001",
+    "question": "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`.",
+    "tags": ["code-review", "python", "open-ended"]
+  }
+]

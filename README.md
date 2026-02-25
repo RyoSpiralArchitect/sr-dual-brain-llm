@@ -145,6 +145,13 @@ python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
   --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en_xl2.json
 ```
 
+Reasoning-heavy (open-ended) suite:
+```bash
+python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
+  --system2-mode on \
+  --questions sr-dual-brain-llm/examples/system2_benchmark_questions_reasoning_openended.json
+```
+
 Outputs:
 - Full report: `sr-dual-brain-llm/samples/system2_benchmark_last.json`
 - History rows (for trend over repeated runs): `sr-dual-brain-llm/samples/system2_benchmark_history.jsonl`
@@ -155,6 +162,8 @@ Useful flags:
 - `--history-limit 50` (trend window size)
 - `--only-tags percent,units` (domain slices; report also includes `summary_by_tag`)
 - `--questions a.json,b.json` (comma-separated multi-file suite)
+- `--output path.json` (save a named report file)
+- `--critic-health-check off` (skip external-critic preflight for micro-only runs)
 
 For mode-to-mode comparison (`off` vs `auto` vs `on`) on the exact same question set:
 
@@ -208,6 +217,8 @@ Single-mode runs:
 | Date (UTC) | Provider / Model | Mode | N | LLM capable | Critic health gate | Key result | Report |
 |---|---|---|---:|---|---|---|---|
 | 2026-02-25 | (none; micro-only) | `on` | 15 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.3529`, `resolved_issue_rate=0.4286`, `avg_latency_ms_all_cases=404.28ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
+| 2026-02-25 | (none; micro-only) | `on` | 70 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8143`, `resolved_issue_rate=0.8507`, `avg_latency_ms_all_cases=485.53ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
+| 2026-02-25 | (none; micro-only) | `on` | 151 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8919`, `resolved_issue_rate=0.9103`, `avg_latency_ms_all_cases=498.57ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 
 Repro command:
 
