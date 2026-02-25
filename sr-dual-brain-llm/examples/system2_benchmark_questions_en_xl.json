@@ -1,0 +1,352 @@
+[
+  {
+    "id": "arith_chain_001",
+    "question": "Compute ((27 * 14) - 96) / 6 and briefly show each arithmetic step.",
+    "tags": ["math", "arithmetic", "stepwise"]
+  },
+  {
+    "id": "arith_chain_002",
+    "question": "Compute `((135 - 27) * 6) / 9` and briefly show each arithmetic step.",
+    "tags": ["math", "arithmetic", "stepwise"]
+  },
+  {
+    "id": "arith_chain_003",
+    "question": "Compute `12^2 - (5*7) + 18/6` and give the final numeric result.",
+    "tags": ["math", "arithmetic"]
+  },
+  {
+    "id": "arith_chain_004",
+    "question": "Compute `((48/6) + (15/3)) * 4` and show the simplified steps.",
+    "tags": ["math", "arithmetic", "stepwise"]
+  },
+  {
+    "id": "arith_chain_005",
+    "question": "Compute `(-18 + 42) / 3 + 5` and show the final result.",
+    "tags": ["math", "arithmetic"]
+  },
+  {
+    "id": "arith_chain_006",
+    "question": "Compute `(3.5 * 18) + 7.2` and give the final number.",
+    "tags": ["math", "arithmetic"]
+  },
+  {
+    "id": "algebra_001",
+    "question": "Solve for x: 3x + 7 = 2x + 19, then verify the result by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "algebra_002",
+    "question": "Solve for x: 5x - 9 = 3x + 7, then verify the result by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "algebra_003",
+    "question": "Solve for x: 0.5x + 3 = 11, then verify by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "algebra_004",
+    "question": "Solve for x: -2x + 4 = 10, then verify by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "algebra_005",
+    "question": "Solve for x: 7x + 2 = 5x - 14, then verify by substitution.",
+    "tags": ["algebra", "verification"]
+  },
+  {
+    "id": "logic_001",
+    "question": "If all A are B, and some B are C, does it follow that some A are C? Give a precise logical explanation.",
+    "tags": ["logic", "deduction"]
+  },
+  {
+    "id": "logic_002",
+    "question": "Is this inference valid? If P then Q. Q. Therefore P. Explain the fallacy (or justify if valid).",
+    "tags": ["logic", "fallacy"]
+  },
+  {
+    "id": "logic_003",
+    "question": "Use De Morgan's laws to rewrite: NOT (A AND B). Provide an equivalent expression.",
+    "tags": ["logic"]
+  },
+  {
+    "id": "probability_001",
+    "question": "A box has 3 red, 4 blue, and 5 green balls. Two are drawn without replacement. What is the probability both are blue?",
+    "tags": ["probability"]
+  },
+  {
+    "id": "probability_002",
+    "question": "A box has 2 red, 5 blue, and 3 green balls. Two are drawn without replacement. What is the probability both are blue?",
+    "tags": ["probability"]
+  },
+  {
+    "id": "probability_003",
+    "question": "A box has 6 red, 3 blue, and 1 green balls. Two are drawn without replacement. What is the probability both are blue?",
+    "tags": ["probability"]
+  },
+  {
+    "id": "bayes_001",
+    "question": "A test has 95% sensitivity and 90% specificity. Disease prevalence is 2%. What is P(disease | positive)? Show the Bayes setup and result.",
+    "tags": ["bayes", "healthcare"]
+  },
+  {
+    "id": "bayes_002",
+    "question": "A test has 92% sensitivity and 88% specificity. Disease prevalence is 5%. What is P(disease | positive)? Show the Bayes setup and result.",
+    "tags": ["bayes", "healthcare"]
+  },
+  {
+    "id": "algo_complexity_001",
+    "question": "Compare quicksort and mergesort for worst-case and average-case time complexity, and explain when each is preferable in practice.",
+    "tags": ["algorithms", "complexity"]
+  },
+  {
+    "id": "code_review_001",
+    "question": "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`.",
+    "tags": ["code-review", "python"]
+  },
+  {
+    "id": "unit_consistency_001",
+    "question": "A car travels 120 km in 1.5 hours, then 80 km in 2 hours. What is the average speed for the whole trip, and why is averaging segment speeds directly wrong?",
+    "tags": ["physics", "reasoning", "avg-speed"]
+  },
+  {
+    "id": "avg_speed_002",
+    "question": "A train travels 150 km in 2 hours, then 90 km in 1.5 hours. What is the average speed for the whole trip (km/h)? Explain briefly.",
+    "tags": ["physics", "reasoning", "avg-speed"]
+  },
+  {
+    "id": "avg_speed_003",
+    "question": "A car travels 80 km in 1 hour, then 40 km in 0.5 hours. What is the average speed for the whole trip (km/h)?",
+    "tags": ["physics", "reasoning", "avg-speed"]
+  },
+  {
+    "id": "avg_speed_004",
+    "question": "A cyclist rides 24 km in 1.2 hours, then 16 km in 0.8 hours. What is the average speed for the whole ride (km/h)?",
+    "tags": ["physics", "reasoning", "avg-speed"]
+  },
+  {
+    "id": "table_inference_001",
+    "question": "Given conversion rates: A=2.1%, B=2.8%, C=1.9% with traffic A=20k, B=8k, C=12k. Which variant yields the largest number of conversions? Show the calculation.",
+    "tags": ["analytics", "decision", "conversions"]
+  },
+  {
+    "id": "table_inference_002",
+    "question": "Given conversion rates: A=1.6%, B=2.4%, C=2.0% with traffic A=30k, B=12k, C=10k. Which variant yields the largest number of conversions? Show the calculation.",
+    "tags": ["analytics", "decision", "conversions"]
+  },
+  {
+    "id": "constraints_001",
+    "question": "Plan a 3-task schedule (T1=2h, T2=3h, T3=1h) with constraints: T2 after T1, T3 independent. Minimize completion time with one worker.",
+    "tags": ["planning", "constraints"]
+  },
+  {
+    "id": "error_analysis_001",
+    "question": "A report claims: 'Revenue rose from 200 to 240, so growth is 40%'. Identify the error and provide the corrected percentage.",
+    "tags": ["error-check", "business-math", "growth"]
+  },
+  {
+    "id": "revenue_growth_002",
+    "question": "Revenue grew from 500 to 575. What is the growth percentage? Show the formula.",
+    "tags": ["business-math", "growth", "percent-change"]
+  },
+  {
+    "id": "revenue_growth_003",
+    "question": "Revenue grew from 1200 to 1110. What is the growth percentage (it may be negative)? Show the formula.",
+    "tags": ["business-math", "growth", "percent-change"]
+  },
+  {
+    "id": "percent_of_001",
+    "question": "What is 18% of 250? Show the calculation.",
+    "tags": ["percent", "math"]
+  },
+  {
+    "id": "percent_of_002",
+    "question": "250の18%は何ですか？計算も書いてください。",
+    "tags": ["percent", "math", "japanese"]
+  },
+  {
+    "id": "percent_of_003",
+    "question": "Compute 7.5 percent of 80. Show the calculation.",
+    "tags": ["percent", "math"]
+  },
+  {
+    "id": "what_percent_of_001",
+    "question": "10 is what percent of 40? Show the calculation.",
+    "tags": ["percent", "math"]
+  },
+  {
+    "id": "what_percent_of_002",
+    "question": "12は80の何%ですか？計算も書いてください。",
+    "tags": ["percent", "math", "japanese"]
+  },
+  {
+    "id": "percent_off_001",
+    "question": "An item costs 80. It is 25% off (i.e., 25% off 80). What is the final price?",
+    "tags": ["percent", "discount", "math"]
+  },
+  {
+    "id": "percent_off_002",
+    "question": "500の20%引きの最終価格はいくらですか？（20%引き）",
+    "tags": ["percent", "discount", "math", "japanese"]
+  },
+  {
+    "id": "percent_off_amount_001",
+    "question": "A 15% discount on 200: what is the discount amount?",
+    "tags": ["percent", "discount", "math"]
+  },
+  {
+    "id": "add_tax_001",
+    "question": "Compute the final total for 8% tax on 80 (total after tax).",
+    "tags": ["percent", "tax", "math"]
+  },
+  {
+    "id": "add_tip_001",
+    "question": "A bill is 120 with 15% tip. What is the final total (including tip)?",
+    "tags": ["percent", "tip", "math"]
+  },
+  {
+    "id": "percent_change_increase_001",
+    "question": "What is the percent increase from 40 to 54? Show the calculation.",
+    "tags": ["percent", "percent-change", "math"]
+  },
+  {
+    "id": "percent_change_decrease_001",
+    "question": "What is the percent decrease from 250 to 200? Show the calculation.",
+    "tags": ["percent", "percent-change", "math"]
+  },
+  {
+    "id": "percent_change_jp_001",
+    "question": "100から85に減少した。減少率（%）は？計算も書いてください。",
+    "tags": ["percent", "percent-change", "math", "japanese"]
+  },
+  {
+    "id": "percent_adjust_001",
+    "question": "Increase 50 by 20%. What is the new value? Show the calculation.",
+    "tags": ["percent", "percent-adjust", "math"]
+  },
+  {
+    "id": "percent_adjust_delta_001",
+    "question": "Increase 50 by 20%. What is the increase amount? Show the calculation.",
+    "tags": ["percent", "percent-adjust", "math"]
+  },
+  {
+    "id": "percent_adjust_jp_001",
+    "question": "50を20%増やすといくつ？計算も書いてください。",
+    "tags": ["percent", "percent-adjust", "math", "japanese"]
+  },
+  {
+    "id": "percent_adjust_002",
+    "question": "Decrease 120 by 10%. What is the new value? Show the calculation.",
+    "tags": ["percent", "percent-adjust", "math"]
+  },
+  {
+    "id": "temp_convert_001",
+    "question": "Convert 68°F to Celsius (°C).",
+    "tags": ["units", "temperature"]
+  },
+  {
+    "id": "temp_convert_002",
+    "question": "Convert 20°C to Fahrenheit (°F).",
+    "tags": ["units", "temperature"]
+  },
+  {
+    "id": "time_units_001",
+    "question": "Convert 2 hours to minutes.",
+    "tags": ["units", "time-units"]
+  },
+  {
+    "id": "time_units_002",
+    "question": "How many seconds are in 3.5 minutes?",
+    "tags": ["units", "time-units"]
+  },
+  {
+    "id": "time_units_jp_001",
+    "question": "2時間は何秒ですか？",
+    "tags": ["units", "time-units", "japanese"]
+  },
+  {
+    "id": "length_units_001",
+    "question": "Convert 5 miles to km.",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "length_units_002",
+    "question": "How many miles is 10 km?",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "mass_units_001",
+    "question": "Convert 70 kg to lb.",
+    "tags": ["units", "mass-units"]
+  },
+  {
+    "id": "mass_units_002",
+    "question": "How many kg is 150 lb?",
+    "tags": ["units", "mass-units"]
+  },
+  {
+    "id": "inch_cm_001",
+    "question": "Convert 12 inches to cm.",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "inch_cm_002",
+    "question": "How many inches is 30 cm?",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "length_metric_001",
+    "question": "Convert 2.4 m to cm.",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "length_metric_002",
+    "question": "How many meters is 350 cm?",
+    "tags": ["units", "length-units"]
+  },
+  {
+    "id": "speed_units_001",
+    "question": "Convert 10 m/s to km/h.",
+    "tags": ["units", "speed-units"]
+  },
+  {
+    "id": "speed_units_002",
+    "question": "Convert 72 km/h to m/s.",
+    "tags": ["units", "speed-units"]
+  },
+  {
+    "id": "speed_units_mph_001",
+    "question": "Convert 55 mph to km/h.",
+    "tags": ["units", "speed-units"]
+  },
+  {
+    "id": "fraction_percent_001",
+    "question": "Convert 3/8 to a percent. Show the calculation.",
+    "tags": ["fraction-percent", "percent", "math"]
+  },
+  {
+    "id": "fraction_percent_002",
+    "question": "Convert 7/20 to a percent. Show the calculation.",
+    "tags": ["fraction-percent", "percent", "math"]
+  },
+  {
+    "id": "safety_policy_001",
+    "question": "Draft a concise log-sharing policy that removes PII while preserving enough detail for incident debugging. Include 4 concrete rules.",
+    "tags": ["policy", "safety"]
+  },
+  {
+    "id": "evidence_strength_001",
+    "question": "Two studies claim opposite outcomes. Study A has n=30, no control group. Study B has n=2,000 randomized control. Which should weigh more and why?",
+    "tags": ["critical-thinking", "evidence"]
+  },
+  {
+    "id": "causal_reasoning_001",
+    "question": "Website latency and error rate both increased after deployment. Give a step-by-step causal triage plan to avoid confusing correlation with causation.",
+    "tags": ["causality", "incident-response"]
+  },
+  {
+    "id": "japanese_reasoning_001",
+    "question": "次の主張を検証してください: 『AならB、BならC、したがってAならC』。推論の妥当性と注意点を簡潔に述べてください。",
+    "tags": ["logic", "japanese"]
+  }
+]

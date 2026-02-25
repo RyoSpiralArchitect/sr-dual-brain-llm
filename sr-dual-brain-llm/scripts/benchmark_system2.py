@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import os
 import random
 import statistics
@@ -75,6 +76,11 @@ def _load_questions(path: Path) -> List[Dict[str, Any]]:
     return out
 
 
+def _parse_question_paths(raw: str) -> List[Path]:
+    tokens = [tok.strip() for tok in str(raw or "").split(",") if tok.strip()]
+    return [Path(token).expanduser().resolve() for token in tokens]
+
+
 def _filter_questions(
     questions: List[Dict[str, Any]],
     *,
@@ -127,6 +133,33 @@ def _safe_float(value: Any) -> Optional[float]:
         return float(value)
     except Exception:
         return None
+
+
+def _percentile(values: list[float], percentile: float) -> float | None:
+    if not values:
+        return None
+    try:
+        q = float(percentile)
+    except Exception:
+        return None
+    if not math.isfinite(q):
+        return None
+    if q <= 0:
+        return float(min(values))
+    if q >= 100:
+        return float(max(values))
+
+    data = sorted(float(v) for v in values)
+    if len(data) == 1:
+        return float(data[0])
+
+    k = (len(data) - 1) * (q / 100.0)
+    f = int(math.floor(k))
+    c = int(math.ceil(k))
+    if f == c:
+        return float(data[f])
+    weight = k - f
+    return float(data[f] * (1.0 - weight) + data[c] * weight)
 
 
 def _safe_bool(value: Any) -> Optional[bool]:
@@ -320,7 +353,7 @@ async def _check_critic_health(
     }
 
 
-def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     total = len(cases)
     ok_cases = [c for c in cases if not c.get("error")]
     measured = [
@@ -483,10 +516,22 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "avg_rounds_all_cases": (
             statistics.mean(rounds_values_all) if rounds_values_all else None
         ),
+        "rounds_p50": _percentile(rounds_values, 50),
+        "rounds_p90": _percentile(rounds_values, 90),
+        "rounds_p95": _percentile(rounds_values, 95),
+        "rounds_all_cases_p50": _percentile(rounds_values_all, 50),
+        "rounds_all_cases_p90": _percentile(rounds_values_all, 90),
+        "rounds_all_cases_p95": _percentile(rounds_values_all, 95),
         "avg_latency_ms": (statistics.mean(latency_values) if latency_values else None),
         "avg_latency_ms_all_cases": (
             statistics.mean(latency_values_all) if latency_values_all else None
         ),
+        "latency_ms_p50": _percentile(latency_values, 50),
+        "latency_ms_p90": _percentile(latency_values, 90),
+        "latency_ms_p95": _percentile(latency_values, 95),
+        "latency_ms_all_cases_p50": _percentile(latency_values_all, 50),
+        "latency_ms_all_cases_p90": _percentile(latency_values_all, 90),
+        "latency_ms_all_cases_p95": _percentile(latency_values_all, 95),
         "avg_phase_latency_ms": {
             phase: (
                 phase_latency_totals[phase] / phase_latency_counts[phase]
@@ -534,6 +579,27 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "cerebellum_issue_cases": cerebellum_issue_cases_count,
         "cerebellum_resolved_issue_rate": cerebellum_resolved_issue_rate,
     }
+
+
+def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    summary = _summarise_cases_base(cases)
+
+    tag_map: Dict[str, List[Dict[str, Any]]] = {}
+    for case in cases:
+        raw_tags = case.get("tags")
+        if not isinstance(raw_tags, list):
+            continue
+        for tag in raw_tags:
+            norm = str(tag).strip().lower()
+            if not norm:
+                continue
+            tag_map.setdefault(norm, []).append(case)
+
+    summary["summary_by_tag"] = {
+        tag: _summarise_cases_base(tag_cases)
+        for tag, tag_cases in sorted(tag_map.items())
+    }
+    return summary
 
 
 def _append_history(path: Path, payload: Dict[str, Any]) -> None:
@@ -724,6 +790,9 @@ async def _run_case(
         "id": question_entry.get("id") or f"q{index:03d}",
         "qid": qid,
         "question": question,
+        "tags": (
+            question_entry.get("tags") if isinstance(question_entry.get("tags"), list) else []
+        ),
         "system2_mode": mode,
         "system2_enabled": system2_enabled,
         "low_signal_filter": low_signal_filter,
@@ -762,16 +831,41 @@ async def _run_case(
 
 
 async def _run(args: argparse.Namespace) -> int:
-    questions_path = Path(args.questions).resolve()
-    if not questions_path.exists():
-        raise FileNotFoundError(f"Questions file not found: {questions_path}")
+    question_paths = _parse_question_paths(args.questions)
+    if not question_paths:
+        raise ValueError("No --questions paths provided.")
+    missing_paths = [path for path in question_paths if not path.exists()]
+    if missing_paths:
+        raise FileNotFoundError(
+            "Questions file(s) not found: {paths}".format(
+                paths=", ".join(str(p) for p in missing_paths)
+            )
+        )
 
-    questions = _load_questions(questions_path)
+    questions: List[Dict[str, Any]] = []
+    for path in question_paths:
+        questions.extend(_load_questions(path))
     questions = _filter_questions(
         questions,
         only_ids=getattr(args, "only_ids", None),
         only_tags=getattr(args, "only_tags", None),
     )
+    seen_ids: set[str] = set()
+    duplicate_ids: set[str] = set()
+    for entry in questions:
+        qid = str(entry.get("id") or "").strip()
+        if not qid:
+            continue
+        if qid in seen_ids:
+            duplicate_ids.add(qid)
+        else:
+            seen_ids.add(qid)
+    if duplicate_ids:
+        preview = ", ".join(sorted(duplicate_ids)[:8])
+        more = "…" if len(duplicate_ids) > 8 else ""
+        print(
+            f"[bench] warning: duplicate question ids detected ({len(duplicate_ids)}): {preview}{more}"
+        )
     if args.shuffle:
         rng = random.Random(int(args.seed))
         rng.shuffle(questions)
@@ -791,7 +885,13 @@ async def _run(args: argparse.Namespace) -> int:
 
     print(f"[bench] run_id={run_id}")
     print(f"[bench] session_id={session_id}")
-    print(f"[bench] questions={len(questions)} source={questions_path}")
+    question_set_label = ",".join(str(path) for path in question_paths)
+    if len(question_paths) == 1:
+        print(f"[bench] questions={len(questions)} source={question_paths[0]}")
+    else:
+        print(f"[bench] questions={len(questions)} sources={len(question_paths)}")
+        for path in question_paths:
+            print(f"[bench] question_source={path}")
     if getattr(args, "only_ids", None):
         print(f"[bench] filter only_ids={args.only_ids}")
     if getattr(args, "only_tags", None):
@@ -888,7 +988,8 @@ async def _run(args: argparse.Namespace) -> int:
         output = {
             "run_id": run_id,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "question_set": str(questions_path),
+            "question_set": question_set_label,
+            "question_sets": [str(path) for path in question_paths],
             "config": {
                 "session_id": session_id,
                 "leading_brain": args.leading_brain,
@@ -910,6 +1011,7 @@ async def _run(args: argparse.Namespace) -> int:
                 ),
                 "require_critic_health": bool(args.require_critic_health),
                 "question_count": len(questions),
+                "question_sets": [str(path) for path in question_paths],
                 "llm_capable": llm_capable,
                 "callosum_timeout_ms": int(getattr(session.controller, "default_timeout_ms", 0) or 0),
                 "timeout_multiplier": _safe_float(os.environ.get("DUALBRAIN_TIMEOUT_MULTIPLIER")),
@@ -940,7 +1042,7 @@ async def _run(args: argparse.Namespace) -> int:
             history_row = {
                 "run_id": run_id,
                 "timestamp": output["timestamp"],
-                "question_set": str(questions_path),
+                "question_set": question_set_label,
                 "summary": summary,
                 "config": output["config"],
             }
@@ -992,7 +1094,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--questions",
         default=str(PROJECT_ROOT / "examples" / "system2_benchmark_questions_en.json"),
-        help="Path to benchmark question set JSON.",
+        help="Comma separated paths to benchmark question set JSON files.",
     )
     parser.add_argument(
         "--output",

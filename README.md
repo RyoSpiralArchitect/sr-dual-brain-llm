@@ -131,6 +131,13 @@ python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
   --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en.json
 ```
 
+Longer suite:
+```bash
+python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
+  --system2-mode on \
+  --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en_xl.json
+```
+
 Outputs:
 - Full report: `sr-dual-brain-llm/samples/system2_benchmark_last.json`
 - History rows (for trend over repeated runs): `sr-dual-brain-llm/samples/system2_benchmark_history.jsonl`
@@ -139,6 +146,8 @@ Useful flags:
 - `--limit 5` (quick smoke run)
 - `--shuffle --seed 42` (order randomization)
 - `--history-limit 50` (trend window size)
+- `--only-tags percent,units` (domain slices; report also includes `summary_by_tag`)
+- `--questions a.json,b.json` (comma-separated multi-file suite)
 
 For mode-to-mode comparison (`off` vs `auto` vs `on`) on the exact same question set:
 

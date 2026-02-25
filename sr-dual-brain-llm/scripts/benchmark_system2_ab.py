@@ -33,6 +33,7 @@ from benchmark_system2 import (  # noqa: E402
     _history_trend,
     _load_history,
     _load_questions,
+    _parse_question_paths,
     _run_case,
     _summarise_cases,
 )
@@ -271,11 +272,20 @@ async def _run_mode(
 
 
 async def _run(args: argparse.Namespace) -> int:
-    questions_path = Path(args.questions).resolve()
-    if not questions_path.exists():
-        raise FileNotFoundError(f"Questions file not found: {questions_path}")
+    question_paths = _parse_question_paths(args.questions)
+    if not question_paths:
+        raise ValueError("No --questions paths provided.")
+    missing_paths = [path for path in question_paths if not path.exists()]
+    if missing_paths:
+        raise FileNotFoundError(
+            "Questions file(s) not found: {paths}".format(
+                paths=", ".join(str(p) for p in missing_paths)
+            )
+        )
 
-    questions = _load_questions(questions_path)
+    questions: List[Dict[str, Any]] = []
+    for path in question_paths:
+        questions.extend(_load_questions(path))
     questions = _filter_questions(
         questions,
         only_ids=getattr(args, "only_ids", None),
@@ -302,7 +312,13 @@ async def _run(args: argparse.Namespace) -> int:
         critic_health_check = "on"
 
     print(f"[ab] run_id={run_id}")
-    print(f"[ab] questions={len(questions)} source={questions_path}")
+    question_set_label = ",".join(str(path) for path in question_paths)
+    if len(question_paths) == 1:
+        print(f"[ab] questions={len(questions)} source={question_paths[0]}")
+    else:
+        print(f"[ab] questions={len(questions)} sources={len(question_paths)}")
+        for path in question_paths:
+            print(f"[ab] question_source={path}")
     if getattr(args, "only_ids", None):
         print(f"[ab] filter only_ids={args.only_ids}")
     if getattr(args, "only_tags", None):
@@ -341,7 +357,8 @@ async def _run(args: argparse.Namespace) -> int:
     report = {
         "run_id": run_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "question_set": str(questions_path),
+        "question_set": question_set_label,
+        "question_sets": [str(path) for path in question_paths],
         "config": {
             "modes": modes,
             "session_prefix": args.session_prefix,
@@ -365,6 +382,7 @@ async def _run(args: argparse.Namespace) -> int:
             ),
             "require_critic_health": bool(args.require_critic_health),
             "question_count": len(questions),
+            "question_sets": [str(path) for path in question_paths],
             "callosum_timeout_ms": os.environ.get("DUALBRAIN_CALLOSUM_TIMEOUT_MS"),
             "timeout_multiplier": os.environ.get("DUALBRAIN_TIMEOUT_MULTIPLIER"),
             "system2_timeout_multiplier": os.environ.get("DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER"),
@@ -386,7 +404,7 @@ async def _run(args: argparse.Namespace) -> int:
         row = {
             "run_id": run_id,
             "timestamp": report["timestamp"],
-            "question_set": str(questions_path),
+            "question_set": question_set_label,
             "summary_by_mode": summary_by_mode,
             "pairwise": pairwise,
             "config": report["config"],
@@ -439,7 +457,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--questions",
         default=str(PROJECT_ROOT / "examples" / "system2_benchmark_questions_en.json"),
-        help="Path to benchmark question set JSON.",
+        help="Comma separated paths to benchmark question set JSON files.",
     )
     parser.add_argument(
         "--output",
