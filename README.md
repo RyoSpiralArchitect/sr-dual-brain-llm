@@ -138,6 +138,13 @@ python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
   --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en_xl.json
 ```
 
+XL2 suite:
+```bash
+python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
+  --system2-mode on \
+  --questions sr-dual-brain-llm/examples/system2_benchmark_questions_en_xl2.json
+```
+
 Outputs:
 - Full report: `sr-dual-brain-llm/samples/system2_benchmark_last.json`
 - History rows (for trend over repeated runs): `sr-dual-brain-llm/samples/system2_benchmark_history.jsonl`

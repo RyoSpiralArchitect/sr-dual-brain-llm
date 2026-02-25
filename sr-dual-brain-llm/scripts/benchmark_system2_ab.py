@@ -201,6 +201,46 @@ async def _run_mode(
             getattr(session.left, "uses_external_llm", False)
             and getattr(session.right, "uses_external_llm", False)
         )
+        if not llm_capable:
+            print(
+                "[ab] warning: external LLM not configured for both hemispheres; "
+                "System2 quality metrics may be pessimistic."
+            )
+            left_external = bool(getattr(session.left, "uses_external_llm", False))
+            right_external = bool(getattr(session.right, "uses_external_llm", False))
+            provider_env = (
+                os.environ.get("LLM_PROVIDER")
+                or os.environ.get("LEFT_BRAIN_PROVIDER")
+                or os.environ.get("RIGHT_BRAIN_PROVIDER")
+            )
+            model_env = (
+                os.environ.get("LLM_MODEL_ID")
+                or os.environ.get("LEFT_BRAIN_MODEL")
+                or os.environ.get("RIGHT_BRAIN_MODEL")
+            )
+            has_api_key = any(
+                os.environ.get(name)
+                for name in (
+                    "LLM_API_KEY",
+                    "OPENAI_API_KEY",
+                    "ANTHROPIC_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "MISTRAL_API_KEY",
+                    "XAI_API_KEY",
+                    "HUGGINGFACE_API_TOKEN",
+                    "HF_TOKEN",
+                )
+            )
+            if has_api_key and (not provider_env or not model_env):
+                print(
+                    "[ab] hint: API key is set but provider/model is missing. "
+                    "Set LLM_PROVIDER + LLM_MODEL_ID (or LEFT_BRAIN_* / RIGHT_BRAIN_*)."
+                )
+            elif provider_env and model_env and has_api_key:
+                print(
+                    f"[ab] hint: external LLM active? left={left_external} right={right_external}. "
+                    "You can configure hemispheres separately via LEFT_BRAIN_* and RIGHT_BRAIN_* env vars."
+                )
         critic_health: Dict[str, Any] = {"checked": False}
         if critic_health_check == "on":
             critic_health = await _check_critic_health(
@@ -411,12 +451,13 @@ async def _run(args: argparse.Namespace) -> int:
         }
         _append_history(history_path, row)
         history = _load_history(history_path, limit=max(1, int(args.history_limit)))
-        trend = _history_trend(history)
+        trend = _history_trend(history, question_set=question_set_label)
         print(
-            "[ab] trend runs={runs} mean_issue_reduction_rate={rate} mean_resolved_issue_rate={resolved} "
+            "[ab] trend runs={runs}/{all_runs} mean_issue_reduction_rate={rate} mean_resolved_issue_rate={resolved} "
             "mean_issue_reduction_rate_all_cases={rate_all} "
             "mean_resolved_issue_share_all_cases={resolved_all}".format(
                 runs=trend.get("runs"),
+                all_runs=trend.get("all_runs"),
                 rate=trend.get("mean_issue_reduction_rate"),
                 resolved=trend.get("mean_resolved_issue_rate"),
                 rate_all=trend.get("mean_issue_reduction_rate_all_cases"),

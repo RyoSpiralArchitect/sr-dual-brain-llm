@@ -628,9 +628,20 @@ def _load_history(path: Path, limit: int) -> List[Dict[str, Any]]:
     return out
 
 
-def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _history_trend(
+    history: List[Dict[str, Any]], *, question_set: str | None = None
+) -> Dict[str, Any]:
     if not history:
-        return {"runs": 0}
+        return {"runs": 0, "all_runs": 0}
+
+    filtered = history
+    qset = str(question_set or "").strip()
+    if qset:
+        filtered = [
+            row for row in history if str(row.get("question_set") or "").strip() == qset
+        ]
+        if not filtered:
+            filtered = history
 
     def _pick(path: str, row: Dict[str, Any]) -> Any:
         cur: Any = row
@@ -644,7 +655,7 @@ def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
     resolved_rates = []
     rates_all = []
     resolved_share_all = []
-    for row in history:
+    for row in filtered:
         rate = _safe_float(_pick("summary.issue_reduction_rate", row))
         if rate is not None:
             rates.append(rate)
@@ -657,9 +668,10 @@ def _history_trend(history: List[Dict[str, Any]]) -> Dict[str, Any]:
         resolved_all = _safe_float(_pick("summary.resolved_issue_share_all_cases", row))
         if resolved_all is not None:
             resolved_share_all.append(resolved_all)
-    latest = history[-1]
+    latest = filtered[-1]
     return {
-        "runs": len(history),
+        "runs": len(filtered),
+        "all_runs": len(history),
         "latest_run_id": latest.get("run_id"),
         "mean_issue_reduction_rate": (statistics.mean(rates) if rates else None),
         "mean_resolved_issue_rate": (
@@ -913,6 +925,41 @@ async def _run(args: argparse.Namespace) -> int:
                 "[bench] warning: external LLM not configured for both hemispheres; "
                 "System2 quality metrics may be pessimistic."
             )
+            left_external = bool(getattr(session.left, "uses_external_llm", False))
+            right_external = bool(getattr(session.right, "uses_external_llm", False))
+            provider_env = (
+                os.environ.get("LLM_PROVIDER")
+                or os.environ.get("LEFT_BRAIN_PROVIDER")
+                or os.environ.get("RIGHT_BRAIN_PROVIDER")
+            )
+            model_env = (
+                os.environ.get("LLM_MODEL_ID")
+                or os.environ.get("LEFT_BRAIN_MODEL")
+                or os.environ.get("RIGHT_BRAIN_MODEL")
+            )
+            has_api_key = any(
+                os.environ.get(name)
+                for name in (
+                    "LLM_API_KEY",
+                    "OPENAI_API_KEY",
+                    "ANTHROPIC_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "MISTRAL_API_KEY",
+                    "XAI_API_KEY",
+                    "HUGGINGFACE_API_TOKEN",
+                    "HF_TOKEN",
+                )
+            )
+            if has_api_key and (not provider_env or not model_env):
+                print(
+                    "[bench] hint: API key is set but provider/model is missing. "
+                    "Set LLM_PROVIDER + LLM_MODEL_ID (or LEFT_BRAIN_* / RIGHT_BRAIN_*)."
+                )
+            elif provider_env and model_env and has_api_key:
+                print(
+                    f"[bench] hint: external LLM active? left={left_external} right={right_external}. "
+                    "You can configure hemispheres separately via LEFT_BRAIN_* and RIGHT_BRAIN_* env vars."
+                )
         critic_health: Dict[str, Any] = {"checked": False}
         critic_health_mode = str(args.critic_health_check or "on").strip().lower()
         if critic_health_mode == "on":
@@ -1048,7 +1095,7 @@ async def _run(args: argparse.Namespace) -> int:
             }
             _append_history(history_path, history_row)
             history = _load_history(history_path, limit=max(1, int(args.history_limit)))
-            history_trend = _history_trend(history)
+            history_trend = _history_trend(history, question_set=question_set_label)
             print(f"[bench] appended history: {history_path}")
 
         print(
@@ -1073,9 +1120,10 @@ async def _run(args: argparse.Namespace) -> int:
         )
         if history_trend.get("runs", 0) > 0:
             print(
-                "[bench] trend runs={runs} mean_reduction_rate={rr} mean_resolved_rate={sr} "
+                "[bench] trend runs={runs}/{all_runs} mean_reduction_rate={rr} mean_resolved_rate={sr} "
                 "mean_reduction_rate_all={rr_all} mean_resolved_share_all={sr_all}".format(
                     runs=history_trend.get("runs"),
+                    all_runs=history_trend.get("all_runs"),
                     rr=history_trend.get("mean_issue_reduction_rate"),
                     sr=history_trend.get("mean_resolved_issue_rate"),
                     rr_all=history_trend.get("mean_issue_reduction_rate_all_cases"),
