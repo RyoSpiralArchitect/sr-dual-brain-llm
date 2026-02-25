@@ -80,6 +80,14 @@ Optional engine-side corpus-callosum timeout (bounds right-brain waits):
 ```bash
 # Default: 20000 (20s)
 export DUALBRAIN_CALLOSUM_TIMEOUT_MS=20000
+
+# Trade latency for accuracy (longer right-brain / System2 waits):
+export DUALBRAIN_TIMEOUT_MULTIPLIER=1.5
+export DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER=1.2   # optional
+export DUALBRAIN_TIMEOUT_MAX_MS=180000            # optional safety cap
+
+# Encourage deeper System2 refinement (max supported: 3):
+export DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN=3
 ```
 
 ### 3) Open the UI (chat + metrics)

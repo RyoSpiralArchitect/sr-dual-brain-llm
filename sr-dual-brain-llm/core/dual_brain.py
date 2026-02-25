@@ -2626,6 +2626,16 @@ class DualBrainController:
                 priority=system2_priority,
             )
             decision.state["system2_round_target"] = system2_round_target
+            system2_round_target_min = _env_int(
+                "DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN",
+                0,
+                minimum=0,
+                maximum=3,
+            )
+            if system2_round_target_min and system2_round_target < int(system2_round_target_min):
+                system2_round_target = int(system2_round_target_min)
+                decision.state["system2_round_target_min"] = int(system2_round_target_min)
+                decision.state["system2_round_target"] = system2_round_target
         if (
             self.prefrontal_cortex is not None
             and not explicit_leading
@@ -3100,12 +3110,42 @@ class DualBrainController:
                         timeout_floor = max(2200.0, timeout_floor - 900.0)
                 if budget_norm == "large" and not system2_active:
                     timeout_scale = 95
-                timeout_ms = int(
+                timeout_ms_base = int(
                     min(
                         float(self.default_timeout_ms),
                         max(timeout_floor, float(decision.slot_ms) * float(timeout_scale)),
                     )
                 )
+                timeout_multiplier = _env_float(
+                    "DUALBRAIN_TIMEOUT_MULTIPLIER",
+                    1.0,
+                    minimum=0.25,
+                    maximum=4.0,
+                )
+                if system2_active:
+                    timeout_multiplier *= _env_float(
+                        "DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER",
+                        1.0,
+                        minimum=0.25,
+                        maximum=4.0,
+                    )
+                timeout_multiplier = max(0.25, min(8.0, float(timeout_multiplier)))
+                timeout_max_ms = _env_int(
+                    "DUALBRAIN_TIMEOUT_MAX_MS",
+                    int(round(float(self.default_timeout_ms) * 4.0)),
+                    minimum=int(self.default_timeout_ms),
+                    maximum=240000,
+                )
+                timeout_ms = int(
+                    min(
+                        float(timeout_max_ms),
+                        float(timeout_ms_base) * float(timeout_multiplier),
+                    )
+                )
+                if timeout_multiplier != 1.0:
+                    decision.state["timeout_multiplier"] = float(timeout_multiplier)
+                    decision.state["timeout_max_ms"] = int(timeout_max_ms)
+                    decision.state["timeout_ms_base"] = int(timeout_ms_base)
                 request_meta = {
                     "temperature": round(decision.temperature, 3),
                     "budget": payload["budget"],
@@ -3404,11 +3444,22 @@ class DualBrainController:
                         )
                         verify_payload["draft_sum"] = verify_payload["draft"][:280]
 
-                        verify_timeout_floor = 2600.0 if system2_norm == "auto" else 3200.0
-                        verify_timeout_ms = int(
+                        verify_timeout_floor = (
+                            2600.0 if system2_norm == "auto" else 3200.0
+                        )
+                        verify_timeout_ms_base = int(
                             min(
                                 float(self.default_timeout_ms),
-                                max(verify_timeout_floor, float(timeout_ms) * 0.7),
+                                max(
+                                    verify_timeout_floor,
+                                    float(timeout_ms_base) * 0.7,
+                                ),
+                            )
+                        )
+                        verify_timeout_ms = int(
+                            min(
+                                float(timeout_max_ms),
+                                float(verify_timeout_ms_base) * float(timeout_multiplier),
                             )
                         )
                         verify_call_error = False
@@ -3630,11 +3681,22 @@ class DualBrainController:
                             )
                             round3_payload["draft_sum"] = round3_payload["draft"][:280]
 
-                            round3_timeout_floor = 2200.0 if system2_norm == "auto" else 2600.0
-                            round3_timeout_ms = int(
+                            round3_timeout_floor = (
+                                2200.0 if system2_norm == "auto" else 2600.0
+                            )
+                            round3_timeout_ms_base = int(
                                 min(
                                     float(self.default_timeout_ms),
-                                    max(round3_timeout_floor, float(verify_timeout_ms) * 0.65),
+                                    max(
+                                        round3_timeout_floor,
+                                        float(verify_timeout_ms_base) * 0.65,
+                                    ),
+                                )
+                            )
+                            round3_timeout_ms = int(
+                                min(
+                                    float(timeout_max_ms),
+                                    float(round3_timeout_ms_base) * float(timeout_multiplier),
                                 )
                             )
                             round3_call_error = False

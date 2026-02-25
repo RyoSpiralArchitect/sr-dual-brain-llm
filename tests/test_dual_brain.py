@@ -1502,6 +1502,106 @@ def test_acc_system2_bump_promotes_easy_numeric_to_system2(monkeypatch):
     assert controller.left_model.integrations == 1
 
 
+def test_timeout_multiplier_scales_callosum_timeout(monkeypatch):
+    class SteadyLeft:
+        uses_external_llm = False
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "draft"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return draft
+
+    def _run(timeout_multiplier: str | None) -> int:
+        if timeout_multiplier is None:
+            monkeypatch.delenv("DUALBRAIN_TIMEOUT_MULTIPLIER", raising=False)
+        else:
+            monkeypatch.setenv("DUALBRAIN_TIMEOUT_MULTIPLIER", timeout_multiplier)
+        callosum = DummyCallosum()
+        controller = DualBrainController(
+            callosum=callosum,
+            memory=SharedMemory(),
+            left_model=SteadyLeft(),
+            right_model=RightBrainModel(),
+            policy=AlwaysConsultPolicy(),
+            hypothalamus=Hypothalamus(),
+            reasoning_dial=ReasoningDial(mode="conservative"),
+            auditor=Auditor(),
+            orchestrator=Orchestrator(3),
+            telemetry=TrackingTelemetry(),
+            basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        )
+        asyncio.run(controller.process("Compute 2+2", system2_mode="off"))
+        assert callosum.payloads
+        return int(callosum.payloads[0]["timeout_ms"])
+
+    baseline = _run(None)
+    doubled = _run("2.0")
+    assert doubled == baseline * 2
+
+
+def test_system2_round_target_min_enforced(monkeypatch):
+    class SteadyLeft:
+        uses_external_llm = False
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "draft"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.9
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return draft
+
+    monkeypatch.setenv("DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN", "3")
+
+    callosum = OkCriticCallosum()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=SteadyLeft(),
+        right_model=RightBrainModel(),
+        policy=AlwaysConsultPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="conservative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    question = (
+        "Compare caching versus batching for API performance. Give pros/cons and a recommendation?"
+    )
+    asyncio.run(controller.process(question, system2_mode="on"))
+
+    policy_events = [payload for evt, payload in telemetry.events if evt == "policy_decision"]
+    assert policy_events
+    state = policy_events[-1].get("state") or {}
+    assert state.get("system2_round_target") == 3
+    assert state.get("system2_round_target_min") == 3
+
+
 def test_system2_auto_triggers_on_structured_multiline_input():
     class RevisingLeft:
         uses_external_llm = True

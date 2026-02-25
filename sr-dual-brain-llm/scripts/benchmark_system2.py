@@ -911,6 +911,15 @@ async def _run(args: argparse.Namespace) -> int:
                 "require_critic_health": bool(args.require_critic_health),
                 "question_count": len(questions),
                 "llm_capable": llm_capable,
+                "callosum_timeout_ms": int(getattr(session.controller, "default_timeout_ms", 0) or 0),
+                "timeout_multiplier": _safe_float(os.environ.get("DUALBRAIN_TIMEOUT_MULTIPLIER")),
+                "system2_timeout_multiplier": _safe_float(
+                    os.environ.get("DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER")
+                ),
+                "timeout_max_ms": _safe_int(os.environ.get("DUALBRAIN_TIMEOUT_MAX_MS")),
+                "system2_round_target_min": _safe_int(
+                    os.environ.get("DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN")
+                ),
             },
             "critic_health": critic_health,
             "summary": summary,
