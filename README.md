@@ -211,6 +211,7 @@ Keep a short log here so benchmark trends are visible without opening JSON files
 | Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result (`on` vs `auto`) | Report |
 |---|---|---|---:|---|---|---|
 | 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
+| 2026-02-26 | (none; micro-only) | `off,auto,on` | 35 | disabled (`--critic-health-check off`) | `activation: 0.0 -> 1.0` (auto no-op), `issue_reduction_rate(on)=1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_20260226_000523Z.json` |
 
 Single-mode runs:
 
@@ -219,6 +220,7 @@ Single-mode runs:
 | 2026-02-25 | (none; micro-only) | `on` | 15 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.3529`, `resolved_issue_rate=0.4286`, `avg_latency_ms_all_cases=404.28ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 | 2026-02-25 | (none; micro-only) | `on` | 70 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8143`, `resolved_issue_rate=0.8507`, `avg_latency_ms_all_cases=485.53ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 | 2026-02-25 | (none; micro-only) | `on` | 151 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8919`, `resolved_issue_rate=0.9103`, `avg_latency_ms_all_cases=498.57ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
+| 2026-02-26 | (none; micro-only) | `on` | 35 | false | disabled (`--critic-health-check off`) | `issue_reduction_rate=1.0`, `resolved_issue_rate=1.0`, `avg_latency_ms_all_cases=447.06ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_reasoning_openended_20260226_000442Z.json` |
 
 Repro command:
 
