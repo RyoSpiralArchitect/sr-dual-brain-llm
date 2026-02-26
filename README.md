@@ -163,6 +163,7 @@ Useful flags:
 - `--only-tags percent,units` (domain slices; report also includes `summary_by_tag`)
 - `--questions a.json,b.json` (comma-separated multi-file suite)
 - `--output path.json` (save a named report file)
+- `ts=$(date -u +%Y%m%d_%H%M%SZ)` then `--output "..._${ts}.json"` (avoid overwriting)
 - `--critic-health-check off` (skip external-critic preflight for micro-only runs)
 
 For mode-to-mode comparison (`off` vs `auto` vs `on`) on the exact same question set:
@@ -221,6 +222,7 @@ Single-mode runs:
 | 2026-02-25 | (none; micro-only) | `on` | 70 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8143`, `resolved_issue_rate=0.8507`, `avg_latency_ms_all_cases=485.53ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 | 2026-02-25 | (none; micro-only) | `on` | 151 | false | enabled (`attempts=3`, `min_successes=2`) → FAILED (not configured) | `issue_reduction_rate=0.8919`, `resolved_issue_rate=0.9103`, `avg_latency_ms_all_cases=498.57ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_benchmark_last.json` |
 | 2026-02-26 | (none; micro-only) | `on` | 35 | false | disabled (`--critic-health-check off`) | `issue_reduction_rate=1.0`, `resolved_issue_rate=1.0`, `avg_latency_ms_all_cases=447.06ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_reasoning_openended_20260226_000442Z.json` |
+| 2026-02-26 | OpenAI / `gpt-4o-mini` | `on` | 35 | true | enabled (`attempts=3`, `min_successes=2`) | `issue_reduction_rate=0.0294` (`34 -> 33`), `resolved_issue_rate=0.0769`, `avg_latency_ms_all_cases=6407.06ms`, `activation=1.0` | `sr-dual-brain-llm/samples/system2_reasoning_openended_openai_20260226_034800Z.json` |
 
 Repro command:
 
