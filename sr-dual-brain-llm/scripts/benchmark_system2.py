@@ -997,8 +997,16 @@ async def _run(args: argparse.Namespace) -> int:
                         )
                     )
             if args.require_critic_health and not bool(critic_health.get("healthy")):
+                provider = critic_health.get("provider")
+                model = critic_health.get("model")
                 raise RuntimeError(
-                    "Critic health check failed. Resolve provider/model connectivity before benchmark."
+                    "Critic health check failed (provider={provider} model={model}). "
+                    "Configure external critic via LLM_PROVIDER + LLM_MODEL_ID + <PROVIDER>_API_KEY "
+                    "(or RIGHT_BRAIN_PROVIDER + RIGHT_BRAIN_MODEL + <PROVIDER>_API_KEY), "
+                    "or rerun with --critic-health-check off.".format(
+                        provider=provider,
+                        model=model,
+                    )
                 )
 
         cases: List[Dict[str, Any]] = []
