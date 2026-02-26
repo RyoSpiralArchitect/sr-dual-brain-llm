@@ -212,6 +212,7 @@ Keep a short log here so benchmark trends are visible without opening JSON files
 | Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result (`on` vs `auto`) | Report |
 |---|---|---|---:|---|---|---|
 | 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
+| 2026-02-26 | OpenAI / `gpt-4o-mini` | `auto,on` | 35 | enabled (`attempts=3`, `min_successes=2`) | `issue_reduction_rate_delta=+0.1786`, `avg_latency_ms_all_cases_delta=-1030.03ms`, `activation: 0.857 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_openai_20260226_042832Z.json` |
 | 2026-02-26 | (none; micro-only) | `off,auto,on` | 35 | disabled (`--critic-health-check off`) | `activation: 0.0 -> 1.0` (auto no-op), `issue_reduction_rate(on)=1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_20260226_000523Z.json` |
 
 Single-mode runs:
