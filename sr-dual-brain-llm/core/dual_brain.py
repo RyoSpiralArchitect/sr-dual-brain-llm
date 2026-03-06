@@ -1435,6 +1435,13 @@ class DualBrainController:
             flags=re.IGNORECASE,
         ):
             return "hard" if length >= 180 else "medium"
+        if re.search(
+            r"(de morgan|equivalent expression|equivalent form|logical equivalence|"
+            r"等価|同値|書き換えて|書き換えよ|書き換える)",
+            q,
+            flags=re.IGNORECASE,
+        ):
+            return "medium"
         inline_code = re.search(r"`([^`]{8,})`", q)
         if inline_code and re.search(
             r"(review|correctness|edge[- ]?case|bug|fix|snippet)",
@@ -1445,6 +1452,12 @@ class DualBrainController:
             # snippets are often "easy" even when correctness is mentioned.
             code_len = len(inline_code.group(1))
             if length < 140 and code_len < 80:
+                if precision_priority and re.search(
+                    r"(correctness|edge[- ]?case|bug|failure|empty|zero|none|null)",
+                    q,
+                    flags=re.IGNORECASE,
+                ):
+                    return "medium"
                 return "easy"
             return "hard" if (length >= 260 or code_len >= 220) else "medium"
         if (

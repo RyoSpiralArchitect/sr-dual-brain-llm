@@ -1835,6 +1835,22 @@ def test_infer_question_type_keeps_brief_code_review_prompt_easy():
     assert inferred == "easy"
 
 
+def test_infer_question_type_marks_brief_code_review_prompt_medium_in_precision_mode():
+    inferred = DualBrainController._infer_question_type(
+        "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`.",
+        precision_priority=True,
+    )
+    assert inferred == "medium"
+
+
+def test_infer_question_type_marks_short_logic_rewrite_prompt_as_medium():
+    inferred = DualBrainController._infer_question_type(
+        "Use De Morgan's laws to rewrite: NOT (A AND B). Provide an equivalent expression.",
+        precision_priority=True,
+    )
+    assert inferred == "medium"
+
+
 def test_infer_question_type_keeps_short_casual_review_prompt_easy():
     inferred = DualBrainController._infer_question_type("Can you review this?")
     assert inferred == "easy"
