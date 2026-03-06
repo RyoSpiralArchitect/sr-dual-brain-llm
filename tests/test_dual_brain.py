@@ -19,6 +19,7 @@ from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
 from core.director_reasoner import DirectorAdvice
 from core.insula import Insula, InteroceptiveState
+from core.predictive_coding import PredictiveCodingController
 from core.salience_network import SalienceNetwork, SalienceSignal
 from core.schema import UnconsciousSummaryModel
 from core.thalamus import Thalamus
@@ -2053,6 +2054,89 @@ def test_stage2_control_loop_logs_task_positive_and_replay():
     assert any(evt == "task_positive_network" for evt, _ in telemetry.events)
     assert any(evt == "basal_ganglia_loop" for evt, _ in telemetry.events)
     assert any(evt == "hippocampal_lifecycle" for evt, _ in telemetry.events)
+
+
+def test_stage3_predictive_routing_triggers_auto_system2_for_short_review_prompt():
+    class PredictiveLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Draft."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.93
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return draft
+
+    telemetry = TrackingTelemetry()
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    controller = DualBrainController(
+        callosum=OkCriticCallosum(),
+        memory=SharedMemory(),
+        left_model=PredictiveLeft(),
+        right_model=right,
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        predictive_coding=PredictiveCodingController(),
+    )
+
+    previous_priority = os.environ.get("DUALBRAIN_SYSTEM2_PRIORITY_AUTO")
+    os.environ["DUALBRAIN_SYSTEM2_PRIORITY_AUTO"] = "balanced"
+    try:
+        answer = asyncio.run(
+            controller.process(
+                "Review `sum(xs)/len(xs)` for empty input correctness and zero-length handling.",
+                system2_mode="auto",
+            )
+        )
+    finally:
+        if previous_priority is None:
+            os.environ.pop("DUALBRAIN_SYSTEM2_PRIORITY_AUTO", None)
+        else:
+            os.environ["DUALBRAIN_SYSTEM2_PRIORITY_AUTO"] = previous_priority
+
+    assert answer == "Draft."
+    assert any(evt == "predictive_coding" for evt, _ in telemetry.events)
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is True
+    assert str(mode_events[-1].get("reason") or "").startswith("predictive_")
+    task_positive_events = [
+        payload for evt, payload in telemetry.events if evt == "task_positive_network"
+    ]
+    assert task_positive_events
+    assert task_positive_events[-1].get("mode") in {"attention", "executive_control"}
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events
+    predictive_stage = next(
+        stage
+        for stage in architecture_events[-1]["path"]
+        if stage.get("stage") == "predictive_routing"
+    )
+    assert predictive_stage.get("dominant_network") in {
+        "attention",
+        "executive_control",
+        "salience",
+    }
+    assert "PredictiveCodingController" in predictive_stage.get("modules", [])
 
 
 def test_system2_auto_uses_tighter_timeout_and_draft_budget_than_on():

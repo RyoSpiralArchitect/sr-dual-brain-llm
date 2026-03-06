@@ -34,6 +34,7 @@ from .neural_impulse import (
 from .anterior_cingulate import AnteriorCingulateCortex
 from .cerebellum import Cerebellum
 from .insula import Insula, InteroceptiveState
+from .predictive_coding import PredictiveCodingController, PredictionFrame
 from .salience_network import SalienceNetwork, SalienceSignal
 from .thalamus import ThalamicRelay, Thalamus
 from .micro_critic import micro_criticise_reasoning
@@ -948,6 +949,27 @@ def _summarise_architecture_stage(idx: int, stage: Dict[str, Any]) -> str:
         slot_ms = stage.get("slot_ms")
         if slot_ms is not None:
             descriptors.append(f"slot {int(slot_ms)}ms")
+    elif name == "predictive_routing":
+        dominant_network = stage.get("dominant_network")
+        if dominant_network:
+            descriptors.append(f"dominant {dominant_network}")
+        top_networks = stage.get("top_networks") or []
+        if top_networks:
+            descriptors.append("top {}".format(", ".join(str(name) for name in top_networks[:3])))
+        phase = stage.get("phase")
+        if phase:
+            descriptors.append(f"phase {phase}")
+        system2_pressure = stage.get("system2_pressure")
+        if system2_pressure is not None:
+            descriptors.append(f"s2 {float(system2_pressure):.2f}")
+        prediction_error = stage.get("prediction_error") or {}
+        if isinstance(prediction_error, dict):
+            dominant_error = prediction_error.get("dominant_channel")
+            overall = prediction_error.get("overall")
+            if dominant_error:
+                descriptors.append(f"err {dominant_error}")
+            if overall is not None:
+                descriptors.append(f"overall {float(overall):.2f}")
     elif name == "integration":
         descriptors.append("success" if stage.get("success") else "retry")
         coherence = stage.get("coherence")
@@ -1109,6 +1131,7 @@ class DualBrainController:
         insula: Optional[Insula] = None,
         salience_network: Optional[SalienceNetwork] = None,
         thalamus: Optional[Thalamus] = None,
+        predictive_coding: Optional[PredictiveCodingController] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -1136,6 +1159,7 @@ class DualBrainController:
         self.insula = insula or Insula()
         self.salience_network = salience_network or SalienceNetwork()
         self.thalamus = thalamus or Thalamus()
+        self.predictive_coding = predictive_coding or PredictiveCodingController()
         self._last_leading_brain: Optional[str] = "right"
         self._default_mode_low_focus_streak = 0
         
@@ -1686,6 +1710,7 @@ class DualBrainController:
         interoception: Optional[InteroceptiveState],
         salience_signal: Optional[SalienceSignal],
         thalamic_relay: Optional[ThalamicRelay],
+        predictive_frame: Optional[PredictionFrame],
         hemisphere_signal: HemisphericSignal,
         collaboration_profile: CollaborationProfile,
         decision: DecisionOutcome,
@@ -1738,6 +1763,24 @@ class DualBrainController:
         if schema_profile is not None:
             perception_entry["schema_profile"] = schema_profile.to_dict()
         path.append(perception_entry)
+
+        if predictive_frame is not None:
+            predictive_modules = ["PredictiveCodingController"]
+            if self.neural_integrator is not None:
+                predictive_modules.append("NeuralIntegrator")
+            path.append(
+                {
+                    "stage": "predictive_routing",
+                    "modules": predictive_modules,
+                    "phase": predictive_frame.networks.phase_state,
+                    "dominant_network": predictive_frame.networks.dominant_network,
+                    "top_networks": list(predictive_frame.networks.top_networks),
+                    "system2_pressure": float(predictive_frame.system2_pressure),
+                    "system2_ready": bool(predictive_frame.system2_ready),
+                    "prediction_error": predictive_frame.prediction_error.to_payload(),
+                    "networks": predictive_frame.networks.to_payload(),
+                }
+            )
 
         dialogue_modules = ["LeftBrainModel", "ReasoningDial", "BasalGanglia"]
         if self.right_model is not None:
@@ -2173,6 +2216,49 @@ class DualBrainController:
             except Exception:
                 pass
 
+        hemisphere_signal = self._select_hemisphere_mode(question, focus)
+        hemisphere_mode = hemisphere_signal.mode
+        hemisphere_bias = hemisphere_signal.bias
+        collaboration_profile = self._compute_collaboration_profile(
+            hemisphere_signal, focus
+        )
+        predictive_frame: Optional[PredictionFrame] = None
+        if self.predictive_coding is not None:
+            predictive_frame = self.predictive_coding.evaluate(
+                question=question,
+                q_type_hint=q_type_hint,
+                precision_priority=precision_priority,
+                focus_metric=focus_metric,
+                affect=question_affect,
+                novelty=novelty,
+                hemisphere_mode=hemisphere_mode,
+                hemisphere_bias=hemisphere_bias,
+                collaboration_strength=collaboration_profile.strength,
+                interoception=insula_state,
+                salience_signal=salience_signal,
+                thalamic_relay=thalamic_relay,
+                context_signal_len=context_signal_len,
+                has_working_memory=bool(context_parts.get("working_memory")),
+                has_long_term_memory=bool(
+                    context_parts.get("memory")
+                    or context_parts.get("schema")
+                    or context_parts.get("pitfalls")
+                ),
+                has_hippocampal_memory=bool(
+                    context_parts.get("hippocampal")
+                    or context_parts.get("replay")
+                ),
+                is_trivial_chat=is_trivial_chat,
+            )
+            try:
+                self.telemetry.log(
+                    "predictive_coding",
+                    qid=qid_value,
+                    frame=predictive_frame.to_payload(),
+                )
+            except Exception:
+                pass
+
         system2_capable = bool(
             getattr(self.left_model, "uses_external_llm", False)
             and getattr(self.right_model, "uses_external_llm", False)
@@ -2220,6 +2306,16 @@ class DualBrainController:
                 ):
                     system2_active = True
                     system2_reason = f"salience_{salience_signal.dominant_network}"
+                elif predictive_frame is not None and predictive_frame.system2_ready:
+                    system2_active = True
+                    if float(predictive_frame.prediction_error.overall) >= 0.40:
+                        system2_reason = (
+                            f"predictive_{predictive_frame.prediction_error.dominant_channel}"
+                        )
+                    else:
+                        system2_reason = (
+                            f"predictive_{predictive_frame.networks.dominant_network}"
+                        )
                 # Structural cues: math/code-like inputs and long/loaded questions.
                 elif "```" in q or any(
                     sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")
@@ -2274,12 +2370,6 @@ class DualBrainController:
         except Exception:  # pragma: no cover - telemetry is best-effort
             pass
 
-        hemisphere_signal = self._select_hemisphere_mode(question, focus)
-        hemisphere_mode = hemisphere_signal.mode
-        hemisphere_bias = hemisphere_signal.bias
-        collaboration_profile = self._compute_collaboration_profile(
-            hemisphere_signal, focus
-        )
         schema_profile: Optional[SchemaProfile] = None
         distortion_payload: Optional[Dict[str, object]] = None
         auto_selected_leading = False
@@ -2701,6 +2791,9 @@ class DualBrainController:
             decision.state["salience_signal"] = salience_signal.to_payload()
         if thalamic_relay is not None:
             decision.state["thalamic_relay"] = thalamic_relay.to_payload()
+        if predictive_frame is not None:
+            decision.state["predictive_coding"] = predictive_frame.to_payload()
+            decision.state["network_state_profile"] = predictive_frame.networks.to_payload()
         acc_signal_pre = None
         # ACC conflict-driven control (optional): use deterministic micro-critic + ACC signal
         # to modulate consult/system2/temperature when the draft appears inconsistent.
@@ -3080,6 +3173,15 @@ class DualBrainController:
                 task_positive_load,
                 float(basal_signal.gating_balance),
             )
+        if predictive_frame is not None:
+            predictive_task_positive_load = float(
+                predictive_frame.networks.task_positive_load
+            )
+            if predictive_task_positive_load >= task_positive_load:
+                task_positive_mode = str(
+                    predictive_frame.networks.task_positive_mode or "attention"
+                )
+            task_positive_load = max(task_positive_load, predictive_task_positive_load)
         decision.state["task_positive_network"] = {
             "load": float(task_positive_load),
             "mode": task_positive_mode,
@@ -3166,14 +3268,22 @@ class DualBrainController:
             self._default_mode_low_focus_streak = 0
         suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2 or bool(
             thalamic_relay is not None and thalamic_relay.suppress_default_mode
-        ) or bool(task_positive_load >= 0.62)
+        ) or bool(task_positive_load >= 0.62) or bool(
+            predictive_frame is not None and predictive_frame.networks.suppress_default_mode
+        )
         try:
             self.telemetry.log(
                 "task_positive_network",
                 qid=decision.qid,
                 load=float(task_positive_load),
                 mode=task_positive_mode,
-                suppressed=bool(task_positive_load >= 0.62),
+                suppressed=bool(
+                    task_positive_load >= 0.62
+                    or (
+                        predictive_frame is not None
+                        and predictive_frame.networks.suppress_default_mode
+                    )
+                ),
             )
         except Exception:  # pragma: no cover - telemetry best-effort
             pass
@@ -5181,6 +5291,7 @@ class DualBrainController:
             interoception=insula_state,
             salience_signal=salience_signal,
             thalamic_relay=thalamic_relay,
+            predictive_frame=predictive_frame,
             hemisphere_signal=hemisphere_signal,
             collaboration_profile=collaboration_profile,
             decision=decision,
@@ -5312,6 +5423,7 @@ class DualBrainController:
             interoception=insula_state,
             salience_signal=salience_signal,
             thalamic_relay=thalamic_relay,
+            predictive_frame=predictive_frame,
             hemisphere_signal=hemisphere_signal,
             collaboration_profile=collaboration_profile,
             decision=decision,
