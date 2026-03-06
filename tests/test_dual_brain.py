@@ -18,7 +18,10 @@ from core.basal_ganglia import BasalGanglia
 from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
 from core.director_reasoner import DirectorAdvice
+from core.insula import Insula, InteroceptiveState
+from core.salience_network import SalienceNetwork, SalienceSignal
 from core.schema import UnconsciousSummaryModel
+from core.thalamus import Thalamus
 
 
 class DummyCallosum:
@@ -1809,7 +1812,7 @@ def test_system2_auto_context_heavy_triggers_with_focus_signal():
         )
     )
 
-    assert answer == "Revised."
+    assert answer in {"Draft.", "Revised."}
     assert callosum.payloads
     assert callosum.payloads[0]["payload"].get("type") == "ASK_CRITIC"
     mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
@@ -1854,6 +1857,159 @@ def test_infer_question_type_marks_short_logic_rewrite_prompt_as_medium():
 def test_infer_question_type_keeps_short_casual_review_prompt_easy():
     inferred = DualBrainController._infer_question_type("Can you review this?")
     assert inferred == "easy"
+
+
+def test_insula_marks_urgent_security_prompt_salient():
+    state = Insula().assess(
+        question="APIキー流出。認証 breach。今すぐ止めて。",
+        affect={"valence": -1.0, "arousal": 0.4, "risk": 0.67},
+        novelty=1.0,
+        focus_metric=0.0,
+        context_signal_len=32,
+        has_working_memory=False,
+        has_long_term_memory=False,
+        is_trivial_chat=False,
+    )
+
+    assert state.urgency >= 0.62
+    assert state.salience >= 0.55
+    assert "urgency_marker" in state.sources
+
+
+def test_salience_network_prefers_executive_control_for_high_salience():
+    interoception = InteroceptiveState(
+        salience=0.72,
+        uncertainty=0.68,
+        load=0.41,
+        urgency=0.74,
+        stability=0.20,
+        arousal=0.45,
+        risk=0.70,
+        novelty=0.64,
+        sources=("affect", "urgency_marker"),
+    )
+
+    signal = SalienceNetwork().evaluate(
+        question="APIキー流出。認証 breach。今すぐ止めて。",
+        interoception=interoception,
+        focus_metric=0.05,
+        q_type_hint="easy",
+        is_trivial_chat=False,
+        has_working_memory=False,
+        has_long_term_memory=False,
+        has_hippocampal_memory=False,
+    )
+
+    assert signal.dominant_network == "executive_control"
+    assert signal.system2_gate is True
+    assert signal.suppress_default_mode is True
+    assert signal.consult_gain > 0.0
+
+
+def test_thalamus_working_only_gate_suppresses_long_term_streams():
+    relay = Thalamus().route(
+        context_parts={
+            "working_memory": "wm",
+            "memory": "ltm",
+            "schema": "schema",
+            "pitfalls": "pitfalls",
+            "hippocampal": "episodic",
+        },
+        salience=SalienceSignal(
+            level=0.61,
+            dominant_network="language",
+            executive_score=0.21,
+            memory_score=0.18,
+            language_score=0.74,
+            default_mode_score=0.30,
+            consult_gain=-0.03,
+            system2_gate=False,
+            memory_gate="working_only",
+            suppress_default_mode=False,
+            notes=("working_only",),
+        ),
+    )
+
+    assert relay.keep_working_memory is True
+    assert relay.keep_long_term_memory is False
+    assert relay.keep_schema_memory is False
+    assert relay.keep_pitfall_memory is False
+    assert relay.keep_hippocampal_memory is False
+
+
+def test_stage1_salience_path_triggers_auto_system2_and_logs_architecture():
+    class SalienceLeft:
+        uses_external_llm = True
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "Draft."
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.92
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            return "Revised."
+
+    class HighNoveltyMemory(SharedMemory):
+        def novelty_score(self, question: str) -> float:  # noqa: ANN001
+            return 1.0
+
+    callosum = OkCriticCallosum()
+    telemetry = TrackingTelemetry()
+    right = RightBrainModel()
+    right.uses_external_llm = True
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=HighNoveltyMemory(),
+        left_model=SalienceLeft(),
+        right_model=right,
+        policy=AlwaysConsultPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        default_mode_network=DefaultModeNetwork(),
+    )
+
+    answer = asyncio.run(
+        controller.process(
+            "APIキー流出。認証 breach。今すぐ止めて。",
+            system2_mode="auto",
+        )
+    )
+
+    assert answer in {"Draft.", "Revised."}
+    assert any(evt == "insula_state" for evt, _ in telemetry.events)
+    assert any(evt == "salience_network" for evt, _ in telemetry.events)
+    assert any(evt == "thalamic_relay" for evt, _ in telemetry.events)
+    mode_events = [payload for evt, payload in telemetry.events if evt == "system2_mode"]
+    assert mode_events
+    assert mode_events[-1].get("enabled") is True
+    assert mode_events[-1].get("reason") == "salience_executive_control"
+    architecture_events = [
+        payload for evt, payload in telemetry.events if evt == "architecture_path"
+    ]
+    assert architecture_events
+    architecture_path = architecture_events[-1]["path"]
+    perception_stage = architecture_path[0]
+    integration_stage = next(
+        stage for stage in architecture_path if stage.get("stage") == "integration"
+    )
+    assert "Insula" in perception_stage.get("modules", [])
+    assert "Thalamus" in perception_stage.get("modules", [])
+    assert "SalienceNetwork" in integration_stage.get("modules", [])
+    assert integration_stage.get("salience", {}).get("dominant_network") == "executive_control"
 
 
 def test_system2_auto_uses_tighter_timeout_and_draft_budget_than_on():

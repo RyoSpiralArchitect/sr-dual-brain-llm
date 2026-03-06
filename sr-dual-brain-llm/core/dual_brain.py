@@ -33,6 +33,9 @@ from .neural_impulse import (
 )
 from .anterior_cingulate import AnteriorCingulateCortex
 from .cerebellum import Cerebellum
+from .insula import Insula, InteroceptiveState
+from .salience_network import SalienceNetwork, SalienceSignal
+from .thalamus import ThalamicRelay, Thalamus
 from .micro_critic import micro_criticise_reasoning
 
 
@@ -1103,6 +1106,9 @@ class DualBrainController:
         neural_integrator: Optional[NeuralIntegrator] = None,
         anterior_cingulate_cortex: Optional[AnteriorCingulateCortex] = None,
         cerebellum: Optional[Cerebellum] = None,
+        insula: Optional[Insula] = None,
+        salience_network: Optional[SalienceNetwork] = None,
+        thalamus: Optional[Thalamus] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -1127,6 +1133,9 @@ class DualBrainController:
         self.coherence_resonator = coherence_resonator or CoherenceResonator()
         self.anterior_cingulate_cortex = anterior_cingulate_cortex or AnteriorCingulateCortex()
         self.cerebellum = cerebellum or Cerebellum()
+        self.insula = insula or Insula()
+        self.salience_network = salience_network or SalienceNetwork()
+        self.thalamus = thalamus or Thalamus()
         self._last_leading_brain: Optional[str] = "right"
         self._default_mode_low_focus_streak = 0
         
@@ -1403,6 +1412,42 @@ class DualBrainController:
             "risk": float(metrics.get("risk", 0.0)),
         }
 
+    def _rebuild_context_from_parts(
+        self,
+        *,
+        question: str,
+        context_parts: Dict[str, str],
+    ) -> tuple[str, FocusSummary | None]:
+        rebuilt: List[str] = []
+        wm_ctx = str(context_parts.get("working_memory") or "")
+        mem_ctx = str(context_parts.get("memory") or "")
+        schema_ctx = str(context_parts.get("schema") or "")
+        pitfall_ctx = str(context_parts.get("pitfalls") or "")
+        hip_ctx = str(context_parts.get("hippocampal") or "")
+
+        if wm_ctx:
+            rebuilt.append(_format_section("Working memory", wm_ctx.splitlines()))
+        if mem_ctx:
+            rebuilt.append(mem_ctx)
+        if schema_ctx:
+            rebuilt.append(f"[Schema memory] {schema_ctx}")
+        if pitfall_ctx:
+            rebuilt.append(pitfall_ctx)
+        if hip_ctx:
+            rebuilt.append(f"[Hippocampal recall] {hip_ctx}")
+
+        context = "\n".join(rebuilt)
+        focus: FocusSummary | None = None
+        if self.prefrontal_cortex is not None:
+            focus_memory_context = "\n".join([part for part in (wm_ctx, mem_ctx) if part])
+            focus = self.prefrontal_cortex.synthesise_focus(
+                question=question,
+                memory_context=focus_memory_context,
+                hippocampal_context=hip_ctx,
+            )
+            context = self.prefrontal_cortex.gate_context(context, focus)
+        return context, focus
+
     @staticmethod
     def _infer_question_type(
         question: str,
@@ -1625,6 +1670,9 @@ class DualBrainController:
         schema_profile: SchemaProfile | None,
         affect: Dict[str, float],
         novelty: float,
+        interoception: Optional[InteroceptiveState],
+        salience_signal: Optional[SalienceSignal],
+        thalamic_relay: Optional[ThalamicRelay],
         hemisphere_signal: HemisphericSignal,
         collaboration_profile: CollaborationProfile,
         decision: DecisionOutcome,
@@ -1642,9 +1690,13 @@ class DualBrainController:
         path: List[Dict[str, Any]] = []
 
         perception_modules = ["Amygdala"] if self.amygdala else []
+        if self.insula is not None:
+            perception_modules.append("Insula")
         if self.prefrontal_cortex is not None:
             perception_modules.append("PrefrontalCortex")
             perception_modules.append("SchemaProfiler")
+        if self.thalamus is not None:
+            perception_modules.append("Thalamus")
         perception_modules.append("SharedMemory")
         if self.hippocampus is not None:
             perception_modules.append("TemporalHippocampalIndexing")
@@ -1664,6 +1716,10 @@ class DualBrainController:
                 "collaboration": collaboration_profile.to_payload(),
             },
         }
+        if interoception is not None:
+            perception_entry["signals"]["interoception"] = interoception.to_payload()
+        if thalamic_relay is not None:
+            perception_entry["signals"]["thalamic_relay"] = thalamic_relay.to_payload()
         if focus is not None:
             perception_entry["focus"] = focus.to_dict()
         if schema_profile is not None:
@@ -1702,6 +1758,8 @@ class DualBrainController:
         integration_modules = ["CoherenceResonator", "Auditor"]
         if self.anterior_cingulate_cortex is not None:
             integration_modules.append("AnteriorCingulateCortex")
+        if self.salience_network is not None:
+            integration_modules.append("SalienceNetwork")
         if self.cerebellum is not None:
             integration_modules.append("Cerebellum")
         if self.default_mode_network is not None:
@@ -1716,6 +1774,8 @@ class DualBrainController:
         }
         if coherence_signal is not None:
             integration_entry["coherence"] = coherence_signal.to_payload()
+        if salience_signal is not None:
+            integration_entry["salience"] = salience_signal.to_payload()
         if distortion_payload is not None:
             integration_entry["distortion"] = distortion_payload
         path.append(integration_entry)
@@ -1926,6 +1986,9 @@ class DualBrainController:
             self.prefrontal_cortex is not None
             and self.prefrontal_cortex.is_trivial_chat_turn(question)
         )
+        focus_metric = 0.0
+        if self.prefrontal_cortex is not None and focus is not None:
+            focus_metric = self.prefrontal_cortex.focus_metric(focus)
         system2_norm = str(system2_mode or "auto").strip().lower()
         if system2_norm in {"true", "1", "yes"}:
             system2_norm = "on"
@@ -1969,7 +2032,110 @@ class DualBrainController:
             minimum=1,
             maximum=12,
         )
-        context_signal_len = 0
+        context_signal_len = sum(
+            len(str(context_parts.get(key) or ""))
+            for key in ("working_memory", "memory", "schema", "pitfalls", "hippocampal")
+        )
+        question_affect = self._sense_affect(question, "")
+        novelty = self.memory.novelty_score(question)
+        q_type_hint = self._infer_question_type(
+            question,
+            precision_priority=precision_priority,
+        )
+        insula_state: Optional[InteroceptiveState] = None
+        salience_signal: Optional[SalienceSignal] = None
+        thalamic_relay: Optional[ThalamicRelay] = None
+        if self.insula is not None:
+            insula_state = self.insula.assess(
+                question=question,
+                affect=question_affect,
+                novelty=novelty,
+                focus_metric=focus_metric,
+                context_signal_len=context_signal_len,
+                has_working_memory=bool(context_parts.get("working_memory")),
+                has_long_term_memory=bool(
+                    context_parts.get("memory")
+                    or context_parts.get("schema")
+                    or context_parts.get("pitfalls")
+                    or context_parts.get("hippocampal")
+                ),
+                is_trivial_chat=is_trivial_chat,
+            )
+        if self.salience_network is not None and insula_state is not None:
+            salience_signal = self.salience_network.evaluate(
+                question=question,
+                interoception=insula_state,
+                focus_metric=focus_metric,
+                q_type_hint=q_type_hint,
+                is_trivial_chat=is_trivial_chat,
+                has_working_memory=bool(context_parts.get("working_memory")),
+                has_long_term_memory=bool(
+                    context_parts.get("memory")
+                    or context_parts.get("schema")
+                    or context_parts.get("pitfalls")
+                ),
+                has_hippocampal_memory=bool(context_parts.get("hippocampal")),
+            )
+        if self.thalamus is not None and salience_signal is not None:
+            thalamic_relay = self.thalamus.route(
+                context_parts=context_parts,
+                salience=salience_signal,
+            )
+            if not thalamic_relay.keep_working_memory:
+                context_parts["working_memory"] = ""
+            if not thalamic_relay.keep_long_term_memory:
+                context_parts["memory"] = ""
+            if not thalamic_relay.keep_schema_memory:
+                context_parts["schema"] = ""
+            if not thalamic_relay.keep_pitfall_memory:
+                context_parts["pitfalls"] = ""
+            if not thalamic_relay.keep_hippocampal_memory:
+                context_parts["hippocampal"] = ""
+            context, focus = self._rebuild_context_from_parts(
+                question=question,
+                context_parts=context_parts,
+            )
+            if self.prefrontal_cortex is not None and focus is not None:
+                focus_metric = self.prefrontal_cortex.focus_metric(focus)
+            else:
+                focus_metric = 0.0
+            context_signal_len = sum(
+                len(str(context_parts.get(key) or ""))
+                for key in (
+                    "working_memory",
+                    "memory",
+                    "schema",
+                    "pitfalls",
+                    "hippocampal",
+                )
+            )
+        if insula_state is not None:
+            try:
+                self.telemetry.log(
+                    "insula_state",
+                    qid=qid_value,
+                    state=insula_state.to_payload(),
+                )
+            except Exception:
+                pass
+        if salience_signal is not None:
+            try:
+                self.telemetry.log(
+                    "salience_network",
+                    qid=qid_value,
+                    signal=salience_signal.to_payload(),
+                )
+            except Exception:
+                pass
+        if thalamic_relay is not None:
+            try:
+                self.telemetry.log(
+                    "thalamic_relay",
+                    qid=qid_value,
+                    relay=thalamic_relay.to_payload(),
+                )
+            except Exception:
+                pass
 
         system2_capable = bool(
             getattr(self.left_model, "uses_external_llm", False)
@@ -2007,13 +2173,16 @@ class DualBrainController:
                 )
                 delimiter_hits = len(re.findall(r"[,、，;；:：]", q))
 
-                q_type_hint = self._infer_question_type(
-                    q,
-                    precision_priority=precision_priority,
-                )
                 if q_type_hint in {"medium", "hard"}:
                     system2_active = True
                     system2_reason = f"q_type_{q_type_hint}"
+                elif (
+                    salience_signal is not None
+                    and salience_signal.system2_gate
+                    and salience_signal.dominant_network in {"executive_control", "memory_recall"}
+                ):
+                    system2_active = True
+                    system2_reason = f"salience_{salience_signal.dominant_network}"
                 # Structural cues: math/code-like inputs and long/loaded questions.
                 elif "```" in q or any(
                     sym in q for sym in ("=", "≠", "<", ">", "≥", "≤", "→", "⇒", "∴", "∵")
@@ -2209,30 +2378,11 @@ class DualBrainController:
         def _rebuild_context_from_parts() -> None:
             nonlocal context, focus, focus_metric, focus_keywords
 
-            rebuilt: List[str] = []
-            wm_ctx = str(context_parts.get("working_memory") or "")
-            mem_ctx = str(context_parts.get("memory") or "")
-            schema_ctx = str(context_parts.get("schema") or "")
-            hip_ctx = str(context_parts.get("hippocampal") or "")
-
-            if wm_ctx:
-                rebuilt.append(_format_section("Working memory", wm_ctx.splitlines()))
-            if mem_ctx:
-                rebuilt.append(mem_ctx)
-            if schema_ctx:
-                rebuilt.append(f"[Schema memory] {schema_ctx}")
-            if hip_ctx:
-                rebuilt.append(f"[Hippocampal recall] {hip_ctx}")
-
-            context = "\n".join(rebuilt)
-            if self.prefrontal_cortex is not None:
-                focus_memory_context = "\n".join([part for part in (wm_ctx, mem_ctx) if part])
-                focus = self.prefrontal_cortex.synthesise_focus(
-                    question=question,
-                    memory_context=focus_memory_context,
-                    hippocampal_context=hip_ctx,
-                )
-                context = self.prefrontal_cortex.gate_context(context, focus)
+            context, focus = self._rebuild_context_from_parts(
+                question=question,
+                context_parts=context_parts,
+            )
+            if self.prefrontal_cortex is not None and focus is not None:
                 focus_metric = self.prefrontal_cortex.focus_metric(focus)
                 focus_keywords = list(focus.keywords) if focus.keywords else None
             else:
@@ -2255,6 +2405,7 @@ class DualBrainController:
             if lt == "drop":
                 context_parts["memory"] = ""
                 context_parts["schema"] = ""
+                context_parts["pitfalls"] = ""
                 context_parts["hippocampal"] = ""
             elif lt == "keep":
                 if not context_parts.get("memory"):
@@ -2498,6 +2649,12 @@ class DualBrainController:
             hemisphere_bias,
             qid=qid_value,
         )
+        if insula_state is not None:
+            decision.state["interoception"] = insula_state.to_payload()
+        if salience_signal is not None:
+            decision.state["salience_signal"] = salience_signal.to_payload()
+        if thalamic_relay is not None:
+            decision.state["thalamic_relay"] = thalamic_relay.to_payload()
         # ACC conflict-driven control (optional): use deterministic micro-critic + ACC signal
         # to modulate consult/system2/temperature when the draft appears inconsistent.
         acc_override_consult = _env_flag("DUALBRAIN_ACC_OVERRIDE_CONSULT", False)
@@ -2876,7 +3033,9 @@ class DualBrainController:
             self._default_mode_low_focus_streak += 1
         else:
             self._default_mode_low_focus_streak = 0
-        suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2
+        suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2 or bool(
+            thalamic_relay is not None and thalamic_relay.suppress_default_mode
+        )
         if suppress_default_mode_reflections:
             decision.state["default_mode_suppressed"] = True
         if focus is not None:
@@ -4848,6 +5007,9 @@ class DualBrainController:
             schema_profile=schema_profile,
             affect=affect,
             novelty=novelty,
+            interoception=insula_state,
+            salience_signal=salience_signal,
+            thalamic_relay=thalamic_relay,
             hemisphere_signal=hemisphere_signal,
             collaboration_profile=collaboration_profile,
             decision=decision,
@@ -4936,6 +5098,9 @@ class DualBrainController:
             schema_profile=schema_profile,
             affect=affect,
             novelty=novelty,
+            interoception=insula_state,
+            salience_signal=salience_signal,
+            thalamic_relay=thalamic_relay,
             hemisphere_signal=hemisphere_signal,
             collaboration_profile=collaboration_profile,
             decision=decision,
