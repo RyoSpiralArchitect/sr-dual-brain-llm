@@ -47,6 +47,10 @@ class ConflictSignal:
     """Conflict signal produced by the ACC monitor."""
 
     conflict_level: float
+    effort_level: float = 0.0
+    uncertainty: float = 0.0
+    adaptation_signal: float = 0.0
+    recommended_control: str = "monitor"
     micro_domain: Optional[str] = None
     micro_confidence: float = 0.0
     micro_issues: int = 0
@@ -56,6 +60,10 @@ class ConflictSignal:
     def to_payload(self) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "conflict_level": float(_clamp01(self.conflict_level)),
+            "effort_level": float(_clamp01(self.effort_level)),
+            "uncertainty": float(_clamp01(self.uncertainty)),
+            "adaptation_signal": float(_clamp01(self.adaptation_signal)),
+            "recommended_control": str(self.recommended_control or "monitor"),
             "sources": list(self.sources),
         }
         if self.micro_domain:
@@ -91,12 +99,16 @@ class AnteriorCingulateCortex:
         """
 
         _ = question
-        _ = draft
 
         lc = _clamp01(left_confidence)
         conflict = 0.0
+        effort = 0.0
+        uncertainty = 0.0
         sources: list[str] = []
         notes: list[str] = []
+        q = str(question or "")
+        q_len = len(q)
+        draft_len = len(str(draft or ""))
 
         if micro is not None:
             sources.append("micro")
@@ -109,6 +121,19 @@ class AnteriorCingulateCortex:
                 # - and a small "overconfidence penalty" to mimic ACC conflict.
                 base = 0.3 + 0.45 * micro_conf + 0.08 * min(issue_count, 6)
                 conflict = max(conflict, _clamp01(base))
+                effort = max(
+                    effort,
+                    _clamp01(
+                        0.18
+                        + 0.12 * min(issue_count, 6)
+                        + 0.08 * min(1.0, q_len / 220.0)
+                        + 0.06 * min(1.0, draft_len / 320.0)
+                    ),
+                )
+                uncertainty = max(
+                    uncertainty,
+                    _clamp01(max(0.0, lc - micro_conf) + 0.08 * min(issue_count, 4)),
+                )
                 notes.append(f"micro:{micro.domain}:{issue_count}")
                 if lc >= self.overconfidence_threshold:
                     conflict = _clamp01(conflict + 0.08)
@@ -116,16 +141,33 @@ class AnteriorCingulateCortex:
             elif micro.verdict == "ok":
                 # Ongoing monitoring baseline.
                 conflict = max(conflict, 0.02)
+                effort = max(effort, 0.05)
+                uncertainty = max(uncertainty, _clamp01(max(0.0, lc - micro_conf) * 0.4))
 
         if not sources:
             sources.append("heuristic")
+            effort = _clamp01(0.06 + 0.10 * min(1.0, q_len / 260.0))
+
+        adaptation_signal = _clamp01(
+            0.58 * conflict + 0.24 * effort + 0.18 * uncertainty
+        )
+        recommended_control = "monitor"
+        if conflict >= 0.72 and (micro is None or len(micro.issues or []) >= 2):
+            recommended_control = "system2"
+        elif conflict >= 0.52 or adaptation_signal >= 0.58:
+            recommended_control = "consult"
+        elif conflict <= 0.12 and lc >= 0.75:
+            recommended_control = "stabilise"
 
         return ConflictSignal(
             conflict_level=_clamp01(conflict),
+            effort_level=_clamp01(effort),
+            uncertainty=_clamp01(uncertainty),
+            adaptation_signal=_clamp01(adaptation_signal),
+            recommended_control=recommended_control,
             micro_domain=(micro.domain if micro is not None else None),
             micro_confidence=(_clamp01(micro.confidence_r) if micro is not None else 0.0),
             micro_issues=(int(len(micro.issues or [])) if micro is not None else 0),
             sources=tuple(sources),
             notes=tuple(notes),
         )
-

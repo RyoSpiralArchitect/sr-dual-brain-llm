@@ -200,6 +200,11 @@ class EpisodicTrace:
     selection_reason: Optional[str] = None
     tags: Tuple[str, ...] = field(default_factory=tuple)
     annotations: Dict[str, Any] = field(default_factory=dict)
+    consolidation_score: float = 0.35
+    retrieval_count: int = 0
+    replay_count: int = 0
+    last_accessed_at: float = field(default_factory=lambda: time.time())
+    last_replayed_at: Optional[float] = None
 
     def payload(self) -> str:
         return f"Q: {self.question}\nA: {self.answer}"
@@ -297,6 +302,30 @@ class TemporalHippocampalIndexing:
             annotations["hemisphere_mode"] = str(annotations["hemisphere_mode"])
         if "hemisphere_bias" in annotations and annotations["hemisphere_bias"] is not None:
             annotations["hemisphere_bias"] = float(annotations["hemisphere_bias"])
+        salience_level = 0.0
+        if annotations.get("salience_level") is not None:
+            try:
+                salience_level = max(0.0, min(1.0, float(annotations["salience_level"])))
+            except Exception:
+                salience_level = 0.0
+        reward = 0.0
+        if annotations.get("reward") is not None:
+            try:
+                reward = max(0.0, min(1.0, float(annotations["reward"])))
+            except Exception:
+                reward = 0.0
+        resolved = 1.0 if annotations.get("conflict_resolved") else 0.0
+        base_consolidation = max(
+            0.15,
+            min(
+                1.0,
+                0.28
+                + 0.22 * float(collaboration_strength or 0.0)
+                + 0.20 * salience_level
+                + 0.18 * reward
+                + 0.10 * resolved,
+            ),
+        )
         trace = EpisodicTrace(
             qid=qid,
             question=question,
@@ -310,6 +339,7 @@ class TemporalHippocampalIndexing:
             selection_reason=selection_reason,
             tags=norm_tags,
             annotations=annotations,
+            consolidation_score=base_consolidation,
         )
         self.episodes.append(trace)
 
@@ -339,7 +369,16 @@ class TemporalHippocampalIndexing:
             combined = sim + 0.35 * lexical
             scored.append((combined, lexical, -idx, sim, trace))
         scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
-        return [(sim, trace) for _, _, _, sim, trace in scored[:topk]]
+        hits = [(sim, trace) for _, _, _, sim, trace in scored[:topk]]
+        now = time.time()
+        for sim, trace in hits:
+            trace.retrieval_count += 1
+            trace.last_accessed_at = now
+            trace.consolidation_score = min(
+                1.0,
+                float(trace.consolidation_score) + 0.03 + 0.04 * max(0.0, sim),
+            )
+        return hits
 
     def retrieve_summary(
         self,
@@ -372,6 +411,9 @@ class TemporalHippocampalIndexing:
                 "lead_right": 0.0,
                 "lead_braided": 0.0,
                 "strength_coverage": 0.0,
+                "avg_consolidation": 0.0,
+                "avg_retrievals": 0.0,
+                "avg_replays": 0.0,
             }
         window = max(1, min(window, len(self.episodes)))
         subset = self.episodes[-window:]
@@ -381,6 +423,9 @@ class TemporalHippocampalIndexing:
             if trace.collaboration_strength is not None
         ]
         avg_strength = sum(strengths) / len(strengths) if strengths else 0.0
+        avg_consolidation = sum(float(trace.consolidation_score) for trace in subset) / len(subset)
+        avg_retrievals = sum(int(trace.retrieval_count) for trace in subset) / len(subset)
+        avg_replays = sum(int(trace.replay_count) for trace in subset) / len(subset)
         lead_counts = {
             "left": 0,
             "right": 0,
@@ -397,4 +442,144 @@ class TemporalHippocampalIndexing:
             "lead_right": float(lead_counts["right"]) / window,
             "lead_braided": float(lead_counts["braided"]) / window,
             "strength_coverage": float(coverage),
+            "avg_consolidation": float(avg_consolidation),
+            "avg_retrievals": float(avg_retrievals),
+            "avg_replays": float(avg_replays),
+        }
+
+    def replay_candidates(
+        self,
+        query: str,
+        *,
+        topk: int = 2,
+    ) -> List[Tuple[float, EpisodicTrace]]:
+        hits = self.retrieve(query, topk=max(topk * 3, topk))
+        if not hits:
+            return []
+        now = time.time()
+        scored: List[Tuple[float, float, EpisodicTrace]] = []
+        for sim, trace in hits:
+            age_seconds = max(1.0, now - float(trace.timestamp))
+            freshness = max(0.0, 1.0 - min(age_seconds, 86400.0) / 86400.0)
+            replay_novelty = 1.0 / (1.0 + float(trace.replay_count))
+            score = (
+                0.50 * max(0.0, sim)
+                + 0.25 * float(trace.consolidation_score)
+                + 0.15 * replay_novelty
+                + 0.10 * freshness
+            )
+            scored.append((score, sim, trace))
+        scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+        selected = scored[:topk]
+        if selected:
+            replay_now = time.time()
+            for _, _, trace in selected:
+                trace.replay_count += 1
+                trace.last_replayed_at = replay_now
+                trace.consolidation_score = min(
+                    1.0,
+                    float(trace.consolidation_score) + 0.05,
+                )
+        return [(sim, trace) for _, sim, trace in selected]
+
+    def replay_summary(
+        self,
+        query: str,
+        *,
+        topk: int = 2,
+        max_chars: int = 180,
+        include_meta: bool = True,
+    ) -> str:
+        hits = self.replay_candidates(query, topk=topk)
+        if not hits:
+            return ""
+        parts: List[str] = []
+        for sim, trace in hits:
+            summary = trace.summary(
+                similarity=(sim if include_meta else None),
+                max_chars=max_chars,
+                include_meta=include_meta,
+            )
+            if summary:
+                parts.append(summary)
+        return " | ".join(parts)
+
+    def consolidate_feedback(
+        self,
+        *,
+        qid: str,
+        reward: float,
+        success: bool,
+        conflict_resolved: bool = False,
+        system2_used: bool = False,
+        salience_level: float = 0.0,
+    ) -> Optional[Dict[str, float]]:
+        for trace in reversed(self.episodes):
+            if str(trace.qid) != str(qid):
+                continue
+            reward = max(0.0, min(1.0, float(reward)))
+            salience_level = max(0.0, min(1.0, float(salience_level)))
+            before = float(trace.consolidation_score)
+            delta = (
+                0.14 * reward
+                + (0.08 if success else -0.03)
+                + (0.10 if conflict_resolved else 0.0)
+                + (0.04 if system2_used else 0.0)
+                + 0.05 * salience_level
+            )
+            trace.consolidation_score = max(0.05, min(1.0, before + delta))
+            trace.annotations["reward"] = reward
+            trace.annotations["success"] = bool(success)
+            trace.annotations["conflict_resolved"] = bool(conflict_resolved)
+            trace.annotations["system2_used"] = bool(system2_used)
+            trace.annotations["salience_level"] = salience_level
+            trace.last_accessed_at = time.time()
+            return {
+                "before": float(before),
+                "after": float(trace.consolidation_score),
+                "reward": float(reward),
+                "success": 1.0 if success else 0.0,
+                "conflict_resolved": 1.0 if conflict_resolved else 0.0,
+                "system2_used": 1.0 if system2_used else 0.0,
+                "salience_level": float(salience_level),
+            }
+        return None
+
+    def forget_stale(
+        self,
+        *,
+        max_episodes: int = 256,
+        min_keep: int = 64,
+    ) -> Dict[str, float]:
+        total_before = len(self.episodes)
+        if total_before <= max_episodes:
+            return {
+                "before": float(total_before),
+                "after": float(total_before),
+                "forgotten": 0.0,
+            }
+        min_keep = max(1, min(int(min_keep), total_before))
+        protected = self.episodes[-min_keep:]
+        candidates = self.episodes[:-min_keep]
+        scored: List[Tuple[float, int, EpisodicTrace]] = []
+        now = time.time()
+        for idx, trace in enumerate(candidates):
+            age_seconds = max(1.0, now - float(trace.timestamp))
+            age_penalty = min(age_seconds / 86400.0, 30.0)
+            score = (
+                float(trace.consolidation_score)
+                + 0.03 * float(trace.retrieval_count)
+                + 0.04 * float(trace.replay_count)
+                - 0.02 * age_penalty
+            )
+            scored.append((score, idx, trace))
+        scored.sort(key=lambda item: (item[0], -item[1]), reverse=True)
+        keep_budget = max_episodes - len(protected)
+        kept_candidates = [trace for _, _, trace in scored[:keep_budget]]
+        self.episodes = kept_candidates + protected
+        forgotten = max(0, total_before - len(self.episodes))
+        return {
+            "before": float(total_before),
+            "after": float(len(self.episodes)),
+            "forgotten": float(forgotten),
         }

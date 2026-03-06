@@ -1365,9 +1365,16 @@ class DualBrainController:
             except Exception:  # pragma: no cover - best-effort
                 pitfall_context = ""
         hippocampal_context = ""
+        replay_context = ""
         if include_long_term and self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(
                 question, include_meta=False
+            )
+            replay_context = self.hippocampus.replay_summary(
+                question,
+                topk=1,
+                max_chars=180,
+                include_meta=False,
             )
 
         segments = []
@@ -1381,6 +1388,8 @@ class DualBrainController:
             segments.append(pitfall_context)
         if hippocampal_context:
             segments.append(f"[Hippocampal recall] {hippocampal_context}")
+        if replay_context:
+            segments.append(f"[Hippocampal replay] {replay_context}")
         combined = "\n".join(segments)
         parts = {
             "working_memory": working_memory_context,
@@ -1388,6 +1397,7 @@ class DualBrainController:
             "schema": schema_context,
             "pitfalls": pitfall_context,
             "hippocampal": hippocampal_context,
+            "replay": replay_context,
         }
         focus: FocusSummary | None = None
         if self.prefrontal_cortex is not None:
@@ -1424,6 +1434,7 @@ class DualBrainController:
         schema_ctx = str(context_parts.get("schema") or "")
         pitfall_ctx = str(context_parts.get("pitfalls") or "")
         hip_ctx = str(context_parts.get("hippocampal") or "")
+        replay_ctx = str(context_parts.get("replay") or "")
 
         if wm_ctx:
             rebuilt.append(_format_section("Working memory", wm_ctx.splitlines()))
@@ -1435,6 +1446,8 @@ class DualBrainController:
             rebuilt.append(pitfall_ctx)
         if hip_ctx:
             rebuilt.append(f"[Hippocampal recall] {hip_ctx}")
+        if replay_ctx:
+            rebuilt.append(f"[Hippocampal replay] {replay_ctx}")
 
         context = "\n".join(rebuilt)
         focus: FocusSummary | None = None
@@ -2034,7 +2047,14 @@ class DualBrainController:
         )
         context_signal_len = sum(
             len(str(context_parts.get(key) or ""))
-            for key in ("working_memory", "memory", "schema", "pitfalls", "hippocampal")
+            for key in (
+                "working_memory",
+                "memory",
+                "schema",
+                "pitfalls",
+                "hippocampal",
+                "replay",
+            )
         )
         question_affect = self._sense_affect(question, "")
         novelty = self.memory.novelty_score(question)
@@ -2058,6 +2078,7 @@ class DualBrainController:
                     or context_parts.get("schema")
                     or context_parts.get("pitfalls")
                     or context_parts.get("hippocampal")
+                    or context_parts.get("replay")
                 ),
                 is_trivial_chat=is_trivial_chat,
             )
@@ -2073,8 +2094,12 @@ class DualBrainController:
                     context_parts.get("memory")
                     or context_parts.get("schema")
                     or context_parts.get("pitfalls")
+                    or context_parts.get("replay")
                 ),
-                has_hippocampal_memory=bool(context_parts.get("hippocampal")),
+                has_hippocampal_memory=bool(
+                    context_parts.get("hippocampal")
+                    or context_parts.get("replay")
+                ),
             )
         if self.thalamus is not None and salience_signal is not None:
             thalamic_relay = self.thalamus.route(
@@ -2091,6 +2116,7 @@ class DualBrainController:
                 context_parts["pitfalls"] = ""
             if not thalamic_relay.keep_hippocampal_memory:
                 context_parts["hippocampal"] = ""
+                context_parts["replay"] = ""
             context, focus = self._rebuild_context_from_parts(
                 question=question,
                 context_parts=context_parts,
@@ -2107,6 +2133,7 @@ class DualBrainController:
                     "schema",
                     "pitfalls",
                     "hippocampal",
+                    "replay",
                 )
             )
         if insula_state is not None:
@@ -2133,6 +2160,15 @@ class DualBrainController:
                     "thalamic_relay",
                     qid=qid_value,
                     relay=thalamic_relay.to_payload(),
+                )
+            except Exception:
+                pass
+        if context_parts.get("replay"):
+            try:
+                self.telemetry.log(
+                    "hippocampal_replay",
+                    qid=qid_value,
+                    replay=str(context_parts.get("replay") or ""),
                 )
             except Exception:
                 pass
@@ -2166,7 +2202,8 @@ class DualBrainController:
                 wm_len = len(str(context_parts.get("working_memory") or ""))
                 mem_len = len(str(context_parts.get("memory") or ""))
                 hip_len = len(str(context_parts.get("hippocampal") or ""))
-                context_signal_len = wm_len + mem_len + hip_len
+                replay_len = len(str(context_parts.get("replay") or ""))
+                context_signal_len = wm_len + mem_len + hip_len + replay_len
                 focus_relevance = float(focus.relevance) if focus is not None else 0.0
                 focus_overlap = (
                     float(focus.hippocampal_overlap) if focus is not None else 0.0
@@ -2358,6 +2395,7 @@ class DualBrainController:
                                 context_parts.get("memory")
                                 or context_parts.get("schema")
                                 or context_parts.get("hippocampal")
+                                or context_parts.get("replay")
                             ),
                         },
                     )
@@ -2407,6 +2445,7 @@ class DualBrainController:
                 context_parts["schema"] = ""
                 context_parts["pitfalls"] = ""
                 context_parts["hippocampal"] = ""
+                context_parts["replay"] = ""
             elif lt == "keep":
                 if not context_parts.get("memory"):
                     context_parts["memory"] = self.memory.retrieve_related(question)
@@ -2418,6 +2457,13 @@ class DualBrainController:
                 if not context_parts.get("hippocampal") and self.hippocampus is not None:
                     context_parts["hippocampal"] = self.hippocampus.retrieve_summary(
                         question, include_meta=False
+                    )
+                if not context_parts.get("replay") and self.hippocampus is not None:
+                    context_parts["replay"] = self.hippocampus.replay_summary(
+                        question,
+                        topk=1,
+                        max_chars=180,
+                        include_meta=False,
                     )
 
             _rebuild_context_from_parts()
@@ -2655,6 +2701,7 @@ class DualBrainController:
             decision.state["salience_signal"] = salience_signal.to_payload()
         if thalamic_relay is not None:
             decision.state["thalamic_relay"] = thalamic_relay.to_payload()
+        acc_signal_pre = None
         # ACC conflict-driven control (optional): use deterministic micro-critic + ACC signal
         # to modulate consult/system2/temperature when the draft appears inconsistent.
         acc_override_consult = _env_flag("DUALBRAIN_ACC_OVERRIDE_CONSULT", False)
@@ -2678,7 +2725,6 @@ class DualBrainController:
                 micro_pre = micro_criticise_reasoning(question, draft)
             except Exception:
                 micro_pre = None
-            acc_signal_pre = None
             if micro_pre is not None:
                 try:
                     acc_signal_pre = self.anterior_cingulate_cortex.monitor(
@@ -2767,6 +2813,55 @@ class DualBrainController:
                             )
                         except Exception:  # pragma: no cover - telemetry best-effort
                             pass
+        basal_loop_signal = None
+        if self.basal_ganglia is not None and (acc_signal_pre is not None or salience_signal is not None):
+            try:
+                basal_loop_signal = self.basal_ganglia.evaluate(
+                    state=decision.state,
+                    affect=affect,
+                    focus_metric=focus_metric,
+                    conflict_level=(
+                        float(acc_signal_pre.conflict_level)
+                        if acc_signal_pre is not None
+                        else 0.0
+                    ),
+                    salience_level=(
+                        float(salience_signal.level)
+                        if salience_signal is not None
+                        else 0.0
+                    ),
+                )
+            except Exception:  # pragma: no cover - best-effort
+                basal_loop_signal = None
+            if basal_loop_signal is not None:
+                decision.state["basal_loop_signal"] = basal_loop_signal.to_dict()
+                if (
+                    basal_loop_signal.recommended_action == 1
+                    and decision.action == 0
+                    and self.right_model is not None
+                    and (
+                        (
+                            acc_signal_pre is not None
+                            and str(acc_signal_pre.recommended_control or "").lower()
+                            in {"consult", "system2"}
+                        )
+                        or (
+                            salience_signal is not None
+                            and salience_signal.dominant_network == "memory_recall"
+                            and salience_signal.system2_gate
+                        )
+                    )
+                ):
+                    decision.action = 1
+                    decision.state["basal_loop_override"] = "consult"
+                try:
+                    self.telemetry.log(
+                        "basal_ganglia_loop",
+                        qid=decision.qid,
+                        signal=basal_loop_signal.to_dict(),
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
         if precision_priority:
             decision.state["q_type"] = self._infer_question_type(
                 question,
@@ -2953,6 +3048,42 @@ class DualBrainController:
         unconscious_summary: Optional[UnconsciousSummaryModel] = None
         default_mode_reflections: Optional[List[DefaultModeReflection]] = None
         suppress_default_mode_reflections = False
+        task_positive_load = 0.0
+        task_positive_mode = "idle"
+        if salience_signal is not None and salience_signal.dominant_network in {
+            "executive_control",
+            "memory_recall",
+        }:
+            task_positive_load = max(task_positive_load, float(salience_signal.level))
+            task_positive_mode = salience_signal.dominant_network
+        if acc_signal_pre is not None:
+            if float(acc_signal_pre.adaptation_signal) >= task_positive_load:
+                task_positive_mode = str(acc_signal_pre.recommended_control or "conflict")
+            task_positive_load = max(
+                task_positive_load,
+                float(acc_signal_pre.adaptation_signal),
+            )
+        if basal_signal is not None and (
+            (
+                salience_signal is not None
+                and salience_signal.dominant_network in {"executive_control", "memory_recall"}
+            )
+            or (
+                acc_signal_pre is not None
+                and str(acc_signal_pre.recommended_control or "").lower()
+                in {"consult", "system2"}
+            )
+        ):
+            if float(basal_signal.gating_balance) >= task_positive_load:
+                task_positive_mode = str(basal_signal.dominant_pathway or "basal")
+            task_positive_load = max(
+                task_positive_load,
+                float(basal_signal.gating_balance),
+            )
+        decision.state["task_positive_network"] = {
+            "load": float(task_positive_load),
+            "mode": task_positive_mode,
+        }
         psychoid_signal: Optional[PsychoidSignalModel] = None
         psychoid_projection: Optional[PsychoidAttentionProjection] = None
         if self.unconscious_field is not None:
@@ -3035,9 +3166,21 @@ class DualBrainController:
             self._default_mode_low_focus_streak = 0
         suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2 or bool(
             thalamic_relay is not None and thalamic_relay.suppress_default_mode
-        )
+        ) or bool(task_positive_load >= 0.62)
+        try:
+            self.telemetry.log(
+                "task_positive_network",
+                qid=decision.qid,
+                load=float(task_positive_load),
+                mode=task_positive_mode,
+                suppressed=bool(task_positive_load >= 0.62),
+            )
+        except Exception:  # pragma: no cover - telemetry best-effort
+            pass
         if suppress_default_mode_reflections:
             decision.state["default_mode_suppressed"] = True
+        if task_positive_load >= 0.62:
+            decision.state["task_positive_suppressed_default_mode"] = True
         if focus is not None:
             self.telemetry.log(
                 "prefrontal_focus",
@@ -4373,6 +4516,7 @@ class DualBrainController:
                 except Exception:
                     micro_result = None
 
+            acc_signal = None
             if acc_enabled and self.anterior_cingulate_cortex is not None:
                 try:
                     acc_signal = self.anterior_cingulate_cortex.monitor(
@@ -4402,6 +4546,23 @@ class DualBrainController:
                 and self.cerebellum is not None
             )
             if can_micro_correct and micro_result is not None:
+                cerebellar_forecast = self.cerebellum.forecast(
+                    micro_result,
+                    conflict=acc_signal,
+                    system2_active=bool(system2_active),
+                    consult_planned=bool(detail_notes or decision.action != 0),
+                )
+                decision.state["cerebellum_forecast"] = (
+                    cerebellar_forecast.to_payload()
+                )
+                try:
+                    self.telemetry.log(
+                        "cerebellum_forward_model",
+                        qid=decision.qid,
+                        forecast=cerebellar_forecast.to_payload(),
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
                 min_conf = _env_float(
                     "DUALBRAIN_CEREBELLUM_MICRO_MIN_CONFIDENCE",
                     float(getattr(self.cerebellum, "min_confidence", 0.88)),
@@ -4418,6 +4579,7 @@ class DualBrainController:
                     micro_result.verdict == "issues"
                     and float(micro_result.confidence_r) >= float(min_conf)
                     and len(micro_result.issues) <= int(max_issues)
+                    and cerebellar_forecast.recommended_path == "micro_correct"
                 ):
                     correction_started = time.perf_counter()
                     cerebellum_applied = False
@@ -4429,7 +4591,10 @@ class DualBrainController:
                         revised = await self.left_model.integrate_info_async(
                             question=question,
                             draft=final_answer,
-                            info=self.cerebellum.build_internal_notes(micro_result),
+                            info=self.cerebellum.build_internal_notes(
+                                micro_result,
+                                forecast=cerebellar_forecast,
+                            ),
                             temperature=max(
                                 0.15, min(0.35, float(decision.temperature))
                             ),
@@ -4460,6 +4625,8 @@ class DualBrainController:
                         "final_issues": int(final_issues),
                         "resolved": bool(resolved),
                         "confidence": float(micro_result.confidence_r),
+                        "forward_path": str(cerebellar_forecast.recommended_path),
+                        "predicted_gain": float(cerebellar_forecast.predicted_gain),
                     }
                     try:
                         self.telemetry.log(
@@ -4471,6 +4638,8 @@ class DualBrainController:
                             final_issues=int(final_issues),
                             resolved=bool(resolved),
                             confidence=float(micro_result.confidence_r),
+                            forward_path=str(cerebellar_forecast.recommended_path),
+                            predicted_gain=float(cerebellar_forecast.predicted_gain),
                         )
                     except Exception:  # pragma: no cover - telemetry best-effort
                         pass
@@ -4486,6 +4655,8 @@ class DualBrainController:
                                 "final_issues": int(final_issues),
                                 "resolved": bool(resolved),
                                 "confidence": float(micro_result.confidence_r),
+                                "forward_path": str(cerebellar_forecast.recommended_path),
+                                "predicted_gain": float(cerebellar_forecast.predicted_gain),
                             },
                         )
                     )
@@ -5045,6 +5216,8 @@ class DualBrainController:
         memory_answer = _sanitize_user_answer(user_answer) or str(user_answer or "").strip()
         episodic_total = 0
         hippocampal_rollup: Optional[Dict[str, float]] = None
+        hippocampal_lifecycle: Optional[Dict[str, float]] = None
+        hippocampal_forgetting: Optional[Dict[str, float]] = None
         if self.hippocampus is not None:
             self.hippocampus.index_episode(
                 decision.qid,
@@ -5076,10 +5249,48 @@ class DualBrainController:
                         if distortion_payload is not None
                         else {}
                     ),
+                    "reward": reward,
+                    "success": success,
+                    "conflict_resolved": bool(
+                        decision.state.get("system2_resolved")
+                        or (
+                            isinstance(decision.state.get("cerebellum_micro"), dict)
+                            and decision.state.get("cerebellum_micro", {}).get("resolved")
+                        )
+                    ),
+                    "system2_used": bool(decision.state.get("system2_enabled")),
+                    "salience_level": (
+                        float(salience_signal.level)
+                        if salience_signal is not None
+                        else 0.0
+                    ),
                 },
             )
+            hippocampal_lifecycle = self.hippocampus.consolidate_feedback(
+                qid=decision.qid,
+                reward=reward,
+                success=success,
+                conflict_resolved=bool(
+                    decision.state.get("system2_resolved")
+                    or (
+                        isinstance(decision.state.get("cerebellum_micro"), dict)
+                        and decision.state.get("cerebellum_micro", {}).get("resolved")
+                    )
+                ),
+                system2_used=bool(decision.state.get("system2_enabled")),
+                salience_level=(
+                    float(salience_signal.level)
+                    if salience_signal is not None
+                    else 0.0
+                ),
+            )
+            hippocampal_forgetting = self.hippocampus.forget_stale()
             episodic_total = len(self.hippocampus.episodes)
             hippocampal_rollup = self.hippocampus.collaboration_rollup()
+            if hippocampal_lifecycle is not None:
+                decision.state["hippocampal_lifecycle"] = hippocampal_lifecycle
+            if hippocampal_forgetting is not None:
+                decision.state["hippocampal_forgetting"] = hippocampal_forgetting
 
         if memory_question and memory_answer:
             self.memory.store(
@@ -5143,6 +5354,8 @@ class DualBrainController:
             for marker in ("[Working memory]", "[Schema memory]", "[Hippocampal recall]"):
                 if marker in (context or ""):
                     sections.append(marker.strip("[]"))
+            if "[Hippocampal replay]" in (context or ""):
+                sections.append("Hippocampal replay")
 
             coh_combined = None
             coh_tension = None
@@ -5279,8 +5492,31 @@ class DualBrainController:
                 qid=decision.qid,
                 rollup=hippocampal_rollup,
             )
+        if hippocampal_lifecycle is not None:
+            self.telemetry.log(
+                "hippocampal_lifecycle",
+                qid=decision.qid,
+                lifecycle=hippocampal_lifecycle,
+            )
+        if hippocampal_forgetting is not None:
+            self.telemetry.log(
+                "hippocampal_forgetting",
+                qid=decision.qid,
+                forgetting=hippocampal_forgetting,
+            )
         if self.basal_ganglia is not None and basal_signal is not None:
-            self.basal_ganglia.integrate_feedback(reward=reward, latency_ms=latency_ms)
+            self.basal_ganglia.integrate_feedback(
+                reward=reward,
+                latency_ms=latency_ms,
+                conflict_resolved=bool(
+                    decision.state.get("system2_resolved")
+                    or (
+                        isinstance(decision.state.get("cerebellum_micro"), dict)
+                        and decision.state.get("cerebellum_micro", {}).get("resolved")
+                    )
+                ),
+                system2_used=bool(decision.state.get("system2_enabled")),
+            )
         if self.unconscious_field is not None:
             outcome_meta = self.unconscious_field.integrate_outcome(
                 mapping=unconscious_profile,

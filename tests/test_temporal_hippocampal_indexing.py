@@ -119,3 +119,65 @@ def test_retrieve_summary_sanitises_internal_and_coaching_lines():
     assert "qid 123" not in summary
     assert "Add a warm" not in summary
     assert "Hemisphere" not in summary
+
+
+def test_replay_summary_updates_replay_counters():
+    hippocampus = TemporalHippocampalIndexing(dim=32)
+    hippocampus.index_episode(
+        "q1",
+        "incident review for api outage",
+        "stabilise the rollout and inspect auth latency",
+        leading="left",
+        collaboration_strength=0.55,
+        metadata={"salience_level": 0.7, "reward": 0.8},
+    )
+
+    replay = hippocampus.replay_summary("api outage review", topk=1, include_meta=False)
+
+    assert "stabilise the rollout" in replay
+    trace = hippocampus.episodes[0]
+    assert trace.replay_count >= 1
+    assert trace.retrieval_count >= 1
+    assert trace.last_replayed_at is not None
+
+
+def test_consolidate_feedback_strengthens_trace():
+    hippocampus = TemporalHippocampalIndexing(dim=16)
+    hippocampus.index_episode(
+        "q1",
+        "outline the rollback",
+        "rollback the deployment",
+        metadata={"reward": 0.4},
+    )
+    before = hippocampus.episodes[0].consolidation_score
+
+    lifecycle = hippocampus.consolidate_feedback(
+        qid="q1",
+        reward=0.9,
+        success=True,
+        conflict_resolved=True,
+        system2_used=True,
+        salience_level=0.8,
+    )
+
+    assert lifecycle is not None
+    assert lifecycle["after"] > before
+    assert hippocampus.episodes[0].annotations["conflict_resolved"] is True
+
+
+def test_forget_stale_prunes_low_consolidation_memories():
+    hippocampus = TemporalHippocampalIndexing(dim=16)
+    for idx in range(6):
+        hippocampus.index_episode(
+            f"q{idx}",
+            f"question {idx}",
+            f"answer {idx}",
+            metadata={"reward": 0.1 if idx < 4 else 0.9},
+        )
+        hippocampus.episodes[-1].consolidation_score = 0.08 if idx < 4 else 0.9
+
+    forgetting = hippocampus.forget_stale(max_episodes=4, min_keep=2)
+
+    assert forgetting["forgotten"] == 2.0
+    assert len(hippocampus.episodes) == 4
+    assert sum(1 for trace in hippocampus.episodes if trace.consolidation_score >= 0.9) >= 2

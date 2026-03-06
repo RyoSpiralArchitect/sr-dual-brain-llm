@@ -2012,6 +2012,49 @@ def test_stage1_salience_path_triggers_auto_system2_and_logs_architecture():
     assert integration_stage.get("salience", {}).get("dominant_network") == "executive_control"
 
 
+def test_stage2_control_loop_logs_task_positive_and_replay():
+    class HighNoveltyMemory(SharedMemory):
+        def novelty_score(self, question: str) -> float:  # noqa: ANN001
+            return 1.0
+
+    telemetry = TrackingTelemetry()
+    hippocampus = TemporalHippocampalIndexing(dim=16)
+    hippocampus.index_episode(
+        "seed-1",
+        "API outage review and auth rollback",
+        "Check auth latency, rollback the deployment, and restore the key path.",
+        leading="left",
+        collaboration_strength=0.7,
+        metadata={"salience_level": 0.9, "reward": 0.8},
+    )
+
+    controller = DualBrainController(
+        callosum=DummyCallosum(),
+        memory=HighNoveltyMemory(),
+        left_model=LeftBrainModel(),
+        right_model=RightBrainModel(),
+        policy=RightBrainPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        hippocampus=hippocampus,
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+
+    answer = asyncio.run(
+        controller.process("API outage review: auth rollback plan needed now.")
+    )
+
+    assert isinstance(answer, str)
+    assert any(evt == "hippocampal_replay" for evt, _ in telemetry.events)
+    assert any(evt == "task_positive_network" for evt, _ in telemetry.events)
+    assert any(evt == "basal_ganglia_loop" for evt, _ in telemetry.events)
+    assert any(evt == "hippocampal_lifecycle" for evt, _ in telemetry.events)
+
+
 def test_system2_auto_uses_tighter_timeout_and_draft_budget_than_on():
     class LongDraftLeft:
         uses_external_llm = True
