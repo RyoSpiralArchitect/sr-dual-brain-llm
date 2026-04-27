@@ -69,9 +69,9 @@ This document synthesizes three knowledge traditions—analytical psychology, co
    - *Reasoning brain* (left) performs chain-of-thought analysis, referencing knowledge bases and distortion audits.
    - *Imaginative brain* (right) leverages archetypal cues, affective context, and creative riffing.
    - *Mediator* (callosum/orchestrator) iterates until convergence or time budget is reached.
-3. **Integration & Expression** – `coherence_resonator` merges drafts, guided by affective and schema metadata, to produce a braided response annotated for telemetry.
+3. **Integration & Expression** – `coherence_resonator` merges drafts, guided by affective and schema metadata, to produce a clean user-facing response while emitting telemetry out-of-band for observability.
 4. **Memory Update** – Hippocampal indexer captures the episode; consolidation policies decide what to commit, decaying low-salience traces.
-5. **Architecture Telemetry** – The controller now emits an `architecture_path` event and persists it in shared memory so engineers can replay perception→dialogue→integration→memory transitions per turn. Final answers echo this trace in an `[Architecture Path]` section so humans can audit the stages without inspecting telemetry logs.
+5. **Architecture Telemetry** – The controller emits an `architecture_path` event and persists it in shared memory so engineers can replay perception→dialogue→integration→memory transitions per turn. This trace is intended for the metrics pane, trace endpoints, and offline analysis, not for direct inclusion in the user-facing reply.
 
 ### Control Policies
 - **Consultation policy** – Train PPO (`core/policy_ppo.py`) with reward shaping that penalises factual errors (CBT audit) and empathy failures (affect deviation), encouraging balanced dual-brain usage.
@@ -89,7 +89,7 @@ This document synthesizes three knowledge traditions—analytical psychology, co
 ## 5. Next Steps Checklist
 1. Implement archetype registry and affect-aware memory gating (ties together Jung + neuroscience).
 2. Build cognitive distortion heuristic module and integrate it into the coherence resonator (CBT alignment).
-3. Instrument telemetry to capture inner dialogue exchanges for offline analysis and policy training.
+3. Continue instrumenting telemetry to capture inner dialogue exchanges for offline analysis and policy training without polluting the chat transcript.
 4. Design evaluation harnesses covering narrative creativity, logical soundness, empathy, and memory fidelity.
 
 ---
