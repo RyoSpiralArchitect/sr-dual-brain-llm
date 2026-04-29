@@ -11,10 +11,15 @@ from core.policy_modes import ReasoningDial
 from core.auditor import Auditor
 from core.orchestrator import Orchestrator
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
+from core.dual_brain_support import (
+    CollaborationProfile,
+    DecisionOutcome,
+    InnerDialogueStep,
+)
 
 from core.unconscious_field import LatentSeed, UnconsciousField
 from core.prefrontal_cortex import FocusSummary, PrefrontalCortex
-from core.basal_ganglia import BasalGanglia
+from core.basal_ganglia import BasalGanglia, BasalGangliaSignal
 from core.default_mode_network import DefaultModeNetwork
 from core.executive_reasoner import ExecutiveAdvice
 from core.director_reasoner import DirectorAdvice
@@ -259,6 +264,42 @@ class AlwaysSkipPolicy:
 class AlwaysConsultPolicy:
     def decide(self, state):  # noqa: ANN001
         return 1
+
+
+def make_stage_controller(
+    *,
+    left_model=None,
+    memory=None,
+    telemetry=None,
+    basal_ganglia=None,
+    unconscious_field=None,
+    prefrontal_cortex=None,
+):
+    return DualBrainController(
+        callosum=DummyCallosum(),
+        memory=memory or SharedMemory(),
+        left_model=left_model or CaptureLeftModel(draft="draft", confidence=0.8),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry or TrackingTelemetry(),
+        basal_ganglia=basal_ganglia or BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+        unconscious_field=unconscious_field,
+        prefrontal_cortex=prefrontal_cortex,
+    )
+
+
+def make_decision(qid: str = "stage-qid", *, action: int = 0) -> DecisionOutcome:
+    return DecisionOutcome(
+        qid=qid,
+        action=action,
+        temperature=0.25,
+        slot_ms=250,
+        state={},
+    )
 
 
 class CriticCallosum(DummyCallosum):
@@ -1337,6 +1378,276 @@ def test_cerebellum_micro_correction_respects_system2_off(monkeypatch):
 
     assert answer == "2+2=5"
     assert controller.left_model.integrations == 0
+
+
+def test_unconscious_resonance_stage_contract_keeps_latent_signals_internal():
+    telemetry = TrackingTelemetry()
+    controller = make_stage_controller(
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+    )
+    controller.default_mode_network = DefaultModeNetwork(
+        min_cache_depth=0,
+        stress_release_threshold=0.0,
+        activation_bias=0.0,
+        cooldown_steps=0,
+    )
+    decision = make_decision("unconscious-stage")
+    decision.state["q_type"] = "medium"
+    salience_signal = SalienceSignal(
+        level=0.8,
+        dominant_network="executive_control",
+        executive_score=0.8,
+        memory_score=0.2,
+        language_score=0.1,
+        default_mode_score=0.1,
+        consult_gain=0.2,
+        system2_gate=True,
+        memory_gate="hold",
+        suppress_default_mode=True,
+    )
+
+    result = controller._run_unconscious_resonance_stage(
+        question="Sketch a mythic journey across unknown seas.",
+        draft="A voyager crosses a dark sea and finds a hidden lantern.",
+        decision=decision,
+        focus=FocusSummary(
+            keywords=("mythic", "journey", "sea"),
+            relevance=0.7,
+            hippocampal_overlap=0.0,
+        ),
+        affect={"valence": 0.1, "arousal": 0.2, "risk": 0.0},
+        salience_signal=salience_signal,
+        acc_signal=None,
+        basal_signal=None,
+        predictive_frame=None,
+        thalamic_relay=None,
+    )
+
+    assert result.unconscious_profile is not None
+    assert result.unconscious_summary is not None
+    assert result.psychoid_signal is not None
+    assert result.default_mode_reflections
+    assert result.suppress_default_mode_reflections is True
+    assert result.task_positive_load == 0.8
+    assert decision.state["unconscious_top"] is not None
+    assert "psychoid_bias" in decision.state
+    assert decision.state["default_mode_suppressed"] is True
+    assert decision.state["task_positive_suppressed_default_mode"] is True
+    assert any(evt == "unconscious_field" for evt, _ in telemetry.events)
+    assert any(evt == "psychoid_signal" for evt, _ in telemetry.events)
+    assert any(evt == "default_mode_reflection" for evt, _ in telemetry.events)
+    assert any(evt == "task_positive_network" for evt, _ in telemetry.events)
+
+
+def test_conflict_regulation_stage_runs_acc_and_cerebellum_contract(monkeypatch):
+    class RevisingLeft:
+        uses_external_llm = True
+
+        def __init__(self):
+            self.integrations = []
+
+        async def generate_answer(self, input_text: str, context: str, *, vision_images=None, on_delta=None) -> str:  # noqa: ANN001
+            return "2+2=5"
+
+        def estimate_confidence(self, draft: str) -> float:  # noqa: ANN001
+            return 0.95
+
+        async def integrate_info_async(  # noqa: ANN001
+            self,
+            *,
+            question: str,
+            draft: str,
+            info: str,
+            temperature: float = 0.3,
+            on_delta=None,
+        ) -> str:
+            self.integrations.append(info)
+            assert "Cerebellar micro-correction" in info
+            return "2+2=4"
+
+    monkeypatch.setenv("DUALBRAIN_ACC_MONITOR", "1")
+    monkeypatch.setenv("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", "1")
+
+    telemetry = TrackingTelemetry()
+    left = RevisingLeft()
+    controller = make_stage_controller(left_model=left, telemetry=telemetry)
+    decision = make_decision("conflict-stage")
+    phase_latencies = {}
+
+    async def emit_reset_if_needed():
+        return None
+
+    def phase_add(name: str, started_at: float) -> None:
+        phase_latencies[name] = (time.perf_counter() - started_at) * 1000.0
+
+    result = asyncio.run(
+        controller._run_conflict_regulation_stage(
+            question="Compute 2+2?",
+            decision=decision,
+            final_answer="2+2=5",
+            confidence=0.95,
+            detail_notes=None,
+            system2_active=False,
+            system2_mode="auto",
+            is_trivial_chat=False,
+            emit_reset_if_needed=emit_reset_if_needed,
+            delta_cb=None,
+            stream_final_only=False,
+            phase_add=phase_add,
+        )
+    )
+
+    assert result.final_answer == "2+2=4"
+    assert left.integrations and "micro:arithmetic" in left.integrations[0]
+    assert "acc_conflict" in decision.state
+    assert decision.state["acc_conflict"]["micro_domain"] == "arithmetic"
+    assert decision.state["cerebellum_micro"]["applied"] is True
+    assert result.steps and result.steps[0].phase == "cerebellum_micro"
+    assert phase_latencies["cerebellum"] >= 0.0
+    assert any(evt == "acc_conflict_monitor" for evt, _ in telemetry.events)
+    assert any(evt == "cerebellum_forward_model" for evt, _ in telemetry.events)
+    assert any(evt == "cerebellum_micro_correction" for evt, _ in telemetry.events)
+
+
+def test_resonance_integration_stage_contract_emits_coherence_and_tags():
+    telemetry = TrackingTelemetry()
+    controller = make_stage_controller(telemetry=telemetry)
+    question = "Imagine a mythic pattern and explain the structure."
+    draft = "A mythic pattern can be explained as a structure of recurring symbols."
+    final_answer = (
+        "A mythic pattern is a story-shaped structure where symbols repeat, "
+        "echo, and guide attention toward a coherent meaning."
+    )
+    controller.coherence_resonator.capture_left(
+        question=question,
+        draft=draft,
+        context="",
+        focus_keywords=["mythic", "pattern", "structure"],
+        focus_metric=0.8,
+    )
+    decision = make_decision("resonance-stage")
+
+    result = controller._run_resonance_integration_stage(
+        question=question,
+        draft=draft,
+        user_answer=final_answer,
+        final_answer=final_answer,
+        detail_notes="The right brain notices story, symbol, and echo.",
+        decision=decision,
+        leading="left",
+        collaborative_lead=True,
+        collaboration_profile=CollaborationProfile(
+            strength=0.72,
+            balance=0.8,
+            density=0.7,
+            focus_bonus=0.1,
+            token_count=9,
+        ),
+        hemisphere_mode="balanced",
+        psychoid_projection=None,
+        unconscious_summary=None,
+        psychoid_signal=None,
+        emit_debug_sections=False,
+        distortion_payload=None,
+    )
+
+    assert result.coherence_signal is not None
+    assert result.distortion_payload is not None
+    assert decision.state["hemisphere_semantic_tilt"] == result.semantic_tilt
+    assert decision.state["coherence_combined"] == result.coherence_signal.combined_score
+    assert "leading_left" in result.tags
+    assert "leading_collaborative" in result.tags
+    assert "collaboration_strong" in result.tags
+    assert any(tag.startswith("coherence_") for tag in result.tags)
+    assert any(evt == "hemisphere_semantic_tilt" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_unconscious_weave" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_linguistic_motifs" for evt, _ in telemetry.events)
+    assert any(evt == "coherence_signal" for evt, _ in telemetry.events)
+
+
+def test_feedback_consolidation_stage_contract_records_flow_and_feedback():
+    class RecordingBasalGanglia(BasalGanglia):
+        def __init__(self):
+            super().__init__(baseline_dopamine=0.0, novelty_weight=0.0)
+            self.feedback_calls = []
+
+        def integrate_feedback(self, **kwargs):  # noqa: ANN003
+            self.feedback_calls.append(dict(kwargs))
+            return super().integrate_feedback(**kwargs)
+
+    memory = SharedMemory()
+    telemetry = TrackingTelemetry()
+    basal_ganglia = RecordingBasalGanglia()
+    controller = make_stage_controller(
+        memory=memory,
+        telemetry=telemetry,
+        basal_ganglia=basal_ganglia,
+        unconscious_field=UnconsciousField(),
+    )
+    decision = make_decision("feedback-stage")
+    decision.state["system2_resolved"] = True
+    steps_payload = [
+        InnerDialogueStep(
+            phase="integration",
+            role="integrator",
+            content="final",
+        ).to_payload()
+    ]
+    architecture_path = [
+        {"stage": "perception", "modules": ["Amygdala"]},
+        {"stage": "memory", "modules": ["SharedMemory"]},
+    ]
+
+    controller._run_feedback_consolidation_stage(
+        question="What happened?",
+        draft="draft",
+        user_answer="final answer",
+        decision=decision,
+        leading="left",
+        follow_brain="right",
+        right_lead_notes=None,
+        detail_notes="right preview",
+        executive_payload={"memo": "exec"},
+        executive_observer_payload={"memo": "observer"},
+        steps_payload=steps_payload,
+        architecture_path=architecture_path,
+        success=True,
+        latency_ms=123.4,
+        reward=0.8,
+        tags={"coherence", "inner_dialogue_trace"},
+        episodic_total=2,
+        phase_latencies_ms={"draft": 10.0, "memory": 2.5},
+        hippocampal_rollup={"avg_strength": 0.7},
+        hippocampal_lifecycle={"consolidated": 1.0},
+        hippocampal_forgetting={"forgotten": 0.0},
+        basal_signal=BasalGangliaSignal(
+            go_probability=0.7,
+            inhibition=0.2,
+            dopamine_level=0.4,
+        ),
+        unconscious_profile=None,
+        affect={"valence": 0.1, "risk": 0.0},
+        novelty=0.4,
+    )
+
+    flow = memory.dialogue_flow("feedback-stage")
+    assert flow is not None
+    assert flow["leading"] == "left"
+    assert flow["follow"] == "right"
+    assert flow["preview"] == "right preview"
+    assert flow["step_count"] == 1
+    assert flow["architecture_count"] == 2
+    assert decision.state["latency_phases_ms"] == {"draft": 10.0, "memory": 2.5}
+    assert basal_ganglia.feedback_calls
+    assert basal_ganglia.feedback_calls[0]["conflict_resolved"] is True
+    assert any(evt == "interaction_complete" for evt, _ in telemetry.events)
+    assert any(evt == "latency_breakdown" for evt, _ in telemetry.events)
+    assert any(evt == "hippocampal_collaboration" for evt, _ in telemetry.events)
+    assert any(evt == "hippocampal_lifecycle" for evt, _ in telemetry.events)
+    assert any(evt == "hippocampal_forgetting" for evt, _ in telemetry.events)
+    assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
 
 
 def test_acc_override_consult_triggers_right_brain_consult(monkeypatch):

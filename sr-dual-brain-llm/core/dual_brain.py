@@ -268,6 +268,33 @@ class PostTurnObserverStageResult:
     executive_observer_payload: Dict[str, Any] | None
 
 
+@dataclass
+class UnconsciousResonanceStageResult:
+    unconscious_profile: Any | None
+    unconscious_summary: UnconsciousSummaryModel | None
+    psychoid_signal: PsychoidSignalModel | None
+    psychoid_projection: PsychoidAttentionProjection | None
+    default_mode_reflections: List[DefaultModeReflection] | None
+    suppress_default_mode_reflections: bool
+    task_positive_load: float
+    task_positive_mode: str
+
+
+@dataclass
+class ConflictRegulationStageResult:
+    final_answer: str
+    steps: List[InnerDialogueStep]
+
+
+@dataclass
+class ResonanceIntegrationStageResult:
+    final_answer: str
+    semantic_tilt: Dict[str, object]
+    tags: set[str]
+    coherence_signal: CoherenceSignal | None
+    distortion_payload: Dict[str, object] | None
+
+
 class DualBrainController:
     """Coordinate left/right brain collaboration with adaptive heuristics."""
 
@@ -502,6 +529,198 @@ class DualBrainController:
             )
         except Exception:  # pragma: no cover - defensive guard
             return None
+
+    def _run_unconscious_resonance_stage(
+        self,
+        *,
+        question: str,
+        draft: str,
+        decision: DecisionOutcome,
+        focus: FocusSummary | None,
+        affect: Dict[str, float],
+        salience_signal: SalienceSignal | None,
+        acc_signal: ConflictSignal | None,
+        basal_signal: BasalGangliaSignal | None,
+        predictive_frame: PredictionFrame | None,
+        thalamic_relay: ThalamicRelay | None,
+    ) -> UnconsciousResonanceStageResult:
+        """Surface latent motifs as internal priors, not user-facing claims."""
+
+        task_positive_load = 0.0
+        task_positive_mode = "idle"
+        if salience_signal is not None and salience_signal.dominant_network in {
+            "executive_control",
+            "memory_recall",
+        }:
+            task_positive_load = max(task_positive_load, float(salience_signal.level))
+            task_positive_mode = salience_signal.dominant_network
+        if acc_signal is not None:
+            if float(acc_signal.adaptation_signal) >= task_positive_load:
+                task_positive_mode = str(acc_signal.recommended_control or "conflict")
+            task_positive_load = max(
+                task_positive_load,
+                float(acc_signal.adaptation_signal),
+            )
+        if basal_signal is not None and (
+            (
+                salience_signal is not None
+                and salience_signal.dominant_network in {"executive_control", "memory_recall"}
+            )
+            or (
+                acc_signal is not None
+                and str(acc_signal.recommended_control or "").lower()
+                in {"consult", "system2"}
+            )
+        ):
+            if float(basal_signal.gating_balance) >= task_positive_load:
+                task_positive_mode = str(basal_signal.dominant_pathway or "basal")
+            task_positive_load = max(
+                task_positive_load,
+                float(basal_signal.gating_balance),
+            )
+        if predictive_frame is not None:
+            predictive_task_positive_load = float(
+                predictive_frame.networks.task_positive_load
+            )
+            if predictive_task_positive_load >= task_positive_load:
+                task_positive_mode = str(
+                    predictive_frame.networks.task_positive_mode or "attention"
+                )
+            task_positive_load = max(task_positive_load, predictive_task_positive_load)
+        decision.state["task_positive_network"] = {
+            "load": float(task_positive_load),
+            "mode": task_positive_mode,
+        }
+
+        unconscious_profile = None
+        unconscious_summary: UnconsciousSummaryModel | None = None
+        psychoid_signal: PsychoidSignalModel | None = None
+        psychoid_projection: PsychoidAttentionProjection | None = None
+        default_mode_reflections: List[DefaultModeReflection] | None = None
+
+        if self.unconscious_field is not None:
+            try:
+                unconscious_profile = self.unconscious_field.analyse(
+                    question=question,
+                    draft=draft,
+                )
+            except Exception:  # pragma: no cover - defensive guard
+                unconscious_profile = None
+            else:
+                summary = self.unconscious_field.summary(unconscious_profile)
+                decision.state["unconscious_top"] = (
+                    summary.top_k[0] if summary.top_k else None
+                )
+                decision.state["unconscious_cache_depth"] = summary.cache_depth
+                if summary.emergent_ideas:
+                    decision.state["unconscious_emergent"] = [
+                        idea.to_payload() for idea in summary.emergent_ideas
+                    ]
+                if summary.stress_released:
+                    decision.state["unconscious_stress_release"] = summary.stress_released
+                psychoid_signal = summary.psychoid_signal
+                if psychoid_signal:
+                    decision.state["psychoid_bias"] = [
+                        entry.to_payload() for entry in psychoid_signal.attention_bias
+                    ]
+                    decision.state["psychoid_tension"] = psychoid_signal.psychoid_tension
+                    decision.state["psychoid_resonance"] = psychoid_signal.resonance
+                    psychoid_projection = self._prepare_psychoid_projection(
+                        psychoid_signal
+                    )
+                    if psychoid_projection:
+                        decision.state["psychoid_attention_norm"] = (
+                            psychoid_projection.norm
+                        )
+                self.telemetry.log(
+                    "unconscious_field",
+                    qid=decision.qid,
+                    summary=summary.to_payload(),
+                )
+                if psychoid_signal:
+                    self.telemetry.log(
+                        "psychoid_signal",
+                        qid=decision.qid,
+                        signal=psychoid_signal.to_payload(),
+                    )
+                    if psychoid_projection:
+                        self.telemetry.log(
+                            "psychoid_attention_projection",
+                            qid=decision.qid,
+                            projection=psychoid_projection.to_payload(),
+                        )
+                unconscious_summary = summary
+
+        if self.default_mode_network is not None and unconscious_summary is not None:
+            try:
+                reflections = self.default_mode_network.reflect(unconscious_summary)
+            except Exception:  # pragma: no cover - defensive guard
+                default_mode_reflections = None
+            else:
+                if reflections:
+                    default_mode_reflections = reflections
+                    decision.state["default_mode_reflections"] = [
+                        ref.as_dict() for ref in reflections
+                    ]
+                    self.telemetry.log(
+                        "default_mode_reflection",
+                        qid=decision.qid,
+                        reflections=[ref.as_dict() for ref in reflections],
+                    )
+
+        # When executive focus stays low for multiple "easy" turns, treat DMN-style
+        # reflections as internal-only (telemetry ok) to avoid "poetic inertia"
+        # dominating the right-brain consult prompt.
+        low_focus = bool(focus is not None and float(focus.relevance) < 0.02)
+        low_arousal = float(affect.get("arousal", 0.0) or 0.0) <= 0.05
+        is_easy = str(decision.state.get("q_type") or "").lower() == "easy"
+        if low_focus and low_arousal and is_easy:
+            self._default_mode_low_focus_streak += 1
+        else:
+            self._default_mode_low_focus_streak = 0
+        suppress_default_mode_reflections = (
+            self._default_mode_low_focus_streak >= 2
+            or bool(
+                thalamic_relay is not None
+                and thalamic_relay.suppress_default_mode
+            )
+            or bool(task_positive_load >= 0.62)
+            or bool(
+                predictive_frame is not None
+                and predictive_frame.networks.suppress_default_mode
+            )
+        )
+        try:
+            self.telemetry.log(
+                "task_positive_network",
+                qid=decision.qid,
+                load=float(task_positive_load),
+                mode=task_positive_mode,
+                suppressed=bool(
+                    task_positive_load >= 0.62
+                    or (
+                        predictive_frame is not None
+                        and predictive_frame.networks.suppress_default_mode
+                    )
+                ),
+            )
+        except Exception:  # pragma: no cover - telemetry best-effort
+            pass
+        if suppress_default_mode_reflections:
+            decision.state["default_mode_suppressed"] = True
+        if task_positive_load >= 0.62:
+            decision.state["task_positive_suppressed_default_mode"] = True
+
+        return UnconsciousResonanceStageResult(
+            unconscious_profile=unconscious_profile,
+            unconscious_summary=unconscious_summary,
+            psychoid_signal=psychoid_signal,
+            psychoid_projection=psychoid_projection,
+            default_mode_reflections=default_mode_reflections,
+            suppress_default_mode_reflections=suppress_default_mode_reflections,
+            task_positive_load=task_positive_load,
+            task_positive_mode=task_positive_mode,
+        )
 
     def _compose_context(self, question: str) -> tuple[str, FocusSummary | None, dict[str, str]]:
         """Blend working-memory recall with hippocampal episodic cues."""
@@ -3406,6 +3625,325 @@ class DualBrainController:
             critic_unhealthy_reason=system2_critic_unhealthy_reason,
         )
 
+    async def _run_conflict_regulation_stage(
+        self,
+        *,
+        question: str,
+        decision: DecisionOutcome,
+        final_answer: str,
+        confidence: float,
+        detail_notes: str | None,
+        system2_active: bool,
+        system2_mode: str,
+        is_trivial_chat: bool,
+        emit_reset_if_needed: Callable[[], Any],
+        delta_cb: Optional[Callable[[str], Any]],
+        stream_final_only: bool,
+        phase_add: Callable[[str, float], None],
+    ) -> ConflictRegulationStageResult:
+        steps: List[InnerDialogueStep] = []
+
+        # ACC conflict monitoring + cerebellar micro-correction:
+        # - only when System2 is inactive,
+        # - and only in System2 auto mode (avoid surprising extra LLM passes when forced off),
+        # - and only when the left model can do safe integration (external LLM available).
+        if not (
+            not system2_active
+            and system2_mode == "auto"
+            and not is_trivial_chat
+            and final_answer
+            and str(final_answer).strip()
+        ):
+            return ConflictRegulationStageResult(
+                final_answer=final_answer,
+                steps=steps,
+            )
+
+        acc_enabled = _env_flag("DUALBRAIN_ACC_MONITOR", True)
+        cerebellum_enabled = _env_flag("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", True)
+        micro_result = None
+        if acc_enabled or cerebellum_enabled:
+            try:
+                micro_result = micro_criticise_reasoning(question, final_answer)
+            except Exception:
+                micro_result = None
+
+        acc_signal = None
+        if acc_enabled and self.anterior_cingulate_cortex is not None:
+            try:
+                acc_signal = self.anterior_cingulate_cortex.monitor(
+                    question=question,
+                    draft=final_answer,
+                    left_confidence=float(confidence or 0.0),
+                    micro=micro_result,
+                )
+            except Exception:  # pragma: no cover - best-effort
+                acc_signal = None
+            if acc_signal is not None:
+                acc_payload = acc_signal.to_payload()
+                decision.state["acc_conflict"] = acc_payload
+                try:
+                    self.telemetry.log(
+                        "acc_conflict_monitor",
+                        qid=decision.qid,
+                        signal=acc_payload,
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
+
+        can_micro_correct = bool(
+            cerebellum_enabled
+            and micro_result is not None
+            and getattr(self.left_model, "uses_external_llm", False)
+            and self.cerebellum is not None
+        )
+        if can_micro_correct and micro_result is not None:
+            cerebellar_forecast = self.cerebellum.forecast(
+                micro_result,
+                conflict=acc_signal,
+                system2_active=bool(system2_active),
+                consult_planned=bool(detail_notes or decision.action != 0),
+            )
+            decision.state["cerebellum_forecast"] = cerebellar_forecast.to_payload()
+            try:
+                self.telemetry.log(
+                    "cerebellum_forward_model",
+                    qid=decision.qid,
+                    forecast=cerebellar_forecast.to_payload(),
+                )
+            except Exception:  # pragma: no cover - telemetry best-effort
+                pass
+            min_conf = _env_float(
+                "DUALBRAIN_CEREBELLUM_MICRO_MIN_CONFIDENCE",
+                float(getattr(self.cerebellum, "min_confidence", 0.88)),
+                minimum=0.0,
+                maximum=1.0,
+            )
+            max_issues = _env_int(
+                "DUALBRAIN_CEREBELLUM_MICRO_MAX_ISSUES",
+                int(getattr(self.cerebellum, "max_issues", 4)),
+                minimum=1,
+                maximum=12,
+            )
+            if (
+                micro_result.verdict == "issues"
+                and float(micro_result.confidence_r) >= float(min_conf)
+                and len(micro_result.issues) <= int(max_issues)
+                and cerebellar_forecast.recommended_path == "micro_correct"
+            ):
+                correction_started = time.perf_counter()
+                cerebellum_applied = False
+                resolved = False
+                initial_issues = len(micro_result.issues)
+                final_issues = initial_issues
+                try:
+                    await emit_reset_if_needed()
+                    revised = await self.left_model.integrate_info_async(
+                        question=question,
+                        draft=final_answer,
+                        info=self.cerebellum.build_internal_notes(
+                            micro_result,
+                            forecast=cerebellar_forecast,
+                        ),
+                        temperature=max(
+                            0.15, min(0.35, float(decision.temperature))
+                        ),
+                        on_delta=None if stream_final_only else delta_cb,
+                    )
+                except Exception:  # pragma: no cover - defensive guard
+                    revised = final_answer
+                else:
+                    if revised and revised.strip() and revised != final_answer:
+                        cerebellum_applied = True
+                        final_answer = revised
+                    try:
+                        post_micro = micro_criticise_reasoning(question, final_answer)
+                    except Exception:
+                        post_micro = None
+                    if post_micro is not None:
+                        final_issues = len(post_micro.issues)
+                        resolved = bool(
+                            post_micro.verdict == "ok" or final_issues == 0
+                        )
+                finally:
+                    phase_add("cerebellum", correction_started)
+
+                decision.state["cerebellum_micro"] = {
+                    "applied": bool(cerebellum_applied),
+                    "domain": str(micro_result.domain),
+                    "initial_issues": int(initial_issues),
+                    "final_issues": int(final_issues),
+                    "resolved": bool(resolved),
+                    "confidence": float(micro_result.confidence_r),
+                    "forward_path": str(cerebellar_forecast.recommended_path),
+                    "predicted_gain": float(cerebellar_forecast.predicted_gain),
+                }
+                try:
+                    self.telemetry.log(
+                        "cerebellum_micro_correction",
+                        qid=decision.qid,
+                        applied=bool(cerebellum_applied),
+                        domain=str(micro_result.domain),
+                        initial_issues=int(initial_issues),
+                        final_issues=int(final_issues),
+                        resolved=bool(resolved),
+                        confidence=float(micro_result.confidence_r),
+                        forward_path=str(cerebellar_forecast.recommended_path),
+                        predicted_gain=float(cerebellar_forecast.predicted_gain),
+                    )
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
+                steps.append(
+                    InnerDialogueStep(
+                        phase="cerebellum_micro",
+                        role="cerebellum",
+                        content=_truncate_text(micro_result.critic_sum, 180),
+                        metadata={
+                            "applied": bool(cerebellum_applied),
+                            "domain": str(micro_result.domain),
+                            "initial_issues": int(initial_issues),
+                            "final_issues": int(final_issues),
+                            "resolved": bool(resolved),
+                            "confidence": float(micro_result.confidence_r),
+                            "forward_path": str(cerebellar_forecast.recommended_path),
+                            "predicted_gain": float(cerebellar_forecast.predicted_gain),
+                        },
+                    )
+                )
+
+        return ConflictRegulationStageResult(
+            final_answer=final_answer,
+            steps=steps,
+        )
+
+    def _run_resonance_integration_stage(
+        self,
+        *,
+        question: str,
+        draft: str,
+        user_answer: str,
+        final_answer: str,
+        detail_notes: str | None,
+        decision: DecisionOutcome,
+        leading: str,
+        collaborative_lead: bool,
+        collaboration_profile: CollaborationProfile,
+        hemisphere_mode: str,
+        psychoid_projection: PsychoidAttentionProjection | None,
+        unconscious_summary: UnconsciousSummaryModel | None,
+        psychoid_signal: PsychoidSignalModel | None,
+        emit_debug_sections: bool,
+        distortion_payload: Dict[str, object] | None,
+    ) -> ResonanceIntegrationStageResult:
+        semantic_tilt = self._evaluate_semantic_tilt(
+            question=question,
+            final_answer=user_answer,
+            detail_notes=detail_notes,
+        )
+        decision.state["hemisphere_semantic_tilt"] = semantic_tilt
+        self.telemetry.log(
+            "hemisphere_semantic_tilt",
+            qid=decision.qid,
+            mode=semantic_tilt["mode"],
+            intensity=semantic_tilt["intensity"],
+            scores=semantic_tilt["scores"],
+            right_hits=semantic_tilt["right_hits"],
+            left_hits=semantic_tilt["left_hits"],
+            initial_mode=hemisphere_mode,
+        )
+
+        tags = set()
+        tags.add(f"leading_{leading}")
+        if collaborative_lead:
+            tags.add("leading_collaborative")
+        strength = collaboration_profile.strength
+        if strength >= 0.7:
+            tags.add("collaboration_strong")
+        elif strength >= 0.45:
+            tags.add("collaboration_present")
+        if collaborative_lead:
+            tags.add("collaboration_braided")
+        tags.add(f"collaboration_strength_{int(strength * 100):02d}")
+        tags.add(
+            f"collaboration_balance_{int(collaboration_profile.balance * 100):02d}"
+        )
+        if leading == "right" and decision.action == 0:
+            tags.add("right_lead_solo")
+
+        coherence_signal: CoherenceSignal | None = None
+        if self.coherence_resonator is not None:
+            self.coherence_resonator.retune(
+                semantic_tilt["mode"],
+                intensity=float(semantic_tilt["intensity"]),
+            )
+            projection_payload = (
+                psychoid_projection.to_payload() if psychoid_projection else None
+            )
+            weave = self.coherence_resonator.capture_unconscious(
+                question=question,
+                draft=draft,
+                final_answer=user_answer,
+                summary=unconscious_summary,
+                psychoid_signal=psychoid_signal,
+            )
+            if weave is not None:
+                fabric_payload = weave.to_payload()
+                decision.state["linguistic_fabric"] = fabric_payload
+                self.telemetry.log(
+                    "coherence_unconscious_weave",
+                    qid=decision.qid,
+                    fabric=fabric_payload,
+                )
+            motifs = self.coherence_resonator.capture_linguistic_motifs(
+                question=question,
+                draft=draft,
+                final_answer=user_answer,
+                unconscious_summary=unconscious_summary,
+            )
+            if motifs is not None:
+                motifs_payload = motifs.to_payload()
+                decision.state["linguistic_motifs"] = motifs_payload
+                self.telemetry.log(
+                    "coherence_linguistic_motifs",
+                    qid=decision.qid,
+                    motifs=motifs_payload,
+                )
+            coherence_signal = self.coherence_resonator.integrate(
+                final_answer=user_answer,
+                psychoid_projection=projection_payload,
+                unconscious_summary=unconscious_summary,
+            )
+            if coherence_signal is not None:
+                decision.state["coherence_combined"] = coherence_signal.combined_score
+                decision.state["coherence_tension"] = coherence_signal.tension
+                decision.state["coherence_notes"] = coherence_signal.notes
+                decision.state["coherence_contributions"] = coherence_signal.contributions
+                self.telemetry.log(
+                    "coherence_signal",
+                    qid=decision.qid,
+                    signal=coherence_signal.to_payload(),
+                )
+                if emit_debug_sections:
+                    final_answer = self.coherence_resonator.annotate_answer(
+                        final_answer,
+                        coherence_signal,
+                    )
+                coherence_tags = set(coherence_signal.tags())
+                tags.update(coherence_tags)
+                decision.state["coherence_tags"] = list(coherence_tags)
+                if coherence_signal.distortions is not None:
+                    distortion_payload = coherence_signal.distortions.to_payload()
+                else:
+                    distortion_payload = None
+
+        return ResonanceIntegrationStageResult(
+            final_answer=final_answer,
+            semantic_tilt=semantic_tilt,
+            tags=tags,
+            coherence_signal=coherence_signal,
+            distortion_payload=distortion_payload,
+        )
+
     def _coerce_director_max_chars(
         self,
         director_max_chars: int | None,
@@ -3888,6 +4426,122 @@ class DualBrainController:
             executive_observer_payload=executive_observer_payload
         )
 
+    def _run_feedback_consolidation_stage(
+        self,
+        *,
+        question: str,
+        draft: str,
+        user_answer: str,
+        decision: DecisionOutcome,
+        leading: str,
+        follow_brain: str | None,
+        right_lead_notes: str | None,
+        detail_notes: str | None,
+        executive_payload: Dict[str, Any] | None,
+        executive_observer_payload: Dict[str, Any] | None,
+        steps_payload: List[Dict[str, Any]],
+        architecture_path: List[Dict[str, Any]],
+        success: bool,
+        latency_ms: float,
+        reward: float,
+        tags: set[str],
+        episodic_total: int,
+        phase_latencies_ms: Dict[str, float],
+        hippocampal_rollup: Dict[str, float] | None,
+        hippocampal_lifecycle: Dict[str, float] | None,
+        hippocampal_forgetting: Dict[str, float] | None,
+        basal_signal: BasalGangliaSignal | None,
+        unconscious_profile: Any,
+        affect: Dict[str, float],
+        novelty: float,
+    ) -> None:
+        self.memory.record_dialogue_flow(
+            decision.qid,
+            leading_brain=leading,
+            follow_brain=follow_brain,
+            preview=_truncate_text(right_lead_notes or detail_notes),
+            executive=executive_payload,
+            executive_observer=executive_observer_payload,
+            steps=steps_payload,
+            architecture=architecture_path,
+        )
+        self.telemetry.log(
+            "interaction_complete",
+            qid=decision.qid,
+            success=success,
+            latency_ms=latency_ms,
+            reward=reward,
+            tags=list(tags),
+            amygdala_override=decision.state.get("amygdala_override", False),
+            hippocampal_total=episodic_total,
+        )
+        if phase_latencies_ms:
+            phases = {
+                key: round(value, 3)
+                for key, value in sorted(phase_latencies_ms.items())
+                if value > 0.0
+            }
+            if phases:
+                accounted_ms = round(sum(phases.values()), 3)
+                other_ms = round(max(0.0, float(latency_ms) - accounted_ms), 3)
+                decision.state["latency_phases_ms"] = phases
+                self.telemetry.log(
+                    "latency_breakdown",
+                    qid=decision.qid,
+                    phases=phases,
+                    accounted_ms=accounted_ms,
+                    other_ms=other_ms,
+                    total_ms=round(float(latency_ms), 3),
+                )
+        if hippocampal_rollup is not None:
+            self.telemetry.log(
+                "hippocampal_collaboration",
+                qid=decision.qid,
+                rollup=hippocampal_rollup,
+            )
+        if hippocampal_lifecycle is not None:
+            self.telemetry.log(
+                "hippocampal_lifecycle",
+                qid=decision.qid,
+                lifecycle=hippocampal_lifecycle,
+            )
+        if hippocampal_forgetting is not None:
+            self.telemetry.log(
+                "hippocampal_forgetting",
+                qid=decision.qid,
+                forgetting=hippocampal_forgetting,
+            )
+        if self.basal_ganglia is not None and basal_signal is not None:
+            self.basal_ganglia.integrate_feedback(
+                reward=reward,
+                latency_ms=latency_ms,
+                conflict_resolved=bool(
+                    decision.state.get("system2_resolved")
+                    or (
+                        isinstance(decision.state.get("cerebellum_micro"), dict)
+                        and decision.state.get("cerebellum_micro", {}).get("resolved")
+                    )
+                ),
+                system2_used=bool(decision.state.get("system2_enabled")),
+            )
+        if self.unconscious_field is not None:
+            outcome_meta = self.unconscious_field.integrate_outcome(
+                mapping=unconscious_profile,
+                question=question,
+                draft=draft,
+                final_answer=user_answer,
+                success=success,
+                decision_state=decision.state,
+                affect=affect,
+                novelty=novelty,
+                reward=reward,
+            )
+            self.telemetry.log(
+                "unconscious_outcome",
+                qid=decision.qid,
+                outcome=outcome_meta,
+            )
+
     async def process(
         self,
         question: str,
@@ -4216,160 +4870,26 @@ class DualBrainController:
             except Exception:  # pragma: no cover - defensive guard
                 neural_activity = None
         
-        unconscious_profile = None
-        unconscious_summary: Optional[UnconsciousSummaryModel] = None
-        default_mode_reflections: Optional[List[DefaultModeReflection]] = None
-        suppress_default_mode_reflections = False
-        task_positive_load = 0.0
-        task_positive_mode = "idle"
-        if salience_signal is not None and salience_signal.dominant_network in {
-            "executive_control",
-            "memory_recall",
-        }:
-            task_positive_load = max(task_positive_load, float(salience_signal.level))
-            task_positive_mode = salience_signal.dominant_network
-        if acc_signal_pre is not None:
-            if float(acc_signal_pre.adaptation_signal) >= task_positive_load:
-                task_positive_mode = str(acc_signal_pre.recommended_control or "conflict")
-            task_positive_load = max(
-                task_positive_load,
-                float(acc_signal_pre.adaptation_signal),
-            )
-        if basal_signal is not None and (
-            (
-                salience_signal is not None
-                and salience_signal.dominant_network in {"executive_control", "memory_recall"}
-            )
-            or (
-                acc_signal_pre is not None
-                and str(acc_signal_pre.recommended_control or "").lower()
-                in {"consult", "system2"}
-            )
-        ):
-            if float(basal_signal.gating_balance) >= task_positive_load:
-                task_positive_mode = str(basal_signal.dominant_pathway or "basal")
-            task_positive_load = max(
-                task_positive_load,
-                float(basal_signal.gating_balance),
-            )
-        if predictive_frame is not None:
-            predictive_task_positive_load = float(
-                predictive_frame.networks.task_positive_load
-            )
-            if predictive_task_positive_load >= task_positive_load:
-                task_positive_mode = str(
-                    predictive_frame.networks.task_positive_mode or "attention"
-                )
-            task_positive_load = max(task_positive_load, predictive_task_positive_load)
-        decision.state["task_positive_network"] = {
-            "load": float(task_positive_load),
-            "mode": task_positive_mode,
-        }
-        psychoid_signal: Optional[PsychoidSignalModel] = None
-        psychoid_projection: Optional[PsychoidAttentionProjection] = None
-        if self.unconscious_field is not None:
-            try:
-                unconscious_profile = self.unconscious_field.analyse(
-                    question=question, draft=draft
-                )
-            except Exception:  # pragma: no cover - defensive guard
-                unconscious_profile = None
-            else:
-                summary = self.unconscious_field.summary(unconscious_profile)
-                decision.state["unconscious_top"] = (
-                    summary.top_k[0] if summary.top_k else None
-                )
-                decision.state["unconscious_cache_depth"] = summary.cache_depth
-                if summary.emergent_ideas:
-                    decision.state["unconscious_emergent"] = [
-                        idea.to_payload() for idea in summary.emergent_ideas
-                    ]
-                if summary.stress_released:
-                    decision.state["unconscious_stress_release"] = summary.stress_released
-                psychoid_signal = summary.psychoid_signal
-                if psychoid_signal:
-                    decision.state["psychoid_bias"] = [
-                        entry.to_payload() for entry in psychoid_signal.attention_bias
-                    ]
-                    decision.state["psychoid_tension"] = psychoid_signal.psychoid_tension
-                    decision.state["psychoid_resonance"] = psychoid_signal.resonance
-                    psychoid_projection = self._prepare_psychoid_projection(
-                        psychoid_signal
-                    )
-                    if psychoid_projection:
-                        decision.state["psychoid_attention_norm"] = psychoid_projection.norm
-                self.telemetry.log(
-                    "unconscious_field",
-                    qid=decision.qid,
-                    summary=summary.to_payload(),
-                )
-                if psychoid_signal:
-                    self.telemetry.log(
-                        "psychoid_signal",
-                        qid=decision.qid,
-                        signal=psychoid_signal.to_payload(),
-                    )
-                    if psychoid_projection:
-                        self.telemetry.log(
-                            "psychoid_attention_projection",
-                            qid=decision.qid,
-                            projection=psychoid_projection.to_payload(),
-                        )
-                unconscious_summary = summary
-        if (
-            self.default_mode_network is not None
-            and unconscious_summary is not None
-        ):
-            try:
-                reflections = self.default_mode_network.reflect(unconscious_summary)
-            except Exception:  # pragma: no cover - defensive guard
-                default_mode_reflections = None
-            else:
-                if reflections:
-                    default_mode_reflections = reflections
-                    decision.state["default_mode_reflections"] = [
-                        ref.as_dict() for ref in reflections
-                    ]
-                    self.telemetry.log(
-                        "default_mode_reflection",
-                        qid=decision.qid,
-                        reflections=[ref.as_dict() for ref in reflections],
-                    )
-        # When executive focus stays low for multiple "easy" turns, treat DMN-style
-        # reflections as internal-only (telemetry ok) to avoid "poetic inertia"
-        # dominating the right-brain consult prompt.
-        low_focus = bool(focus is not None and float(focus.relevance) < 0.02)
-        low_arousal = float(affect.get("arousal", 0.0) or 0.0) <= 0.05
-        is_easy = str(decision.state.get("q_type") or "").lower() == "easy"
-        if low_focus and low_arousal and is_easy:
-            self._default_mode_low_focus_streak += 1
-        else:
-            self._default_mode_low_focus_streak = 0
-        suppress_default_mode_reflections = self._default_mode_low_focus_streak >= 2 or bool(
-            thalamic_relay is not None and thalamic_relay.suppress_default_mode
-        ) or bool(task_positive_load >= 0.62) or bool(
-            predictive_frame is not None and predictive_frame.networks.suppress_default_mode
+        unconscious_stage = self._run_unconscious_resonance_stage(
+            question=question,
+            draft=draft,
+            decision=decision,
+            focus=focus,
+            affect=affect,
+            salience_signal=salience_signal,
+            acc_signal=acc_signal_pre,
+            basal_signal=basal_signal,
+            predictive_frame=predictive_frame,
+            thalamic_relay=thalamic_relay,
         )
-        try:
-            self.telemetry.log(
-                "task_positive_network",
-                qid=decision.qid,
-                load=float(task_positive_load),
-                mode=task_positive_mode,
-                suppressed=bool(
-                    task_positive_load >= 0.62
-                    or (
-                        predictive_frame is not None
-                        and predictive_frame.networks.suppress_default_mode
-                    )
-                ),
-            )
-        except Exception:  # pragma: no cover - telemetry best-effort
-            pass
-        if suppress_default_mode_reflections:
-            decision.state["default_mode_suppressed"] = True
-        if task_positive_load >= 0.62:
-            decision.state["task_positive_suppressed_default_mode"] = True
+        unconscious_profile = unconscious_stage.unconscious_profile
+        unconscious_summary = unconscious_stage.unconscious_summary
+        psychoid_signal = unconscious_stage.psychoid_signal
+        psychoid_projection = unconscious_stage.psychoid_projection
+        default_mode_reflections = unconscious_stage.default_mode_reflections
+        suppress_default_mode_reflections = (
+            unconscious_stage.suppress_default_mode_reflections
+        )
         if focus is not None:
             self.telemetry.log(
                 "prefrontal_focus",
@@ -4931,170 +5451,22 @@ class DualBrainController:
                     source=str(advice.source),
                 )
 
-        # ACC conflict monitoring + cerebellar micro-correction:
-        # - only when System2 is inactive,
-        # - and only in System2 auto mode (avoid surprising extra LLM passes when forced off),
-        # - and only when the left model can do safe integration (external LLM available).
-        if (
-            not system2_active
-            and system2_norm == "auto"
-            and not is_trivial_chat
-            and final_answer
-            and str(final_answer).strip()
-        ):
-            acc_enabled = _env_flag("DUALBRAIN_ACC_MONITOR", True)
-            cerebellum_enabled = _env_flag("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", True)
-            micro_result = None
-            if acc_enabled or cerebellum_enabled:
-                try:
-                    micro_result = micro_criticise_reasoning(question, final_answer)
-                except Exception:
-                    micro_result = None
-
-            acc_signal = None
-            if acc_enabled and self.anterior_cingulate_cortex is not None:
-                try:
-                    acc_signal = self.anterior_cingulate_cortex.monitor(
-                        question=question,
-                        draft=final_answer,
-                        left_confidence=float(confidence or 0.0),
-                        micro=micro_result,
-                    )
-                except Exception:  # pragma: no cover - best-effort
-                    acc_signal = None
-                if acc_signal is not None:
-                    acc_payload = acc_signal.to_payload()
-                    decision.state["acc_conflict"] = acc_payload
-                    try:
-                        self.telemetry.log(
-                            "acc_conflict_monitor",
-                            qid=decision.qid,
-                            signal=acc_payload,
-                        )
-                    except Exception:  # pragma: no cover - telemetry best-effort
-                        pass
-
-            can_micro_correct = bool(
-                cerebellum_enabled
-                and micro_result is not None
-                and getattr(self.left_model, "uses_external_llm", False)
-                and self.cerebellum is not None
-            )
-            if can_micro_correct and micro_result is not None:
-                cerebellar_forecast = self.cerebellum.forecast(
-                    micro_result,
-                    conflict=acc_signal,
-                    system2_active=bool(system2_active),
-                    consult_planned=bool(detail_notes or decision.action != 0),
-                )
-                decision.state["cerebellum_forecast"] = (
-                    cerebellar_forecast.to_payload()
-                )
-                try:
-                    self.telemetry.log(
-                        "cerebellum_forward_model",
-                        qid=decision.qid,
-                        forecast=cerebellar_forecast.to_payload(),
-                    )
-                except Exception:  # pragma: no cover - telemetry best-effort
-                    pass
-                min_conf = _env_float(
-                    "DUALBRAIN_CEREBELLUM_MICRO_MIN_CONFIDENCE",
-                    float(getattr(self.cerebellum, "min_confidence", 0.88)),
-                    minimum=0.0,
-                    maximum=1.0,
-                )
-                max_issues = _env_int(
-                    "DUALBRAIN_CEREBELLUM_MICRO_MAX_ISSUES",
-                    int(getattr(self.cerebellum, "max_issues", 4)),
-                    minimum=1,
-                    maximum=12,
-                )
-                if (
-                    micro_result.verdict == "issues"
-                    and float(micro_result.confidence_r) >= float(min_conf)
-                    and len(micro_result.issues) <= int(max_issues)
-                    and cerebellar_forecast.recommended_path == "micro_correct"
-                ):
-                    correction_started = time.perf_counter()
-                    cerebellum_applied = False
-                    resolved = False
-                    initial_issues = len(micro_result.issues)
-                    final_issues = initial_issues
-                    try:
-                        await _emit_reset_if_needed()
-                        revised = await self.left_model.integrate_info_async(
-                            question=question,
-                            draft=final_answer,
-                            info=self.cerebellum.build_internal_notes(
-                                micro_result,
-                                forecast=cerebellar_forecast,
-                            ),
-                            temperature=max(
-                                0.15, min(0.35, float(decision.temperature))
-                            ),
-                            on_delta=None if stream_final_only else delta_cb,
-                        )
-                    except Exception:  # pragma: no cover - defensive guard
-                        revised = final_answer
-                    else:
-                        if revised and revised.strip() and revised != final_answer:
-                            cerebellum_applied = True
-                            final_answer = revised
-                        try:
-                            post_micro = micro_criticise_reasoning(question, final_answer)
-                        except Exception:
-                            post_micro = None
-                        if post_micro is not None:
-                            final_issues = len(post_micro.issues)
-                            resolved = bool(
-                                post_micro.verdict == "ok" or final_issues == 0
-                            )
-                    finally:
-                        _phase_add("cerebellum", correction_started)
-
-                    decision.state["cerebellum_micro"] = {
-                        "applied": bool(cerebellum_applied),
-                        "domain": str(micro_result.domain),
-                        "initial_issues": int(initial_issues),
-                        "final_issues": int(final_issues),
-                        "resolved": bool(resolved),
-                        "confidence": float(micro_result.confidence_r),
-                        "forward_path": str(cerebellar_forecast.recommended_path),
-                        "predicted_gain": float(cerebellar_forecast.predicted_gain),
-                    }
-                    try:
-                        self.telemetry.log(
-                            "cerebellum_micro_correction",
-                            qid=decision.qid,
-                            applied=bool(cerebellum_applied),
-                            domain=str(micro_result.domain),
-                            initial_issues=int(initial_issues),
-                            final_issues=int(final_issues),
-                            resolved=bool(resolved),
-                            confidence=float(micro_result.confidence_r),
-                            forward_path=str(cerebellar_forecast.recommended_path),
-                            predicted_gain=float(cerebellar_forecast.predicted_gain),
-                        )
-                    except Exception:  # pragma: no cover - telemetry best-effort
-                        pass
-                    inner_steps.append(
-                        InnerDialogueStep(
-                            phase="cerebellum_micro",
-                            role="cerebellum",
-                            content=_truncate_text(micro_result.critic_sum, 180),
-                            metadata={
-                                "applied": bool(cerebellum_applied),
-                                "domain": str(micro_result.domain),
-                                "initial_issues": int(initial_issues),
-                                "final_issues": int(final_issues),
-                                "resolved": bool(resolved),
-                                "confidence": float(micro_result.confidence_r),
-                                "forward_path": str(cerebellar_forecast.recommended_path),
-                                "predicted_gain": float(cerebellar_forecast.predicted_gain),
-                            },
-                        )
-                    )
+        conflict_stage = await self._run_conflict_regulation_stage(
+            question=question,
+            decision=decision,
+            final_answer=final_answer,
+            confidence=confidence,
+            detail_notes=detail_notes,
+            system2_active=system2_active,
+            system2_mode=system2_norm,
+            is_trivial_chat=is_trivial_chat,
+            emit_reset_if_needed=_emit_reset_if_needed,
+            delta_cb=delta_cb,
+            stream_final_only=stream_final_only,
+            phase_add=_phase_add,
+        )
+        final_answer = conflict_stage.final_answer
+        inner_steps.extend(conflict_stage.steps)
 
         answer_stage = self._assemble_final_answer_stage(
             final_answer=final_answer,
@@ -5112,104 +5484,28 @@ class DualBrainController:
         user_answer = answer_stage.user_answer
         final_answer = answer_stage.final_answer
 
-        semantic_tilt = self._evaluate_semantic_tilt(
+        resonance_stage = self._run_resonance_integration_stage(
             question=question,
-            final_answer=user_answer,
+            draft=draft,
+            user_answer=user_answer,
+            final_answer=final_answer,
             detail_notes=detail_notes,
+            decision=decision,
+            leading=leading,
+            collaborative_lead=collaborative_lead,
+            collaboration_profile=collaboration_profile,
+            hemisphere_mode=hemisphere_mode,
+            psychoid_projection=psychoid_projection,
+            unconscious_summary=unconscious_summary,
+            psychoid_signal=psychoid_signal,
+            emit_debug_sections=emit_debug_sections,
+            distortion_payload=distortion_payload,
         )
-        decision.state["hemisphere_semantic_tilt"] = semantic_tilt
-        self.telemetry.log(
-            "hemisphere_semantic_tilt",
-            qid=decision.qid,
-            mode=semantic_tilt["mode"],
-            intensity=semantic_tilt["intensity"],
-            scores=semantic_tilt["scores"],
-            right_hits=semantic_tilt["right_hits"],
-            left_hits=semantic_tilt["left_hits"],
-            initial_mode=hemisphere_mode,
-        )
-        tags = set()
-        tags.add(f"leading_{leading}")
-        if collaborative_lead:
-            tags.add("leading_collaborative")
-        strength = collaboration_profile.strength
-        if strength >= 0.7:
-            tags.add("collaboration_strong")
-        elif strength >= 0.45:
-            tags.add("collaboration_present")
-        if collaborative_lead:
-            tags.add("collaboration_braided")
-        tags.add(
-            f"collaboration_strength_{int(strength * 100):02d}"
-        )
-        tags.add(
-            f"collaboration_balance_{int(collaboration_profile.balance * 100):02d}"
-        )
-        if leading == "right" and decision.action == 0:
-            tags.add("right_lead_solo")
-        if self.coherence_resonator is not None:
-            self.coherence_resonator.retune(
-                semantic_tilt["mode"],
-                intensity=float(semantic_tilt["intensity"]),
-            )
-            projection_payload = (
-                psychoid_projection.to_payload() if psychoid_projection else None
-            )
-            weave = self.coherence_resonator.capture_unconscious(
-                question=question,
-                draft=draft,
-                final_answer=user_answer,
-                summary=unconscious_summary,
-                psychoid_signal=psychoid_signal,
-            )
-            if weave is not None:
-                fabric_payload = weave.to_payload()
-                decision.state["linguistic_fabric"] = fabric_payload
-                self.telemetry.log(
-                    "coherence_unconscious_weave",
-                    qid=decision.qid,
-                    fabric=fabric_payload,
-                )
-            motifs = self.coherence_resonator.capture_linguistic_motifs(
-                question=question,
-                draft=draft,
-                final_answer=user_answer,
-                unconscious_summary=unconscious_summary,
-            )
-            if motifs is not None:
-                motifs_payload = motifs.to_payload()
-                decision.state["linguistic_motifs"] = motifs_payload
-                self.telemetry.log(
-                    "coherence_linguistic_motifs",
-                    qid=decision.qid,
-                    motifs=motifs_payload,
-                )
-            coherence_signal = self.coherence_resonator.integrate(
-                final_answer=user_answer,
-                psychoid_projection=projection_payload,
-                unconscious_summary=unconscious_summary,
-            )
-            if coherence_signal is not None:
-                decision.state["coherence_combined"] = coherence_signal.combined_score
-                decision.state["coherence_tension"] = coherence_signal.tension
-                decision.state["coherence_notes"] = coherence_signal.notes
-                decision.state["coherence_contributions"] = coherence_signal.contributions
-                self.telemetry.log(
-                    "coherence_signal",
-                    qid=decision.qid,
-                    signal=coherence_signal.to_payload(),
-                )
-                if emit_debug_sections:
-                    final_answer = self.coherence_resonator.annotate_answer(
-                        final_answer, coherence_signal
-                    )
-                coherence_tags = set(coherence_signal.tags())
-                tags.update(coherence_tags)
-                decision.state["coherence_tags"] = list(coherence_tags)
-                if coherence_signal.distortions is not None:
-                    distortion_payload = coherence_signal.distortions.to_payload()
-                else:
-                    distortion_payload = None
+        final_answer = resonance_stage.final_answer
+        semantic_tilt = resonance_stage.semantic_tilt
+        tags = resonance_stage.tags
+        coherence_signal = resonance_stage.coherence_signal
+        distortion_payload = resonance_stage.distortion_payload
 
         inner_steps.append(
             InnerDialogueStep(
@@ -5602,92 +5898,34 @@ class DualBrainController:
             phase_add=_phase_add,
         )
         executive_observer_payload = observer_stage.executive_observer_payload
-        self.memory.record_dialogue_flow(
-            decision.qid,
-            leading_brain=leading,
+
+        self._run_feedback_consolidation_stage(
+            question=question,
+            draft=draft,
+            user_answer=user_answer,
+            decision=decision,
+            leading=leading,
             follow_brain=follow_brain,
-            preview=_truncate_text(right_lead_notes or detail_notes),
-            executive=executive_payload,
-            executive_observer=executive_observer_payload,
-            steps=steps_payload,
-            architecture=architecture_path,
-        )
-        self.telemetry.log(
-            "interaction_complete",
-            qid=decision.qid,
+            right_lead_notes=right_lead_notes,
+            detail_notes=detail_notes,
+            executive_payload=executive_payload,
+            executive_observer_payload=executive_observer_payload,
+            steps_payload=steps_payload,
+            architecture_path=architecture_path,
             success=success,
             latency_ms=latency_ms,
             reward=reward,
-            tags=list(tags),
-            amygdala_override=decision.state.get("amygdala_override", False),
-            hippocampal_total=episodic_total,
+            tags=tags,
+            episodic_total=episodic_total,
+            phase_latencies_ms=phase_latencies_ms,
+            hippocampal_rollup=hippocampal_rollup,
+            hippocampal_lifecycle=hippocampal_lifecycle,
+            hippocampal_forgetting=hippocampal_forgetting,
+            basal_signal=basal_signal,
+            unconscious_profile=unconscious_profile,
+            affect=affect,
+            novelty=novelty,
         )
-        if phase_latencies_ms:
-            phases = {
-                key: round(value, 3)
-                for key, value in sorted(phase_latencies_ms.items())
-                if value > 0.0
-            }
-            if phases:
-                accounted_ms = round(sum(phases.values()), 3)
-                other_ms = round(max(0.0, float(latency_ms) - accounted_ms), 3)
-                decision.state["latency_phases_ms"] = phases
-                self.telemetry.log(
-                    "latency_breakdown",
-                    qid=decision.qid,
-                    phases=phases,
-                    accounted_ms=accounted_ms,
-                    other_ms=other_ms,
-                    total_ms=round(float(latency_ms), 3),
-                )
-        if hippocampal_rollup is not None:
-            self.telemetry.log(
-                "hippocampal_collaboration",
-                qid=decision.qid,
-                rollup=hippocampal_rollup,
-            )
-        if hippocampal_lifecycle is not None:
-            self.telemetry.log(
-                "hippocampal_lifecycle",
-                qid=decision.qid,
-                lifecycle=hippocampal_lifecycle,
-            )
-        if hippocampal_forgetting is not None:
-            self.telemetry.log(
-                "hippocampal_forgetting",
-                qid=decision.qid,
-                forgetting=hippocampal_forgetting,
-            )
-        if self.basal_ganglia is not None and basal_signal is not None:
-            self.basal_ganglia.integrate_feedback(
-                reward=reward,
-                latency_ms=latency_ms,
-                conflict_resolved=bool(
-                    decision.state.get("system2_resolved")
-                    or (
-                        isinstance(decision.state.get("cerebellum_micro"), dict)
-                        and decision.state.get("cerebellum_micro", {}).get("resolved")
-                    )
-                ),
-                system2_used=bool(decision.state.get("system2_enabled")),
-            )
-        if self.unconscious_field is not None:
-            outcome_meta = self.unconscious_field.integrate_outcome(
-                mapping=unconscious_profile,
-                question=question,
-                draft=draft,
-                final_answer=user_answer,
-                success=success,
-                decision_state=decision.state,
-                affect=affect,
-                novelty=novelty,
-                reward=reward,
-            )
-            self.telemetry.log(
-                "unconscious_outcome",
-                qid=decision.qid,
-                outcome=outcome_meta,
-            )
         return final_answer
 
 

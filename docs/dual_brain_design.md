@@ -73,6 +73,16 @@ This document synthesizes three knowledge traditions—analytical psychology, co
 4. **Memory Update** – Hippocampal indexer captures the episode; consolidation policies decide what to commit, decaying low-salience traces.
 5. **Architecture Telemetry** – The controller emits an `architecture_path` event and persists it in shared memory so engineers can replay perception→dialogue→integration→memory transitions per turn. This trace is intended for the metrics pane, trace endpoints, and offline analysis, not for direct inclusion in the user-facing reply.
 
+### Current Stage Map
+- **Perception stage** – Amygdala, insula, salience network, thalamus, hippocampal recall, and prefrontal focus prepare the field before drafting.
+- **Director and routing stages** – Executive/director observers, basal ganglia gating, ACC preflight, and System2 policy decide who leads and whether deeper critique is needed.
+- **Draft and consult stages** – Left-brain drafting, optional right-brain preview, corpus-callosum consults, and System2 refinement create the candidate answer.
+- **Unconscious resonance stage** – Archetypal priors, recurrent motifs, psychoid attention bias, and default-mode reflections are computed as internal signals for consult routing and telemetry, not as diagnostic user-facing claims.
+- **Conflict regulation stage** – ACC monitors residual contradiction; the cerebellum forecasts whether a small corrective motor-like adjustment is safer than another full reasoning loop.
+- **Answer assembly and resonance integration stages** – The clean user answer is separated from debug/meta output, then `coherence_resonator` integrates semantic tilt, linguistic fabric, motifs, and distortion signals.
+- **Metacognition audit stage** – The auditor performs a CBT-style reflective check and may rewrite or reject the answer while preserving director-specified clarifying questions.
+- **Memory persistence and feedback consolidation stages** – Shared memory, hippocampal lifecycle, architecture path, post-turn observer notes, basal-ganglia reward feedback, and unconscious outcome updates close the loop out-of-band.
+
 ### Control Policies
 - **Consultation policy** – Train PPO (`core/policy_ppo.py`) with reward shaping that penalises factual errors (CBT audit) and empathy failures (affect deviation), encouraging balanced dual-brain usage.
 - **Metacognitive checkpoints** – After each loop, run `auditor.py` with a structured prompt: “What assumptions drove this answer? Which could fail?” Flag high-risk steps for reconsideration.
