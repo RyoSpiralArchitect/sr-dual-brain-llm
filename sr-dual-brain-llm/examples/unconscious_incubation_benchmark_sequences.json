@@ -1,0 +1,107 @@
+[
+  {
+    "id": "mirror_shadow_return",
+    "title": "Mirror motif sinks, distracts, then returns with shadow risk",
+    "tags": ["mirror", "shadow", "incubation"],
+    "target_archetypes": ["syzygy", "shadow"],
+    "turns": [
+      {
+        "id": "seed",
+        "role": "seed",
+        "question": "Seed a concise product metaphor around a mirror that reflects user intent without trapping them in past behavior. Keep it practical.",
+        "tags": ["seed", "mirror", "syzygy"],
+        "target_archetypes": ["syzygy"]
+      },
+      {
+        "id": "distractor",
+        "role": "distractor",
+        "question": "Switch topics: give a four-step release checklist for a small backend service.",
+        "tags": ["distractor", "operations"]
+      },
+      {
+        "id": "return",
+        "role": "return",
+        "question": "Return to the mirror product metaphor, but now include the hidden shadow risk of over-personalization and one concrete measurement.",
+        "tags": ["return", "mirror", "shadow", "measurement"],
+        "target_archetypes": ["syzygy", "shadow"]
+      },
+      {
+        "id": "echo",
+        "role": "echo_return",
+        "question": "Seed a concise product metaphor around a mirror that reflects user intent without trapping them in past behavior. Keep it practical.",
+        "tags": ["echo", "mirror", "syzygy"],
+        "target_archetypes": ["syzygy"]
+      }
+    ]
+  },
+  {
+    "id": "forest_path_return",
+    "title": "Forest path planning motif incubates through a factual detour",
+    "tags": ["forest", "path", "incubation"],
+    "target_archetypes": ["great_mother", "hero"],
+    "turns": [
+      {
+        "id": "seed",
+        "role": "seed",
+        "question": "Use the image of a forest path to explain a complex roadmap with priorities, constraints, and a decision rule.",
+        "tags": ["seed", "forest", "path"],
+        "target_archetypes": ["great_mother", "hero"]
+      },
+      {
+        "id": "distractor",
+        "role": "distractor",
+        "question": "Now ignore the forest metaphor and summarize how to triage three unrelated bug reports.",
+        "tags": ["distractor", "triage"]
+      },
+      {
+        "id": "return",
+        "role": "return",
+        "question": "Bring back the forest path roadmap metaphor and refine it into a sharper decision ritual for the team.",
+        "tags": ["return", "forest", "path", "roadmap"],
+        "target_archetypes": ["great_mother", "hero"]
+      },
+      {
+        "id": "echo",
+        "role": "echo_return",
+        "question": "Use the image of a forest path to explain a complex roadmap with priorities, constraints, and a decision rule.",
+        "tags": ["echo", "forest", "path"],
+        "target_archetypes": ["great_mother", "hero"]
+      }
+    ]
+  },
+  {
+    "id": "mask_interface_return",
+    "title": "Persona/interface boundary reappears after an implementation detour",
+    "tags": ["persona", "interface", "incubation"],
+    "target_archetypes": ["persona"],
+    "turns": [
+      {
+        "id": "seed",
+        "role": "seed",
+        "question": "Describe a settings screen as a mask or interface boundary: it should hide internal knobs while preserving user agency.",
+        "tags": ["seed", "persona", "mask", "ux"],
+        "target_archetypes": ["persona"]
+      },
+      {
+        "id": "distractor",
+        "role": "distractor",
+        "question": "Change focus: list the database fields needed to store a user preference.",
+        "tags": ["distractor", "database"]
+      },
+      {
+        "id": "return",
+        "role": "return",
+        "question": "Return to the mask/interface boundary and turn it into four UX policy rules for exposing advanced settings.",
+        "tags": ["return", "persona", "mask", "ux", "policy"],
+        "target_archetypes": ["persona"]
+      },
+      {
+        "id": "echo",
+        "role": "echo_return",
+        "question": "Describe a settings screen as a mask or interface boundary: it should hide internal knobs while preserving user agency.",
+        "tags": ["echo", "persona", "mask", "ux"],
+        "target_archetypes": ["persona"]
+      }
+    ]
+  }
+]

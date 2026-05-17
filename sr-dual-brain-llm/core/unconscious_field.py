@@ -57,6 +57,7 @@ from .schema import (
     AttentionBiasEntry,
     EmergentIdeaModel,
     GeometryModel,
+    HarvestAttemptModel,
     PsychoidSignalModel,
     UnconsciousSummaryModel,
 )
@@ -1062,6 +1063,7 @@ class UnconsciousField:
         self._max_cache = 24
         self._pending_stress_release = 0.0
         self._last_emergent: List[EmergentIdeaModel] = []
+        self._last_harvest_attempts: List[HarvestAttemptModel] = []
         self._last_stress_release = 0.0
         self._last_cache_depth = 0
         self._psychoid_sampler = PsychoidArchetypeSampler(self.prototypes)
@@ -1085,12 +1087,46 @@ class UnconsciousField:
 
     def _harvest_emergent(self, vector: List[float]) -> List[EmergentIdeaModel]:
         ideas: List[EmergentIdeaModel] = []
+        attempts: List[HarvestAttemptModel] = []
         survivors: List[LatentSeed] = []
         for seed in self._seed_cache:
             similarity = cosine(vector, seed.vector)
             incubation = seed.exposures + 1
             threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
-            if similarity >= threshold and incubation >= 2 and seed.intensity >= 0.08:
+            similarity_pass = similarity >= threshold
+            incubation_pass = incubation >= 2
+            intensity_pass = seed.intensity >= 0.08
+            emerged = similarity_pass and incubation_pass and intensity_pass
+            failure_reasons: List[str] = []
+            if not similarity_pass:
+                failure_reasons.append("similarity_below_threshold")
+            if not incubation_pass:
+                failure_reasons.append("insufficient_incubation")
+            if not intensity_pass:
+                failure_reasons.append("low_intensity")
+            decayed_intensity = seed.intensity * 0.96
+            status = "emerged" if emerged else ("survived" if decayed_intensity >= 0.05 else "decayed")
+            attempts.append(
+                HarvestAttemptModel(
+                    archetype=seed.archetype_id,
+                    label=seed.archetype_label,
+                    intensity=round(seed.intensity, 4),
+                    novelty=round(seed.novelty, 4),
+                    incubation_rounds=incubation,
+                    trigger_similarity=round(similarity, 4),
+                    threshold=round(threshold, 4),
+                    threshold_gap=round(max(0.0, threshold - similarity), 4),
+                    threshold_margin=round(similarity - threshold, 4),
+                    emerged=emerged,
+                    similarity_pass=similarity_pass,
+                    incubation_pass=incubation_pass,
+                    intensity_pass=intensity_pass,
+                    failure_reasons=failure_reasons,
+                    status=status,
+                    origin=seed.short_origin(),
+                )
+            )
+            if emerged:
                 ideas.append(
                     EmergentIdeaModel(
                         archetype=seed.archetype_id,
@@ -1103,10 +1139,11 @@ class UnconsciousField:
                 )
             else:
                 seed.exposures = incubation
-                seed.intensity *= 0.96
+                seed.intensity = decayed_intensity
                 if seed.intensity >= 0.05:
                     survivors.append(seed)
         self._seed_cache = survivors
+        self._last_harvest_attempts = attempts
         return ideas
 
     def analyse(
@@ -1231,6 +1268,7 @@ class UnconsciousField:
                 for score in mapping.archetype_map[:top_k]
             ],
             emergent_ideas=list(self._last_emergent),
+            harvest_attempts=list(self._last_harvest_attempts),
             stress_released=self._last_stress_release,
             cache_depth=self._last_cache_depth,
             psychoid_signal=self._last_psychoid_signal,
@@ -1247,6 +1285,7 @@ __all__ = [
     "EventMapping",
     "Geometry",
     "HashEmbedder",
+    "HarvestAttemptModel",
     "LatentSeed",
     "PsychoidArchetypeSampler",
     "PsychoidSignalModel",

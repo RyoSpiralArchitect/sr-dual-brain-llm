@@ -26,6 +26,11 @@ def test_extract_case_signals_combines_unconscious_motif_and_leakage_metrics():
             "event": "unconscious_field",
             "summary": {
                 "top_k": ["sage", "shadow"],
+                "archetype_map": [
+                    {"id": "sage", "label": "Sage", "intensity": 0.42},
+                    {"id": "shadow", "label": "Shadow", "intensity": 0.4},
+                    {"id": "hero", "label": "Hero", "intensity": 0.18},
+                ],
                 "emergent_ideas": [{"label": "bridge", "archetype": "sage"}],
                 "stress_released": 0.2,
                 "cache_depth": 4,
@@ -71,17 +76,72 @@ def test_extract_case_signals_combines_unconscious_motif_and_leakage_metrics():
         },
     ]
 
-    signals = _extract_case_signals(events, {}, "clean answer")
+    signals = _extract_case_signals(
+        events,
+        {},
+        "clean answer",
+        question="A patient mentor teaches debugging.",
+        tags=["sage"],
+    )
 
     assert signals["unconscious"]["top_k"] == ["sage", "shadow"]
     assert signals["unconscious"]["emergent_ideas"] == 1
+    assert signals["unconscious"]["incubation_pressure"] > 0.0
     assert signals["psychoid"]["present"] is True
     assert signals["psychoid"]["signifier_chain_len"] == 1
     assert signals["default_mode"]["reflection_count"] == 1
     assert signals["default_mode"]["suppressed"] is True
+    assert signals["archetype_trace"]["cue_alignment"] == "top_k_aligned"
+    assert signals["archetype_trace"]["cue_top_k_hits"] == ["sage"]
+    assert math.isclose(signals["archetype_trace"]["top1_margin"], 0.02, rel_tol=1e-9)
     assert signals["coherence"]["motif_score"] == 0.42
     assert signals["leakage"]["has_internal_leak"] is False
     assert signals["unconscious"]["score"] > 0.0
+
+
+def test_extract_case_signals_marks_motif_only_archetype_cue_alignment():
+    events = [
+        {
+            "event": "unconscious_field",
+            "summary": {
+                "top_k": ["sage", "hero"],
+                "archetype_map": [
+                    {"id": "sage", "label": "Sage", "intensity": 0.39},
+                    {"id": "hero", "label": "Hero", "intensity": 0.37},
+                    {"id": "shadow", "label": "Shadow", "intensity": 0.36},
+                ],
+                "emergent_ideas": [],
+                "stress_released": 0.0,
+                "cache_depth": 2,
+                "motifs": ["archetype_match_shadow"],
+                "psychoid_signal": {
+                    "attention_bias": [{"archetype": "sage", "weight": 0.7}],
+                    "signifier_chain": ["sage:book", "shadow:fear"],
+                    "resonance": 0.2,
+                    "psychoid_tension": 0.2,
+                },
+            },
+        },
+        {
+            "event": "coherence_linguistic_motifs",
+            "motifs": {"score": 0.2, "repeated_loops": 2},
+        },
+    ]
+
+    signals = _extract_case_signals(
+        events,
+        {},
+        "clean answer",
+        question="A brittle legacy module creates hidden fear.",
+        tags=["shadow"],
+    )
+
+    assert signals["archetype_trace"]["cue_alignment"] == "motif_only"
+    assert signals["archetype_trace"]["cue_motif_hits"] == ["shadow"]
+    assert signals["archetype_trace"]["motif_without_top_k"] == ["shadow"]
+    assert signals["archetype_trace"]["motif_top_k_divergent"] is True
+    assert signals["unconscious"]["unreleased_cache"] is True
+    assert signals["unconscious"]["incubation_pressure"] > 0.0
 
 
 def test_summarise_cases_reports_rates_and_averages():
@@ -89,8 +149,27 @@ def test_summarise_cases_reports_rates_and_averages():
         {
             "error": None,
             "latency_ms": 100.0,
-            "unconscious": {"score": 0.5, "emergent_ideas": 1},
-            "psychoid": {"present": True, "resonance": 0.4, "tension": 0.2},
+            "unconscious": {
+                "score": 0.5,
+                "emergent_ideas": 1,
+                "incubation_pressure": 0.3,
+                "cache_depth": 3,
+                "unreleased_cache": False,
+            },
+            "archetype_trace": {
+                "cue_alignment": "top_k_aligned",
+                "top1_margin": 0.1,
+                "activation_entropy": 0.8,
+                "motif_top_k_divergent": False,
+                "ambiguous_activation": False,
+            },
+            "psychoid": {
+                "present": True,
+                "resonance": 0.4,
+                "tension": 0.2,
+                "signifier_chain_len": 2,
+                "attention_bias_count": 4,
+            },
             "default_mode": {
                 "reflection_count": 1,
                 "suppressed": True,
@@ -101,14 +180,34 @@ def test_summarise_cases_reports_rates_and_averages():
                 "tension": 0.2,
                 "unconscious_weave_score": 0.5,
                 "motif_score": 0.4,
+                "motif_repeated_loops": 1,
             },
             "leakage": {"has_internal_leak": False},
         },
         {
             "error": None,
             "latency_ms": 300.0,
-            "unconscious": {"score": 0.7, "emergent_ideas": 0},
-            "psychoid": {"present": True, "resonance": 0.6, "tension": 0.3},
+            "unconscious": {
+                "score": 0.7,
+                "emergent_ideas": 0,
+                "incubation_pressure": 0.5,
+                "cache_depth": 2,
+                "unreleased_cache": True,
+            },
+            "archetype_trace": {
+                "cue_alignment": "motif_only",
+                "top1_margin": 0.02,
+                "activation_entropy": 0.95,
+                "motif_top_k_divergent": True,
+                "ambiguous_activation": True,
+            },
+            "psychoid": {
+                "present": True,
+                "resonance": 0.6,
+                "tension": 0.3,
+                "signifier_chain_len": 3,
+                "attention_bias_count": 4,
+            },
             "default_mode": {
                 "reflection_count": 0,
                 "suppressed": False,
@@ -119,6 +218,7 @@ def test_summarise_cases_reports_rates_and_averages():
                 "tension": 0.1,
                 "unconscious_weave_score": 0.7,
                 "motif_score": None,
+                "motif_repeated_loops": 2,
             },
             "leakage": {"has_internal_leak": True},
         },
@@ -132,4 +232,11 @@ def test_summarise_cases_reports_rates_and_averages():
     assert summary["leak_cases"] == 1
     assert math.isclose(summary["leak_rate"], 0.5, rel_tol=1e-9)
     assert math.isclose(summary["avg_unconscious_score"], 0.6, rel_tol=1e-9)
+    assert math.isclose(summary["avg_incubation_pressure"], 0.4, rel_tol=1e-9)
+    assert math.isclose(summary["unreleased_cache_rate"], 0.5, rel_tol=1e-9)
+    assert math.isclose(summary["archetype_cue_top_k_alignment_rate"], 0.5, rel_tol=1e-9)
+    assert math.isclose(summary["archetype_cue_motif_only_rate"], 0.5, rel_tol=1e-9)
+    assert math.isclose(summary["archetype_motif_top_k_divergence_rate"], 0.5, rel_tol=1e-9)
+    assert math.isclose(summary["archetype_ambiguous_activation_rate"], 0.5, rel_tol=1e-9)
+    assert math.isclose(summary["avg_cache_depth"], 2.5, rel_tol=1e-9)
     assert math.isclose(summary["avg_latency_ms"], 200.0, rel_tol=1e-9)
