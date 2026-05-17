@@ -66,6 +66,38 @@ def _read_gateway_base_url(log_path: Path) -> str | None:
     return None
 
 
+def test_read_gateway_base_url_extracts_loopback_ephemeral_port(tmp_path: Path) -> None:
+    log_path = tmp_path / "gateway.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "info: Microsoft.Hosting.Lifetime[14]",
+                "      Now listening on: http://127.0.0.1:43123",
+                "info: Microsoft.Hosting.Lifetime[0]",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert _read_gateway_base_url(log_path) == "http://127.0.0.1:43123"
+
+
+def test_read_gateway_base_url_ignores_non_loopback_or_unbound_logs(tmp_path: Path) -> None:
+    log_path = tmp_path / "gateway.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "Now listening on: http://0.0.0.0:43123",
+                "Now listening on: http://localhost:43124",
+                "Application started. Press Ctrl+C to shut down.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert _read_gateway_base_url(log_path) is None
+
+
 def _build_gateway() -> None:
     proc = subprocess.run(
         ["dotnet", "build", str(GATEWAY_PROJECT)],

@@ -8,6 +8,7 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from benchmark_unconscious_creativity import (  # noqa: E402
+    _closest_near_miss,
     _extract_case_signals,
     _internal_leak_markers,
     _summarise_cases,
@@ -142,6 +143,40 @@ def test_extract_case_signals_marks_motif_only_archetype_cue_alignment():
     assert signals["archetype_trace"]["motif_top_k_divergent"] is True
     assert signals["unconscious"]["unreleased_cache"] is True
     assert signals["unconscious"]["incubation_pressure"] > 0.0
+
+
+def test_closest_near_miss_prefers_smallest_gap_then_similarity():
+    attempts = [
+        {
+            "archetype": "sage",
+            "emerged": False,
+            "threshold_gap": 0.04,
+            "trigger_similarity": 0.91,
+        },
+        {
+            "archetype": "shadow",
+            "emerged": False,
+            "threshold_gap": 0.02,
+            "trigger_similarity": 0.62,
+        },
+        {
+            "archetype": "hero",
+            "emerged": False,
+            "threshold_gap": 0.02,
+            "trigger_similarity": 0.72,
+        },
+        {
+            "archetype": "trickster",
+            "emerged": True,
+            "threshold_gap": 0.001,
+            "trigger_similarity": 0.99,
+        },
+    ]
+
+    closest = _closest_near_miss(attempts)
+
+    assert closest is not None
+    assert closest["archetype"] == "hero"
 
 
 def test_summarise_cases_reports_rates_and_averages():
