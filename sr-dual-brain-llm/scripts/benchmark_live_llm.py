@@ -66,7 +66,7 @@ def _scope_env_status(env: Mapping[str, str], scope: str) -> dict[str, Any]:
         missing.append("LLM_PROVIDER" if prefix == "LLM" else f"{prefix}_PROVIDER or LLM_PROVIDER")
     if not model:
         missing.append(
-            "LLM_MODEL or LLM_MODEL_ID"
+            "LLM_MODEL_ID"
             if prefix == "LLM"
             else f"{prefix}_MODEL or LLM_MODEL_ID"
         )

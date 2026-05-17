@@ -803,7 +803,7 @@ def _sanitize_user_answer(answer: str) -> str:
             continue
         lines.append(line)
     cleaned = "\n".join(lines).strip()
-    return cleaned or str(answer).strip()
+    return cleaned
 
 
 def _detail_notes_redundant(draft: str, detail_notes: str) -> bool:
@@ -985,13 +985,13 @@ class HemisphericSignal:
     left_score: float
     token_count: int
 
-    def to_payload(self) -> Dict[str, float]:
+    def to_payload(self) -> Dict[str, Any]:
         return {
             "mode": self.mode,
             "bias": float(self.bias),
             "right_score": float(self.right_score),
             "left_score": float(self.left_score),
-            "token_count": float(self.token_count),
+            "token_count": int(self.token_count),
         }
 
     @property
@@ -1009,13 +1009,13 @@ class CollaborationProfile:
     focus_bonus: float
     token_count: int
 
-    def to_payload(self) -> Dict[str, float]:
+    def to_payload(self) -> Dict[str, Any]:
         return {
             "strength": float(self.strength),
             "balance": float(self.balance),
             "density": float(self.density),
             "focus_bonus": float(self.focus_bonus),
-            "token_count": float(self.token_count),
+            "token_count": int(self.token_count),
         }
 
 

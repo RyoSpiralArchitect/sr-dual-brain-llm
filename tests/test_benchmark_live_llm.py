@@ -7,7 +7,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scrip
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from benchmark_live_llm import _build_ab_command, _llm_env_status  # noqa: E402
+from benchmark_live_llm import _build_ab_command, _llm_env_status, _scope_env_status  # noqa: E402
 
 
 def test_llm_env_status_accepts_shared_config_for_both_hemispheres():
@@ -38,6 +38,19 @@ def test_llm_env_status_reports_missing_right_scope():
     assert status["left"]["configured"] is True
     assert status["right"]["configured"] is False
     assert status["right"]["missing"]
+
+
+def test_scope_env_status_shared_model_hint_uses_model_id_only():
+    status = _scope_env_status(
+        {
+            "LLM_PROVIDER": "openai",
+            "OPENAI_API_KEY": "sk-test",
+        },
+        "LLM",
+    )
+
+    assert "LLM_MODEL_ID" in status["missing"]
+    assert all("LLM_MODEL or" not in item for item in status["missing"])
 
 
 def test_build_ab_command_threads_live_defaults():

@@ -15,6 +15,7 @@ from core.dual_brain_support import (
     CollaborationProfile,
     DecisionOutcome,
     InnerDialogueStep,
+    _sanitize_user_answer,
 )
 
 from core.unconscious_field import LatentSeed, UnconsciousField
@@ -118,6 +119,12 @@ class InstantDirectorModel:
             latency_ms=1.0,
             source="test",
         )
+
+
+def test_sanitize_user_answer_returns_empty_when_all_lines_filtered():
+    answer = "qid 123\n[Telemetry]\n[Architecture Path]\n- Add a warmer sign-off."
+
+    assert _sanitize_user_answer(answer) == ""
 
 
 class CaptureLeftModel:

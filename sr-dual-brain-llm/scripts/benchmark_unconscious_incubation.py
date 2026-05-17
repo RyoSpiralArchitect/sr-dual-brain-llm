@@ -570,7 +570,7 @@ def _sequence_observation(sequence: Dict[str, Any]) -> Dict[str, Any]:
         if value is not None
     ]
     first_emergent = emergent_turns[0] if emergent_turns else None
-    lineage = _sequence_lineage(sequence)
+    lineage = _as_dict(sequence.get("lineage")) or _sequence_lineage(sequence)
     near_miss_events = _near_miss_events_with_turns([_as_dict(turn) for turn in turns])
     echo_near_miss_events = [
         event

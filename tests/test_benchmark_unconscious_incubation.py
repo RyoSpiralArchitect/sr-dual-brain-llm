@@ -136,6 +136,41 @@ def test_sequence_observation_marks_target_emergence_and_pressure_delta():
     assert math.isclose(obs["pressure_delta"], 0.2, rel_tol=1e-9)
 
 
+def test_sequence_observation_reuses_precomputed_lineage():
+    lineage = {
+        "cached_seed_archetypes": ["cached"],
+        "archetype_transitions": ["cached->emergent"],
+        "same_archetype_link_rate": 0.25,
+        "origin_matched_link_rate": 0.5,
+        "links": [{"match_type": "precomputed"}],
+    }
+    sequence = {
+        "lineage": lineage,
+        "turns": [
+            {
+                "turn_index": 1,
+                "role": "return",
+                "error": None,
+                "unconscious": {
+                    "emergent_ideas": 1,
+                    "emergent_archetypes": ["emergent"],
+                    "incubation_pressure": 0.4,
+                    "cache_depth": 1,
+                },
+                "leakage": {"has_internal_leak": False},
+            }
+        ],
+    }
+
+    obs = _sequence_observation(sequence)
+
+    assert obs["lineage"] == lineage
+    assert obs["cached_seed_archetypes"] == ["cached"]
+    assert obs["seed_to_emergent_transitions"] == ["cached->emergent"]
+    assert obs["seed_emergent_same_archetype_rate"] == 0.25
+    assert obs["seed_emergent_origin_match_rate"] == 0.5
+
+
 def test_sequence_lineage_maps_cached_seed_to_emergent_archetype():
     sequence = {
         "turns": [

@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import socket
 import subprocess
 import sys
 import time
@@ -15,6 +14,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GATEWAY_PROJECT = REPO_ROOT / "csharp" / "SrDualBrain.Gateway" / "SrDualBrain.Gateway.csproj"
+GATEWAY_LISTEN_URL = "http://127.0.0.1:0"
 
 _CLEARED_ENV_VARS = (
     "LLM_PROVIDER",
@@ -54,11 +54,16 @@ _CLEARED_ENV_VARS = (
 )
 
 
-def _pick_free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return int(sock.getsockname()[1])
+def _read_gateway_base_url(log_path: Path) -> str | None:
+    logs = log_path.read_text(encoding="utf-8", errors="replace")
+    for line in logs.splitlines():
+        if "Now listening on:" not in line:
+            continue
+        raw_url = line.rsplit("Now listening on:", 1)[1].strip().rstrip("/")
+        parsed = parse.urlparse(raw_url)
+        if parsed.scheme in {"http", "https"} and parsed.hostname == "127.0.0.1" and parsed.port is not None:
+            return f"{parsed.scheme}://127.0.0.1:{parsed.port}"
+    return None
 
 
 def _build_gateway() -> None:
@@ -127,9 +132,9 @@ def _read_sse(url: str, payload: dict[str, Any], *, timeout: float = 30.0) -> li
     return events
 
 
-def _wait_for_gateway(base_url: str, log_path: Path, proc: subprocess.Popen[str], *, timeout_s: float = 45.0) -> None:
+def _wait_for_gateway(log_path: Path, proc: subprocess.Popen[str], *, timeout_s: float = 45.0) -> str:
     deadline = time.time() + timeout_s
-    last_error = "gateway did not become ready"
+    last_error = "gateway did not report its listening URL"
     while time.time() < deadline:
         if proc.poll() is not None:
             logs = log_path.read_text(encoding="utf-8", errors="replace")
@@ -138,10 +143,14 @@ def _wait_for_gateway(base_url: str, log_path: Path, proc: subprocess.Popen[str]
                 f"exit_code={proc.returncode}\n"
                 f"logs:\n{logs}"
             )
+        base_url = _read_gateway_base_url(log_path)
+        if base_url is None:
+            time.sleep(0.25)
+            continue
         try:
             status, body = _request_json("GET", f"{base_url}/v1/health", timeout=2.0)
             if status == 200 and body.get("gateway") == "ok" and isinstance(body.get("engine"), dict):
-                return
+                return base_url
             last_error = f"unexpected health payload: status={status} body={body}"
         except Exception as exc:  # pragma: no cover - polling noise is transient
             last_error = str(exc)
@@ -158,8 +167,6 @@ def gateway_base_url(tmp_path_factory: pytest.TempPathFactory) -> str:
 
     _build_gateway()
 
-    port = _pick_free_port()
-    base_url = f"http://127.0.0.1:{port}"
     log_dir = tmp_path_factory.mktemp("gateway-contract")
     log_path = log_dir / "gateway.log"
 
@@ -183,7 +190,7 @@ def gateway_base_url(tmp_path_factory: pytest.TempPathFactory) -> str:
                 "--project",
                 str(GATEWAY_PROJECT),
                 "--urls",
-                base_url,
+                GATEWAY_LISTEN_URL,
             ],
             cwd=REPO_ROOT,
             env=env,
@@ -192,7 +199,7 @@ def gateway_base_url(tmp_path_factory: pytest.TempPathFactory) -> str:
             text=True,
         )
         try:
-            _wait_for_gateway(base_url, log_path, proc)
+            base_url = _wait_for_gateway(log_path, proc)
             yield base_url
         finally:
             if proc.poll() is None:
