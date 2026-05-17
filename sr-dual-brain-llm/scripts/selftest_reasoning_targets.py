@@ -24,7 +24,12 @@ def test_infer_question_type() -> None:
     causal_q = "Website latency and error rate both increased after deployment. Give a step-by-step causal triage plan to avoid confusing correlation with causation."
     logic_q = "If all A are B, and some B are C, does it follow that some A are C? Give a precise logical explanation."
 
-    _assert(DualBrainController._infer_question_type(code_review_q) in {"medium", "hard"}, "code_review should be medium+")
+    _assert(DualBrainController._infer_question_type(code_review_q) == "easy", "brief code_review stays easy by default")
+    _assert(
+        DualBrainController._infer_question_type(code_review_q, precision_priority=True)
+        in {"medium", "hard"},
+        "code_review should be medium+ in precision mode",
+    )
     _assert(DualBrainController._infer_question_type(causal_q) in {"medium", "hard"}, "causal triage should be medium+")
     _assert(DualBrainController._infer_question_type(logic_q) in {"medium", "hard"}, "logic should be medium+")
 

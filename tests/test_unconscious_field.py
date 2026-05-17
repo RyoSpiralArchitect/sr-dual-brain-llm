@@ -71,6 +71,10 @@ def test_unconscious_field_incubates_and_releases_emergent_ideas():
     revisit = field.analyse(question=question, draft="A hesitant warrior circles the keep.")
     interim_summary = field.summary(revisit)
     assert not interim_summary.emergent_ideas, "Seed should continue incubating"
+    assert interim_summary.harvest_attempts, "Incubating seed should leave a harvest trace"
+    interim_attempt = interim_summary.harvest_attempts[0]
+    assert interim_attempt.emerged is False
+    assert interim_attempt.failure_reasons
 
     # Second revisit should surface the idea.
     second_revisit = field.analyse(
@@ -79,6 +83,8 @@ def test_unconscious_field_incubates_and_releases_emergent_ideas():
     )
     final_summary = field.summary(second_revisit)
     assert final_summary.emergent_ideas, "Incubated seed should surface as an emergent insight"
+    assert final_summary.harvest_attempts[0].emerged is True
+    assert final_summary.harvest_attempts[0].threshold_margin >= 0.0
     assert final_summary.cache_depth >= 0
     psychoid_signal = final_summary.psychoid_signal
     assert psychoid_signal

@@ -54,6 +54,18 @@ def _coerce_emergent(
     return coerced
 
 
+def _coerce_harvest_attempts(
+    entries: Iterable[Union["HarvestAttemptModel", Dict[str, object]]],
+) -> List["HarvestAttemptModel"]:
+    coerced: List[HarvestAttemptModel] = []
+    for entry in entries:
+        if isinstance(entry, HarvestAttemptModel):
+            coerced.append(entry)
+        else:
+            coerced.append(HarvestAttemptModel(**entry))
+    return coerced
+
+
 @dataclass
 class GeometryModel:
     """Polar representation of an archetypal event embedding."""
@@ -127,6 +139,66 @@ class EmergentIdeaModel:
 
 
 @dataclass
+class HarvestAttemptModel:
+    """Trace for a cached seed tested against the current unconscious vector."""
+
+    archetype: str
+    label: str
+    intensity: float
+    novelty: float
+    incubation_rounds: int
+    trigger_similarity: float
+    threshold: float
+    threshold_gap: float
+    threshold_margin: float
+    emerged: bool
+    similarity_pass: bool
+    incubation_pass: bool
+    intensity_pass: bool
+    failure_reasons: List[str] = field(default_factory=list)
+    status: str = ""
+    origin: str = ""
+
+    def __post_init__(self) -> None:
+        self.archetype = str(self.archetype)
+        self.label = str(self.label)
+        self.intensity = _as_float(self.intensity)
+        self.novelty = _as_float(self.novelty)
+        self.incubation_rounds = _as_int(self.incubation_rounds)
+        self.trigger_similarity = _as_float(self.trigger_similarity)
+        self.threshold = _as_float(self.threshold)
+        self.threshold_gap = _as_float(self.threshold_gap)
+        self.threshold_margin = _as_float(self.threshold_margin)
+        self.emerged = bool(self.emerged)
+        self.similarity_pass = bool(self.similarity_pass)
+        self.incubation_pass = bool(self.incubation_pass)
+        self.intensity_pass = bool(self.intensity_pass)
+        self.failure_reasons = [str(item) for item in self.failure_reasons]
+        self.status = str(self.status)
+        self.origin = str(self.origin)
+
+    def to_payload(self) -> Dict[str, object]:
+        return {
+            "archetype": self.archetype,
+            "label": self.label,
+            "intensity": self.intensity,
+            "novelty": self.novelty,
+            "incubation_rounds": self.incubation_rounds,
+            "trigger_similarity": self.trigger_similarity,
+            "threshold": self.threshold,
+            "threshold_gap": self.threshold_gap,
+            "threshold_margin": self.threshold_margin,
+            "emerged": self.emerged,
+            "similarity_pass": self.similarity_pass,
+            "incubation_pass": self.incubation_pass,
+            "intensity_pass": self.intensity_pass,
+            "failure_reasons": list(self.failure_reasons),
+            "status": self.status,
+            "origin": self.origin,
+        }
+
+
+@dataclass
 class AttentionBiasEntry:
     """Attention-bias contribution for a single archetype."""
 
@@ -185,6 +257,7 @@ class UnconsciousSummaryModel:
     geometry: GeometryModel = field(default_factory=lambda: GeometryModel(0.0, 0.0, 0.0))
     archetype_map: List[ArchetypeActivation] = field(default_factory=list)
     emergent_ideas: List[EmergentIdeaModel] = field(default_factory=list)
+    harvest_attempts: List[HarvestAttemptModel] = field(default_factory=list)
     stress_released: float = 0.0
     cache_depth: int = 0
     psychoid_signal: Optional[PsychoidSignalModel] = None
@@ -196,6 +269,7 @@ class UnconsciousSummaryModel:
         self.top_k = [str(item) for item in self.top_k]
         self.archetype_map = _coerce_archetypes(self.archetype_map)
         self.emergent_ideas = _coerce_emergent(self.emergent_ideas)
+        self.harvest_attempts = _coerce_harvest_attempts(self.harvest_attempts)
         self.stress_released = _as_float(self.stress_released)
         self.cache_depth = _as_int(self.cache_depth)
         if self.psychoid_signal is not None and not isinstance(
@@ -211,6 +285,7 @@ class UnconsciousSummaryModel:
             "geometry": self.geometry.to_payload(),
             "archetype_map": [score.to_payload() for score in self.archetype_map],
             "emergent_ideas": [idea.to_payload() for idea in self.emergent_ideas],
+            "harvest_attempts": [attempt.to_payload() for attempt in self.harvest_attempts],
             "stress_released": self.stress_released,
             "cache_depth": self.cache_depth,
             "psychoid_signal": self.psychoid_signal.to_payload()
@@ -225,6 +300,7 @@ __all__ = [
     "AttentionBiasEntry",
     "EmergentIdeaModel",
     "GeometryModel",
+    "HarvestAttemptModel",
     "PsychoidSignalModel",
     "UnconsciousSummaryModel",
 ]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "motif_bridge_001",
+    "question": "Design a concise onboarding metaphor for a developer tool that turns scattered logs into a reliable bridge between incidents and fixes. Keep it practical, not mystical.",
+    "tags": ["motif", "bridge", "product-writing"]
+  },
+  {
+    "id": "shadow_refactor_001",
+    "question": "A team keeps avoiding a brittle legacy module because everyone fears breaking production. Propose a grounded refactor narrative that names the hidden risk, lowers anxiety, and gives three concrete first steps.",
+    "tags": ["shadow", "engineering", "anxiety-regulation"]
+  },
+  {
+    "id": "mirror_strategy_001",
+    "question": "Create a product strategy note around the motif of a mirror: the product should reflect user intent without trapping them in their past behavior. Include one risk and one measurement idea.",
+    "tags": ["mirror", "strategy", "measurement"]
+  },
+  {
+    "id": "sage_debug_001",
+    "question": "Explain how a patient mentor would teach a junior engineer to debug a flaky test. Use a warm motif, but keep the advice specific and testable.",
+    "tags": ["sage", "debugging", "education"]
+  },
+  {
+    "id": "forest_constraints_001",
+    "question": "Write a compact creative brief for navigating a complex roadmap as if it were a forest path. The output must still include priorities, constraints, and a decision rule.",
+    "tags": ["forest", "planning", "constraints"]
+  },
+  {
+    "id": "mask_interface_001",
+    "question": "A settings screen exposes too many internal knobs. Use the idea of a mask or interface boundary to propose a clearer UX policy with four concrete rules.",
+    "tags": ["persona", "ux", "policy"]
+  },
+  {
+    "id": "japanese_motif_001",
+    "question": "『霧の中の橋』という比喩を使って、曖昧な研究アイデアを検証可能な実験計画へ変える方法を、占いっぽくならないように説明してください。",
+    "tags": ["japanese", "bridge", "research"]
+  },
+  {
+    "id": "braided_architecture_001",
+    "question": "Propose a two-hemisphere architecture metaphor for combining fast intuition with slow verification in an AI assistant. Ground it in concrete orchestration behavior.",
+    "tags": ["architecture", "system1-system2", "orchestration"]
+  }
+]
