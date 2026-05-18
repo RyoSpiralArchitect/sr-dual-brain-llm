@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scripts"
+EXAMPLES_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "examples"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -71,6 +72,7 @@ def test_summarize_unconscious_creativity_report_surfaces_leak_and_pressure():
         "cases": [
             {
                 "id": "q1",
+                "question": "Use a sage metaphor.",
                 "unconscious": {"incubation_pressure": 0.4},
                 "tags": ["sage"],
             }
@@ -83,7 +85,9 @@ def test_summarize_unconscious_creativity_report_surfaces_leak_and_pressure():
     assert "Unconscious Creativity" in markdown
     assert "- 1 cases leaked internal markers." in markdown
     assert "| leak_rate | 50.0% |" in markdown
-    assert "| q1 | pressure | 0.400 | sage |" in markdown
+    assert "## Tag Coverage" in markdown
+    assert "## Case Details" in markdown
+    assert "| q1 | sage | Use a sage metaphor. | - | - | 0.400 | - | - | - | - |" in markdown
 
 
 def test_summarize_unconscious_incubation_report_surfaces_echo_near_miss():
@@ -98,13 +102,31 @@ def test_summarize_unconscious_incubation_report_surfaces_echo_near_miss():
             "emergent_sequence_rate": 1.0,
             "avg_closest_echo_near_miss_gap": 0.04,
             "near_miss_attempts": 1,
+            "near_miss_state_counts": {"waiting_incubation": 1},
+            "turns_by_role": {
+                "seed": {
+                    "turns": 1,
+                    "emergent_rate": 0.0,
+                    "seed_cached_rate": 1.0,
+                    "harvest_attempt_turn_rate": 0.0,
+                    "near_miss_turn_rate": 0.0,
+                    "cue_top_k_alignment_rate": 1.0,
+                    "avg_incubation_pressure": 0.2,
+                }
+            },
         },
         "sequences": [
             {
                 "id": "mirror",
+                "title": "Mirror sequence",
+                "tags": ["mirror"],
                 "observation": {
+                    "turns": 4,
+                    "first_emergent_turn_index": 4,
                     "closest_echo_near_miss_gap": 0.04,
                     "target_emergent_hits": ["syzygy"],
+                    "pressure_delta": 0.2,
+                    "peak_cache_depth": 2,
                 },
             }
         ],
@@ -116,7 +138,12 @@ def test_summarize_unconscious_incubation_report_surfaces_echo_near_miss():
     assert "Unconscious Incubation" in markdown
     assert "- No sequence-level leaks were reported." in markdown
     assert "| avg_closest_echo_near_miss_gap | 0.040 |" in markdown
-    assert "| mirror | echo_gap | 0.040 | syzygy |" in markdown
+    assert "## Role Summary" in markdown
+    assert "| seed | 1 | 0.0% | 100.0% | 0.0% | 0.0% | 100.0% | 0.200 | - |" in markdown
+    assert "## Count Breakdowns" in markdown
+    assert "| near_miss_state | waiting_incubation | 1 |" in markdown
+    assert "## Sequence Details" in markdown
+    assert "| mirror | mirror | Mirror sequence | 4 | 4 | syzygy | - | 0.040 | 0.200 | 2 |" in markdown
 
 
 def test_cli_writes_markdown_output(tmp_path):
@@ -156,3 +183,17 @@ def test_cli_writes_markdown_output(tmp_path):
     markdown = output_path.read_text(encoding="utf-8")
     assert "System2" in markdown
     assert "| system2_activation_rate | 100.0% |" in markdown
+
+
+def test_expanded_benchmark_question_sets_remain_valid():
+    expected_counts = {
+        "system2_benchmark_questions_reasoning_openended.json": 43,
+        "unconscious_creativity_benchmark_questions.json": 12,
+        "unconscious_incubation_benchmark_sequences.json": 5,
+    }
+    for filename, expected_count in expected_counts.items():
+        payload = json.loads((EXAMPLES_DIR / filename).read_text(encoding="utf-8"))
+        assert isinstance(payload, list)
+        assert len(payload) >= expected_count
+        ids = [item["id"] for item in payload]
+        assert len(ids) == len(set(ids))

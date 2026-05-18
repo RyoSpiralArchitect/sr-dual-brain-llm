@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -71,9 +72,12 @@ def _fmt_value(value: Any, *, key: str = "", signed: bool = False) -> str:
         if key.endswith("_ms") or "_ms_" in key:
             return f"{prefix}{number:.1f} ms"
         if (
-            not key.startswith(("avg_", "mean_", "min_", "max_"))
+            not key.startswith(("avg_", "mean_"))
             and (
-                key.endswith("_count")
+                key in {"count", "rounds", "turns", "cache_depth", "peak_cache_depth"}
+                or key.endswith("_index")
+                or key.endswith("_cache_depth")
+                or key.endswith("_count")
                 or key.endswith("_cases")
                 or key.endswith("_turns")
                 or key.endswith("_sequences")
@@ -85,17 +89,90 @@ def _fmt_value(value: Any, *, key: str = "", signed: bool = False) -> str:
         return f"{prefix}{_fmt_number(number)}"
     if isinstance(value, (list, tuple)):
         return ", ".join(str(item) for item in value) if value else "-"
+    if isinstance(value, dict):
+        pairs = (f"{name}={count}" for name, count in sorted(value.items()))
+        return ", ".join(pairs) or "-"
     return str(value)
 
 
+def _short_text(value: Any, limit: int = 84) -> str:
+    text = " ".join(str(value or "").split())
+    if not text:
+        return "-"
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _join_values(value: Any, *, limit: int = 4) -> str:
+    items = _as_list(value)
+    if not items:
+        return "-"
+    rendered = [str(item) for item in items[:limit]]
+    if len(items) > limit:
+        rendered.append(f"+{len(items) - limit} more")
+    return ", ".join(rendered)
+
+
 def _table(headers: Sequence[str], rows: Iterable[Sequence[Any]]) -> str:
+    def cell(value: Any) -> str:
+        return str(value).replace("\n", "<br>").replace("|", "\\|")
+
     out = [
-        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join(cell(header) for header in headers) + " |",
         "| " + " | ".join("---" for _ in headers) + " |",
     ]
     for row in rows:
-        out.append("| " + " | ".join(str(cell) for cell in row) + " |")
+        out.append("| " + " | ".join(cell(item) for item in row) + " |")
     return "\n".join(out)
+
+
+def _tag_counts(
+    items: Iterable[Mapping[str, Any]], *, include_turns: bool = False
+) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for item in items:
+        for tag in _as_list(item.get("tags")):
+            text = str(tag).strip()
+            if text:
+                counts[text] += 1
+        if include_turns:
+            for turn in _as_list(item.get("turns")):
+                turn_data = _as_dict(turn)
+                for tag in _as_list(turn_data.get("tags")):
+                    text = str(tag).strip()
+                    if text:
+                        counts[text] += 1
+    return counts
+
+
+def _tag_coverage_section(report: Mapping[str, Any], kind: str) -> str:
+    items = _as_list(report.get("sequences" if kind == "unconscious_incubation" else "cases"))
+    counts = _tag_counts(
+        [item for item in items if isinstance(item, dict)],
+        include_turns=kind == "unconscious_incubation",
+    )
+    if not counts:
+        return ""
+    rows = [(tag, count) for tag, count in counts.most_common(12)]
+    return "## Tag Coverage\n\n" + _table(("Tag", "Count"), rows)
+
+
+def _count_breakdowns_section(summary: Mapping[str, Any]) -> str:
+    rows: list[tuple[str, str, str]] = []
+    for key, value in sorted(summary.items()):
+        if not key.endswith("_counts") or not isinstance(value, dict):
+            continue
+        label = key.removesuffix("_counts")
+        ordered_counts = sorted(
+            value.items(),
+            key=lambda item: (-(_safe_float(item[1]) or 0.0), str(item[0])),
+        )
+        for name, count in ordered_counts:
+            rows.append((label, str(name), _fmt_value(count, key="count")))
+    if not rows:
+        return ""
+    return "## Count Breakdowns\n\n" + _table(("Breakdown", "Value", "Count"), rows)
 
 
 def _metric_rows(summary: Mapping[str, Any], keys: Sequence[str]) -> list[tuple[str, str]]:
@@ -326,39 +403,171 @@ def _unconscious_incubation_section(summary: Mapping[str, Any]) -> str:
     return "## Summary\n\n" + _table(("Metric", "Value"), _metric_rows(summary, keys))
 
 
-def _top_cases(report: Mapping[str, Any], kind: str, limit: int) -> str:
+def _role_summary_section(summary: Mapping[str, Any]) -> str:
+    turns_by_role = _as_dict(summary.get("turns_by_role"))
+    if not turns_by_role:
+        return ""
+    rows = []
+    for role, payload in sorted(turns_by_role.items()):
+        data = _as_dict(payload)
+        rows.append(
+            (
+                str(role),
+                _fmt_value(data.get("turns"), key="turns"),
+                _fmt_value(data.get("emergent_rate"), key="emergent_rate"),
+                _fmt_value(data.get("seed_cached_rate"), key="seed_cached_rate"),
+                _fmt_value(data.get("harvest_attempt_turn_rate"), key="harvest_attempt_turn_rate"),
+                _fmt_value(data.get("near_miss_turn_rate"), key="near_miss_turn_rate"),
+                _fmt_value(data.get("cue_top_k_alignment_rate"), key="cue_top_k_alignment_rate"),
+                _fmt_value(data.get("avg_incubation_pressure"), key="avg_incubation_pressure"),
+                _fmt_value(data.get("avg_closest_near_miss_gap"), key="avg_closest_near_miss_gap"),
+            )
+        )
+    return "## Role Summary\n\n" + _table(
+        (
+            "Role",
+            "Turns",
+            "Emergent",
+            "Seed Cached",
+            "Harvest",
+            "Near Miss",
+            "Cue Align",
+            "Pressure",
+            "Gap",
+        ),
+        rows,
+    )
+
+
+def _system2_case_rows(
+    items: Sequence[Any], limit: int
+) -> list[tuple[str, str, str, str, str, str, str, str]]:
+    rows = []
+    for item in items[:limit]:
+        data = _as_dict(item)
+        initial = data.get("initial_issues")
+        final = data.get("final_issues")
+        issues = "-"
+        if initial is not None or final is not None:
+            before = _fmt_value(initial, key="issue_count")
+            after = _fmt_value(final, key="issue_count")
+            issues = f"{before} -> {after}"
+        rows.append(
+            (
+                str(data.get("id") or data.get("qid") or "-"),
+                _join_values(data.get("tags"), limit=3),
+                _short_text(data.get("question"), 68),
+                issues,
+                _fmt_value(data.get("resolved")),
+                _fmt_value(data.get("rounds"), key="rounds"),
+                _fmt_value(data.get("latency_ms"), key="latency_ms"),
+                str(data.get("system2_reason") or data.get("error") or "-"),
+            )
+        )
+    return rows
+
+
+def _creativity_case_rows(
+    items: Sequence[Any], limit: int
+) -> list[tuple[str, str, str, str, str, str, str, str, str, str]]:
+    rows = []
+    for item in items[:limit]:
+        data = _as_dict(item)
+        unconscious = _as_dict(data.get("unconscious"))
+        coherence = _as_dict(data.get("coherence"))
+        leakage = _as_dict(data.get("leakage"))
+        rows.append(
+            (
+                str(data.get("id") or data.get("qid") or "-"),
+                _join_values(data.get("tags"), limit=3),
+                _short_text(data.get("question"), 58),
+                _join_values(unconscious.get("top_k"), limit=3),
+                _fmt_value(unconscious.get("score"), key="score"),
+                _fmt_value(unconscious.get("incubation_pressure"), key="incubation_pressure"),
+                _fmt_value(unconscious.get("cache_depth"), key="cache_depth"),
+                _fmt_value(unconscious.get("emergent_ideas"), key="emergent_ideas"),
+                _fmt_value(coherence.get("combined"), key="coherence_combined"),
+                _fmt_value(leakage.get("has_internal_leak")),
+            )
+        )
+    return rows
+
+
+def _incubation_case_rows(
+    items: Sequence[Any], limit: int
+) -> list[tuple[str, str, str, str, str, str, str, str, str, str]]:
+    rows = []
+    for item in items[:limit]:
+        data = _as_dict(item)
+        obs = _as_dict(data.get("observation"))
+        rows.append(
+            (
+                str(data.get("id") or "-"),
+                _join_values(data.get("tags"), limit=3),
+                _short_text(data.get("title"), 48),
+                _fmt_value(obs.get("turns"), key="turns"),
+                _fmt_value(obs.get("first_emergent_turn_index"), key="first_emergent_turn_index"),
+                _join_values(obs.get("target_emergent_hits"), limit=3),
+                _join_values(obs.get("seed_to_emergent_transitions"), limit=3),
+                _fmt_value(obs.get("closest_echo_near_miss_gap"), key="closest_echo_near_miss_gap"),
+                _fmt_value(obs.get("pressure_delta"), key="pressure_delta"),
+                _fmt_value(obs.get("peak_cache_depth"), key="peak_cache_depth"),
+            )
+        )
+    return rows
+
+
+def _case_details(report: Mapping[str, Any], kind: str, limit: int) -> str:
     if limit <= 0:
         return ""
     items = _as_list(report.get("sequences" if kind == "unconscious_incubation" else "cases"))
     if not items:
         return ""
-    rows: list[tuple[str, str, str, str]] = []
-    for item in items:
-        data = _as_dict(item)
-        if kind == "unconscious_incubation":
-            obs = _as_dict(data.get("observation"))
-            score = obs.get("closest_echo_near_miss_gap")
-            signal = "echo_gap"
-            detail = obs.get("target_emergent_hits") or obs.get("seed_to_emergent_transitions")
-        elif kind == "unconscious_creativity":
-            unconscious = _as_dict(data.get("unconscious"))
-            score = unconscious.get("incubation_pressure")
-            signal = "pressure"
-            detail = _as_dict(unconscious.get("closest_near_miss")).get("archetype") or data.get("tags")
-        else:
-            score = data.get("latency_ms")
-            signal = "latency_ms"
-            detail = data.get("error") or data.get("resolved")
-        rows.append(
+    if kind == "unconscious_incubation":
+        return "## Sequence Details\n\n" + _table(
             (
-                str(data.get("id") or data.get("qid") or "-"),
-                signal,
-                _fmt_value(score, key=str(signal)),
-                _fmt_value(detail),
-            )
+                "Sequence",
+                "Tags",
+                "Title",
+                "Turns",
+                "First Emergent",
+                "Target Hits",
+                "Transitions",
+                "Echo Gap",
+                "Pressure Delta",
+                "Peak Cache",
+            ),
+            _incubation_case_rows(items, limit),
         )
-    rows = rows[:limit]
-    return "## Highlights\n\n" + _table(("Item", "Signal", "Value", "Detail"), rows)
+    if kind == "unconscious_creativity":
+        return "## Case Details\n\n" + _table(
+            (
+                "Item",
+                "Tags",
+                "Prompt",
+                "Top-K",
+                "Score",
+                "Pressure",
+                "Cache",
+                "Emergent",
+                "Coherence",
+                "Leak",
+            ),
+            _creativity_case_rows(items, limit),
+        )
+    return "## Case Details\n\n" + _table(
+        (
+            "Item",
+            "Tags",
+            "Prompt",
+            "Issues",
+            "Resolved",
+            "Rounds",
+            "Latency",
+            "Reason",
+        ),
+        _system2_case_rows(items, limit),
+    )
 
 
 def summarize_report(report: Mapping[str, Any], *, source: str | None = None, top: int = 5) -> str:
@@ -389,12 +598,21 @@ def summarize_report(report: Mapping[str, Any], *, source: str | None = None, to
         sections.extend(["", _unconscious_creativity_section(summary)])
     elif kind == "unconscious_incubation":
         sections.extend(["", _unconscious_incubation_section(summary)])
+        role_summary = _role_summary_section(summary)
+        if role_summary:
+            sections.extend(["", role_summary])
     else:
         rows = sorted((str(k), _fmt_value(v, key=str(k))) for k, v in summary.items())
         sections.extend(["", "## Summary", "", _table(("Metric", "Value"), rows)])
-    highlights = _top_cases(report, kind, top)
-    if highlights:
-        sections.extend(["", highlights])
+    count_breakdowns = _count_breakdowns_section(summary)
+    if count_breakdowns:
+        sections.extend(["", count_breakdowns])
+    tag_coverage = _tag_coverage_section(report, kind)
+    if tag_coverage:
+        sections.extend(["", tag_coverage])
+    details = _case_details(report, kind, top)
+    if details:
+        sections.extend(["", details])
     return "\n".join(sections).rstrip() + "\n"
 
 
@@ -409,7 +627,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", help="Path to a benchmark JSON report.")
     parser.add_argument("--output", "-o", help="Write Markdown to this path instead of stdout.")
-    parser.add_argument("--top", type=int, default=5, help="Number of highlight rows to include.")
+    parser.add_argument("--top", type=int, default=5, help="Number of detail rows to include.")
     return parser
 
 

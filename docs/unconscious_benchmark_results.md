@@ -32,8 +32,13 @@ Convert a JSON report into a short Markdown brief:
 ```bash
 python3 sr-dual-brain-llm/scripts/summarize_benchmark_report.py \
   target/benchmarks/unconscious_incubation_last.json \
-  --output target/benchmarks/unconscious_incubation_last.md
+  --output target/benchmarks/unconscious_incubation_last.md \
+  --top 8
 ```
+
+The Markdown summary includes run/config metadata, aggregate metrics, count
+breakdowns, tag coverage, role-level incubation metrics when present, and a
+bounded detail table. Increase `--top` to show more case or sequence rows.
 
 ## Report Shape
 
