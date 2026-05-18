@@ -186,6 +186,10 @@ for run commands and metric interpretation.
 To turn any benchmark JSON report into a Markdown brief with summary metrics,
 count breakdowns, tag coverage, and per-case detail rows:
 `python3 sr-dual-brain-llm/scripts/summarize_benchmark_report.py path/to/report.json --output path/to/report.md --top 8`.
+To compare two reports or summarize a JSONL history trend:
+`python3 sr-dual-brain-llm/scripts/compare_benchmark_reports.py before.json after.json --output compare.md`
+or
+`python3 sr-dual-brain-llm/scripts/compare_benchmark_reports.py --history target/benchmarks/unconscious_incubation_history.jsonl --limit 10 --output trend.md`.
 
 ### 6) ACC + Cerebellum controls (optional)
 This repo includes an ACC-like conflict monitor + cerebellum-like micro-correction loop.
