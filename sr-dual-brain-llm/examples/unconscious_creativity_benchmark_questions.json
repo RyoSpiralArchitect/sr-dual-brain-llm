@@ -38,5 +38,25 @@
     "id": "braided_architecture_001",
     "question": "Propose a two-hemisphere architecture metaphor for combining fast intuition with slow verification in an AI assistant. Ground it in concrete orchestration behavior.",
     "tags": ["architecture", "system1-system2", "orchestration"]
+  },
+  {
+    "id": "trickster_release_001",
+    "question": "Use a trickster/reversal motif to explain how a launch plan can surface hidden assumptions without derailing the team. Include one guardrail and one signal to watch.",
+    "tags": ["trickster", "release", "risk"]
+  },
+  {
+    "id": "child_prototype_001",
+    "question": "Frame a tiny prototype as a sprout: it should invite learning without pretending to be a mature product. Include a success criterion and a kill criterion.",
+    "tags": ["child", "prototype", "experimentation"]
+  },
+  {
+    "id": "great_mother_onboarding_001",
+    "question": "Design a calm onboarding note for a safety-critical tool using a care/grounding motif. Keep it operational and include two concrete user safeguards.",
+    "tags": ["great_mother", "onboarding", "safety"]
+  },
+  {
+    "id": "self_alignment_001",
+    "question": "Write a short strategy memo about aligning a fragmented AI workflow around a clear center. Avoid vague spirituality; name interfaces, checks, and escalation rules.",
+    "tags": ["self", "strategy", "governance"]
   }
 ]

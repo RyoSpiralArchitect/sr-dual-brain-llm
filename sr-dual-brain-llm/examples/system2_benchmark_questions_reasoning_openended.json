@@ -173,5 +173,45 @@
     "id": "code_review_avg_001",
     "question": "Review this Python snippet for correctness and edge cases: `def avg(nums): return sum(nums)/len(nums)`.",
     "tags": ["code-review", "python", "open-ended"]
+  },
+  {
+    "id": "code_review_mutable_default_001",
+    "question": "Review this Python snippet for correctness and hidden state bugs: `def add_item(item, bucket=[]): bucket.append(item); return bucket`.",
+    "tags": ["code-review", "python", "state", "open-ended"]
+  },
+  {
+    "id": "code_review_cache_key_001",
+    "question": "Review this cache lookup: `if key in cache: return cache[key]; cache[key] = compute(key); return cache[key]`. Mention one concurrency risk and one mitigation.",
+    "tags": ["code-review", "concurrency", "python", "open-ended"]
+  },
+  {
+    "id": "prob_base_rate_001",
+    "question": "A disease affects 1% of people. A test is 99% sensitive and 95% specific. If someone tests positive, explain why the probability they have the disease is not 99%.",
+    "tags": ["probability", "base-rate", "open-ended"]
+  },
+  {
+    "id": "prob_expected_value_001",
+    "question": "A feature has a 30% chance to save $10k/month and a 70% chance to save $1k/month. A rollout costs $3k once. Estimate the first-month expected value and explain the caveat.",
+    "tags": ["probability", "expected-value", "open-ended"]
+  },
+  {
+    "id": "constraints_two_workers_001",
+    "question": "Schedule tasks A=2h, B=2h, C=3h, D=1h with two workers. B depends on A; D depends on C. Minimize completion time and explain the critical path.",
+    "tags": ["planning", "constraints", "critical-path", "open-ended"]
+  },
+  {
+    "id": "causal_ab_test_001",
+    "question": "Conversion rose after a pricing-page redesign, but a seasonal campaign started the same week. Give a causal analysis plan before claiming the redesign caused the lift.",
+    "tags": ["causality", "experiment-design", "open-ended"]
+  },
+  {
+    "id": "logic_quantifier_negation_001",
+    "question": "Rewrite the statement `Not all services are healthy` using an existential quantifier, and explain the difference from `No services are healthy`.",
+    "tags": ["logic", "quantifiers", "open-ended"]
+  },
+  {
+    "id": "japanese_reasoning_004",
+    "question": "次の主張を検証してください: 『必要条件』と『十分条件』を取り違えると、どんな誤推論が起きますか。短い例で説明してください。",
+    "tags": ["logic", "japanese", "open-ended"]
   }
 ]

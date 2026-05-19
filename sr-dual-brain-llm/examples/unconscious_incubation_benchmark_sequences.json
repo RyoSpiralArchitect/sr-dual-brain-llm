@@ -103,5 +103,75 @@
         "target_archetypes": ["persona"]
       }
     ]
+  },
+  {
+    "id": "trickster_release_return",
+    "title": "Trickster release motif returns as guarded reversal",
+    "tags": ["trickster", "release", "incubation"],
+    "target_archetypes": ["trickster", "hero"],
+    "turns": [
+      {
+        "id": "seed",
+        "role": "seed",
+        "question": "Seed a release-planning metaphor around a trickster reversal: it should reveal hidden assumptions while keeping the launch grounded.",
+        "tags": ["seed", "trickster", "release", "risk"],
+        "target_archetypes": ["trickster"]
+      },
+      {
+        "id": "distractor",
+        "role": "distractor",
+        "question": "Switch topics: outline API pagination fields for a list endpoint.",
+        "tags": ["distractor", "api", "pagination"]
+      },
+      {
+        "id": "return",
+        "role": "return",
+        "question": "Return to the trickster release metaphor and turn it into a launch guardrail, a rollback trigger, and a learning signal.",
+        "tags": ["return", "trickster", "release", "guardrail"],
+        "target_archetypes": ["trickster", "hero"]
+      },
+      {
+        "id": "echo",
+        "role": "echo_return",
+        "question": "Seed a release-planning metaphor around a trickster reversal: it should reveal hidden assumptions while keeping the launch grounded.",
+        "tags": ["echo", "trickster", "release"],
+        "target_archetypes": ["trickster"]
+      }
+    ]
+  },
+  {
+    "id": "child_prototype_return",
+    "title": "Prototype sprout motif matures after metric detour",
+    "tags": ["child", "prototype", "incubation"],
+    "target_archetypes": ["child", "self"],
+    "turns": [
+      {
+        "id": "seed",
+        "role": "seed",
+        "question": "Describe a tiny prototype as a sprout: it should create learning without pretending to be a mature product.",
+        "tags": ["seed", "child", "prototype", "experiment"],
+        "target_archetypes": ["child"]
+      },
+      {
+        "id": "distractor",
+        "role": "distractor",
+        "question": "Change focus: define three metrics for monitoring API latency.",
+        "tags": ["distractor", "metrics", "latency"]
+      },
+      {
+        "id": "return",
+        "role": "return",
+        "question": "Return to the sprout prototype and make it a grounded experiment plan with a success criterion, a kill criterion, and one escalation rule.",
+        "tags": ["return", "child", "prototype", "governance"],
+        "target_archetypes": ["child", "self"]
+      },
+      {
+        "id": "echo",
+        "role": "echo_return",
+        "question": "Describe a tiny prototype as a sprout: it should create learning without pretending to be a mature product.",
+        "tags": ["echo", "child", "prototype"],
+        "target_archetypes": ["child"]
+      }
+    ]
   }
 ]

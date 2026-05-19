@@ -183,6 +183,9 @@ Unconscious-field benchmark reports live under `target/benchmarks/` by default.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.
+To turn any benchmark JSON report into a Markdown brief with summary metrics,
+count breakdowns, tag coverage, and per-case detail rows:
+`python3 sr-dual-brain-llm/scripts/summarize_benchmark_report.py path/to/report.json --output path/to/report.md --top 8`.
 
 ### 6) ACC + Cerebellum controls (optional)
 This repo includes an ACC-like conflict monitor + cerebellum-like micro-correction loop.
