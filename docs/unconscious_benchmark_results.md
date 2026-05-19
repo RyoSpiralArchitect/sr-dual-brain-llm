@@ -40,6 +40,24 @@ The Markdown summary includes run/config metadata, aggregate metrics, count
 breakdowns, tag coverage, role-level incubation metrics when present, and a
 bounded detail table. Increase `--top` to show more case or sequence rows.
 
+Compare two reports:
+
+```bash
+python3 sr-dual-brain-llm/scripts/compare_benchmark_reports.py \
+  target/benchmarks/unconscious_incubation_previous.json \
+  target/benchmarks/unconscious_incubation_last.json \
+  --output target/benchmarks/unconscious_incubation_compare.md
+```
+
+Summarize the latest history trend:
+
+```bash
+python3 sr-dual-brain-llm/scripts/compare_benchmark_reports.py \
+  --history target/benchmarks/unconscious_incubation_history.jsonl \
+  --limit 10 \
+  --output target/benchmarks/unconscious_incubation_trend.md
+```
+
 ## Report Shape
 
 Each report contains:
