@@ -179,6 +179,11 @@ Outputs:
 - History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
 - Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
 
+Unconscious-field benchmark reports live under `target/benchmarks/` by default.
+For the creativity and multi-turn incubation suites, see
+[`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
+for run commands and metric interpretation.
+
 ### 6) ACC + Cerebellum controls (optional)
 This repo includes an ACC-like conflict monitor + cerebellum-like micro-correction loop.
 
