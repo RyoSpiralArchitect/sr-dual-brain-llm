@@ -124,7 +124,7 @@ def infer_report_kind(report: Mapping[str, Any]) -> str:
         return kind
     summary = _as_dict(report.get("summary"))
     run_id = str(report.get("run_id") or "")
-    if "summary_by_mode" in report:
+    if isinstance(report.get("summary_by_mode"), dict):
         return "system2_ab"
     if (
         "total_sequences" in summary
