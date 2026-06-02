@@ -168,6 +168,22 @@ def _safe_bool(value: Any) -> Optional[bool]:
     return None
 
 
+def _normalise_system2_resolved_signal(
+    *,
+    resolved: Optional[bool],
+    initial_issues: Optional[int],
+    final_issues: Optional[int],
+) -> tuple[Optional[bool], bool]:
+    if (
+        initial_issues is not None
+        and final_issues is not None
+        and int(initial_issues) == 0
+        and int(final_issues) == 0
+    ):
+        return True, resolved is not True
+    return resolved, False
+
+
 _CRITIC_FALLBACK_MARKERS = (
     "(fallback) external critic model unavailable",
     "(fallback) external critic model not configured",
@@ -175,11 +191,334 @@ _CRITIC_FALLBACK_MARKERS = (
 )
 
 
+ISSUE_CATEGORY_KEYWORDS = {
+    "causal_identification": (
+        "causal",
+        "cause",
+        "causation",
+        "correlation",
+        "confound",
+        "counterfactual",
+        "rollback",
+        "deployment",
+        "timeline",
+    ),
+    "safety_privacy": (
+        "pii",
+        "privacy",
+        "personal",
+        "sensitive",
+        "redact",
+        "anonym",
+        "policy",
+        "consent",
+        "retention",
+        "access",
+    ),
+    "specificity": (
+        "specific",
+        "concrete",
+        "example",
+        "mechanism",
+        "step",
+        "actionable",
+        "explicit",
+    ),
+    "verification": (
+        "verify",
+        "validation",
+        "test",
+        "measure",
+        "metric",
+        "evidence",
+        "check",
+        "confirm",
+    ),
+    "edge_cases": (
+        "edge",
+        "exception",
+        "failure",
+        "risk",
+        "missing",
+        "omit",
+        "does not address",
+    ),
+    "quantitative_reasoning": (
+        "calculate",
+        "probability",
+        "percentage",
+        "rate",
+        "unit",
+        "numeric",
+        "math",
+    ),
+}
+
+
 def _is_critic_fallback_issue(issue: Any) -> bool:
     text = str(issue or "").strip().lower()
     if text.startswith("(fallback)"):
         return True
     return any(marker in text for marker in _CRITIC_FALLBACK_MARKERS)
+
+
+def _text_list(value: Any, *, limit: int = 12, max_len: int = 500) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    out: List[str] = []
+    for item in value:
+        text = str(item or "").strip()
+        if not text:
+            continue
+        out.append(text[:max_len])
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _normalise_issue_text(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    return " ".join("".join(ch if ch.isalnum() else " " for ch in text).split())
+
+
+def _issue_token_set(value: Any) -> set[str]:
+    stop = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "be",
+        "by",
+        "for",
+        "in",
+        "is",
+        "it",
+        "of",
+        "or",
+        "the",
+        "to",
+        "with",
+    }
+    return {
+        tok
+        for tok in _normalise_issue_text(value).split()
+        if len(tok) >= 4 and tok not in stop
+    }
+
+
+def _issue_similarity(left: Any, right: Any) -> float:
+    lhs = _normalise_issue_text(left)
+    rhs = _normalise_issue_text(right)
+    if not lhs or not rhs:
+        return 0.0
+    if lhs in rhs or rhs in lhs:
+        return 1.0
+    left_tokens = _issue_token_set(lhs)
+    right_tokens = _issue_token_set(rhs)
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens.intersection(right_tokens)) / len(
+        left_tokens.union(right_tokens)
+    )
+
+
+def _match_issue(item: str, candidates: List[str], *, threshold: float = 0.2) -> Dict[str, Any]:
+    best_text = ""
+    best_score = 0.0
+    item_categories = set(_issue_categories(item))
+    for candidate in candidates:
+        score = _issue_similarity(item, candidate)
+        candidate_categories = set(_issue_categories(candidate))
+        if item_categories.intersection(candidate_categories):
+            score = max(score, 0.22)
+        if score > best_score:
+            best_score = score
+            best_text = candidate
+    return {
+        "matched": bool(best_score >= threshold),
+        "score": round(best_score, 4),
+        "text": best_text if best_score >= threshold else "",
+    }
+
+
+def _issue_categories(issue: Any) -> List[str]:
+    text = _normalise_issue_text(issue)
+    categories = [
+        category
+        for category, keywords in ISSUE_CATEGORY_KEYWORDS.items()
+        if any(keyword in text for keyword in keywords)
+    ]
+    return categories or ["other"]
+
+
+def _count_categories(issues: List[str]) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for issue in issues:
+        for category in _issue_categories(issue):
+            counts[category] = counts.get(category, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _latest_system2_issues(policy_state: Dict[str, Any]) -> List[str]:
+    round3 = _text_list(policy_state.get("system2_round3_issues"))
+    if round3:
+        return round3
+    verify = _text_list(policy_state.get("system2_verify_issues"))
+    if verify:
+        return verify
+    return _text_list(policy_state.get("critic_issues"))
+
+
+def _build_system2_diagnostic(
+    *,
+    policy_state: Dict[str, Any],
+    initial_issues: Optional[int],
+    final_issues: Optional[int],
+    resolved: Optional[bool],
+    answer: str,
+) -> Dict[str, Any]:
+    initial_issue_texts = _text_list(policy_state.get("critic_issues"))
+    verify_issue_texts = _text_list(policy_state.get("system2_verify_issues"))
+    round3_issue_texts = _text_list(policy_state.get("system2_round3_issues"))
+    final_issue_texts = _latest_system2_issues(policy_state)
+    followup_new = _text_list(policy_state.get("system2_followup_new_issues"))
+    round3_new = _text_list(policy_state.get("system2_round3_new_issues"))
+
+    carried_over: List[Dict[str, Any]] = []
+    resolved_initial: List[Dict[str, Any]] = []
+    for issue in initial_issue_texts:
+        match = _match_issue(issue, final_issue_texts)
+        payload = {
+            "issue": issue,
+            "match_score": match["score"],
+            "final_match": match["text"],
+            "categories": _issue_categories(issue),
+        }
+        if match["matched"]:
+            carried_over.append(payload)
+        else:
+            resolved_initial.append(payload)
+
+    newly_reported: List[Dict[str, Any]] = []
+    for issue in final_issue_texts:
+        match = _match_issue(issue, initial_issue_texts)
+        if not match["matched"]:
+            newly_reported.append(
+                {
+                    "issue": issue,
+                    "nearest_initial_score": match["score"],
+                    "categories": _issue_categories(issue),
+                }
+            )
+
+    progress = None
+    if initial_issues is not None and final_issues is not None:
+        progress = max(0, int(initial_issues) - int(final_issues))
+
+    if resolved is True:
+        status = "resolved"
+    elif initial_issues is None or final_issues is None:
+        status = "unmeasured"
+    elif int(initial_issues or 0) == 0 and int(final_issues or 0) == 0:
+        status = "clean_initial"
+    elif progress == 0 and int(final_issues or 0) > 0:
+        status = "stalled"
+    elif progress and int(final_issues or 0) > 0:
+        status = "partial_progress"
+    else:
+        status = "unresolved"
+
+    return {
+        "status": status,
+        "critic_kind": policy_state.get("critic_kind"),
+        "critic_verdict": policy_state.get("critic_verdict"),
+        "followup_verdict": policy_state.get("system2_followup_verdict"),
+        "round3_verdict": policy_state.get("system2_round3_verdict"),
+        "initial_issue_texts": initial_issue_texts,
+        "verify_issue_texts": verify_issue_texts,
+        "round3_issue_texts": round3_issue_texts,
+        "final_issue_texts": final_issue_texts,
+        "carried_over_initial_issues": carried_over,
+        "resolved_initial_issues": resolved_initial,
+        "newly_reported_final_issues": newly_reported,
+        "followup_new_issues": followup_new,
+        "round3_new_issues": round3_new,
+        "critic_sum_preview": str(policy_state.get("critic_sum") or "")[:800],
+        "verify_critic_sum_preview": str(
+            policy_state.get("system2_verify_critic_sum") or ""
+        )[:800],
+        "round3_critic_sum_preview": str(
+            policy_state.get("system2_round3_critic_sum") or ""
+        )[:800],
+        "category_counts_initial": _count_categories(initial_issue_texts),
+        "category_counts_final": _count_categories(final_issue_texts),
+        "followup_progress": _safe_int(policy_state.get("system2_followup_progress")),
+        "followup_eligible": _safe_bool(policy_state.get("system2_followup_eligible")),
+        "verify_issues_raw": _safe_int(policy_state.get("system2_issue_count_verify_raw")),
+        "verify_issues_calibrated": _safe_int(
+            policy_state.get("system2_issue_count_verify_calibrated")
+        ),
+        "round3_issues_raw": _safe_int(policy_state.get("system2_issue_count_round3_raw")),
+        "round3_issues_calibrated": _safe_int(
+            policy_state.get("system2_issue_count_round3_calibrated")
+        ),
+        "truncation_signal": _safe_bool(
+            policy_state.get("system2_truncation_signal")
+        ),
+        "pitfall_patterns": _text_list(policy_state.get("system2_pitfall_patterns")),
+        "answer_preview": answer[:500] if answer else "",
+    }
+
+
+def _summarise_diagnostics(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    diagnostics = [
+        c.get("system2_diagnostic")
+        for c in cases
+        if isinstance(c.get("system2_diagnostic"), dict)
+    ]
+    status_counts: Dict[str, int] = {}
+    initial_category_counts: Dict[str, int] = {}
+    final_category_counts: Dict[str, int] = {}
+    carried_over = 0
+    newly_reported = 0
+    truncation_signal_count = 0
+    for diagnostic in diagnostics:
+        status = str(diagnostic.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+        if diagnostic.get("truncation_signal") is True:
+            truncation_signal_count += 1
+        carried = diagnostic.get("carried_over_initial_issues")
+        if isinstance(carried, list):
+            carried_over += len(carried)
+        new_final = diagnostic.get("newly_reported_final_issues")
+        if isinstance(new_final, list):
+            newly_reported += len(new_final)
+        initial_counts = diagnostic.get("category_counts_initial")
+        if isinstance(initial_counts, dict):
+            for key, value in initial_counts.items():
+                count = _safe_int(value)
+                if count is not None:
+                    initial_category_counts[str(key)] = (
+                        initial_category_counts.get(str(key), 0) + count
+                    )
+        final_counts = diagnostic.get("category_counts_final")
+        if isinstance(final_counts, dict):
+            for key, value in final_counts.items():
+                count = _safe_int(value)
+                if count is not None:
+                    final_category_counts[str(key)] = (
+                        final_category_counts.get(str(key), 0) + count
+                    )
+    return {
+        "diagnostic_cases": len(diagnostics),
+        "status_counts": dict(sorted(status_counts.items())),
+        "initial_issue_category_counts": dict(sorted(initial_category_counts.items())),
+        "final_issue_category_counts": dict(sorted(final_category_counts.items())),
+        "carried_over_initial_issue_count": carried_over,
+        "newly_reported_final_issue_count": newly_reported,
+        "truncation_signal_count": truncation_signal_count,
+    }
 
 
 def _evaluate_critic_health_result(result: Dict[str, Any]) -> tuple[bool, str]:
@@ -368,6 +707,9 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         if c.get("initial_issues") is None or c.get("final_issues") is None
     ]
     system2_enabled_cases = [c for c in ok_cases if c.get("system2_enabled") is True]
+    truncation_signal_cases = [
+        c for c in ok_cases if c.get("truncation_signal") is True
+    ]
 
     sum_initial = sum(int(c["initial_issues"]) for c in measured)
     sum_final = sum(int(c["final_issues"]) for c in measured)
@@ -497,6 +839,10 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "error_cases": total - len(ok_cases),
         "system2_enabled_cases": len(system2_enabled_cases),
         "system2_activation_rate": activation_rate,
+        "truncation_signal_cases": len(truncation_signal_cases),
+        "truncation_signal_rate": (
+            len(truncation_signal_cases) / len(ok_cases) if ok_cases else None
+        ),
         "measured_cases": measured_count,
         "measured_case_rate": measured_case_rate,
         "no_op_cases": len(no_op_cases),
@@ -578,6 +924,7 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "cerebellum_issue_reduction_rate": cerebellum_reduction_rate,
         "cerebellum_issue_cases": cerebellum_issue_cases_count,
         "cerebellum_resolved_issue_rate": cerebellum_resolved_issue_rate,
+        "diagnostics": _summarise_diagnostics(cases),
     }
 
 
@@ -696,6 +1043,7 @@ async def _run_case(
     default_system2_mode: str,
     executive_mode: str,
     executive_observer_mode: str,
+    diagnostics_mode: str,
 ) -> Dict[str, Any]:
     qid = f"{run_id}-c{index:03d}"
     question = str(question_entry.get("question") or "")
@@ -747,12 +1095,20 @@ async def _run_case(
     followup_revision = _safe_bool(system2.get("followup_revision"))
     if followup_revision is None:
         followup_revision = _safe_bool(policy_state.get("system2_followup_revision"))
+    resolved, resolved_normalized = _normalise_system2_resolved_signal(
+        resolved=resolved,
+        initial_issues=initial_issues,
+        final_issues=final_issues,
+    )
     system2_enabled = _safe_bool(system2.get("enabled"))
     if system2_enabled is None:
         system2_enabled = _safe_bool(policy_state.get("system2_enabled"))
     low_signal_filter = _safe_bool(system2.get("low_signal_filter"))
     if low_signal_filter is None:
         low_signal_filter = _safe_bool(policy_state.get("system2_low_signal_filter"))
+    truncation_signal = _safe_bool(system2.get("truncation_signal"))
+    if truncation_signal is None:
+        truncation_signal = _safe_bool(policy_state.get("system2_truncation_signal"))
 
     reduction = None
     if initial_issues is not None and final_issues is not None:
@@ -797,7 +1153,7 @@ async def _run_case(
         )
         cerebellum_confidence = _safe_float(cerebellum_payload.get("confidence"))
 
-    return {
+    case = {
         "index": index,
         "id": question_entry.get("id") or f"q{index:03d}",
         "qid": qid,
@@ -815,6 +1171,7 @@ async def _run_case(
         "final_issues": final_issues,
         "issue_reduction": reduction,
         "resolved": resolved,
+        "resolved_normalized_from_clean_issue_counts": resolved_normalized,
         "followup_revision": followup_revision,
         "followup_new_issues": (
             system2.get("followup_new_issues")
@@ -825,6 +1182,10 @@ async def _run_case(
                 else []
             )
         ),
+        "followup_progress": _safe_int(system2.get("followup_progress")),
+        "followup_eligible": _safe_bool(system2.get("followup_eligible")),
+        "stalled_followup": _safe_bool(system2.get("stalled_followup")),
+        "truncation_signal": truncation_signal,
         "latency_ms": latency_ms if latency_ms is not None else elapsed_ms,
         "phase_latency_ms": phase_latency,
         "error": error_text,
@@ -840,6 +1201,73 @@ async def _run_case(
         "cerebellum_domain": cerebellum_domain,
         "cerebellum_confidence": cerebellum_confidence,
     }
+    diagnostics_norm = str(diagnostics_mode or "off").strip().lower()
+    if diagnostics_norm not in {"off", "unresolved", "all"}:
+        diagnostics_norm = "off"
+    should_emit_diagnostic = bool(
+        diagnostics_norm == "all"
+        or (
+            diagnostics_norm == "unresolved"
+            and (
+                resolved is False
+                or (
+                    initial_issues is not None
+                    and final_issues is not None
+                    and int(final_issues) > 0
+                )
+            )
+        )
+    )
+    if should_emit_diagnostic:
+        diagnostic_state = dict(policy_state)
+        if isinstance(system2.get("critic_issues"), list):
+            diagnostic_state["critic_issues"] = system2.get("critic_issues")
+        if isinstance(system2.get("verify_issues"), list):
+            diagnostic_state["system2_verify_issues"] = system2.get("verify_issues")
+        if isinstance(system2.get("round3_issues"), list):
+            diagnostic_state["system2_round3_issues"] = system2.get("round3_issues")
+        if isinstance(system2.get("followup_new_issues"), list):
+            diagnostic_state["system2_followup_new_issues"] = system2.get(
+                "followup_new_issues"
+            )
+        if system2.get("followup_verdict") is not None:
+            diagnostic_state["system2_followup_verdict"] = system2.get(
+                "followup_verdict"
+            )
+        if system2.get("critic_sum") is not None:
+            diagnostic_state["critic_sum"] = system2.get("critic_sum")
+        if system2.get("verify_critic_sum") is not None:
+            diagnostic_state["system2_verify_critic_sum"] = system2.get(
+                "verify_critic_sum"
+            )
+        if system2.get("round3_critic_sum") is not None:
+            diagnostic_state["system2_round3_critic_sum"] = system2.get(
+                "round3_critic_sum"
+            )
+        if system2.get("followup_progress") is not None:
+            diagnostic_state["system2_followup_progress"] = system2.get(
+                "followup_progress"
+            )
+        if system2.get("followup_eligible") is not None:
+            diagnostic_state["system2_followup_eligible"] = system2.get(
+                "followup_eligible"
+            )
+        if system2.get("stalled_followup") is not None:
+            diagnostic_state["system2_stalled_followup"] = system2.get(
+                "stalled_followup"
+            )
+        if system2.get("truncation_signal") is not None:
+            diagnostic_state["system2_truncation_signal"] = system2.get(
+                "truncation_signal"
+            )
+        case["system2_diagnostic"] = _build_system2_diagnostic(
+            policy_state=diagnostic_state,
+            initial_issues=initial_issues,
+            final_issues=final_issues,
+            resolved=resolved,
+            answer=answer,
+        )
+    return case
 
 
 async def _run(args: argparse.Namespace) -> int:
@@ -1020,11 +1448,14 @@ async def _run(args: argparse.Namespace) -> int:
                 default_system2_mode=args.system2_mode,
                 executive_mode=args.executive_mode,
                 executive_observer_mode=args.executive_observer_mode,
+                diagnostics_mode=args.diagnostics,
             )
             cases.append(case)
+            diag = case.get("system2_diagnostic")
             print(
                 "[bench] {idx:03d}/{total} id={id} mode={mode} enabled={enabled} "
-                "issues={initial}->{final} rounds={rounds}/{target} resolved={resolved} error={error}".format(
+                "issues={initial}->{final} rounds={rounds}/{target} resolved={resolved} "
+                "diag={diag} error={error}".format(
                     idx=idx,
                     total=len(questions),
                     id=case.get("id"),
@@ -1035,6 +1466,7 @@ async def _run(args: argparse.Namespace) -> int:
                     rounds=case.get("rounds"),
                     target=case.get("round_target"),
                     resolved=case.get("resolved"),
+                    diag=diag.get("status") if isinstance(diag, dict) else "off",
                     error=("yes" if case.get("error") else "no"),
                 )
             )
@@ -1052,6 +1484,7 @@ async def _run(args: argparse.Namespace) -> int:
                 "executive_mode": args.executive_mode,
                 "executive_observer_mode": args.executive_observer_mode,
                 "low_signal_filter": low_signal_filter,
+                "diagnostics": str(args.diagnostics),
                 "critic_health_check": critic_health_mode,
                 "critic_health_attempts": int(args.critic_health_attempts),
                 "critic_health_min_successes": (
@@ -1076,6 +1509,13 @@ async def _run(args: argparse.Namespace) -> int:
                 "timeout_max_ms": _safe_int(os.environ.get("DUALBRAIN_TIMEOUT_MAX_MS")),
                 "system2_round_target_min": _safe_int(
                     os.environ.get("DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN")
+                ),
+                "system2_stalled_followup": os.environ.get(
+                    "DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP",
+                    "on",
+                ),
+                "system2_stalled_min_issues": _safe_int(
+                    os.environ.get("DUALBRAIN_SYSTEM2_STALLED_MIN_ISSUES")
                 ),
             },
             "critic_health": critic_health,
@@ -1199,6 +1639,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         choices=["on", "off"],
         default="on",
         help="Toggle System2 low-signal critic issue filter.",
+    )
+    parser.add_argument(
+        "--diagnostics",
+        choices=["off", "unresolved", "all"],
+        default="unresolved",
+        help="Include System2 critic issue diagnostics in the report.",
     )
     parser.add_argument(
         "--critic-health-check",

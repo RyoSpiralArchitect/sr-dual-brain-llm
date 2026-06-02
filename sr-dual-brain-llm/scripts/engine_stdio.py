@@ -230,6 +230,36 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         followup_verdict = system2_refine_ev.get("followup_verdict")
         if followup_verdict is None:
             followup_verdict = policy_state.get("system2_followup_verdict")
+        critic_issues = system2_refine_ev.get("critic_issues")
+        if critic_issues is None:
+            critic_issues = policy_state.get("critic_issues")
+        verify_issues = system2_refine_ev.get("verify_issues")
+        if verify_issues is None:
+            verify_issues = policy_state.get("system2_verify_issues")
+        round3_issues = system2_refine_ev.get("round3_issues")
+        if round3_issues is None:
+            round3_issues = policy_state.get("system2_round3_issues")
+        critic_sum = system2_refine_ev.get("critic_sum")
+        if critic_sum is None:
+            critic_sum = policy_state.get("critic_sum")
+        verify_critic_sum = system2_refine_ev.get("verify_critic_sum")
+        if verify_critic_sum is None:
+            verify_critic_sum = policy_state.get("system2_verify_critic_sum")
+        round3_critic_sum = system2_refine_ev.get("round3_critic_sum")
+        if round3_critic_sum is None:
+            round3_critic_sum = policy_state.get("system2_round3_critic_sum")
+        followup_progress = system2_refine_ev.get("followup_progress")
+        if followup_progress is None:
+            followup_progress = policy_state.get("system2_followup_progress")
+        followup_eligible = system2_refine_ev.get("followup_eligible")
+        if followup_eligible is None:
+            followup_eligible = policy_state.get("system2_followup_eligible")
+        stalled_followup = system2_refine_ev.get("stalled_followup")
+        if stalled_followup is None:
+            stalled_followup = policy_state.get("system2_stalled_followup")
+        truncation_signal = system2_refine_ev.get("truncation_signal")
+        if truncation_signal is None:
+            truncation_signal = policy_state.get("system2_truncation_signal")
         low_signal_filter = system2_refine_ev.get("low_signal_filter")
         if low_signal_filter is None:
             low_signal_filter = system2_ev.get("low_signal_filter")
@@ -253,6 +283,22 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
                 else []
             ),
             "followup_verdict": followup_verdict,
+            "critic_issues": (
+                critic_issues if isinstance(critic_issues, list) else []
+            ),
+            "verify_issues": (
+                verify_issues if isinstance(verify_issues, list) else []
+            ),
+            "round3_issues": (
+                round3_issues if isinstance(round3_issues, list) else []
+            ),
+            "critic_sum": critic_sum,
+            "verify_critic_sum": verify_critic_sum,
+            "round3_critic_sum": round3_critic_sum,
+            "followup_progress": followup_progress,
+            "followup_eligible": followup_eligible,
+            "stalled_followup": stalled_followup,
+            "truncation_signal": truncation_signal,
         }
 
     metrics: dict[str, Any] = {

@@ -220,6 +220,52 @@ class System2RefinementResult:
     critic_unhealthy_reason: Optional[str]
 
 
+_SYSTEM2_TRUNCATION_MARKERS = (
+    "truncated",
+    "truncation",
+    "cut off",
+    "cuts off",
+    "cut-off",
+    "mid-sentence",
+    "mid sentence",
+    "ends abruptly",
+    "abruptly ends",
+    "dangling sentence",
+    "unfinished",
+    "not complete",
+    "does not complete",
+    "doesn't complete",
+    "fails to finish",
+    "missing conclusion",
+    "missing final answer",
+    "incomplete answer",
+    "incomplete response",
+    "incomplete final",
+    "incomplete output",
+)
+
+
+def _has_system2_truncation_signal(
+    issues: Sequence[str] | None,
+    *details: object,
+) -> bool:
+    chunks: List[str] = []
+    if issues:
+        chunks.extend(str(item or "") for item in issues)
+    chunks.extend(str(item or "") for item in details if item)
+    haystack = "\n".join(chunks).lower()
+    return any(marker in haystack for marker in _SYSTEM2_TRUNCATION_MARKERS)
+
+
+def _prioritise_system2_truncation_issues(issues: Sequence[str]) -> List[str]:
+    urgent: List[str] = []
+    rest: List[str] = []
+    for issue in issues:
+        target = urgent if _has_system2_truncation_signal([issue]) else rest
+        target.append(str(issue))
+    return urgent + rest
+
+
 @dataclass
 class ExecutiveAdviceStageResult:
     executive_payload: Dict[str, Any] | None
@@ -2814,6 +2860,8 @@ class DualBrainController:
             if critic_fixes:
                 decision.state["critic_fixes"] = critic_fixes
             detail_notes = response.get("critic_sum")
+            if detail_notes:
+                decision.state["critic_sum"] = str(detail_notes)[:1200]
             system2_initial_issue_count = len(critic_issues)
         else:
             detail_notes = response.get("notes_sum")
@@ -2886,6 +2934,8 @@ class DualBrainController:
                     if critic_fixes:
                         decision.state["critic_fixes"] = critic_fixes
                     detail_notes = fallback.get("critic_sum")
+                    if detail_notes:
+                        decision.state["critic_sum"] = str(detail_notes)[:1200]
                     system2_initial_issue_count = len(critic_issues)
                 else:
                     detail_notes = fallback.get("notes_sum")
@@ -3108,6 +3158,13 @@ class DualBrainController:
         system2_followup_revision = False
         system2_followup_new_issues: List[str] = []
         system2_followup_verdict: Optional[str] = None
+        system2_truncation_signal = _has_system2_truncation_signal(
+            critic_issues,
+            decision.state.get("critic_sum"),
+        )
+        decision.state["system2_truncation_signal"] = bool(
+            system2_truncation_signal
+        )
 
         should_verify = bool(
             critic_needs_revision
@@ -3212,6 +3269,17 @@ class DualBrainController:
 
             system2_rounds_completed = max(system2_rounds_completed, 2)
             system2_followup_verdict = verify_verdict or None
+            if verify_issues:
+                decision.state["system2_verify_issues"] = list(verify_issues)
+            if verify_detail:
+                decision.state["system2_verify_critic_sum"] = verify_detail[:1200]
+            verify_truncation_signal = _has_system2_truncation_signal(
+                verify_issues,
+                verify_detail,
+            )
+            if verify_truncation_signal:
+                system2_truncation_signal = True
+                decision.state["system2_truncation_signal"] = True
             followup_new_issues_raw = _novel_issue_items(
                 verify_issues,
                 critic_issues,
@@ -3282,12 +3350,30 @@ class DualBrainController:
                 and int(verify_issue_count_calibrated)
                 <= int(system2_followup_max_remaining)
             )
+            stalled_followup_enabled = _env_flag(
+                "DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP",
+                True,
+            )
+            stalled_followup_min_issues = _env_int(
+                "DUALBRAIN_SYSTEM2_STALLED_MIN_ISSUES",
+                4,
+                minimum=1,
+            )
+            stalled_followup = bool(
+                stalled_followup_enabled
+                and int(verify_issue_count_calibrated) >= int(stalled_followup_min_issues)
+                and followup_progress <= 0
+                and system2_round_target >= 3
+            )
+            if stalled_followup:
+                followup_eligible = True
             decision.state["system2_followup_progress"] = int(
                 followup_progress
             )
             decision.state["system2_followup_eligible"] = bool(
                 followup_eligible
             )
+            decision.state["system2_stalled_followup"] = bool(stalled_followup)
 
             followup_focus_issues: List[str] = []
             followup_instruction = ""
@@ -3297,24 +3383,49 @@ class DualBrainController:
                 and system2_round_target >= 3
                 and followup_eligible
             ):
-                if system2_followup_new_issues:
+                if system2_truncation_signal and verify_issues:
+                    followup_focus_issues = _prioritise_system2_truncation_issues(
+                        verify_issues
+                    )[:8]
+                    followup_instruction = (
+                        "The critic signals truncation or incomplete finalization. "
+                        "Treat this as a completion patch: keep the correct answer, "
+                        "finish dangling sections or lists, cover the focused issues, "
+                        "and do not expand scope."
+                    )
+                elif stalled_followup and verify_issues:
+                    followup_focus_issues = list(verify_issues[:8])
+                    followup_instruction = (
+                        "The previous revision made no measurable issue-count progress. "
+                        "Treat this as a critic checklist patch, not a broad rewrite."
+                    )
+                elif system2_followup_new_issues:
                     followup_focus_issues = list(system2_followup_new_issues[:8])
                     followup_instruction = (
-                        "Apply only the newly discovered issues and preserve already-correct parts."
+                        "Patch only the newly discovered critic issues and preserve already-correct parts."
                     )
                 elif verify_issues and system2_initial_issue_count >= 2:
                     followup_focus_issues = list(verify_issues[:8])
                     followup_instruction = (
-                        "Apply minimal edits to resolve remaining unresolved issues without broad rewrites."
+                        "Apply minimal checklist edits to resolve remaining issues without broad rewrites."
                     )
 
             if followup_focus_issues and verify_detail:
                 focus_block = "\n".join(
-                    f"- {item}" for item in followup_focus_issues
+                    f"{idx}. {item}"
+                    for idx, item in enumerate(followup_focus_issues, 1)
+                )
+                patch_rules = (
+                    "Patch rules:\n"
+                    "- Treat each focus item as a checklist item.\n"
+                    "- Preserve correct parts of the current answer.\n"
+                    "- Use minimal local edits; do not restart the answer unless necessary.\n"
+                    "- Close the final answer cleanly, with no dangling sentence or list."
                 )
                 followup_info = (
                     "Reasoning critic follow-up (internal; do not output directly).\n"
                     f"{followup_instruction}\n"
+                    f"{patch_rules}\n"
                     "Issue focus list:\n"
                     f"{focus_block}\n\n"
                     "Critic details:\n"
@@ -3435,6 +3546,9 @@ class DualBrainController:
                         round3_detail = str(
                             round3_fallback.get("critic_sum") or ""
                         ).strip()
+                if _has_system2_truncation_signal(round3_issues, round3_detail):
+                    system2_truncation_signal = True
+                    decision.state["system2_truncation_signal"] = True
 
                 round3_new_issues = _novel_issue_items(
                     round3_issues,
@@ -3499,6 +3613,10 @@ class DualBrainController:
                     decision.state["system2_round3_new_issues"] = round3_new_issues
                 if round3_verdict:
                     decision.state["system2_round3_verdict"] = round3_verdict
+                if round3_issues:
+                    decision.state["system2_round3_issues"] = list(round3_issues)
+                if round3_detail:
+                    decision.state["system2_round3_critic_sum"] = round3_detail[:1200]
 
         decision.state["system2_rounds"] = int(system2_rounds_completed)
         decision.state["system2_issue_count_initial"] = int(
@@ -3508,6 +3626,9 @@ class DualBrainController:
             system2_final_issue_count
         )
         decision.state["system2_resolved"] = bool(system2_resolved)
+        decision.state["system2_truncation_signal"] = bool(
+            system2_truncation_signal
+        )
         if system2_followup_verdict:
             decision.state["system2_followup_verdict"] = (
                 system2_followup_verdict
@@ -3555,8 +3676,18 @@ class DualBrainController:
                 ),
                 resolved=bool(system2_resolved),
                 followup_revision=bool(system2_followup_revision),
+                critic_issues=list(critic_issues),
+                verify_issues=list(decision.state.get("system2_verify_issues") or []),
+                round3_issues=list(decision.state.get("system2_round3_issues") or []),
+                critic_sum=decision.state.get("critic_sum"),
+                verify_critic_sum=decision.state.get("system2_verify_critic_sum"),
+                round3_critic_sum=decision.state.get("system2_round3_critic_sum"),
                 followup_new_issues=list(system2_followup_new_issues),
                 followup_verdict=system2_followup_verdict,
+                followup_progress=decision.state.get("system2_followup_progress"),
+                followup_eligible=decision.state.get("system2_followup_eligible"),
+                stalled_followup=decision.state.get("system2_stalled_followup"),
+                truncation_signal=decision.state.get("system2_truncation_signal"),
             )
         except Exception:  # pragma: no cover - telemetry best-effort
             pass

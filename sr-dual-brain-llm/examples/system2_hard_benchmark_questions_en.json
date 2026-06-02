@@ -1,0 +1,62 @@
+[
+  {
+    "id": "simpson_paradox_001",
+    "question": "A/B test results are split by device. Mobile: A has 18 conversions / 900 visits, B has 12 / 300. Desktop: A has 120 / 3000, B has 90 / 1500. Overall, which variant looks better, which variant is better within each device segment, and what decision should the team make? Explain the trap.",
+    "tags": ["hard", "statistics", "simpson", "ab-test"]
+  },
+  {
+    "id": "causal_dag_adjustment_001",
+    "question": "We want the causal effect of feature X on retention Y. User sophistication U affects both X adoption and Y. In-app errors E are partly caused by X and also affect Y. Marketing campaign M affects X adoption but not Y except through X. Which variables should we adjust for, which should we not adjust for, and why?",
+    "tags": ["hard", "causality", "dag", "confounding"]
+  },
+  {
+    "id": "bayes_two_stage_001",
+    "question": "A fraud screen flags 4% of legitimate accounts and 80% of fraudulent accounts. Fraud prevalence is 0.7%. A second independent manual review catches 70% of true fraud among flagged accounts and falsely escalates 10% of legitimate flagged accounts. What is P(fraud | flagged by both)? Show the setup and the main intuition.",
+    "tags": ["hard", "bayes", "probability"]
+  },
+  {
+    "id": "concurrency_review_001",
+    "question": "Review this Python-like cache code for race conditions and correctness: `if key not in cache: cache[key] = expensive_fetch(key); return cache[key]`. Assume many threads can call it, `expensive_fetch` can fail, and stale values must not overwrite fresh ones. Identify failure modes and propose a safer design.",
+    "tags": ["hard", "code-review", "concurrency", "python"]
+  },
+  {
+    "id": "incident_causal_triage_002",
+    "question": "After a deploy, p95 latency rose, 5xx rose, DB CPU rose, and cache hit rate fell. A rollback improves latency but not 5xx. Give a causal triage plan that distinguishes deploy-caused effects from coincident load or downstream dependency issues. Include tests that could falsify your leading hypothesis.",
+    "tags": ["hard", "incident-response", "causality", "operations"]
+  },
+  {
+    "id": "security_logging_policy_002",
+    "question": "Design a log-sharing policy for incident response under these constraints: engineers need enough context to debug auth failures; logs may contain email, IP, session ids, and OAuth provider errors; external vendors can receive only minimal data; retention must be short. Give rules, redaction examples, access controls, and what must never be shared.",
+    "tags": ["hard", "policy", "safety", "security", "privacy"]
+  },
+  {
+    "id": "experiment_peeking_001",
+    "question": "A team checks an A/B test every hour and stops when p < 0.05 after 18 looks. The final report says conversion improved by 3%. Explain why this can be invalid, how to redesign the analysis, and what information you would need before trusting the result.",
+    "tags": ["hard", "statistics", "experimentation", "decision"]
+  },
+  {
+    "id": "queueing_capacity_001",
+    "question": "A service receives 120 requests/sec. Mean service time is 6 ms, but p99 service time is 220 ms during GC pauses. There are 2 workers, retries happen after 300 ms, and each failed retry doubles traffic for that request. Explain whether average utilization alone is enough, identify the instability risk, and propose mitigations.",
+    "tags": ["hard", "systems", "queueing", "reliability"]
+  },
+  {
+    "id": "quantifier_logic_001",
+    "question": "Evaluate the inference: 'Every service has some owner. Therefore there is some owner who owns every service.' Formalize the premises and conclusion with quantifiers, decide validity, and give a concrete counterexample if invalid.",
+    "tags": ["hard", "logic", "quantifiers"]
+  },
+  {
+    "id": "financial_cohort_ltv_001",
+    "question": "A subscription product has ARPU $30/month, gross margin 80%, monthly churn 6%, CAC $220, and payback target 12 months. A new onboarding flow lowers churn to 5% but costs $4/user/month in support for the first 3 months. Estimate whether it improves LTV and payback, stating assumptions and caveats.",
+    "tags": ["hard", "business-math", "cohort", "finance"]
+  },
+  {
+    "id": "evidence_conflict_meta_001",
+    "question": "Three studies disagree. A: n=50, randomized, large effect, but single site. B: n=2000 observational, small effect, strong confounding risk. C: n=400 randomized, null result, but low adherence. Rank the evidence strength and describe what conclusion is justified without overclaiming.",
+    "tags": ["hard", "evidence", "critical-thinking", "uncertainty"]
+  },
+  {
+    "id": "distributed_consistency_001",
+    "question": "A payment system writes `payment_authorized` to Service A and `order_confirmed` to Service B using two independent HTTP calls. The second call can timeout after the first succeeds. Explain the consistency problem, why naive retries may duplicate side effects, and design an idempotent recovery flow.",
+    "tags": ["hard", "distributed-systems", "payments", "reliability"]
+  }
+]
