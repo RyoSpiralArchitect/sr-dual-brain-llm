@@ -202,6 +202,8 @@ def _is_ms_key(key: str) -> bool:
 
 
 def _is_count_key(key: str) -> bool:
+    if key.startswith(("avg_", "mean_")):
+        return False
     return (
         key in {"count", "rounds", "turns", "cache_depth", "peak_cache_depth"}
         or key.endswith("_index")
