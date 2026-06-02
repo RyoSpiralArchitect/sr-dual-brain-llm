@@ -306,7 +306,7 @@ def _attention_from_rows(rows: Sequence[Sequence[str]]) -> list[str]:
         details = ", ".join(f"{row[0]} ({row[3]})" for row in improved[:5])
         items.append(f"Improvements: {details}.")
     if not items:
-        items.append("No oriented metric changed enough to classify as improved or regressed.")
+        items.append("No oriented metrics were classified as improved or regressed.")
     return items
 
 
