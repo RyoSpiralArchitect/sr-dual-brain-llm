@@ -330,7 +330,8 @@ def _match_issue(item: str, candidates: List[str], *, threshold: float = 0.2) ->
     for candidate in candidates:
         score = _issue_similarity(item, candidate)
         candidate_categories = set(_issue_categories(candidate))
-        if item_categories.intersection(candidate_categories):
+        shared = item_categories.intersection(candidate_categories) - {"other"}
+        if shared:
             score = max(score, 0.22)
         if score > best_score:
             best_score = score
