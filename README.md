@@ -179,6 +179,10 @@ Outputs:
 - Full comparative report: `sr-dual-brain-llm/samples/system2_ab_last.json`
 - History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
 - Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
+- `--diagnostics unresolved` records issue details for unresolved cases.
+
+For the bounded `gpt-6-luna` live-provider run and its full case report, see
+[`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md).
 
 Unconscious-field benchmark reports live under `target/benchmarks/` by default.
 For the creativity and multi-turn incubation suites, see
@@ -222,8 +226,9 @@ Benchmark reports now also include summary keys for these loops (when active):
 
 Keep a short log here so benchmark trends are visible without opening JSON files.
 
-| Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result (`on` vs `auto`) | Report |
+| Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result | Report |
 |---|---|---|---:|---|---|---|
+| 2026-09-27 | OpenAI / `gpt-6-luna` | `off,on` | 15 | 2/2 healthy per mode, no retries | `on`: 5 → 4 critic issues; 15/15 successful in each mode; exploratory latency only | [`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md) |
 | 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
 | 2026-02-26 | OpenAI / `gpt-4o-mini` | `auto,on` | 35 | enabled (`attempts=3`, `min_successes=2`) | `issue_reduction_rate_delta=+0.1786`, `avg_latency_ms_all_cases_delta=-1030.03ms`, `activation: 0.857 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_openai_20260226_042832Z.json` |
 | 2026-02-26 | (none; micro-only) | `off,auto,on` | 35 | disabled (`--critic-health-check off`) | `activation: 0.0 -> 1.0` (auto no-op), `issue_reduction_rate(on)=1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_20260226_000523Z.json` |
@@ -396,6 +401,10 @@ Notes:
 ### `GET /v1/trace/{qid}`
 Fetches stored `telemetry` and/or `dialogue_flow` for a prior turn (even if `/v1/process` returned only the clean answer + metrics).
 
+The in-process trace cache and dialogue-flow memory retain the same bounded
+number of recent turns (`DUALBRAIN_TRACE_CACHE_SIZE`, default `64`, clamped to
+`4`–`512`). Older turns return `found: false` from this endpoint.
+
 Query params:
 - `session_id` (default: `"default"`)
 - `include_telemetry` (default: `true`)
@@ -542,6 +551,11 @@ Optional overrides:
 - `LLM_AUTO_CONTINUE` / `LEFT_BRAIN_AUTO_CONTINUE` / `RIGHT_BRAIN_AUTO_CONTINUE` / `EXECUTIVE_AUTO_CONTINUE` (default: on)
 - `LLM_MAX_CONTINUATIONS` / `LEFT_BRAIN_MAX_CONTINUATIONS` / `RIGHT_BRAIN_MAX_CONTINUATIONS` / `EXECUTIVE_MAX_CONTINUATIONS` (default: 2)
 - `OPENAI_ORGANIZATION`
+
+For OpenAI GPT-5/6 models such as `gpt-6-luna`, Chat Completions requests use
+`max_completion_tokens` and omit `temperature` (the API rejects the older
+parameters with reasoning enabled). Other OpenAI-style providers retain their
+existing request format.
 
 Auto-continue will issue follow-up calls when a provider reports that output stopped due to token limits (e.g., OpenAI-style `finish_reason=length`, Anthropic `stop_reason=max_tokens`).
 
