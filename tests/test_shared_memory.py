@@ -55,6 +55,16 @@ def test_record_dialogue_flow_tracks_architecture():
     assert record["architecture"][0]["stage"] == "perception"
 
 
+def test_dialogue_flow_retention_is_bounded_and_repeated_qid_refreshes_recency():
+    memory = SharedMemory(max_dialogue_flows=2)
+    for qid in ("q1", "q2", "q1", "q3"):
+        memory.record_dialogue_flow(qid, leading_brain="left", preview=qid)
+
+    assert list(memory.dialogue_flows) == ["q1", "q3"]
+    assert memory.dialogue_flow("q2") is None
+    assert memory.dialogue_flow("q1") == {"leading": "left", "follow": None, "preview": "q1"}
+
+
 def test_memory_retrieval_sanitises_internal_and_coaching_lines():
     memory = SharedMemory()
     memory.store(
