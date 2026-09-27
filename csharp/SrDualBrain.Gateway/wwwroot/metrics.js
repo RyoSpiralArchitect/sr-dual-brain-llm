@@ -13,6 +13,7 @@ const els = {
   mMetaCoverage: $("mMetaCoverage"),
   mMetaFlags: $("mMetaFlags"),
   activeModules: $("activeModules"),
+  traceTheater: $("traceTheater"),
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
   brainHistory: $("brainHistory"),
@@ -29,6 +30,8 @@ const els = {
   btnExportModuleHistory: $("btnExportModuleHistory"),
   btnDock: $("btnDock"),
 };
+
+const traceTheater = window.TraceTheater?.create(els.traceTheater);
 
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
@@ -591,6 +594,7 @@ function renderMetrics(response) {
 
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
+  traceTheater?.render(dialogueFlow, qid, response?._client?.trace_status);
   const metrics = response?.metrics ?? null;
   const executive = response?.executive ?? dialogueFlow?.executive ?? null;
   const executiveObserver = response?.executive_observer ?? dialogueFlow?.executive_observer ?? null;

@@ -97,6 +97,7 @@ Open:
 Recommended “research loop”:
 - Keep the **main window** chat-only.
 - Click **Pop out metrics** to open `/metrics.html` in a separate window and monitor:
+  - Trace Theater: replay the recorded left/right/coordinator exchange step by step
   - coherence/tension/routing/policy/latency
   - metacognition (drift / repetition / cleanup)
   - active modules
@@ -339,6 +340,7 @@ Open `http://127.0.0.1:8080/`.
 ### Chat
 - Chat transcript stays **answer-only**.
 - Internal data (executive memo, telemetry, dialogue flow) stays in the metrics pane / pop-out.
+- Trace Theater replays recorded dialogue steps in the metrics pane. Playback is visual only; it does not rerun a model or alter the answer. The UI loads the completed turn's trace even when inline dialogue flow is unchecked.
 - `Restart engine`: restarts the Python engine process (drops all in-process sessions). Useful after code changes or when recovering from an engine error.
 
 ### Controls
@@ -362,6 +364,7 @@ Open `http://127.0.0.1:8080/`.
 
 ### Metrics pane
 - Key numbers: coherence / tension / routing / action / temperature / latency (including top latency phases when available)
+- **Trace Theater**: select a recorded step, or play through the exchange; step content and metadata stay collapsed until opened
 - Active modules: quick chip list
 - **Architecture path**: stage-by-stage module timeline (the “what ran” view)
 - Executive memo: out-of-band `memo` + optional `mix_in` + directives metadata

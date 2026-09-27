@@ -17,6 +17,10 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -24,6 +28,9 @@ jobs:
 
       - name: Run unit tests
         run: pytest -q --ignore=tests/test_gateway_contract.py
+
+      - name: Run Trace Theater tests
+        run: node --test tests/test_trace_theater.mjs
 
   gateway-contract:
     runs-on: ubuntu-latest
