@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 from collections.abc import AsyncIterator
 from codecs import getincrementaldecoder
 from dataclasses import dataclass, field
@@ -296,6 +297,33 @@ class LLMClient:
             return "https://api-inference.huggingface.co/models"
         raise ValueError(f"Unsupported provider: {provider}")
 
+    def _openai_style_payload(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float,
+        max_output_tokens: Optional[int],
+        stream: bool = False,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "model": self.config.model,
+            "messages": messages,
+        }
+        # GPT-5/6 Chat Completions use a different token limit parameter and
+        # reject non-default temperature when reasoning is enabled.
+        if self.provider == "openai" and re.match(
+            r"^gpt-(?:5|6)(?:[.-]|$)", self.config.model, re.I
+        ):
+            payload["max_completion_tokens"] = int(
+                max_output_tokens or self.config.max_output_tokens
+            )
+        else:
+            payload["temperature"] = float(temperature)
+            payload["max_tokens"] = int(max_output_tokens or self.config.max_output_tokens)
+        if stream:
+            payload["stream"] = True
+        return payload
+
     @staticmethod
     async def _iter_sse_data(chunks: AsyncIterator[bytes]) -> AsyncIterator[str]:
         decoder = getincrementaldecoder("utf-8")()
@@ -373,13 +401,12 @@ class LLMClient:
     ) -> tuple[str, Optional[str]]:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
-        payload = {
-            "model": self.config.model,
-            "messages": messages,
-            "temperature": float(temperature),
-            "max_tokens": int(max_output_tokens or self.config.max_output_tokens),
-            "stream": True,
-        }
+        payload = self._openai_style_payload(
+            messages,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+            stream=True,
+        )
         headers = {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
@@ -475,12 +502,11 @@ class LLMClient:
         base_messages.append({"role": "user", "content": prompt})
 
         async def _call(messages: list[dict[str, Any]]) -> tuple[str, Optional[str]]:
-            payload = {
-                "model": self.config.model,
-                "messages": messages,
-                "temperature": float(temperature),
-                "max_tokens": int(max_output_tokens or self.config.max_output_tokens),
-            }
+            payload = self._openai_style_payload(
+                messages,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+            )
             headers = {
                 "Authorization": f"Bearer {self.config.api_key}",
                 "Content-Type": "application/json",

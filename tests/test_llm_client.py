@@ -113,6 +113,47 @@ def test_openai_style_auto_continue_can_be_disabled(monkeypatch):
     assert len(calls) == 1
 
 
+def test_openai_luna_uses_reasoning_compatible_payload_for_complete_and_stream(monkeypatch):
+    client = LLMClient(
+        LLMConfig(provider="openai", model="gpt-6-luna", api_key="key", max_output_tokens=256)
+    )
+    calls = []
+
+    async def fake_post_json(url, payload, headers):
+        calls.append(payload)
+        return {"choices": [{"message": {"content": "OK"}, "finish_reason": "stop"}]}
+
+    monkeypatch.setattr(client, "_post_json", fake_post_json)
+    assert asyncio.run(client.complete("prompt", temperature=0.7)) == "OK"
+    assert calls[0]["max_completion_tokens"] == 256
+    assert "max_tokens" not in calls[0]
+    assert "temperature" not in calls[0]
+
+    stream_payload = client._openai_style_payload(
+        [{"role": "user", "content": "prompt"}],
+        temperature=0.7,
+        max_output_tokens=128,
+        stream=True,
+    )
+    assert stream_payload["stream"] is True
+    assert stream_payload["max_completion_tokens"] == 128
+    assert "max_tokens" not in stream_payload
+    assert "temperature" not in stream_payload
+
+
+def test_openai_style_legacy_payload_keeps_temperature_and_max_tokens():
+    for provider, model in (("openai", "gpt-4o-mini"), ("mistral", "gpt-6-luna")):
+        client = LLMClient(LLMConfig(provider=provider, model=model, api_key="key"))
+        payload = client._openai_style_payload(
+            [{"role": "user", "content": "prompt"}],
+            temperature=0.2,
+            max_output_tokens=99,
+        )
+        assert payload["temperature"] == 0.2
+        assert payload["max_tokens"] == 99
+        assert "max_completion_tokens" not in payload
+
+
 def test_iter_sse_data_handles_chunk_boundaries():
     async def fake_chunks():
         yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"},\"finish_reason\":null}]}\n"

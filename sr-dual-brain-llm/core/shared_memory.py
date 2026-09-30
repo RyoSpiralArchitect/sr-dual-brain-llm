@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
@@ -143,11 +144,12 @@ class MemoryTrace:
 
 
 class SharedMemory:
-    def __init__(self, *, max_items: int = 1024):
+    def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64):
         self.max_items = max_items
+        self.max_dialogue_flows = max(1, int(max_dialogue_flows))
         self.past_qas: List[MemoryTrace] = []
         self.kv: Dict[str, Any] = {}
-        self.dialogue_flows: Dict[str, Dict[str, Any]] = {}
+        self.dialogue_flows: OrderedDict[str, Dict[str, Any]] = OrderedDict()
 
     # ------------------------------------------------------------------
     # Storage helpers
@@ -337,6 +339,9 @@ class SharedMemory:
             record["architecture"] = arch_payload
             record["architecture_count"] = len(arch_payload)
         self.dialogue_flows[qid] = record
+        self.dialogue_flows.move_to_end(qid)
+        while len(self.dialogue_flows) > self.max_dialogue_flows:
+            self.dialogue_flows.popitem(last=False)
         self.kv["last_leading_brain"] = leading_brain
 
     def dialogue_flow(self, qid: str) -> Dict[str, Any] | None:

@@ -38,6 +38,7 @@ const els = {
   mMetaCoverage: $("mMetaCoverage"),
   mMetaFlags: $("mMetaFlags"),
   activeModules: $("activeModules"),
+  traceTheater: $("traceTheater"),
   modulePath: $("modulePath"),
   brainActivity: $("brainActivity"),
   brainHistory: $("brainHistory"),
@@ -55,12 +56,15 @@ const els = {
   btnExportChat: $("btnExportChat"),
 };
 
+const traceTheater = window.TraceTheater?.create(els.traceTheater);
+
 let lastLlmSignature = null;
 const sessionLlmSignature = new Map();
 
 let metricsPopout = null;
 let metricsPopoutPoll = null;
 let lastMetricsPayload = null;
+let lastTraceStatus = "ready";
 let pendingBlobs = [];
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
@@ -82,8 +86,9 @@ function setMetricsPopoutUi(isOpen) {
   }
 }
 
-function publishMetricsToPopout(payload) {
+function publishMetricsToPopout(payload, traceStatus = lastTraceStatus) {
   lastMetricsPayload = payload;
+  lastTraceStatus = traceStatus;
   if (!payload) return;
   if (!isMetricsPopoutOpen()) return;
   try {
@@ -91,6 +96,7 @@ function publishMetricsToPopout(payload) {
     const history = brainHistoryBySession.get(sessionId) ?? [];
     const moduleHistory = moduleHistoryBySession.get(sessionId) ?? [];
     const clientState = {
+      trace_status: traceStatus,
       brain_history: history.map((h) => ({
         qid: h.qid ?? "",
         ts: h.ts ?? 0,
@@ -749,6 +755,7 @@ function renderMetrics(response, opts = {}) {
 
   const telemetry = response?.telemetry ?? [];
   const dialogueFlow = response?.dialogue_flow ?? {};
+  traceTheater?.render(dialogueFlow, qid, opts?.traceStatus);
   const metrics = response?.metrics ?? null;
   const executive = response?.executive ?? dialogueFlow?.executive ?? null;
   const executiveObserver = response?.executive_observer ?? dialogueFlow?.executive_observer ?? null;
@@ -919,7 +926,7 @@ function renderMetrics(response, opts = {}) {
     els.dialogueFlowRaw.textContent = JSON.stringify(dialogueFlow, null, 2);
   }
 
-  publishMetricsToPopout(response);
+  publishMetricsToPopout(response, opts?.traceStatus ?? "ready");
 }
 
 function formatLatencyWithPhases(metrics, latencyMs) {
@@ -1220,20 +1227,24 @@ async function onSend() {
 
     // Keep chat bubbles clean; qid/metrics are shown in the side panel.
     placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
-    renderMetrics(result);
+    const needTheaterTrace = !!els.traceTheater && !!result?.qid && !Array.isArray(result?.dialogue_flow?.steps);
+    renderMetrics(result, { traceStatus: needTheaterTrace ? "loading" : "ready" });
 
     const hasExecutiveInline = !!(result?.executive || result?.dialogue_flow?.executive);
-    if (((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) || (req.wantExecutive && !hasExecutiveInline)) {
+    if (((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) || (req.wantExecutive && !hasExecutiveInline) || needTheaterTrace) {
       try {
         const trace = await fetchTrace(req.sessionId, result.qid, {
           includeTelemetry: req.wantTelemetry,
-          includeDialogueFlow: req.wantDialogueFlow,
+          includeDialogueFlow: req.wantDialogueFlow || needTheaterTrace,
           includeExecutive: req.wantExecutive,
         });
-        const merged = mergeTrace(result, trace);
-        renderMetrics(merged);
+        if (trace?.found) {
+          renderMetrics(mergeTrace(result, trace));
+        } else if (needTheaterTrace) {
+          renderMetrics(result, { traceStatus: "unavailable" });
+        }
       } catch {
-        // ignore trace fetch failures
+        if (needTheaterTrace) renderMetrics(result, { traceStatus: "unavailable" });
       }
     }
   } catch (err) {
@@ -1265,6 +1276,7 @@ els.btnClear.addEventListener("click", () => {
   if (els.executiveObserverMemo) els.executiveObserverMemo.textContent = "—";
   if (els.activeModules) els.activeModules.innerHTML = "";
   if (els.modulePath) els.modulePath.innerHTML = "";
+  traceTheater?.render(null, "");
   if (els.brainActivity) els.brainActivity.innerHTML = "";
   if (els.brainHistory) els.brainHistory.innerHTML = "";
   if (els.moduleHistory) els.moduleHistory.innerHTML = "";
@@ -1301,6 +1313,7 @@ els.btnReset.addEventListener("click", async () => {
     selectedQidBySession.delete(sessionId);
     if (els.brainHistory) els.brainHistory.innerHTML = "";
     if (els.moduleHistory) els.moduleHistory.innerHTML = "";
+    traceTheater?.render(null, "");
   } catch (err) {
     appendBubble("assistant", `reset failed: ${err}`, { mono: true, right: "error" });
   } finally {

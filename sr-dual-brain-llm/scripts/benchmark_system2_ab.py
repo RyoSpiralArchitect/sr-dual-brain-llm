@@ -185,6 +185,7 @@ async def _run_mode(
     leading_brain: str,
     executive_mode: str,
     executive_observer_mode: str,
+    diagnostics_mode: str,
     critic_health_check: str,
     critic_health_attempts: int,
     critic_health_min_successes: int | None,
@@ -280,6 +281,7 @@ async def _run_mode(
                 default_system2_mode=mode,
                 executive_mode=executive_mode,
                 executive_observer_mode=executive_observer_mode,
+                diagnostics_mode=diagnostics_mode,
             )
             cases.append(case)
             print(
@@ -376,6 +378,7 @@ async def _run(args: argparse.Namespace) -> int:
             leading_brain=args.leading_brain,
             executive_mode=args.executive_mode,
             executive_observer_mode=args.executive_observer_mode,
+            diagnostics_mode=args.diagnostics,
             critic_health_check=critic_health_check,
             critic_health_attempts=int(args.critic_health_attempts),
             critic_health_min_successes=(
@@ -405,6 +408,7 @@ async def _run(args: argparse.Namespace) -> int:
             "leading_brain": args.leading_brain,
             "executive_mode": args.executive_mode,
             "executive_observer_mode": args.executive_observer_mode,
+            "diagnostics": args.diagnostics,
             "low_signal_filter": low_signal_filter,
             "only_ids": getattr(args, "only_ids", None),
             "only_tags": getattr(args, "only_tags", None),
@@ -540,6 +544,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--executive-observer-mode",
         choices=["off", "metrics", "director", "both"],
         default="off",
+    )
+    parser.add_argument(
+        "--diagnostics",
+        choices=["off", "unresolved", "all"],
+        default="off",
+        help="Include per-case System2 diagnostics in the report.",
     )
     parser.add_argument(
         "--low-signal-filter",

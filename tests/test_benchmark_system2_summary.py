@@ -1,12 +1,15 @@
+import asyncio
 import math
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
+import benchmark_system2_ab  # noqa: E402
 from benchmark_system2 import (  # noqa: E402
     _build_system2_diagnostic,
     _normalise_system2_resolved_signal,
@@ -117,6 +120,47 @@ def test_pairwise_contains_all_case_metric_deltas():
     assert math.isclose(on_vs_auto["system2_activation_rate_delta"], 0.25, rel_tol=1e-9)
     assert math.isclose(on_vs_auto["avg_latency_ms_all_cases_delta"], 1500.0, rel_tol=1e-9)
     assert math.isclose(on_vs_auto["avg_rounds_all_cases_delta"], 0.7, rel_tol=1e-9)
+
+
+def test_ab_runner_passes_diagnostics_to_case_runner(monkeypatch):
+    seen = []
+
+    class FakeSession:
+        left = SimpleNamespace(uses_external_llm=False)
+        right = SimpleNamespace(uses_external_llm=False)
+
+        async def close(self):
+            return None
+
+    async def fake_create(*, session_id):
+        return FakeSession()
+
+    async def fake_run_case(**kwargs):
+        seen.append(kwargs)
+        return {"id": "q1", "error": None, "system2_enabled": False}
+
+    monkeypatch.setattr(benchmark_system2_ab, "EngineSession", SimpleNamespace(create=fake_create))
+    monkeypatch.setattr(benchmark_system2_ab, "_run_case", fake_run_case)
+    asyncio.run(
+        benchmark_system2_ab._run_mode(
+            mode="off",
+            questions=[{"id": "q1", "question": "test"}],
+            run_id="test",
+            session_prefix="test",
+            leading_brain="auto",
+            executive_mode="off",
+            executive_observer_mode="off",
+            diagnostics_mode="all",
+            critic_health_check="off",
+            critic_health_attempts=1,
+            critic_health_min_successes=1,
+            critic_health_retries=0,
+            critic_health_timeout=1.0,
+            critic_health_rate_limit_backoff=0.0,
+            require_critic_health=False,
+        )
+    )
+    assert seen[0]["diagnostics_mode"] == "all"
 
 
 def test_resolve_health_min_successes_defaults_and_clamps():

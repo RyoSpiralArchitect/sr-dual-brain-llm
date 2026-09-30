@@ -738,7 +738,9 @@ class EngineSession:
         right_llm_config: Optional[LLMConfig] = None,
         executive_llm_config: Optional[LLMConfig] = None,
     ) -> "EngineSession":
-        memory = SharedMemory()
+        trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
+        trace_cache_limit = max(4, min(512, trace_cache_limit))
+        memory = SharedMemory(max_dialogue_flows=trace_cache_limit)
         hippocampus = TemporalHippocampalIndexing()
         persisted_memory = 0
         persisted_episodes = 0
@@ -776,8 +778,6 @@ class EngineSession:
         default_mode = DefaultModeNetwork()
         psychoid_adapter = PsychoidAttentionAdapter()
         telemetry = InMemoryTelemetry()
-        trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
-        trace_cache_limit = max(4, min(512, trace_cache_limit))
         callosum_timeout_ms = int(
             os.environ.get("DUALBRAIN_CALLOSUM_TIMEOUT_MS", "20000") or 20000
         )
