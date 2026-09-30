@@ -32,6 +32,7 @@ const els = {
 };
 
 const traceTheater = window.TraceTheater?.create(els.traceTheater);
+const traceSelection = window.TraceSelection.create();
 
 const brainHistoryBySession = new Map();
 const brainHistoryLimit = 24;
@@ -450,12 +451,12 @@ function renderBrainHistory(sessionId) {
         if (!fullQid) return;
         postToOpener({ type: "srdb.trace.jump", payload: { session_id: sessionId, qid: fullQid } });
         if (!window.opener || window.opener.closed) {
-          try {
-            const trace = await fetchTrace(sessionId, fullQid, {
-              includeTelemetry: true,
-              includeDialogueFlow: true,
-              includeExecutive: true,
-            });
+          const ticket = traceSelection.begin();
+          await traceSelection.apply(ticket, () => fetchTrace(sessionId, fullQid, {
+            includeTelemetry: true,
+            includeDialogueFlow: true,
+            includeExecutive: true,
+          }), (trace) => {
             if (trace?.found) {
               renderMetrics({
                 qid: trace?.qid ?? fullQid,
@@ -468,9 +469,9 @@ function renderBrainHistory(sessionId) {
                 ts: trace?.ts ?? null,
               });
             }
-          } catch (err) {
+          }, (err) => {
             console.warn("trace jump failed", err);
-          }
+          });
         }
       });
       cells.appendChild(cell);
@@ -791,6 +792,7 @@ window.addEventListener("message", (e) => {
   if (!msg || typeof msg !== "object") return;
 
   if (msg.type === "srdb.metrics") {
+    traceSelection.begin();
     renderMetrics(msg.payload);
     return;
   }

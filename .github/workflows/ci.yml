@@ -29,8 +29,8 @@ jobs:
       - name: Run unit tests
         run: pytest -q --ignore=tests/test_gateway_contract.py
 
-      - name: Run Trace Theater tests
-        run: node --test tests/test_trace_theater.mjs
+      - name: Run trace UI tests
+        run: node --test tests/test_trace_theater.mjs tests/test_trace_selection.mjs
 
   gateway-contract:
     runs-on: ubuntu-latest

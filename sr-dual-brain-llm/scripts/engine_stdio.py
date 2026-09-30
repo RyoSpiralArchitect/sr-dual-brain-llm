@@ -221,6 +221,9 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         resolved = system2_refine_ev.get("resolved")
         if resolved is None:
             resolved = policy_state.get("system2_resolved")
+        resolution_basis = system2_refine_ev.get("resolution_basis")
+        if resolution_basis is None:
+            resolution_basis = policy_state.get("system2_resolution_basis")
         followup_revision = system2_refine_ev.get("followup_revision")
         if followup_revision is None:
             followup_revision = policy_state.get("system2_followup_revision")
@@ -276,6 +279,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "initial_issues": initial_issues,
             "final_issues": final_issues,
             "resolved": resolved,
+            "resolution_basis": resolution_basis,
             "followup_revision": followup_revision,
             "followup_new_issues": (
                 followup_new_issues

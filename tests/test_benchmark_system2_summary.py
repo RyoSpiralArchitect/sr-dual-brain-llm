@@ -1,8 +1,12 @@
 import asyncio
+import json
 import math
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scripts"
@@ -10,14 +14,129 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 import benchmark_system2_ab  # noqa: E402
+import prepare_system2_scoring  # noqa: E402
 from benchmark_system2 import (  # noqa: E402
     _build_system2_diagnostic,
+    _run_case,
     _normalise_system2_resolved_signal,
     _resolve_health_min_successes,
     _summarise_cases,
 )
 from benchmark_system2_ab import _build_pairwise  # noqa: E402
 from engine_stdio import _extract_metrics  # noqa: E402
+
+
+def test_ab_provenance_hashes_effective_questions_and_excludes_secrets(tmp_path):
+    source = tmp_path / "questions.json"
+    source.write_text('[{"id":"one","question":"Why?"}]', encoding="utf-8")
+    questions = [{"id": "one", "question": "Why?"}]
+    provenance = benchmark_system2_ab._question_provenance([source], questions)
+    assert provenance["sources"][0]["path"] == "<external>/questions.json"
+    assert len(provenance["sources"][0]["sha256"]) == 64
+    assert provenance["effective_questions_sha256"] != benchmark_system2_ab._question_provenance(
+        [source], [{"id": "one", "question": "Changed?"}]
+    )["effective_questions_sha256"]
+
+    model = SimpleNamespace(llm_config=SimpleNamespace(
+        provider="openai", model="fixture", api_key="DO_NOT_STORE",
+        max_output_tokens=512, timeout_seconds=30, auto_continue=False, max_continuations=0,
+    ))
+    public = benchmark_system2_ab._public_llm_config(model)
+    assert public["model"] == "fixture"
+    assert "DO_NOT_STORE" not in json.dumps(public)
+    assert "api_key" not in public
+
+
+def _synthetic_scoring_report(modes):
+    config = {
+        "modes": modes,
+        "include_full_answers": True,
+        "source_revision": {"commit": "a" * 40, "dirty": False},
+        "question_provenance": {"effective_questions_sha256": "b" * 64},
+        "effective_llm_by_mode": {"off": {"left": {"model": "fixture"}}, "on": {"left": {"model": "fixture"}}},
+    }
+    return {
+        "run_id": "fixture-" + "-".join(modes),
+        "config": config,
+        "modes": {
+            mode: {"cases": [{
+                "id": "q1", "question": "Compute 2+2?", "system2_mode": mode,
+                "system2_enabled": mode == "on",
+                "answer": "Four." if mode == "off" else "4.", "error": None,
+            }]}
+            for mode in modes
+        },
+    }
+
+
+def test_blind_scoring_packets_require_complete_counterbalanced_pairs(tmp_path):
+    ab = _synthetic_scoring_report(["off", "on"])
+    ba = _synthetic_scoring_report(["on", "off"])
+    ab_path = tmp_path / "ab.json"
+    ba_path = tmp_path / "ba.json"
+    ab_path.write_text(json.dumps(ab), encoding="utf-8")
+    ba_path.write_text(json.dumps(ba), encoding="utf-8")
+    loaded_ab = prepare_system2_scoring._load_report(ab_path, ["off", "on"])
+    loaded_ba = prepare_system2_scoring._load_report(ba_path, ["on", "off"])
+    blind, key = prepare_system2_scoring.build_packets(loaded_ab, loaded_ba, seed=11)
+    assert len(blind["packets"]) == 2
+    assert len(key["assignments"]) == 2
+    assert "off" not in json.dumps(blind["packets"])
+    assert {item["block"] for item in key["assignments"]} == {"block_1", "block_2"}
+
+    ba["modes"]["on"]["cases"][0]["answer"] = ""
+    with pytest.raises(ValueError, match="missing complete answer"):
+        prepare_system2_scoring.build_packets(ab, ba, seed=11)
+    ba["modes"]["on"]["cases"][0]["answer"] = "4."
+    ba["config"]["source_revision"]["commit"] = "c" * 40
+    with pytest.raises(ValueError, match="source_revision differs"):
+        prepare_system2_scoring.build_packets(ab, ba, seed=11)
+
+
+def test_blind_scoring_cli_writes_local_private_files(tmp_path, monkeypatch):
+    ab_path = tmp_path / "ab.json"
+    ba_path = tmp_path / "ba.json"
+    ab_path.write_text(json.dumps(_synthetic_scoring_report(["off", "on"])), encoding="utf-8")
+    ba_path.write_text(json.dumps(_synthetic_scoring_report(["on", "off"])), encoding="utf-8")
+    output_dir = tmp_path / "packets"
+    monkeypatch.setattr(sys, "argv", [
+        "prepare_system2_scoring.py", "--ab", str(ab_path), "--ba", str(ba_path),
+        "--output-dir", str(output_dir), "--seed", "11",
+    ])
+    prepare_system2_scoring.main()
+    blind_path = output_dir / "blind_packets.json"
+    key_path = output_dir / "reveal_key.json"
+    assert len(json.loads(blind_path.read_text(encoding="utf-8"))["packets"]) == 2
+    assert len(json.loads(key_path.read_text(encoding="utf-8"))["assignments"]) == 2
+    assert os.stat(blind_path).st_mode & 0o777 == 0o600
+    assert os.stat(key_path).st_mode & 0o777 == 0o600
+    with pytest.raises(FileExistsError):
+        prepare_system2_scoring.main()
+
+
+def test_full_answers_are_opt_in_for_ab_cases():
+    async def answer(*_args, **_kwargs):
+        return "A complete fixture answer."
+
+    session = SimpleNamespace(
+        telemetry=SimpleNamespace(clear=lambda: None, events=[]),
+        controller=SimpleNamespace(process=answer),
+    )
+    params = {
+        "session": session,
+        "question_entry": {"id": "q1", "question": "Why?"},
+        "index": 1,
+        "run_id": "fixture",
+        "leading_brain": "auto",
+        "default_system2_mode": "off",
+        "executive_mode": "off",
+        "executive_observer_mode": "off",
+        "diagnostics_mode": "off",
+    }
+    preview_only = asyncio.run(_run_case(**params))
+    with_answer = asyncio.run(_run_case(**params, include_answer=True))
+    assert "answer" not in preview_only
+    assert with_answer["answer"] == "A complete fixture answer."
 
 
 def test_summarise_cases_includes_all_case_noop_metrics():
@@ -173,15 +292,15 @@ def test_resolve_health_min_successes_defaults_and_clamps():
     assert _resolve_health_min_successes(attempts=3, min_successes=0) == 1
 
 
-def test_clean_issue_counts_normalize_unresolved_signal():
+def test_clean_issue_counts_do_not_override_unresolved_signal():
     resolved, normalized = _normalise_system2_resolved_signal(
         resolved=False,
         initial_issues=0,
         final_issues=0,
     )
 
-    assert resolved is True
-    assert normalized is True
+    assert resolved is False
+    assert normalized is False
 
 
 def test_system2_diagnostic_tracks_carried_over_issue_categories():

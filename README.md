@@ -124,7 +124,7 @@ Notes:
 - `session_id` scopes memory state inside the Python engine process.
 
 ### 5) System2 benchmark (fixed set + trend tracking)
-To measure reasoning refinement quality over time (`initial_issues -> final_issues`), run:
+To track model-generated reasoning critic diagnostics over time (`initial_issues -> final_issues`), run:
 
 ```bash
 python3 sr-dual-brain-llm/scripts/benchmark_system2.py \
@@ -178,8 +178,15 @@ python3 sr-dual-brain-llm/scripts/benchmark_system2_ab.py \
 Outputs:
 - Full comparative report: `sr-dual-brain-llm/samples/system2_ab_last.json`
 - History rows: `sr-dual-brain-llm/samples/system2_ab_history.jsonl`
-- Pairwise deltas include quality (`issue_reduction_rate`, `resolved_issue_rate`) and latency (`avg_latency_ms`, `avg_phase_latency_ms`)
+- Pairwise deltas include model-generated critic diagnostics (`issue_reduction_rate`, `resolved_issue_rate`) and observed latency (`avg_latency_ms`, `avg_phase_latency_ms`). These are not independent answer-quality scores.
 - `--diagnostics unresolved` records issue details for unresolved cases.
+- Reports record source commit/dirty state, question hashes, effective model settings, and mode order without API keys or other credentials.
+- `--include-full-answers` stores complete responses only when requested. Keep these local and review them before sharing.
+
+For a future counterbalanced, independently scored study, see
+[`docs/benchmarks/system2-paired-evaluation-protocol.md`](docs/benchmarks/system2-paired-evaluation-protocol.md).
+The local-only `prepare_system2_scoring.py` tool makes blinded answer pairs from
+two clean `off,on` and `on,off` reports; it does not call a model.
 
 For the bounded `gpt-6-luna` live-provider run and its full case report, see
 [`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md).
@@ -346,6 +353,7 @@ Open `http://127.0.0.1:8080/`.
 - Chat transcript stays **answer-only**.
 - Internal data (executive memo, telemetry, dialogue flow) stays in the metrics pane / pop-out.
 - Trace Theater replays recorded dialogue steps in the metrics pane. Playback is visual only; it does not rerun a model or alter the answer. The UI loads the completed turn's trace even when inline dialogue flow is unchecked.
+- Long traces show the first and last 40 steps with the omitted middle count, so the finalization step remains visible.
 - `Restart engine`: restarts the Python engine process (drops all in-process sessions). Useful after code changes or when recovering from an engine error.
 
 ### Controls
@@ -363,6 +371,7 @@ Open `http://127.0.0.1:8080/`.
   - `on`: force critic mode (left drafts → right critiques → left revises → verify pass)
   - `off`: disable critic mode
   - Metrics panel (`system2`) now shows round progress and issue decay (initial → final) when available.
+  - A round is marked `resolved` only when its critic returns a healthy, explicit `ok` verdict with no issues. This is an internally coherent critic signal, not independent proof of correctness. See [`docs/system2-verification-gate.md`](docs/system2-verification-gate.md).
 - `Executive observer (experiment)`:
   - `off`: disabled
   - `metrics`: after the turn, the Executive receives a compact metrics/context report and emits an out-of-band memo (never blended into chat)

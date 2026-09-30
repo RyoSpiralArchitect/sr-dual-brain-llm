@@ -46,6 +46,8 @@
 
     let qid = null;
     let steps = [];
+    let totalSteps = 0;
+    let stepButtons = [];
     let selected = 0;
     let timer = null;
     let destroyed = false;
@@ -123,23 +125,28 @@
 
     function showStep() {
       const hasSteps = steps.length > 0;
-      const step = hasSteps ? steps[selected] : null;
-      count.textContent = hasSteps ? `Step ${selected + 1} of ${steps.length}` : "No steps";
+      const entry = hasSteps ? steps[selected] : null;
+      const step = entry?.step;
+      const stepNumber = entry ? entry.index + 1 : 0;
+      const omitted = totalSteps - steps.length;
+      count.textContent = hasSteps
+        ? `Step ${stepNumber} of ${totalSteps}${omitted ? ` · ${omitted} omitted` : ""}`
+        : "No steps";
       announcement.textContent = hasSteps
-        ? `Step ${selected + 1} of ${steps.length}: ${limited(step.role || "unknown", 32)}, ${limited(step.phase || "step", 80).replaceAll("_", " ")}`
+        ? `Step ${stepNumber} of ${totalSteps}: ${limited(step.role || "unknown", 32)}, ${limited(step.phase || "step", 80).replaceAll("_", " ")}${omitted ? `. ${omitted} middle steps omitted` : ""}`
         : empty.textContent;
-      progressFill.style.width = hasSteps ? `${((selected + 1) / steps.length) * 100}%` : "0%";
+      progressFill.style.width = hasSteps ? `${(stepNumber / totalSteps) * 100}%` : "0%";
       previous.disabled = !hasSteps || selected === 0;
       next.disabled = !hasSteps || selected === steps.length - 1;
       play.disabled = steps.length < 2 || reducedMotion();
-      play.title = reducedMotion() ? "Playback is paused for reduced motion" : "Play dialogue steps";
+      play.title = reducedMotion() ? "Playback is paused for reduced motion"
+        : omitted ? `Play visible steps (${omitted} middle steps omitted)` : "Play dialogue steps";
       empty.hidden = hasSteps;
       frameTop.hidden = !hasSteps;
       details.hidden = !hasSteps;
 
-      const buttons = rail.children;
-      for (let i = 0; i < buttons.length; i++) {
-        const button = buttons[i].firstChild;
+      for (let i = 0; i < stepButtons.length; i++) {
+        const button = stepButtons[i];
         const active = i === selected;
         button.className = `tt__step${active ? " tt__step--active" : ""}`;
         if (active) button.setAttribute("aria-current", "step");
@@ -211,14 +218,25 @@
     function render(flow, nextQid, status = "ready") {
       if (destroyed) return;
       const identity = nextQid == null ? "" : String(nextQid);
-      if (identity !== qid) {
+      const identityChanged = identity !== qid;
+      const previousOriginalIndex = steps[selected]?.index ?? 0;
+      if (identityChanged) {
         stopPlayback();
         selected = 0;
         qid = identity;
       }
       const input = flow && typeof flow === "object" && !Array.isArray(flow) && Array.isArray(flow.steps)
         ? flow.steps : [];
-      steps = input.slice(0, MAX_STEPS).filter((step) => step && typeof step === "object" && !Array.isArray(step));
+      const validSteps = input.filter((step) => step && typeof step === "object" && !Array.isArray(step));
+      totalSteps = validSteps.length;
+      const headCount = Math.ceil(MAX_STEPS / 2);
+      const tailCount = MAX_STEPS - headCount;
+      steps = validSteps.length > MAX_STEPS
+        ? [
+            ...validSteps.slice(0, headCount).map((step, index) => ({ step, index })),
+            ...validSteps.slice(-tailCount).map((step, index) => ({ step, index: totalSteps - tailCount + index })),
+          ]
+        : validSteps.map((step, index) => ({ step, index }));
       empty.textContent = !identity
         ? "Send a message to see its recorded steps."
         : status === "loading"
@@ -226,21 +244,30 @@
           : status === "unavailable"
             ? "Trace unavailable. The engine may have restarted or the trace may have expired."
             : "No dialogue steps were recorded for this turn.";
-      selected = Math.min(selected, Math.max(0, steps.length - 1));
+      if (!identityChanged && steps.length) {
+        const nextSelected = steps.findIndex((entry) => entry.index >= previousOriginalIndex);
+        selected = nextSelected < 0 ? steps.length - 1 : nextSelected;
+      }
       rail.replaceChildren();
-      steps.forEach((step, index) => {
+      stepButtons = [];
+      steps.forEach(({ step, index: originalIndex }, index) => {
+        if (index > 0 && originalIndex > steps[index - 1].index + 1) {
+          const omitted = originalIndex - steps[index - 1].index - 1;
+          rail.appendChild(element("li", "tt__rail-gap", `${omitted} middle steps omitted`));
+        }
         const item = element("li", "tt__rail-item");
         const button = element("button", "tt__step");
         button.type = "button";
         const stepRole = limited(step.role || "unknown", 32);
         const stepPhase = limited(step.phase || "step", 48);
-        button.setAttribute("aria-label", `Step ${index + 1}: ${stepRole}, ${stepPhase}`);
-        button.appendChild(element("span", "tt__step-number", String(index + 1).padStart(2, "0")));
+        button.setAttribute("aria-label", `Step ${originalIndex + 1} of ${totalSteps}: ${stepRole}, ${stepPhase}`);
+        button.appendChild(element("span", "tt__step-number", String(originalIndex + 1).padStart(2, "0")));
         button.appendChild(element("span", "tt__step-phase", stepPhase.replaceAll("_", " ")));
         button.setAttribute("data-kind", roleKind(stepRole));
         button.addEventListener("click", () => select(index));
         item.appendChild(button);
         rail.appendChild(item);
+        stepButtons.push(button);
       });
       renderStages(flow);
       showStep();

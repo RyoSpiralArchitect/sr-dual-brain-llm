@@ -60,6 +60,7 @@ from .dual_brain_support import (
     _prioritise_issue_list,
     _resolve_system2_priority,
     _sanitize_user_answer,
+    _system2_resolution_from_critique,
     _semantic_tokens,
     _summarise_architecture_path,
     _trim_system2_draft,
@@ -2842,12 +2843,14 @@ class DualBrainController:
         system2_initial_issue_count = 0
         if system2_active:
             critic_verdict = str(response.get("verdict") or "").strip().lower() or None
+            critic_issues_raw = _normalise_issue_list(response.get("issues"), limit=12)
             critic_issues = _filter_system2_issues(
-                _normalise_issue_list(response.get("issues"), limit=12),
+                critic_issues_raw,
                 question=question,
                 filter_enabled=system2_low_signal_filter,
                 keep_at_least=1,
             )
+            decision.state["critic_issues_raw"] = critic_issues_raw
             critic_fixes = _normalise_issue_list(response.get("fixes"), limit=12)
             decision.state["right_role"] = "critic"
             critic_kind = response.get("critic_kind")
@@ -2916,15 +2919,16 @@ class DualBrainController:
                         decision.state["critic_kind"] = str(critic_kind)
                     if critic_verdict:
                         decision.state["critic_verdict"] = critic_verdict
+                    critic_issues_raw = _normalise_issue_list(
+                        fallback.get("issues"), limit=12,
+                    )
                     critic_issues = _filter_system2_issues(
-                        _normalise_issue_list(
-                            fallback.get("issues"),
-                            limit=12,
-                        ),
+                        critic_issues_raw,
                         question=question,
                         filter_enabled=system2_low_signal_filter,
                         keep_at_least=1,
                     )
+                    decision.state["critic_issues_raw"] = critic_issues_raw
                     critic_fixes = _normalise_issue_list(
                         fallback.get("fixes"),
                         limit=12,
@@ -3154,7 +3158,14 @@ class DualBrainController:
     ) -> System2RefinementResult:
         system2_rounds_completed = 1
         system2_final_issue_count = len(critic_issues)
-        system2_resolved = False if system2_critic_unhealthy else not critic_needs_revision
+        system2_resolved, resolution_basis = _system2_resolution_from_critique(
+            verdict=decision.state.get("critic_verdict"),
+            issues=decision.state.get("critic_issues_raw") or critic_issues,
+            critic_kind=decision.state.get("critic_kind"),
+            critic_sum=decision.state.get("critic_sum"),
+        )
+        if system2_critic_unhealthy:
+            system2_resolved, resolution_basis = False, "critic_unhealthy"
         system2_followup_revision = False
         system2_followup_new_issues: List[str] = []
         system2_followup_verdict: Optional[str] = None
@@ -3219,11 +3230,12 @@ class DualBrainController:
             verify_verdict = str(
                 verify_response.get("verdict") or ""
             ).strip().lower()
+            verify_kind = verify_response.get("critic_kind")
+            verify_issues_raw_for_resolution = _normalise_issue_list(
+                verify_response.get("issues"), limit=12,
+            )
             verify_issues = _filter_system2_issues(
-                _normalise_issue_list(
-                    verify_response.get("issues"),
-                    limit=12,
-                ),
+                verify_issues_raw_for_resolution,
                 question=question,
                 filter_enabled=system2_low_signal_filter,
             )
@@ -3255,11 +3267,12 @@ class DualBrainController:
                     verify_verdict = str(
                         verify_fallback.get("verdict") or ""
                     ).strip().lower()
+                    verify_kind = verify_fallback.get("critic_kind")
+                    verify_issues_raw_for_resolution = _normalise_issue_list(
+                        verify_fallback.get("issues"), limit=12,
+                    )
                     verify_issues = _filter_system2_issues(
-                        _normalise_issue_list(
-                            verify_fallback.get("issues"),
-                            limit=12,
-                        ),
+                        verify_issues_raw_for_resolution,
                         question=question,
                         filter_enabled=system2_low_signal_filter,
                     )
@@ -3319,20 +3332,18 @@ class DualBrainController:
                     len(critic_issues) + max_growth,
                 )
 
-            has_verify_signal = bool(
-                verify_verdict in {"ok", "issues"}
-                or verify_issues
-                or verify_detail
+            verify_resolved, verify_basis = _system2_resolution_from_critique(
+                verdict=verify_verdict,
+                issues=verify_issues_raw_for_resolution,
+                critic_kind=verify_kind,
+                critic_sum=verify_detail,
             )
-            if has_verify_signal:
+            if verify_issues_raw_for_resolution or verify_resolved:
                 system2_final_issue_count = verify_issue_count_calibrated
-                system2_resolved = (
-                    verify_verdict == "ok"
-                    or system2_final_issue_count == 0
-                )
             else:
                 system2_final_issue_count = len(critic_issues)
-                system2_resolved = False
+            system2_resolved = verify_resolved
+            resolution_basis = verify_basis
             decision.state["system2_issue_count_verify_raw"] = int(
                 verify_issue_count_raw
             )
@@ -3499,11 +3510,12 @@ class DualBrainController:
                 round3_verdict = str(
                     round3_response.get("verdict") or ""
                 ).strip().lower()
+                round3_kind = round3_response.get("critic_kind")
+                round3_issues_raw_for_resolution = _normalise_issue_list(
+                    round3_response.get("issues"), limit=12,
+                )
                 round3_issues = _filter_system2_issues(
-                    _normalise_issue_list(
-                        round3_response.get("issues"),
-                        limit=12,
-                    ),
+                    round3_issues_raw_for_resolution,
                     question=question,
                     filter_enabled=system2_low_signal_filter,
                 )
@@ -3535,11 +3547,12 @@ class DualBrainController:
                         round3_verdict = str(
                             round3_fallback.get("verdict") or ""
                         ).strip().lower()
+                        round3_kind = round3_fallback.get("critic_kind")
+                        round3_issues_raw_for_resolution = _normalise_issue_list(
+                            round3_fallback.get("issues"), limit=12,
+                        )
                         round3_issues = _filter_system2_issues(
-                            _normalise_issue_list(
-                                round3_fallback.get("issues"),
-                                limit=12,
-                            ),
+                            round3_issues_raw_for_resolution,
                             question=question,
                             filter_enabled=system2_low_signal_filter,
                         )
@@ -3589,19 +3602,18 @@ class DualBrainController:
                         len(verify_issues) + max_growth,
                     )
 
-                has_round3_signal = bool(
-                    round3_verdict in {"ok", "issues"}
-                    or round3_issues
-                    or round3_detail
+                round3_resolved, round3_basis = _system2_resolution_from_critique(
+                    verdict=round3_verdict,
+                    issues=round3_issues_raw_for_resolution,
+                    critic_kind=round3_kind,
+                    critic_sum=round3_detail,
                 )
-                if has_round3_signal:
+                if round3_issues_raw_for_resolution or round3_resolved:
                     system2_final_issue_count = round3_issue_count_calibrated
-                    system2_resolved = (
-                        round3_verdict == "ok"
-                        or system2_final_issue_count == 0
-                    )
-                    if round3_verdict:
-                        system2_followup_verdict = round3_verdict
+                system2_resolved = round3_resolved
+                resolution_basis = round3_basis
+                if round3_verdict:
+                    system2_followup_verdict = round3_verdict
                 system2_rounds_completed = max(system2_rounds_completed, 3)
                 decision.state["system2_issue_count_round3_raw"] = int(
                     round3_issue_count_raw
@@ -3626,6 +3638,7 @@ class DualBrainController:
             system2_final_issue_count
         )
         decision.state["system2_resolved"] = bool(system2_resolved)
+        decision.state["system2_resolution_basis"] = resolution_basis
         decision.state["system2_truncation_signal"] = bool(
             system2_truncation_signal
         )
@@ -3675,6 +3688,7 @@ class DualBrainController:
                     "system2_round_target_requested"
                 ),
                 resolved=bool(system2_resolved),
+                resolution_basis=resolution_basis,
                 followup_revision=bool(system2_followup_revision),
                 critic_issues=list(critic_issues),
                 verify_issues=list(decision.state.get("system2_verify_issues") or []),

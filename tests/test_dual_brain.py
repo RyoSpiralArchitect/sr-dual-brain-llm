@@ -16,6 +16,7 @@ from core.dual_brain_support import (
     DecisionOutcome,
     InnerDialogueStep,
     _sanitize_user_answer,
+    _system2_resolution_from_critique,
 )
 
 from core.unconscious_field import LatentSeed, UnconsciousField
@@ -366,6 +367,68 @@ class TwoPhaseCriticCallosum(DummyCallosum):
                 "confidence_r": 0.9,
             }
         return await super().ask_detail(payload, timeout_ms=timeout_ms)
+
+
+def test_system2_critic_resolution_requires_coherent_clean_verdict():
+    def check(verdict, issues, critic_sum=""):
+        return _system2_resolution_from_critique(
+            verdict=verdict,
+            issues=issues,
+            critic_kind="external",
+            critic_sum=critic_sum,
+        )
+
+    assert check("ok", []) == (True, "explicit_clean")
+    assert check("ok", ["Calculation remains wrong."]) == (False, "contradictory_ok_with_issues")
+    assert check("issues", []) == (False, "issues_without_items")
+    assert check(None, []) == (False, "no_explicit_clean_verdict")
+    assert check("ok", [], "External critic model unavailable.") == (False, "critic_unhealthy")
+
+
+def test_system2_conflicting_verification_does_not_claim_resolution():
+    class ConflictingVerifyCallosum(DummyCallosum):
+        def __init__(self):
+            super().__init__()
+            self.critic_calls = 0
+
+        async def ask_detail(self, payload, timeout_ms=3000):  # noqa: ANN001
+            if payload.get("type") != "ASK_CRITIC":
+                return await super().ask_detail(payload, timeout_ms=timeout_ms)
+            self.critic_calls += 1
+            if self.critic_calls == 1:
+                return {
+                    "verdict": "issues", "issues": ["Arithmetic result is wrong: 2+2 is not 5."],
+                    "fixes": ["Correct the arithmetic result."],
+                    "critic_sum": "Arithmetic result is wrong: 2+2 is not 5.",
+                }
+            return {
+                "verdict": "ok", "issues": ["Arithmetic result still needs verification."],
+                "fixes": [], "critic_sum": "Arithmetic result still needs verification.",
+            }
+
+    callosum = ConflictingVerifyCallosum()
+    telemetry = TrackingTelemetry()
+    controller = DualBrainController(
+        callosum=callosum,
+        memory=SharedMemory(),
+        left_model=CaptureLeftModel(draft="2+2=5", confidence=0.95),
+        right_model=RightBrainModel(),
+        policy=AlwaysSkipPolicy(),
+        hypothalamus=Hypothalamus(),
+        reasoning_dial=ReasoningDial(mode="evaluative"),
+        auditor=Auditor(),
+        orchestrator=Orchestrator(3),
+        telemetry=telemetry,
+        unconscious_field=UnconsciousField(),
+        prefrontal_cortex=PrefrontalCortex(),
+        basal_ganglia=BasalGanglia(baseline_dopamine=0.0, novelty_weight=0.0),
+    )
+    asyncio.run(controller.process("Compute 2+2?", system2_mode="on"))
+    refinement = [payload for event, payload in telemetry.events if event == "system2_refinement"][-1]
+    assert callosum.critic_calls == 2
+    assert refinement["resolved"] is False
+    assert refinement["resolution_basis"] == "contradictory_ok_with_issues"
+    assert refinement["final_issues"] == 1
 
 
 class RephraseCriticCallosum(DummyCallosum):
@@ -3067,7 +3130,8 @@ def test_system2_filters_low_signal_critic_noise():
     latest = refinement_events[-1]
     assert latest.get("initial_issues") == 1
     assert latest.get("final_issues") == 0
-    assert latest.get("resolved") is True
+    assert latest.get("resolved") is False
+    assert latest.get("resolution_basis") == "issues_remaining"
     assert latest.get("followup_new_issues") == []
 
 
@@ -3655,7 +3719,8 @@ def test_system2_arithmetic_contradiction_penalizes_false_critic_claims():
     assert latest.get("rounds") == 2
     assert latest.get("initial_issues") == 1
     assert latest.get("final_issues") == 0
-    assert latest.get("resolved") is True
+    assert latest.get("resolved") is False
+    assert latest.get("resolution_basis") == "issues_remaining"
     assert latest.get("followup_new_issues") == []
     assert latest.get("followup_revision") is False
 

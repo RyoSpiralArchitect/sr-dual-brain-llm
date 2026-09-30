@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import random
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -20,6 +22,7 @@ from typing import Any, Dict, List
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
+REPOSITORY_ROOT = PROJECT_ROOT.parent
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -38,6 +41,68 @@ from benchmark_system2 import (  # noqa: E402
     _summarise_cases,
 )
 from engine_stdio import EngineSession  # noqa: E402
+
+
+def _portable_question_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPOSITORY_ROOT.resolve()).as_posix()
+    except ValueError:
+        return f"<external>/{resolved.name}"
+
+
+def _question_provenance(paths: List[Path], questions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    encoded = json.dumps(
+        questions, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "sources": [
+            {
+                "path": _portable_question_path(path),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+            for path in paths
+        ],
+        "effective_questions_sha256": hashlib.sha256(encoded).hexdigest(),
+    }
+
+
+def _source_revision() -> Dict[str, Any]:
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        ).stdout.strip()
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return {"commit": None, "dirty": None}
+    return {"commit": head, "dirty": bool(status.strip())}
+
+
+def _public_llm_config(model: Any) -> Dict[str, Any]:
+    config = getattr(model, "llm_config", None)
+    if config is None:
+        return {"external": False}
+    return {
+        "external": True,
+        "provider": str(config.provider),
+        "model": str(config.model),
+        "max_output_tokens": int(config.max_output_tokens),
+        "timeout_seconds": int(config.timeout_seconds),
+        "auto_continue": bool(config.auto_continue),
+        "max_continuations": int(config.max_continuations),
+    }
 
 
 def _parse_modes(raw: str) -> List[str]:
@@ -193,11 +258,17 @@ async def _run_mode(
     critic_health_timeout: float,
     critic_health_rate_limit_backoff: float,
     require_critic_health: bool,
+    include_full_answers: bool = False,
 ) -> Dict[str, Any]:
     session_id = f"{session_prefix}-{mode}"
     print(f"[ab] mode={mode} session_id={session_id}")
     session = await EngineSession.create(session_id=session_id)
     try:
+        effective_llm = {
+            "left": _public_llm_config(session.left),
+            "right": _public_llm_config(session.right),
+            "executive": _public_llm_config(getattr(session, "executive", None)),
+        }
         llm_capable = bool(
             getattr(session.left, "uses_external_llm", False)
             and getattr(session.right, "uses_external_llm", False)
@@ -282,6 +353,7 @@ async def _run_mode(
                 executive_mode=executive_mode,
                 executive_observer_mode=executive_observer_mode,
                 diagnostics_mode=diagnostics_mode,
+                include_answer=include_full_answers,
             )
             cases.append(case)
             print(
@@ -306,6 +378,7 @@ async def _run_mode(
             "mode": mode,
             "llm_capable": llm_capable,
             "critic_health": critic_health,
+            "effective_llm": effective_llm,
             "summary": summary,
             "cases": cases,
         }
@@ -354,7 +427,10 @@ async def _run(args: argparse.Namespace) -> int:
         critic_health_check = "on"
 
     print(f"[ab] run_id={run_id}")
-    question_set_label = ",".join(str(path) for path in question_paths)
+    question_labels = [_portable_question_path(path) for path in question_paths]
+    question_set_label = ",".join(question_labels)
+    question_provenance = _question_provenance(question_paths, questions)
+    source_revision = _source_revision()
     if len(question_paths) == 1:
         print(f"[ab] questions={len(questions)} source={question_paths[0]}")
     else:
@@ -392,6 +468,7 @@ async def _run(args: argparse.Namespace) -> int:
                 args.critic_health_rate_limit_backoff
             ),
             require_critic_health=bool(args.require_critic_health),
+            include_full_answers=bool(args.include_full_answers),
         )
 
     summary_by_mode = {mode: payload.get("summary", {}) for mode, payload in by_mode.items()}
@@ -401,7 +478,7 @@ async def _run(args: argparse.Namespace) -> int:
         "run_id": run_id,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "question_set": question_set_label,
-        "question_sets": [str(path) for path in question_paths],
+        "question_sets": question_labels,
         "config": {
             "modes": modes,
             "session_prefix": args.session_prefix,
@@ -426,7 +503,16 @@ async def _run(args: argparse.Namespace) -> int:
             ),
             "require_critic_health": bool(args.require_critic_health),
             "question_count": len(questions),
-            "question_sets": [str(path) for path in question_paths],
+            "question_sets": question_labels,
+            "question_provenance": question_provenance,
+            "source_revision": source_revision,
+            "effective_llm_by_mode": {
+                mode: payload["effective_llm"] for mode, payload in by_mode.items()
+            },
+            "shuffle": bool(args.shuffle),
+            "seed": int(args.seed),
+            "limit": args.limit,
+            "include_full_answers": bool(args.include_full_answers),
             "callosum_timeout_ms": os.environ.get("DUALBRAIN_CALLOSUM_TIMEOUT_MS"),
             "timeout_multiplier": os.environ.get("DUALBRAIN_TIMEOUT_MULTIPLIER"),
             "system2_timeout_multiplier": os.environ.get("DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER"),
@@ -611,6 +697,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--shuffle", action="store_true")
     parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument(
+        "--include-full-answers",
+        action="store_true",
+        help="Store complete user-facing answers for local blinded scoring; treat the report as sensitive.",
+    )
     return parser
 
 

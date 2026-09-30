@@ -57,6 +57,7 @@ const els = {
 };
 
 const traceTheater = window.TraceTheater?.create(els.traceTheater);
+const traceSelection = window.TraceSelection.create();
 
 let lastLlmSignature = null;
 const sessionLlmSignature = new Map();
@@ -1059,21 +1060,21 @@ async function jumpToTrace(sessionId, qid) {
   const sid = (sessionId || "default").trim() || "default";
   const id = String(qid || "").trim();
   if (!id) return;
-
-  try {
-    const trace = await fetchTrace(sid, id, {
-      includeTelemetry: true,
-      includeDialogueFlow: true,
-      includeExecutive: true,
-    });
+  const ticket = traceSelection.begin();
+  await traceSelection.apply(ticket, () => fetchTrace(sid, id, {
+    includeTelemetry: true,
+    includeDialogueFlow: true,
+    includeExecutive: true,
+  }), (trace) => {
     if (!trace?.found) {
-      throw new Error("trace not found (engine may have restarted)");
+      setStatus("warn", "trace load failed: trace not found (engine may have restarted)");
+      return;
     }
     renderMetrics(normaliseTraceToPayload(trace, { sessionIdFallback: sid }), { source: "trace" });
     openDetailsFor(["executiveMemo", "executiveObserverMemo", "telemetryRaw", "dialogueFlowRaw"]);
-  } catch (err) {
+  }, (err) => {
     setStatus("warn", `trace load failed: ${String(err)}`);
-  }
+  });
 }
 
 async function getFullTracePayload(payload) {
@@ -1186,6 +1187,7 @@ async function callProcessStream(body, { onDelta, onFinal, onReset }) {
 async function onSend() {
   const text = (els.question.value || "").trim();
   if (!text) return;
+  const selectionTicket = traceSelection.begin();
 
   appendBubble("user", text);
   els.question.value = "";
@@ -1228,24 +1230,27 @@ async function onSend() {
     // Keep chat bubbles clean; qid/metrics are shown in the side panel.
     placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
     const needTheaterTrace = !!els.traceTheater && !!result?.qid && !Array.isArray(result?.dialogue_flow?.steps);
-    renderMetrics(result, { traceStatus: needTheaterTrace ? "loading" : "ready" });
+    if (traceSelection.isCurrent(selectionTicket)) {
+      renderMetrics(result, { traceStatus: needTheaterTrace ? "loading" : "ready" });
+    }
 
     const hasExecutiveInline = !!(result?.executive || result?.dialogue_flow?.executive);
-    if (((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline) || (req.wantExecutive && !hasExecutiveInline) || needTheaterTrace) {
-      try {
-        const trace = await fetchTrace(req.sessionId, result.qid, {
-          includeTelemetry: req.wantTelemetry,
-          includeDialogueFlow: req.wantDialogueFlow || needTheaterTrace,
-          includeExecutive: req.wantExecutive,
-        });
+    const needsTrace = ((req.wantTelemetry || req.wantDialogueFlow) && !req.traceInline)
+      || (req.wantExecutive && !hasExecutiveInline) || needTheaterTrace;
+    if (traceSelection.isCurrent(selectionTicket) && needsTrace) {
+      await traceSelection.apply(selectionTicket, () => fetchTrace(req.sessionId, result.qid, {
+        includeTelemetry: req.wantTelemetry,
+        includeDialogueFlow: req.wantDialogueFlow || needTheaterTrace,
+        includeExecutive: req.wantExecutive,
+      }), (trace) => {
         if (trace?.found) {
           renderMetrics(mergeTrace(result, trace));
         } else if (needTheaterTrace) {
           renderMetrics(result, { traceStatus: "unavailable" });
         }
-      } catch {
+      }, () => {
         if (needTheaterTrace) renderMetrics(result, { traceStatus: "unavailable" });
-      }
+      });
     }
   } catch (err) {
     placeholder.querySelector(".bubble__content").textContent = String(err);
@@ -1269,6 +1274,7 @@ els.question.addEventListener("keydown", (e) => {
 });
 
 els.btnClear.addEventListener("click", () => {
+  traceSelection.begin();
   els.chatLog.innerHTML = "";
   els.telemetryRaw.textContent = "{}";
   if (els.dialogueFlowRaw) els.dialogueFlowRaw.textContent = "{}";
@@ -1297,6 +1303,7 @@ els.btnClear.addEventListener("click", () => {
 });
 
 els.btnReset.addEventListener("click", async () => {
+  traceSelection.begin();
   const sessionId = (els.sessionId.value || "default").trim() || "default";
   setBusy(true);
   try {
