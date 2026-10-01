@@ -126,3 +126,25 @@ test("new qid stops playback and reduced motion disables it", () => {
   assert.equal(find(root, "tt__control--play").disabled, true);
   theater.destroy();
 });
+
+test("long flows disclose the gap and keep the ending reachable", () => {
+  const { root, theater } = setup();
+  const steps = Array.from({ length: 120 }, (_, index) => ({
+    role: index === 119 ? "integrator" : "left",
+    phase: `phase_${index + 1}`,
+  }));
+  theater.render({ steps }, "long-turn");
+  const rail = find(root, "tt__rail");
+  assert.equal(rail.children.length, 81);
+  assert.match(rail.children[40].textContent, /40 middle steps omitted/);
+  assert.equal(find(root, "tt__count").textContent, "Step 1 of 120 · 40 omitted");
+
+  rail.children[39].firstChild.click();
+  assert.equal(find(root, "tt__count").textContent, "Step 40 of 120 · 40 omitted");
+  find(root, "tt__controls").children[2].click();
+  assert.equal(find(root, "tt__count").textContent, "Step 81 of 120 · 40 omitted");
+  rail.children[80].firstChild.click();
+  assert.equal(find(root, "tt__count").textContent, "Step 120 of 120 · 40 omitted");
+  assert.equal(find(root, "tt__phase").textContent, "phase 120");
+  theater.destroy();
+});

@@ -174,13 +174,8 @@ def _normalise_system2_resolved_signal(
     initial_issues: Optional[int],
     final_issues: Optional[int],
 ) -> tuple[Optional[bool], bool]:
-    if (
-        initial_issues is not None
-        and final_issues is not None
-        and int(initial_issues) == 0
-        and int(final_issues) == 0
-    ):
-        return True, resolved is not True
+    # Zero model-generated issues cannot override an explicit unresolved or
+    # unavailable verification signal.
     return resolved, False
 
 
@@ -1045,6 +1040,7 @@ async def _run_case(
     executive_mode: str,
     executive_observer_mode: str,
     diagnostics_mode: str,
+    include_answer: bool = False,
 ) -> Dict[str, Any]:
     qid = f"{run_id}-c{index:03d}"
     question = str(question_entry.get("question") or "")
@@ -1093,6 +1089,7 @@ async def _run_case(
     resolved = _safe_bool(system2.get("resolved"))
     if resolved is None:
         resolved = _safe_bool(policy_state.get("system2_resolved"))
+    resolution_basis = system2.get("resolution_basis") or policy_state.get("system2_resolution_basis")
     followup_revision = _safe_bool(system2.get("followup_revision"))
     if followup_revision is None:
         followup_revision = _safe_bool(policy_state.get("system2_followup_revision"))
@@ -1172,6 +1169,7 @@ async def _run_case(
         "final_issues": final_issues,
         "issue_reduction": reduction,
         "resolved": resolved,
+        "resolution_basis": resolution_basis,
         "resolved_normalized_from_clean_issue_counts": resolved_normalized,
         "followup_revision": followup_revision,
         "followup_new_issues": (
@@ -1202,6 +1200,8 @@ async def _run_case(
         "cerebellum_domain": cerebellum_domain,
         "cerebellum_confidence": cerebellum_confidence,
     }
+    if include_answer:
+        case["answer"] = answer
     diagnostics_norm = str(diagnostics_mode or "off").strip().lower()
     if diagnostics_norm not in {"off", "unresolved", "all"}:
         diagnostics_norm = "off"

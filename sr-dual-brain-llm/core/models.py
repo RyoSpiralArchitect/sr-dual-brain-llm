@@ -58,6 +58,7 @@ _RIGHT_CRITIC_GUARDRAILS = (
     "- Keep issues canonical: merge paraphrases of the same root cause into one issue.\n"
     "- Prefer <= 6 high-signal issues; avoid micro-fragmentation.\n"
     "- If there are no issues, set verdict='ok' and issues=[], fixes=[].\n"
+    "- If verdict='issues', include at least one concrete issue; never return verdict='ok' with a non-empty issues list.\n"
     "- Output JSON only (no code fences, no preamble).\n"
 )
 

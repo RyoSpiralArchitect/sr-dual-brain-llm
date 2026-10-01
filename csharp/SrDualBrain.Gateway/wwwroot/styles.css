@@ -625,6 +625,13 @@ textarea:focus, input:focus, select:focus { outline: 2px solid rgba(96,165,250,0
   scrollbar-width: thin;
 }
 .tt__rail-item { flex: 0 0 auto; min-width: 74px; max-width: 120px; }
+.tt__rail-gap {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 8px;
+  color: var(--muted);
+  font: 600 10px var(--sans);
+}
 .tt__step {
   --tt-accent: var(--tt-other);
   appearance: none;

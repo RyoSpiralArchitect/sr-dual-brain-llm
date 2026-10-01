@@ -685,6 +685,39 @@ def _detect_system2_critic_unhealthy_reason(
     return None
 
 
+def _system2_resolution_from_critique(
+    *,
+    verdict: Optional[str],
+    issues: Sequence[str],
+    critic_kind: Optional[str],
+    critic_sum: Optional[str],
+) -> tuple[bool, str]:
+    """Require an explicit, coherent clean verdict before marking a round resolved.
+
+    Issue counts are model diagnostics, not proof that the answer is correct.
+    This gate only determines whether the critic's own signal is internally usable.
+    """
+    if _detect_system2_critic_unhealthy_reason(
+        critic_kind=critic_kind,
+        issues=issues,
+        critic_sum=critic_sum,
+    ):
+        return False, "critic_unhealthy"
+    clean_issues = [item for item in issues if str(item).strip()]
+    normalized_verdict = str(verdict or "").strip().lower()
+    if normalized_verdict == "ok":
+        if clean_issues:
+            return False, "contradictory_ok_with_issues"
+        return True, "explicit_clean"
+    if normalized_verdict == "issues":
+        if clean_issues:
+            return False, "issues_remaining"
+        return False, "issues_without_items"
+    if clean_issues:
+        return False, "issues_without_valid_verdict"
+    return False, "no_explicit_clean_verdict"
+
+
 def _looks_like_coaching_notes(question: str, text: str) -> bool:
     """Detect "writing coach" style content that should not leak into user replies."""
 
