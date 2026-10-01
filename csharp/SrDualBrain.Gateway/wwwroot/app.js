@@ -87,33 +87,55 @@ function setMetricsPopoutUi(isOpen) {
   }
 }
 
+function metricsHistoryState(sessionId) {
+  const history = brainHistoryBySession.get(sessionId) ?? [];
+  const moduleHistory = moduleHistoryBySession.get(sessionId) ?? [];
+  return {
+    brain_history: history.map((h) => ({
+      qid: h.qid ?? "",
+      ts: h.ts ?? 0,
+      values: h.values ?? {},
+    })),
+    module_history: moduleHistory.map((h) => ({
+      qid: h.qid ?? "",
+      ts: h.ts ?? 0,
+      modules: Array.isArray(h.modules) ? h.modules.map(String) : [],
+      stage_by_module: h.stage_by_module ?? {},
+    })),
+  };
+}
+
 function publishMetricsToPopout(payload, traceStatus = lastTraceStatus) {
   lastMetricsPayload = payload;
   lastTraceStatus = traceStatus;
   if (!payload) return;
   if (!isMetricsPopoutOpen()) return;
   try {
-    const sessionId = payload?.session_id ?? "default";
-    const history = brainHistoryBySession.get(sessionId) ?? [];
-    const moduleHistory = moduleHistoryBySession.get(sessionId) ?? [];
     const clientState = {
       trace_status: traceStatus,
-      brain_history: history.map((h) => ({
-        qid: h.qid ?? "",
-        ts: h.ts ?? 0,
-        values: h.values ?? {},
-      })),
-      module_history: moduleHistory.map((h) => ({
-        qid: h.qid ?? "",
-        ts: h.ts ?? 0,
-        modules: Array.isArray(h.modules) ? h.modules.map(String) : [],
-        stage_by_module: h.stage_by_module ?? {},
-      })),
+      ...metricsHistoryState(payload?.session_id ?? "default"),
     };
     metricsPopout.postMessage(
       { type: "srdb.metrics", payload: { ...payload, _client: clientState } },
       window.location.origin,
     );
+  } catch {
+    // ignore
+  }
+}
+
+function refreshHistoryOnly(sessionId) {
+  if ((lastMetricsPayload?.session_id ?? "default") === sessionId) {
+    renderBrainHistory(sessionId);
+    renderModuleHistory(sessionId);
+  }
+  if (!isMetricsPopoutOpen()) return;
+  try {
+    // Do not resend a metrics selection: it could interrupt a pending trace jump.
+    metricsPopout.postMessage({
+      type: "srdb.metrics.history",
+      payload: { session_id: sessionId, ...metricsHistoryState(sessionId) },
+    }, window.location.origin);
   } catch {
     // ignore
   }
@@ -568,6 +590,13 @@ function upsertModuleHistory(sessionId, snapshot) {
   return history;
 }
 
+function recordLiveTurn(response) {
+  const sessionId = response?.session_id ?? "default";
+  const qid = response?.qid ?? "";
+  upsertBrainHistory(sessionId, snapshotBrain(response?.metrics, { qid }));
+  upsertModuleHistory(sessionId, snapshotModules(response?.metrics, { qid }));
+}
+
 function stageAccent(stageName) {
   const key = String(stageName || "")
     .trim()
@@ -884,10 +913,6 @@ function renderMetrics(response, opts = {}) {
   renderBrainActivity(metrics);
   const sessionId = response?.session_id ?? "default";
   selectedQidBySession.set(sessionId, qid || "");
-  if (renderSource !== "trace") {
-    upsertBrainHistory(sessionId, snapshotBrain(metrics, { qid }));
-    upsertModuleHistory(sessionId, snapshotModules(metrics, { qid }));
-  }
   renderBrainHistory(sessionId);
   renderModuleHistory(sessionId);
 
@@ -1230,8 +1255,12 @@ async function onSend() {
     // Keep chat bubbles clean; qid/metrics are shown in the side panel.
     placeholder.querySelector(".bubble__meta > div:last-child").textContent = "";
     const needTheaterTrace = !!els.traceTheater && !!result?.qid && !Array.isArray(result?.dialogue_flow?.steps);
+    // Completion belongs in history even when the user selected an older trace.
+    recordLiveTurn(result);
     if (traceSelection.isCurrent(selectionTicket)) {
       renderMetrics(result, { traceStatus: needTheaterTrace ? "loading" : "ready" });
+    } else {
+      refreshHistoryOnly(result?.session_id ?? "default");
     }
 
     const hasExecutiveInline = !!(result?.executive || result?.dialogue_flow?.executive);

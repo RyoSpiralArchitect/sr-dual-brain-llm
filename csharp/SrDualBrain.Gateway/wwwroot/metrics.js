@@ -797,6 +797,18 @@ window.addEventListener("message", (e) => {
     return;
   }
 
+  if (msg.type === "srdb.metrics.history") {
+    const payload = msg.payload ?? {};
+    const sessionId = payload.session_id ?? "default";
+    if (Array.isArray(payload.brain_history)) brainHistoryBySession.set(sessionId, payload.brain_history);
+    if (Array.isArray(payload.module_history)) moduleHistoryBySession.set(sessionId, payload.module_history);
+    if ((lastPayload?.session_id ?? "default") === sessionId) {
+      renderBrainHistory(sessionId);
+      renderModuleHistory(sessionId);
+    }
+    return;
+  }
+
   if (msg.type === "srdb.chat.response") {
     const payload = msg.payload ?? {};
     const requestId = String(payload?.request_id || "").trim();
