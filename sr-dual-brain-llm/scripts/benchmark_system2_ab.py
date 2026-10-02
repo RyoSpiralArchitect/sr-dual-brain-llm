@@ -259,6 +259,7 @@ async def _run_mode(
     critic_health_rate_limit_backoff: float,
     require_critic_health: bool,
     include_full_answers: bool = False,
+    include_traces: bool = False,
 ) -> Dict[str, Any]:
     session_id = f"{session_prefix}-{mode}"
     print(f"[ab] mode={mode} session_id={session_id}")
@@ -354,6 +355,7 @@ async def _run_mode(
                 executive_observer_mode=executive_observer_mode,
                 diagnostics_mode=diagnostics_mode,
                 include_answer=include_full_answers,
+                include_trace=include_traces,
             )
             cases.append(case)
             print(
@@ -469,6 +471,7 @@ async def _run(args: argparse.Namespace) -> int:
             ),
             require_critic_health=bool(args.require_critic_health),
             include_full_answers=bool(args.include_full_answers),
+            include_traces=bool(getattr(args, "include_traces", False)),
         )
 
     summary_by_mode = {mode: payload.get("summary", {}) for mode, payload in by_mode.items()}
@@ -513,6 +516,9 @@ async def _run(args: argparse.Namespace) -> int:
             "seed": int(args.seed),
             "limit": args.limit,
             "include_full_answers": bool(args.include_full_answers),
+            "include_traces": bool(getattr(args, "include_traces", False)),
+            "critic_max_output_tokens": os.environ.get("DUALBRAIN_CRITIC_MAX_OUTPUT_TOKENS", "520"),
+            "critic_timeout_seconds": os.environ.get("DUALBRAIN_CRITIC_TIMEOUT_SECONDS", "24"),
             "callosum_timeout_ms": os.environ.get("DUALBRAIN_CALLOSUM_TIMEOUT_MS"),
             "timeout_multiplier": os.environ.get("DUALBRAIN_TIMEOUT_MULTIPLIER"),
             "system2_timeout_multiplier": os.environ.get("DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER"),
@@ -701,6 +707,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--include-full-answers",
         action="store_true",
         help="Store complete user-facing answers for local blinded scoring; treat the report as sensitive.",
+    )
+    parser.add_argument(
+        "--include-traces",
+        action="store_true",
+        help="Store complete per-case dialogue flows for local comparison; treat the report as sensitive.",
     )
     return parser
 

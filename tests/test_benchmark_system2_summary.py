@@ -15,6 +15,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 import benchmark_system2_ab  # noqa: E402
 import prepare_system2_scoring  # noqa: E402
+import score_system2_reference  # noqa: E402
 from benchmark_system2 import (  # noqa: E402
     _build_system2_diagnostic,
     _run_case,
@@ -137,6 +138,52 @@ def test_full_answers_are_opt_in_for_ab_cases():
     with_answer = asyncio.run(_run_case(**params, include_answer=True))
     assert "answer" not in preview_only
     assert with_answer["answer"] == "A complete fixture answer."
+
+
+def test_critic_provider_failure_is_not_counted_as_issue_progress():
+    cases = [
+        {"id": "bad", "error": None, "critic_validity": "invalid", "critic_failure_reasons": ["provider_error"], "initial_issues": 5,
+         "final_issues": 0, "resolved": True, "system2_enabled": True},
+        {"id": "good", "error": None, "critic_validity": "valid", "initial_issues": 2,
+         "final_issues": 1, "resolved": False, "system2_enabled": True},
+    ]
+    summary = _summarise_cases(cases)
+    assert summary["critic_invalid_cases"] == 1
+    assert summary["critic_invalid_by_reason"] == {"provider_error": 1}
+    assert summary["measured_cases"] == 1
+    assert summary["sum_initial_issues"] == 2
+    assert summary["sum_final_issues"] == 1
+    assert summary["resolved_issue_cases"] == 0
+
+
+def test_reference_scorer_accepts_latex_and_rejects_wrong_final():
+    score = score_system2_reference.score_answer
+    assert score("probability_001", r"=\boxed{\frac{1}{11}}") == "correct"
+    assert score("probability_001", r"=\boxed{\frac{1}{10}}") == "incorrect"
+    assert score("arith_chain_001", "378 - 96 = 282; Answer: 47") == "correct"
+    assert score("arith_chain_001", "378 - 96 = 282; Answer: 48") == "incorrect"
+    assert score("algebra_001", r"x=12; verify 3(12)+7=43") == "correct"
+    assert score("bayes_001", r"P(D\mid +)=0.1624, or 16.24%") == "correct"
+    assert score("bayes_001", "Sensitivity is 0.95 and prevalence is 0.02") == "indeterminate"
+    assert score("error_analysis_001", "Growth is 20%, not 40%") == "correct"
+    assert score("error_analysis_001", "20% appears in the setup, but growth is 40%") == "incorrect"
+    assert score("safety_policy_001", "Four rules") == "unscored"
+
+
+def test_reference_pair_scores_both_orders_without_critic_self_grading():
+    ab = _synthetic_scoring_report(["off", "on"])
+    ba = _synthetic_scoring_report(["on", "off"])
+    for report in (ab, ba):
+        for mode in ("off", "on"):
+            case = report["modes"][mode]["cases"][0]
+            case["id"] = "probability_001"
+            case["answer"] = r"\frac{1}{10}" if mode == "off" else r"\frac{1}{11}"
+            case["critic_validity"] = "valid" if mode == "on" else "not_applicable"
+    result = score_system2_reference.score_pair(ab, ba)
+    assert result["summary"]["paired_scored"] == 2
+    assert result["summary"]["on_wins"] == 2
+    assert result["summary"]["off_wins"] == 0
+    assert all("answer" not in row for row in result["rows"])
 
 
 def test_summarise_cases_includes_all_case_noop_metrics():

@@ -182,11 +182,17 @@ Outputs:
 - `--diagnostics unresolved` records issue details for unresolved cases.
 - Reports record source commit/dirty state, question hashes, effective model settings, and mode order without API keys or other credentials.
 - `--include-full-answers` stores complete responses only when requested. Keep these local and review them before sharing.
+- `--include-traces` stores each dialogue flow for the local [off/on comparison page](csharp/SrDualBrain.Gateway/wwwroot/benchmark-compare.html). Open the page through the gateway or locally, then choose a saved report; the page reads it in the browser.
+- `DUALBRAIN_CRITIC_MAX_OUTPUT_TOKENS` (default `520`) and `DUALBRAIN_CRITIC_TIMEOUT_SECONDS` (default `24`) set the critic call budget. Record both when comparing runs. Provider/parse failures appear as `critic_validity=invalid` and are excluded from issue-progress calculations; observed latency still includes them.
 
 For a future counterbalanced, independently scored study, see
 [`docs/benchmarks/system2-paired-evaluation-protocol.md`](docs/benchmarks/system2-paired-evaluation-protocol.md).
 The local-only `prepare_system2_scoring.py` tool makes blinded answer pairs from
 two clean `off,on` and `on,off` reports; it does not call a model.
+For the seven fixed-answer questions in the base suite, `score_system2_reference.py`
+can score the same two reports against frozen answers. It reports unsupported
+wording as indeterminate and leaves open-ended questions unscored. Its output
+contains case IDs and scores, not the answer text.
 
 For the bounded `gpt-6-luna` live-provider run and its full case report, see
 [`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md).

@@ -465,8 +465,22 @@ class RightBrainModel:
                 f"{draft}\n\n"
                 "Return JSON only."
             )
-            max_tokens = 520
-            timeout_seconds = min(float(self.llm_config.timeout_seconds if self.llm_config else 40), 24.0)
+            # Reasoning models also spend this budget on hidden reasoning tokens.
+            # Keep the ordinary default while allowing a measured run to reserve
+            # enough room for the structured JSON response.
+            try:
+                max_tokens = int(os.environ.get("DUALBRAIN_CRITIC_MAX_OUTPUT_TOKENS", "520"))
+            except ValueError:
+                max_tokens = 520
+            max_tokens = max(256, min(max_tokens, 16384))
+            try:
+                critic_timeout = float(os.environ.get("DUALBRAIN_CRITIC_TIMEOUT_SECONDS", "24"))
+            except ValueError:
+                critic_timeout = 24.0
+            timeout_seconds = min(
+                float(self.llm_config.timeout_seconds if self.llm_config else 40),
+                max(1.0, min(critic_timeout, 120.0)),
+            )
             call_failed = False
             completion = ""
             last_error = ""
@@ -520,8 +534,10 @@ class RightBrainModel:
                     lines.append(f"- {item}")
             critic_sum = "\n".join(lines).strip()
             critic_kind = "external"
+            critic_status = "ok"
             if verdict == "issues" and not issues:
                 if call_failed:
+                    critic_status = "provider_error"
                     if micro is not None and micro.verdict == "issues":
                         issues = list(micro.issues)
                         fixes = list(micro.fixes)
@@ -540,6 +556,7 @@ class RightBrainModel:
                         else:
                             critic_sum = "External critic model unavailable."
                 elif completion.strip():
+                    critic_status = "unstructured"
                     if micro is not None and micro.verdict == "issues":
                         issues = list(micro.issues)
                         fixes = list(micro.fixes)
@@ -590,6 +607,7 @@ class RightBrainModel:
                             if verdict == "issues" and not issues:
                                 verdict = "issues"
                             critic_kind = "external_repaired"
+                            critic_status = "ok"
                         else:
                             issues = [
                                 "(fallback) External critic response was unstructured; unable to parse actionable issues."
@@ -606,6 +624,13 @@ class RightBrainModel:
                             "Return strict JSON with concrete correctness issues."
                         ]
                         critic_sum = "External critic response unstructured."
+                else:
+                    critic_status = "empty_response"
+                    issues = ["(fallback) External critic returned an empty response; unable to verify reasoning."]
+                    fixes = ["Retry the critic with a larger output budget or a different provider."]
+                    critic_sum = "External critic response empty."
+            if verdict == "ok" and issues:
+                critic_status = "inconsistent"
             if verdict == "ok" and not critic_sum:
                 critic_sum = "No issues detected."
             # High-confidence sanity override: when micro-critic can compute an
@@ -631,6 +656,7 @@ class RightBrainModel:
                     float(micro.confidence_r) if critic_kind.startswith("micro") else 0.9
                 ),
                 "critic_kind": critic_kind,
+                "critic_status": critic_status,
             }
 
         # Deterministic fallback when no external critic is configured.
@@ -643,6 +669,7 @@ class RightBrainModel:
                 "critic_sum": micro.critic_sum,
                 "confidence_r": float(micro.confidence_r),
                 "critic_kind": "micro_offline",
+                "critic_status": "offline",
             }
         return {
             "qid": qid,
@@ -654,6 +681,7 @@ class RightBrainModel:
             "critic_sum": "External critic not configured.",
             "confidence_r": 0.2,
             "critic_kind": "disabled",
+            "critic_status": "not_configured",
         }
 
         # Heuristic fallback (no external LLM available).

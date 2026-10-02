@@ -49,6 +49,14 @@ The reveal key also retains each case's recorded System2 activation state, which
 may be unknown. The tool only pairs answers; it does not score them or run a
 provider.
 
+For a bounded objective check on the seven fixed-answer base-suite items,
+`score_system2_reference.py --ab /local/path/off-on.json --ba
+/local/path/on-off.json --output /local/path/reference-scores.json` scores
+explicit final answers using frozen numeric/category references. This is
+independent of the model-generated critic, but it does not cover explanation
+quality, completeness, safety, or the eight open-ended items. Keep the blinded
+human ratings above as the broader quality protocol.
+
 ## Score and report
 
 - For each blinded answer, rate **correctness** (0 incorrect, 1 partly correct,

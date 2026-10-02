@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 
 from core.models import RightBrainModel
+from core.micro_critic import _numeric_candidates, micro_criticise_reasoning
 
 
 class _FailingLLMClient:
@@ -19,6 +20,49 @@ class _PythonDictLLMClient:
         return "{'verdict': 'ok', 'issues': [], 'fixes': []}"
 
 
+class _EmptyLLMClient:
+    async def complete(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        return ""
+
+
+class _BudgetCaptureLLMClient:
+    def __init__(self):
+        self.budget = None
+
+    async def complete(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        self.budget = kwargs["max_output_tokens"]
+        return '{"verdict":"ok","issues":[],"fixes":[]}'
+
+
+def test_probability_micro_critic_accepts_latex_fraction_answer():
+    question = "A box has 3 red, 4 blue, and 5 green balls. Two are drawn without replacement. What is the probability both are blue?"
+    result = micro_criticise_reasoning(question, r"The answer is \boxed{\frac{1}{11}}.")
+    assert result is not None
+    assert result.verdict == "ok"
+    assert abs(_numeric_candidates(r"\tfrac{1}{11}")[0] - 1 / 11) < 1e-9
+    assert micro_criticise_reasoning(question, r"The answer is \frac{1}{10}.").verdict == "issues"
+
+
+def test_critic_budget_can_be_raised_for_reasoning_model(monkeypatch):
+    monkeypatch.setenv("DUALBRAIN_CRITIC_MAX_OUTPUT_TOKENS", "4096")
+    model = RightBrainModel()
+    client = _BudgetCaptureLLMClient()
+    model._llm_client = client
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+    result = asyncio.run(model.criticise_reasoning("qid", "Question", "Draft"))
+    assert client.budget == 4096
+    assert result["critic_status"] == "ok"
+
+
+def test_empty_critic_response_has_failure_status():
+    model = RightBrainModel()
+    model._llm_client = _EmptyLLMClient()
+    model.llm_config = SimpleNamespace(timeout_seconds=40)
+    result = asyncio.run(model.criticise_reasoning("qid", "Question", "Draft"))
+    assert result["critic_status"] == "empty_response"
+    assert result["issues"][0].startswith("(fallback)")
+
+
 def test_criticise_reasoning_returns_fallback_issue_when_provider_fails():
     model = RightBrainModel()
     model._llm_client = _FailingLLMClient()
@@ -32,6 +76,7 @@ def test_criticise_reasoning_returns_fallback_issue_when_provider_fails():
     issues = result.get("issues")
     assert isinstance(issues, list) and issues
     assert "unavailable" in str(issues[0]).lower()
+    assert result["critic_status"] == "provider_error"
 
 
 def test_criticise_reasoning_returns_parse_fallback_for_unstructured_output():
@@ -47,6 +92,7 @@ def test_criticise_reasoning_returns_parse_fallback_for_unstructured_output():
     issues = result.get("issues")
     assert isinstance(issues, list) and issues
     assert "unstructured" in str(issues[0]).lower()
+    assert result["critic_status"] == "unstructured"
 
 
 def test_criticise_reasoning_parses_python_dict_style_json():
@@ -81,6 +127,7 @@ def test_criticise_reasoning_uses_micro_critic_on_provider_failure_for_supported
     assert isinstance(issues, list) and issues
     assert any("47" in str(item) for item in issues)
     assert str(result.get("critic_kind") or "").startswith("micro")
+    assert result["critic_status"] == "provider_error"
 
 
 def test_criticise_reasoning_micro_critic_handles_short_backtick_arithmetic():
