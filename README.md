@@ -202,6 +202,10 @@ fixed-reference scoring. A subsequent
 [single-model blind review by Sol-6.1](docs/benchmarks/gpt-6-luna-system2-sol-judge-2026-10-02.md)
 scored the 30 paired answers; it is exploratory and does not replace the
 two-rater protocol.
+For human ratings, `serve_system2_review.py --packets ... --output-dir ...`
+opens a private, resumable A/B form at `http://127.0.0.1:8871/`. See the
+[scoring instructions](docs/benchmarks/system2-paired-evaluation-protocol.md#score-and-report)
+for locking ratings and handling uncertainty.
 
 Unconscious-field benchmark reports live under `target/benchmarks/` by default.
 For the creativity and multi-turn incubation suites, see

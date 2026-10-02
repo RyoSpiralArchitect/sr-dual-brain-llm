@@ -59,6 +59,25 @@ human ratings above as the broader quality protocol.
 
 ## Score and report
 
+For a resumable human review form, start the local server with only the blind
+packet file (never a raw report or reveal key):
+
+```bash
+python3 -S sr-dual-brain-llm/scripts/serve_system2_review.py \
+  --packets /local/path/scoring-packets/blind_packets.json \
+  --output-dir /local/path/human-ratings --port 8871
+```
+
+Open `http://127.0.0.1:8871/`. The form records reviewer identity and prior
+exposure to results, saves partial work, and resumes from the first incomplete
+pair. It requires all six scores for a preference or tie. An explicitly
+uncertain pair can leave scores empty but must include a reason; retain these
+nulls as unscored dimensions during comparison. Do not convert them to zero.
+The final action writes a read-only `ratings.json` with an input SHA-256 and
+a separate hash receipt. A locked file cannot be overwritten through the form.
+The server binds to loopback, serves only the form and blind packet data, and
+makes no provider calls. Keep its output directory private and outside Git.
+
 - For each blinded answer, rate **correctness** (0 incorrect, 1 partly correct,
   2 correct), **completeness** (0 misses core request, 1 partial, 2 complete),
   and **unsupported claims** (0 none, 1 minor, 2 material). Record ties and

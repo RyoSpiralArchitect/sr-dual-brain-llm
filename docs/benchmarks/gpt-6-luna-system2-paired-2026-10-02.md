@@ -52,9 +52,26 @@ machine-scoreable subset. It does not score explanations, completeness,
 unsupported claims, or the open-ended items. A 30-packet blinded answer set
 was prepared locally for the two-rater protocol in
 [`system2-paired-evaluation-protocol.md`](system2-paired-evaluation-protocol.md);
-those two independent ratings have not been collected. A separate
+human ratings and adjudication have not been collected. A separate
 [single-model blinded review by Sol-6.1](gpt-6-luna-system2-sol-judge-2026-10-02.md)
 found 27 ties, 1 `on` preference, and 2 `off` preferences across all 30 pairs.
+
+### Additional Mistral and human review in progress
+
+`mistral-large-latest` completed all 30 blind packets in a fresh API request
+using the same rubric, without the reveal key or other ratings. The request
+used [Mistral JSON mode](https://docs.mistral.ai/studio/conversations/structured-output/json_mode),
+temperature 0, random seed 7, and an 8,192-token output limit. The response
+reported the same model alias; an underlying model revision was not exposed.
+Packet IDs, score ranges, and completion status were validated before locking
+the ratings. Their SHA-256 is
+`379828b528818d6c087f4fa4814de1c184255d5af48f821c542460e9ad48c881`.
+
+Those scores are withheld until the human ratings are locked. The human
+reviewer has already seen the earlier Sol aggregate; the form records prior
+exposure explicitly. Human scoring and adjudication remain pending, so this
+follow-up is not yet a completed two-rater result. The assistant coordinating
+the study is not an additional blinded rater because it has seen mode mappings.
 
 ## Reproduce and receipts
 
