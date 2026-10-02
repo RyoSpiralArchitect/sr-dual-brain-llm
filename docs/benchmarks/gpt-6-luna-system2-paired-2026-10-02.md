@@ -52,7 +52,9 @@ machine-scoreable subset. It does not score explanations, completeness,
 unsupported claims, or the open-ended items. A 30-packet blinded answer set
 was prepared locally for the two-rater protocol in
 [`system2-paired-evaluation-protocol.md`](system2-paired-evaluation-protocol.md);
-those ratings have not been collected.
+those two independent ratings have not been collected. A separate
+[single-model blinded review by Sol-6.1](gpt-6-luna-system2-sol-judge-2026-10-02.md)
+found 27 ties, 1 `on` preference, and 2 `off` preferences across all 30 pairs.
 
 ## Reproduce and receipts
 

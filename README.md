@@ -198,7 +198,10 @@ For the bounded `gpt-6-luna` live-provider run and its full case report, see
 [`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md).
 The [2026-10-02 paired retest](docs/benchmarks/gpt-6-luna-system2-paired-2026-10-02.md)
 adds explicit critic validity, complete local answers and traces, and bounded
-fixed-reference scoring.
+fixed-reference scoring. A subsequent
+[single-model blind review by Sol-6.1](docs/benchmarks/gpt-6-luna-system2-sol-judge-2026-10-02.md)
+scored the 30 paired answers; it is exploratory and does not replace the
+two-rater protocol.
 
 Unconscious-field benchmark reports live under `target/benchmarks/` by default.
 For the creativity and multi-turn incubation suites, see
@@ -244,7 +247,7 @@ Keep a short log here so benchmark trends are visible without opening JSON files
 
 | Date (UTC) | Provider / Model | Modes | N | Critic health gate | Key result | Report |
 |---|---|---|---:|---|---|---|
-| 2026-10-02 | OpenAI / `gpt-6-luna` | `off,on` and `on,off` | 15 × 4 | 2/2 healthy in each mode, no retries | 60/60 turns; 0 invalid critics; fixed-reference scoring: 12/12 paired ties correct, 2 indeterminate pairs; no measured quality advantage | [`docs/benchmarks/gpt-6-luna-system2-paired-2026-10-02.md`](docs/benchmarks/gpt-6-luna-system2-paired-2026-10-02.md) |
+| 2026-10-02 | OpenAI / `gpt-6-luna` | `off,on` and `on,off` | 15 × 4 | 2/2 healthy in each mode, no retries | 60/60 turns; 0 invalid critics; fixed-reference: 12 paired correct/correct ties, 2 indeterminate; Sol-6.1 blind judge: 27 ties, on 1, off 2; no stable quality advantage | [`paired retest`](docs/benchmarks/gpt-6-luna-system2-paired-2026-10-02.md), [`blind review`](docs/benchmarks/gpt-6-luna-system2-sol-judge-2026-10-02.md) |
 | 2026-09-27 | OpenAI / `gpt-6-luna` | `off,on` | 15 | 2/2 healthy per mode, no retries | Historical 5 → 4 issue count includes a false positive and provider failures; see reassessment | [`docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md`](docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.md) |
 | 2026-02-15 | OpenAI / `gpt-4o` | `auto,on` | 15 | enabled (`attempts=3`, `min_successes=1`) | `issue_reduction_rate_delta=+0.125`, `avg_latency_ms_all_cases_delta=-1479.57ms`, `activation: 0.933 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openai4o_15_latest.json` |
 | 2026-02-26 | OpenAI / `gpt-4o-mini` | `auto,on` | 35 | enabled (`attempts=3`, `min_successes=2`) | `issue_reduction_rate_delta=+0.1786`, `avg_latency_ms_all_cases_delta=-1030.03ms`, `activation: 0.857 -> 1.0` | `sr-dual-brain-llm/samples/system2_ab_reasoning_openended_openai_20260226_042832Z.json` |
