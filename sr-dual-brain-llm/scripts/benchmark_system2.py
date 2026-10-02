@@ -1218,25 +1218,30 @@ async def _run_case(
         "cerebellum_confidence": cerebellum_confidence,
     }
     critic_statuses = [
-        str(policy_state.get(key) or "").strip().lower()
-        for key in (
-            "critic_status",
-            "system2_verify_critic_status",
-            "system2_round3_critic_status",
+        str(system2.get(metric_key) or policy_state.get(state_key) or "").strip().lower()
+        for metric_key, state_key in (
+            ("critic_status", "critic_status"),
+            ("verify_critic_status", "system2_verify_critic_status"),
+            ("round3_critic_status", "system2_round3_critic_status"),
         )
     ]
     critic_issues_for_health = [
         item
-        for key in ("critic_issues_raw", "system2_verify_issues", "system2_round3_issues")
-        for item in _text_list(policy_state.get(key))
+        for source, key in (
+            (policy_state, "critic_issues_raw"),
+            (system2, "critic_issues"),
+            (system2, "verify_issues"),
+            (system2, "round3_issues"),
+        )
+        for item in _text_list(source.get(key))
     ]
     invalid_statuses = {
-        "provider_error", "unstructured", "empty_response", "inconsistent", "not_configured", "offline"
+        "provider_error", "unstructured", "empty_response", "inconsistent", "not_configured", "offline", "timeout"
     }
     critic_failure_reasons = {status for status in critic_statuses if status in invalid_statuses}
     if any(_is_critic_fallback_issue(item) for item in critic_issues_for_health):
         critic_failure_reasons.add("fallback_issue")
-    if str(policy_state.get("critic_kind") or "") == "micro_timeout_fallback":
+    if str(system2.get("critic_kind") or policy_state.get("critic_kind") or "") == "micro_timeout_fallback":
         critic_failure_reasons.add("micro_timeout_fallback")
     case["critic_validity"] = (
         "invalid" if critic_failure_reasons else

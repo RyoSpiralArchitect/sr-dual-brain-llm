@@ -3673,6 +3673,9 @@ class DualBrainController:
                 initial_issues=int(system2_initial_issue_count),
                 final_issues=int(system2_final_issue_count),
                 critic_kind=decision.state.get("critic_kind"),
+                critic_status=decision.state.get("critic_status"),
+                verify_critic_status=decision.state.get("system2_verify_critic_status"),
+                round3_critic_status=decision.state.get("system2_round3_critic_status"),
                 verify_issues_raw=decision.state.get(
                     "system2_issue_count_verify_raw"
                 ),
@@ -5536,6 +5539,11 @@ class DualBrainController:
                         final_issues=int(timeout_final_issues),
                         critic_kind=(
                             decision.state.get("critic_kind")
+                            if timeout_recovered
+                            else "timeout"
+                        ),
+                        critic_status=(
+                            decision.state.get("critic_status")
                             if timeout_recovered
                             else "timeout"
                         ),

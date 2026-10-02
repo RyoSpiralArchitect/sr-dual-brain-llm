@@ -140,6 +140,31 @@ def test_full_answers_are_opt_in_for_ab_cases():
     assert with_answer["answer"] == "A complete fixture answer."
 
 
+def test_provider_failure_status_reaches_case_report():
+    async def answer(*_args, **_kwargs):
+        return "An answer was produced."
+
+    events = [
+        {"event": "system2_mode", "mode": "on", "enabled": True},
+        {"event": "system2_refinement", "critic_kind": "micro", "critic_status": "provider_error",
+         "rounds": 1, "initial_issues": 1, "final_issues": 0, "resolved": True},
+    ]
+    session = SimpleNamespace(
+        telemetry=SimpleNamespace(clear=lambda: None, events=events),
+        controller=SimpleNamespace(process=answer),
+        memory=SimpleNamespace(dialogue_flow=lambda _qid: {"steps": [{"role": "critic"}]}),
+    )
+    case = asyncio.run(_run_case(
+        session=session, question_entry={"id": "q1", "question": "Why?"}, index=1,
+        run_id="fixture", leading_brain="auto", default_system2_mode="on",
+        executive_mode="off", executive_observer_mode="off", diagnostics_mode="off",
+        include_trace=True,
+    ))
+    assert case["critic_validity"] == "invalid"
+    assert case["critic_failure_reasons"] == ["provider_error"]
+    assert case["dialogue_flow"]["steps"][0]["role"] == "critic"
+
+
 def test_critic_provider_failure_is_not_counted_as_issue_progress():
     cases = [
         {"id": "bad", "error": None, "critic_validity": "invalid", "critic_failure_reasons": ["provider_error"], "initial_issues": 5,
