@@ -15,6 +15,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 import benchmark_system2_ab  # noqa: E402
 import prepare_system2_scoring  # noqa: E402
+import score_system2_reference  # noqa: E402
 from benchmark_system2 import (  # noqa: E402
     _build_system2_diagnostic,
     _run_case,
@@ -23,7 +24,8 @@ from benchmark_system2 import (  # noqa: E402
     _summarise_cases,
 )
 from benchmark_system2_ab import _build_pairwise  # noqa: E402
-from engine_stdio import _extract_metrics  # noqa: E402
+from engine_stdio import _extract_metrics, _right_worker  # noqa: E402
+from core.callosum import Callosum  # noqa: E402
 
 
 def test_ab_provenance_hashes_effective_questions_and_excludes_secrets(tmp_path):
@@ -137,6 +139,101 @@ def test_full_answers_are_opt_in_for_ab_cases():
     with_answer = asyncio.run(_run_case(**params, include_answer=True))
     assert "answer" not in preview_only
     assert with_answer["answer"] == "A complete fixture answer."
+
+
+def test_provider_failure_status_reaches_case_report():
+    async def answer(*_args, **_kwargs):
+        return "An answer was produced."
+
+    events = [
+        {"event": "system2_mode", "mode": "on", "enabled": True},
+        {"event": "system2_refinement", "critic_kind": "micro", "critic_status": "provider_error",
+         "rounds": 1, "initial_issues": 1, "final_issues": 0, "resolved": True},
+    ]
+    session = SimpleNamespace(
+        telemetry=SimpleNamespace(clear=lambda: None, events=events),
+        controller=SimpleNamespace(process=answer),
+        memory=SimpleNamespace(dialogue_flow=lambda _qid: {"steps": [{"role": "critic"}]}),
+    )
+    case = asyncio.run(_run_case(
+        session=session, question_entry={"id": "q1", "question": "Why?"}, index=1,
+        run_id="fixture", leading_brain="auto", default_system2_mode="on",
+        executive_mode="off", executive_observer_mode="off", diagnostics_mode="off",
+        include_trace=True,
+    ))
+    assert case["critic_validity"] == "invalid"
+    assert case["critic_failure_reasons"] == ["provider_error"]
+    assert case["dialogue_flow"]["steps"][0]["role"] == "critic"
+
+
+def test_right_worker_preserves_critic_status():
+    class FakeRight:
+        async def criticise_reasoning(self, *_args, **_kwargs):
+            return {"verdict": "issues", "issues": ["(fallback) unavailable"],
+                    "fixes": [], "critic_sum": "provider unavailable", "confidence_r": 0.2,
+                    "critic_kind": "external", "critic_status": "provider_error"}
+
+    async def run():
+        callosum = Callosum(slot_ms=0)
+        worker = asyncio.create_task(_right_worker(callosum, None, FakeRight()))
+        try:
+            return await callosum.ask_detail(
+                {"qid": "test-status", "type": "ASK_CRITIC", "question": "Why?", "draft": "Because."},
+                timeout_ms=1000,
+            )
+        finally:
+            worker.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await worker
+
+    response = asyncio.run(run())
+    assert response["critic_status"] == "provider_error"
+
+
+def test_critic_provider_failure_is_not_counted_as_issue_progress():
+    cases = [
+        {"id": "bad", "error": None, "critic_validity": "invalid", "critic_failure_reasons": ["provider_error"], "initial_issues": 5,
+         "final_issues": 0, "resolved": True, "system2_enabled": True},
+        {"id": "good", "error": None, "critic_validity": "valid", "initial_issues": 2,
+         "final_issues": 1, "resolved": False, "system2_enabled": True},
+    ]
+    summary = _summarise_cases(cases)
+    assert summary["critic_invalid_cases"] == 1
+    assert summary["critic_invalid_by_reason"] == {"provider_error": 1}
+    assert summary["measured_cases"] == 1
+    assert summary["sum_initial_issues"] == 2
+    assert summary["sum_final_issues"] == 1
+    assert summary["resolved_issue_cases"] == 0
+
+
+def test_reference_scorer_accepts_latex_and_rejects_wrong_final():
+    score = score_system2_reference.score_answer
+    assert score("probability_001", r"=\boxed{\frac{1}{11}}") == "correct"
+    assert score("probability_001", r"=\boxed{\frac{1}{10}}") == "incorrect"
+    assert score("arith_chain_001", "378 - 96 = 282; Answer: 47") == "correct"
+    assert score("arith_chain_001", "378 - 96 = 282; Answer: 48") == "incorrect"
+    assert score("algebra_001", r"x=12; verify 3(12)+7=43") == "correct"
+    assert score("bayes_001", r"P(D\mid +)=0.1624, or 16.24%") == "correct"
+    assert score("bayes_001", "Sensitivity is 0.95 and prevalence is 0.02") == "indeterminate"
+    assert score("error_analysis_001", "Growth is 20%, not 40%") == "correct"
+    assert score("error_analysis_001", "20% appears in the setup, but growth is 40%") == "incorrect"
+    assert score("safety_policy_001", "Four rules") == "unscored"
+
+
+def test_reference_pair_scores_both_orders_without_critic_self_grading():
+    ab = _synthetic_scoring_report(["off", "on"])
+    ba = _synthetic_scoring_report(["on", "off"])
+    for report in (ab, ba):
+        for mode in ("off", "on"):
+            case = report["modes"][mode]["cases"][0]
+            case["id"] = "probability_001"
+            case["answer"] = r"\frac{1}{10}" if mode == "off" else r"\frac{1}{11}"
+            case["critic_validity"] = "valid" if mode == "on" else "not_applicable"
+    result = score_system2_reference.score_pair(ab, ba)
+    assert result["summary"]["paired_scored"] == 2
+    assert result["summary"]["on_wins"] == 2
+    assert result["summary"]["off_wins"] == 0
+    assert all("answer" not in row for row in result["rows"])
 
 
 def test_summarise_cases_includes_all_case_noop_metrics():

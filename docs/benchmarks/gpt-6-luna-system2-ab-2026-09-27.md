@@ -1,5 +1,12 @@
 # GPT-6 Luna System2 A/B — 2026-09-27
 
+**2026-10-02 reassessment:** The historical `5 → 4` issue count includes a
+known false positive on the correct LaTeX answer `\frac{1}{11}` and provider
+output-limit failures treated as critic issues. Preserve the figures below as
+the original receipt; they are not a valid measure of issue resolution.
+The [paired retest](gpt-6-luna-system2-paired-2026-10-02.md) records critic
+validity separately and scores fixed-answer questions independently.
+
 This is one exploratory live-provider run of the repository's fixed 15-question
 English/Japanese suite. The exact model ID was `gpt-6-luna` via the OpenAI Chat
 Completions API. Both hemispheres used that model. The run used the API's default

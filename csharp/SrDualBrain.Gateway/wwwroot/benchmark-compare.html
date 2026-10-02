@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>System2 benchmark comparison</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .compare { max-width: 1450px; margin: 28px auto; padding: 0 20px 50px; }
+      .compare h1 { margin: 0 0 8px; }
+      .compare__intro { max-width: 850px; line-height: 1.6; }
+      .compare__tools { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+      .compare__tools label { display: grid; gap: 7px; }
+      .compare__tools input, .compare__tools select { max-width: min(90vw, 480px); }
+      .compare__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .compare__pane { min-width: 0; }
+      .compare__meta { margin: 10px 0 18px; line-height: 1.5; }
+      .compare__answer { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; max-height: 520px; overflow: auto; }
+      .compare__question { white-space: pre-wrap; line-height: 1.6; }
+      .compare__trace { margin-top: 18px; }
+      @media (max-width: 850px) { .compare__grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header class="topbar"><div class="brand"><div class="brand__title">SrDualBrain</div><div class="brand__subtitle">System2 benchmark comparison</div></div></header>
+    <main class="compare">
+      <h1>Off / On, side by side</h1>
+      <p class="compare__intro">Open a saved A/B report with full answers and traces. The file stays in this browser tab; nothing is uploaded. Internal critic counts describe the run, while the separate reference score measures only fixed-answer questions.</p>
+      <div class="compare__tools">
+        <label>Benchmark report <input id="reportFile" type="file" accept=".json,application/json" /></label>
+        <label>Question <select id="questionSelect" disabled><option>Load a report first</option></select></label>
+      </div>
+      <p id="loadStatus" role="status">Waiting for a report.</p>
+      <section class="card"><div class="card__header"><div class="card__title" id="questionId">Question</div></div><p class="compare__question" id="questionText"></p></section>
+      <div class="compare__grid">
+        <section class="card compare__pane" aria-label="System2 off">
+          <div class="card__header"><div class="card__title">System2 off</div></div>
+          <p class="compare__meta" id="offMeta"></p>
+          <pre class="compare__answer" id="offAnswer"></pre>
+          <div class="compare__trace" id="offTrace"></div>
+        </section>
+        <section class="card compare__pane" aria-label="System2 on">
+          <div class="card__header"><div class="card__title">System2 on</div></div>
+          <p class="compare__meta" id="onMeta"></p>
+          <pre class="compare__answer" id="onAnswer"></pre>
+          <div class="compare__trace" id="onTrace"></div>
+        </section>
+      </div>
+    </main>
+    <script src="./trace-theater.js"></script>
+    <script src="./benchmark-compare.js"></script>
+  </body>
+</html>

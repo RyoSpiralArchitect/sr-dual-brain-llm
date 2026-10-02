@@ -2856,6 +2856,8 @@ class DualBrainController:
             critic_kind = response.get("critic_kind")
             if critic_kind:
                 decision.state["critic_kind"] = str(critic_kind)
+            if response.get("critic_status"):
+                decision.state["critic_status"] = str(response["critic_status"])
             if critic_verdict:
                 decision.state["critic_verdict"] = critic_verdict
             if critic_issues:
@@ -2917,6 +2919,8 @@ class DualBrainController:
                     critic_kind = fallback.get("critic_kind")
                     if critic_kind:
                         decision.state["critic_kind"] = str(critic_kind)
+                    if fallback.get("critic_status"):
+                        decision.state["critic_status"] = str(fallback["critic_status"])
                     if critic_verdict:
                         decision.state["critic_verdict"] = critic_verdict
                     critic_issues_raw = _normalise_issue_list(
@@ -3231,6 +3235,7 @@ class DualBrainController:
                 verify_response.get("verdict") or ""
             ).strip().lower()
             verify_kind = verify_response.get("critic_kind")
+            verify_status = verify_response.get("critic_status")
             verify_issues_raw_for_resolution = _normalise_issue_list(
                 verify_response.get("issues"), limit=12,
             )
@@ -3268,6 +3273,7 @@ class DualBrainController:
                         verify_fallback.get("verdict") or ""
                     ).strip().lower()
                     verify_kind = verify_fallback.get("critic_kind")
+                    verify_status = verify_fallback.get("critic_status")
                     verify_issues_raw_for_resolution = _normalise_issue_list(
                         verify_fallback.get("issues"), limit=12,
                     )
@@ -3282,6 +3288,8 @@ class DualBrainController:
 
             system2_rounds_completed = max(system2_rounds_completed, 2)
             system2_followup_verdict = verify_verdict or None
+            if verify_status:
+                decision.state["system2_verify_critic_status"] = str(verify_status)
             if verify_issues:
                 decision.state["system2_verify_issues"] = list(verify_issues)
             if verify_detail:
@@ -3511,6 +3519,7 @@ class DualBrainController:
                     round3_response.get("verdict") or ""
                 ).strip().lower()
                 round3_kind = round3_response.get("critic_kind")
+                round3_status = round3_response.get("critic_status")
                 round3_issues_raw_for_resolution = _normalise_issue_list(
                     round3_response.get("issues"), limit=12,
                 )
@@ -3548,6 +3557,7 @@ class DualBrainController:
                             round3_fallback.get("verdict") or ""
                         ).strip().lower()
                         round3_kind = round3_fallback.get("critic_kind")
+                        round3_status = round3_fallback.get("critic_status")
                         round3_issues_raw_for_resolution = _normalise_issue_list(
                             round3_fallback.get("issues"), limit=12,
                         )
@@ -3625,6 +3635,8 @@ class DualBrainController:
                     decision.state["system2_round3_new_issues"] = round3_new_issues
                 if round3_verdict:
                     decision.state["system2_round3_verdict"] = round3_verdict
+                if round3_status:
+                    decision.state["system2_round3_critic_status"] = str(round3_status)
                 if round3_issues:
                     decision.state["system2_round3_issues"] = list(round3_issues)
                 if round3_detail:
@@ -3661,6 +3673,9 @@ class DualBrainController:
                 initial_issues=int(system2_initial_issue_count),
                 final_issues=int(system2_final_issue_count),
                 critic_kind=decision.state.get("critic_kind"),
+                critic_status=decision.state.get("critic_status"),
+                verify_critic_status=decision.state.get("system2_verify_critic_status"),
+                round3_critic_status=decision.state.get("system2_round3_critic_status"),
                 verify_issues_raw=decision.state.get(
                     "system2_issue_count_verify_raw"
                 ),
@@ -5524,6 +5539,11 @@ class DualBrainController:
                         final_issues=int(timeout_final_issues),
                         critic_kind=(
                             decision.state.get("critic_kind")
+                            if timeout_recovered
+                            else "timeout"
+                        ),
+                        critic_status=(
+                            decision.state.get("critic_status")
                             if timeout_recovered
                             else "timeout"
                         ),

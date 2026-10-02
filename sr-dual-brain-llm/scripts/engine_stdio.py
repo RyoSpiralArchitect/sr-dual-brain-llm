@@ -273,6 +273,9 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "enabled": system2_ev.get("enabled"),
             "reason": system2_ev.get("reason"),
             "critic_kind": critic_kind,
+            "critic_status": system2_refine_ev.get("critic_status"),
+            "verify_critic_status": system2_refine_ev.get("verify_critic_status"),
+            "round3_critic_status": system2_refine_ev.get("round3_critic_status"),
             "low_signal_filter": low_signal_filter,
             "rounds": rounds,
             "round_target": round_target,
@@ -662,6 +665,7 @@ async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightB
                         "critic_sum": critique.get("critic_sum"),
                         "confidence_r": critique.get("confidence_r"),
                         "critic_kind": critique.get("critic_kind"),
+                        "critic_status": critique.get("critic_status"),
                     },
                 )
             except Exception as exc:
