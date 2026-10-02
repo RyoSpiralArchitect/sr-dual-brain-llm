@@ -665,6 +665,7 @@ async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightB
                         "critic_sum": critique.get("critic_sum"),
                         "confidence_r": critique.get("confidence_r"),
                         "critic_kind": critique.get("critic_kind"),
+                        "critic_status": critique.get("critic_status"),
                     },
                 )
             except Exception as exc:

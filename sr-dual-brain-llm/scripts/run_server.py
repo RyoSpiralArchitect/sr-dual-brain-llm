@@ -74,6 +74,8 @@ async def right_worker(callosum, mem, right_model):
                             "fixes": critique.get("fixes"),
                             "critic_sum": critique.get("critic_sum"),
                             "confidence_r": critique.get("confidence_r"),
+                            "critic_kind": critique.get("critic_kind"),
+                            "critic_status": critique.get("critic_status"),
                         },
                     )
                 except Exception as e:

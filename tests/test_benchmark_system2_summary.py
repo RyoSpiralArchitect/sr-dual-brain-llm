@@ -24,7 +24,8 @@ from benchmark_system2 import (  # noqa: E402
     _summarise_cases,
 )
 from benchmark_system2_ab import _build_pairwise  # noqa: E402
-from engine_stdio import _extract_metrics  # noqa: E402
+from engine_stdio import _extract_metrics, _right_worker  # noqa: E402
+from core.callosum import Callosum  # noqa: E402
 
 
 def test_ab_provenance_hashes_effective_questions_and_excludes_secrets(tmp_path):
@@ -163,6 +164,30 @@ def test_provider_failure_status_reaches_case_report():
     assert case["critic_validity"] == "invalid"
     assert case["critic_failure_reasons"] == ["provider_error"]
     assert case["dialogue_flow"]["steps"][0]["role"] == "critic"
+
+
+def test_right_worker_preserves_critic_status():
+    class FakeRight:
+        async def criticise_reasoning(self, *_args, **_kwargs):
+            return {"verdict": "issues", "issues": ["(fallback) unavailable"],
+                    "fixes": [], "critic_sum": "provider unavailable", "confidence_r": 0.2,
+                    "critic_kind": "external", "critic_status": "provider_error"}
+
+    async def run():
+        callosum = Callosum(slot_ms=0)
+        worker = asyncio.create_task(_right_worker(callosum, None, FakeRight()))
+        try:
+            return await callosum.ask_detail(
+                {"qid": "test-status", "type": "ASK_CRITIC", "question": "Why?", "draft": "Because."},
+                timeout_ms=1000,
+            )
+        finally:
+            worker.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await worker
+
+    response = asyncio.run(run())
+    assert response["critic_status"] == "provider_error"
 
 
 def test_critic_provider_failure_is_not_counted_as_issue_progress():
