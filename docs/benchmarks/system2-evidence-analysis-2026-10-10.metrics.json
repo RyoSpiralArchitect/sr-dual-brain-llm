@@ -1,0 +1,392 @@
+{
+  "analysis_date": "2026-10-10",
+  "source_revision": "bbb1459fc8bc73dcd0740410924c2cfdb7d1b1f5",
+  "scope": "Existing System2 evidence and fresh heuristic mechanism diagnostics; no new live-model evaluation",
+  "historical_archive": {
+    "path": "docs/benchmarks/gpt-6-luna-system2-ab-2026-09-27.json.gz",
+    "decompressed_sha256": "35111fe5d2334cae729f6e33b0ef6fe3dc512a2aa3a13eda9e5a7cee7cc6fb57",
+    "run_id": "system2_ab_20260927_175600",
+    "source_revision": null,
+    "modes": {
+      "off": {
+        "cases": 15,
+        "completed": 15,
+        "reported_partial_mean_latency_ms": 4592.8705888004815,
+        "reported_partial_median_latency_ms": 3592.85445799469,
+        "phase_sum_exceeds_reported_latency_cases": 15,
+        "single_phase_exceeds_reported_latency_cases": 1,
+        "initial_critic_issue_count": null,
+        "final_critic_issue_count": null,
+        "warning": "Legacy critic counts include false-positive/provider failures; latency excludes initial drafting and is not full turn time"
+      },
+      "on": {
+        "cases": 15,
+        "completed": 15,
+        "reported_partial_mean_latency_ms": 2988.6759084028504,
+        "reported_partial_median_latency_ms": 1463.7774169968907,
+        "phase_sum_exceeds_reported_latency_cases": 13,
+        "single_phase_exceeds_reported_latency_cases": 9,
+        "initial_critic_issue_count": 5,
+        "final_critic_issue_count": 4,
+        "warning": "Legacy critic counts include false-positive/provider failures; latency excludes initial drafting and is not full turn time"
+      }
+    }
+  },
+  "paired_documented_results": {
+    "evidence_source": "Committed Markdown only; full reports and ratings unavailable in this checkout",
+    "sources": [
+      "docs/benchmarks/gpt-6-luna-system2-paired-2026-10-02.md",
+      "docs/benchmarks/gpt-6-luna-system2-sol-judge-2026-10-02.md"
+    ],
+    "turns": 60,
+    "unique_cases": 15,
+    "pairs": 30,
+    "reference_correct_ties": 12,
+    "reference_indeterminate_pairs": 2,
+    "reference_unscored_pairs": 16,
+    "judge_on_preferences": 1,
+    "judge_off_preferences": 2,
+    "judge_ties": 27,
+    "non_ties_preferring_second_mode": 3,
+    "completeness_on": 57,
+    "completeness_off": 57,
+    "blocks": [
+      {
+        "block": "AB",
+        "order": [
+          "off",
+          "on"
+        ],
+        "reported_partial_latency_ms": {
+          "off": 9035,
+          "on": 6634
+        },
+        "on_minus_off_ms": -2401,
+        "on_relative_change_percent": -26.574432761483123
+      },
+      {
+        "block": "BA",
+        "order": [
+          "on",
+          "off"
+        ],
+        "reported_partial_latency_ms": {
+          "off": 7457,
+          "on": 8709
+        },
+        "on_minus_off_ms": 1252,
+        "on_relative_change_percent": 16.789593670376824
+      }
+    ],
+    "reported_partial_latency_by_position_ms": {
+      "first": 8872.0,
+      "second": 7045.5,
+      "warning": "Descriptive means from rounded published block means; not an end-to-end speed or causal order estimate"
+    }
+  },
+  "local_heuristic_results": {
+    "creativity": {
+      "raw_path": "target/benchmarks/analysis-2026-10-10/unconscious-creativity-local.json",
+      "raw_sha256": "485786199628f9cf7d90838b88a9b7add625c8ecd0a83bdc4eafad4ddf6edab0",
+      "run_id": "unconscious_creativity_20261010_090200",
+      "timestamp_utc": "2026-10-10T09:02:06Z",
+      "external_llm_enabled": false,
+      "postgres_enabled": false,
+      "process_exit_code": 0,
+      "summary": {
+        "total_cases": 12,
+        "ok_cases": 12,
+        "error_cases": 0,
+        "leak_cases": 0,
+        "leak_rate": 0.0,
+        "psychoid_signal_rate": 1.0,
+        "default_mode_reflection_rate": 0.16666666666666666,
+        "default_mode_suppressed_rate": 0.9166666666666666,
+        "emergent_idea_rate": 0.0,
+        "unreleased_cache_rate": 0.9166666666666666,
+        "unconscious_weave_rate": 1.0,
+        "linguistic_motif_rate": 1.0,
+        "archetype_cue_cases": 11,
+        "archetype_cue_top_k_alignment_rate": 0.5454545454545454,
+        "archetype_cue_motif_only_rate": 0.2727272727272727,
+        "archetype_cue_divergent_rate": 0.09090909090909091,
+        "archetype_motif_top_k_divergence_rate": 0.5,
+        "archetype_ambiguous_activation_rate": 0.5,
+        "avg_archetype_top1_margin": 0.16573629488402816,
+        "avg_archetype_activation_entropy": 0.8990500457265566,
+        "avg_unconscious_score": 0.38830675,
+        "avg_incubation_pressure": 0.5228849999999999,
+        "avg_cache_depth": 5.5,
+        "max_cache_depth": 11,
+        "avg_coherence_combined": 0.584648530831632,
+        "avg_coherence_tension": 0.21311819129100543,
+        "avg_weave_score": 0.5643089480034316,
+        "avg_motif_score": 0.26357799815396576,
+        "avg_motif_repeated_loops": 2.3333333333333335,
+        "avg_psychoid_resonance": 0.0384642587188407,
+        "avg_psychoid_tension": 0.3413426792129813,
+        "avg_signifier_chain_len": 6.5,
+        "avg_attention_bias_count": 4.0,
+        "avg_task_positive_load": 0.6937525376083151
+      },
+      "fixture": {
+        "path": "sr-dual-brain-llm/examples/unconscious_creativity_benchmark_questions.json",
+        "sha256": "6795bcb3602620ad244bf2471347e5913d6fb17278a2aa5bb4a4e354864931f7"
+      },
+      "config": {
+        "session_id": "unconscious_creativity_20261010_090200",
+        "answer_mode": "plain",
+        "leading_brain": "auto",
+        "system2_mode": "auto",
+        "executive_mode": "off",
+        "executive_observer_mode": "off",
+        "low_signal_filter": "on",
+        "question_count": 12,
+        "only_ids": null,
+        "only_tags": null,
+        "llm_capable": false
+      },
+      "invocation_conditions": {
+        "working_directory": "repository root",
+        "python_executable": ".venv/bin/python",
+        "question_order": "fixture order",
+        "shuffle": false,
+        "subset_filter": null,
+        "history_enabled": false,
+        "expect_no_leaks": true,
+        "authentication": "Provider/model/key settings and PG DSN cleared only in child environment; proxy and TLS retained",
+        "diagnostic_interpretation": "Heuristic signal health, not independent answer quality"
+      }
+    },
+    "incubation": {
+      "raw_path": "target/benchmarks/analysis-2026-10-10/unconscious-incubation-local.json",
+      "raw_sha256": "8a17f2be6d9460c9365e608f0ff20b5d09291d05e47f39f4711ed5eb8c92691b",
+      "run_id": "unconscious_incubation_20261010_090200",
+      "timestamp_utc": "2026-10-10T09:02:09Z",
+      "external_llm_enabled": false,
+      "postgres_enabled": false,
+      "process_exit_code": 0,
+      "summary": {
+        "total_sequences": 5,
+        "ok_sequences": 5,
+        "error_sequences": 0,
+        "total_turns": 20,
+        "ok_turns": 20,
+        "leak_sequences": 0,
+        "emergent_sequences": 5,
+        "emergent_sequence_rate": 1.0,
+        "target_emergent_sequence_rate": 0.2,
+        "seed_cached_sequence_rate": 1.0,
+        "seed_to_emergent_links": 5,
+        "seed_to_emergent_same_archetype_rate": 1.0,
+        "seed_to_emergent_origin_match_rate": 1.0,
+        "seed_to_emergent_transition_counts": {
+          "self->self": 1,
+          "shadow->shadow": 1,
+          "syzygy->syzygy": 3
+        },
+        "sequences_with_seed_emergent_same_archetype": 5,
+        "sequences_with_seed_emergent_origin_match": 5,
+        "near_miss_attempts": 25,
+        "echo_near_miss_attempts": 10,
+        "sequences_with_near_miss": 5,
+        "sequences_with_echo_near_miss": 5,
+        "avg_closest_near_miss_gap": 0.08008000000000001,
+        "avg_closest_echo_near_miss_gap": 0.08008000000000001,
+        "min_closest_echo_near_miss_gap": 0.0,
+        "max_closest_echo_near_miss_gap": 0.1625,
+        "near_miss_state_counts": {
+          "absorbed_by_emergent_archetype": 8,
+          "deep_below_threshold": 1,
+          "mid_depth": 2,
+          "off_axis_top1_dominant": 2,
+          "waiting_incubation": 12
+        },
+        "echo_near_miss_state_counts": {
+          "absorbed_by_emergent_archetype": 8,
+          "waiting_incubation": 2
+        },
+        "near_miss_archetype_counts": {
+          "hero": 2,
+          "persona": 1,
+          "self": 6,
+          "shadow": 9,
+          "syzygy": 7
+        },
+        "echo_near_miss_archetype_counts": {
+          "hero": 1,
+          "persona": 1,
+          "self": 2,
+          "shadow": 5,
+          "syzygy": 1
+        },
+        "avg_seed_cached_turns": 3.0,
+        "avg_first_emergent_turn_index": 4.0,
+        "avg_peak_incubation_pressure": 0.4195474,
+        "avg_pressure_delta": 0.20574060000000002,
+        "avg_final_cache_depth": 2.0,
+        "max_peak_cache_depth": 2,
+        "turns_by_role": {
+          "distractor": {
+            "turns": 5,
+            "ok_turns": 5,
+            "emergent_rate": 0.0,
+            "seed_cached_rate": 1.0,
+            "harvest_attempt_turn_rate": 1.0,
+            "near_miss_turn_rate": 1.0,
+            "leak_rate": 0.0,
+            "cue_top_k_alignment_rate": 0.6,
+            "cue_motif_only_rate": 0.2,
+            "cue_psychoid_only_rate": 0.0,
+            "avg_incubation_pressure": 0.2113772,
+            "avg_closest_near_miss_gap": 0.25286,
+            "avg_cache_depth": 1.0
+          },
+          "echo_return": {
+            "turns": 5,
+            "ok_turns": 5,
+            "emergent_rate": 1.0,
+            "seed_cached_rate": 0.0,
+            "harvest_attempt_turn_rate": 1.0,
+            "near_miss_turn_rate": 1.0,
+            "leak_rate": 0.0,
+            "cue_top_k_alignment_rate": 0.6,
+            "cue_motif_only_rate": 0.4,
+            "cue_psychoid_only_rate": 0.0,
+            "avg_incubation_pressure": 0.31762440000000003,
+            "avg_closest_near_miss_gap": 0.08008000000000001,
+            "avg_cache_depth": 2.0
+          },
+          "return": {
+            "turns": 5,
+            "ok_turns": 5,
+            "emergent_rate": 0.0,
+            "seed_cached_rate": 1.0,
+            "harvest_attempt_turn_rate": 1.0,
+            "near_miss_turn_rate": 1.0,
+            "leak_rate": 0.0,
+            "cue_top_k_alignment_rate": 0.6,
+            "cue_motif_only_rate": 0.4,
+            "cue_psychoid_only_rate": 0.0,
+            "avg_incubation_pressure": 0.4195474,
+            "avg_closest_near_miss_gap": 0.13468,
+            "avg_cache_depth": 2.0
+          },
+          "seed": {
+            "turns": 5,
+            "ok_turns": 5,
+            "emergent_rate": 0.0,
+            "seed_cached_rate": 1.0,
+            "harvest_attempt_turn_rate": 0.0,
+            "near_miss_turn_rate": 0.0,
+            "leak_rate": 0.0,
+            "cue_top_k_alignment_rate": 0.4,
+            "cue_motif_only_rate": 0.4,
+            "cue_psychoid_only_rate": 0.2,
+            "avg_incubation_pressure": 0.1118838,
+            "avg_closest_near_miss_gap": null,
+            "avg_cache_depth": 0.0
+          }
+        }
+      },
+      "cases": [
+        {
+          "id": "mirror_shadow_return",
+          "target_archetypes": [
+            "shadow",
+            "syzygy"
+          ],
+          "emergent_archetypes": [
+            "syzygy"
+          ],
+          "target_emerged": true,
+          "first_emergent_turn_index": 4,
+          "first_emergent_role": "echo_return"
+        },
+        {
+          "id": "forest_path_return",
+          "target_archetypes": [
+            "great_mother",
+            "hero"
+          ],
+          "emergent_archetypes": [
+            "syzygy"
+          ],
+          "target_emerged": false,
+          "first_emergent_turn_index": 4,
+          "first_emergent_role": "echo_return"
+        },
+        {
+          "id": "mask_interface_return",
+          "target_archetypes": [
+            "persona"
+          ],
+          "emergent_archetypes": [
+            "self"
+          ],
+          "target_emerged": false,
+          "first_emergent_turn_index": 4,
+          "first_emergent_role": "echo_return"
+        },
+        {
+          "id": "trickster_release_return",
+          "target_archetypes": [
+            "hero",
+            "trickster"
+          ],
+          "emergent_archetypes": [
+            "syzygy"
+          ],
+          "target_emerged": false,
+          "first_emergent_turn_index": 4,
+          "first_emergent_role": "echo_return"
+        },
+        {
+          "id": "child_prototype_return",
+          "target_archetypes": [
+            "child",
+            "self"
+          ],
+          "emergent_archetypes": [
+            "shadow"
+          ],
+          "target_emerged": false,
+          "first_emergent_turn_index": 4,
+          "first_emergent_role": "echo_return"
+        }
+      ],
+      "fixture": {
+        "path": "sr-dual-brain-llm/examples/unconscious_incubation_benchmark_sequences.json",
+        "sha256": "d4b6e3c935697959b91ad51d0ded0cf42aad5ee757a9bacdfa7a83fe24e92713"
+      },
+      "config": {
+        "session_prefix": "unconscious-incubation",
+        "answer_mode": "plain",
+        "leading_brain": "auto",
+        "system2_mode": "auto",
+        "executive_mode": "off",
+        "executive_observer_mode": "off",
+        "low_signal_filter": "on",
+        "sequence_count": 5,
+        "only_ids": null,
+        "only_tags": null
+      },
+      "invocation_conditions": {
+        "working_directory": "repository root",
+        "python_executable": ".venv/bin/python",
+        "question_order": "fixture order",
+        "shuffle": false,
+        "subset_filter": null,
+        "history_enabled": false,
+        "expect_no_leaks": true,
+        "authentication": "Provider/model/key settings and PG DSN cleared only in child environment; proxy and TLS retained",
+        "diagnostic_interpretation": "Heuristic signal health, not independent answer quality"
+      }
+    }
+  },
+  "local_runtime": {
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "torch": "2.14.1+cpu"
+  }
+}

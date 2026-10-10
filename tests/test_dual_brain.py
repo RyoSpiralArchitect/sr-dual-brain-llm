@@ -1720,6 +1720,44 @@ def test_feedback_consolidation_stage_contract_records_flow_and_feedback():
     assert any(evt == "unconscious_outcome" for evt, _ in telemetry.events)
 
 
+def test_turn_latency_includes_initial_draft_observer_and_feedback(monkeypatch):
+    clock = [1000.0]
+    monkeypatch.setattr(time, "perf_counter", lambda: clock[0])
+
+    class SlowDraft(CaptureLeftModel):
+        async def generate_answer(self, *args, **kwargs):
+            clock[0] += 0.040
+            return await super().generate_answer(*args, **kwargs)
+
+    class SlowFeedback(BasalGanglia):
+        def integrate_feedback(self, **kwargs):
+            assert kwargs["latency_ms"] == 0.0  # Retain the existing adaptive consult signal.
+            clock[0] += 0.060
+            return super().integrate_feedback(**kwargs)
+
+    telemetry = TrackingTelemetry()
+    controller = make_stage_controller(
+        left_model=SlowDraft(confidence=0.95), telemetry=telemetry,
+        basal_ganglia=SlowFeedback(),
+    )
+    original_observer = controller._run_post_turn_observer_stage
+
+    async def slow_observer(**kwargs):
+        clock[0] += 0.050
+        return await original_observer(**kwargs)
+
+    monkeypatch.setattr(controller, "_run_post_turn_observer_stage", slow_observer)
+    asyncio.run(controller.process("Hello", system2_mode="off"))
+    completed = next(payload for event, payload in telemetry.events if event == "interaction_complete")
+    assert abs(completed["latency_ms"] - 150.0) < 0.001
+    assert completed["consult_latency_ms"] == 0.0
+    assert completed["latency_scope"] == "controller_turn"
+    assert completed["latency_schema_version"] == 2
+    breakdown = next(payload for event, payload in telemetry.events if event == "latency_breakdown")
+    assert breakdown["total_ms"] == 150.0
+
+
+
 def test_acc_override_consult_triggers_right_brain_consult(monkeypatch):
     class RevisingLeft:
         uses_external_llm = True

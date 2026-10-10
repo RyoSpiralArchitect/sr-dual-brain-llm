@@ -141,6 +141,47 @@ def test_full_answers_are_opt_in_for_ab_cases():
     assert with_answer["answer"] == "A complete fixture answer."
 
 
+def test_case_uses_outer_wall_time_even_with_legacy_partial_telemetry(monkeypatch):
+    import benchmark_system2
+
+    clock = iter([10.0, 10.25])
+    monkeypatch.setattr(benchmark_system2.time, "perf_counter", lambda: next(clock))
+
+    async def answer(*_args, **_kwargs):
+        return "Measured answer"
+
+    events = [{"event": "interaction_complete", "latency_ms": 2.0}]
+    session = SimpleNamespace(
+        telemetry=SimpleNamespace(clear=lambda: None, events=events),
+        controller=SimpleNamespace(process=answer),
+    )
+    case = asyncio.run(_run_case(
+        session=session, question_entry={"id": "q1", "question": "Why?"}, index=1,
+        run_id="timing", leading_brain="auto", default_system2_mode="off",
+        executive_mode="off", executive_observer_mode="off", diagnostics_mode="off",
+    ))
+    assert case["latency_ms"] == 250.0
+    assert case["controller_latency_ms"] == 2.0
+    assert case["controller_latency_scope"] is None
+    assert case["latency_scope"] == "process_wall"
+    assert case["latency_schema_version"] == 2
+
+
+def test_mixed_latency_scopes_are_not_pooled_even_in_tag_summaries():
+    legacy = {"latency_ms": 10.0, "error": None, "tags": ["hard"]}
+    current = {"latency_ms": 100.0, "error": None, "tags": ["hard"],
+               "latency_schema_version": 2, "latency_scope": "process_wall"}
+    summary = _summarise_cases([legacy, current])
+    assert summary["latency_scope"] == "mixed"
+    assert summary["avg_latency_ms_all_cases"] is None
+    assert summary["summary_by_tag"]["hard"]["avg_latency_ms_all_cases"] is None
+    current_only = _summarise_cases([current])
+    assert current_only["latency_scope"] == "process_wall"
+    assert current_only["latency_schema_version"] == 2
+    assert current_only["avg_latency_ms_all_cases"] == 100.0
+
+
+
 def test_provider_failure_status_reaches_case_report():
     async def answer(*_args, **_kwargs):
         return "An answer was produced."

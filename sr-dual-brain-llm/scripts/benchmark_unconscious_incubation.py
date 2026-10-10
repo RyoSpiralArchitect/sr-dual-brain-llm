@@ -35,6 +35,7 @@ from benchmark_unconscious_creativity import (  # noqa: E402
     _safe_int,
 )
 from engine_stdio import EngineSession, _extract_metrics  # noqa: E402
+from benchmark_system2 import _latency_metadata  # noqa: E402
 
 
 def _load_sequences(path: Path) -> List[Dict[str, Any]]:
@@ -285,7 +286,12 @@ async def _run_turn(
         "target_archetypes": _as_list(turn_entry.get("target_archetypes")),
         "answer_mode": answer_mode,
         "system2_mode": system2_mode,
-        "latency_ms": _safe_float(metrics.get("latency_ms")) or elapsed_ms,
+        "latency_ms": elapsed_ms,
+        "latency_schema_version": 2,
+        "latency_scope": "process_wall",
+        "controller_latency_ms": _safe_float(metrics.get("latency_ms")),
+        "controller_latency_scope": metrics.get("latency_scope"),
+        "consult_latency_ms": _safe_float(metrics.get("consult_latency_ms")),
         "telemetry_events": len(events),
         "unconscious_outcome": outcome,
         "cached_seed": cached_seed,
@@ -637,6 +643,7 @@ def _summarise_turns_by_role(turns: List[Dict[str, Any]]) -> Dict[str, Dict[str,
             if turn.get("archetype_trace", {}).get("cue_alignment") != "unlabeled"
         ]
         out[role] = {
+            **_latency_metadata(role_turns),
             "turns": len(role_turns),
             "ok_turns": len(ok_turns),
             "emergent_rate": _rate(
@@ -803,6 +810,7 @@ def _summarise_sequences(sequences: List[Dict[str, Any]]) -> Dict[str, Any]:
     ]
     return {
         "total_sequences": sequence_total,
+        **_latency_metadata(turns),
         "ok_sequences": len(ok_sequences),
         "error_sequences": sequence_total - len(ok_sequences),
         "total_turns": len(turns),

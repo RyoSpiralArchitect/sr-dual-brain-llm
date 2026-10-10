@@ -940,8 +940,29 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _latency_metadata(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    signatures = {
+        (case.get("latency_schema_version"), case.get("latency_scope"))
+        for case in cases if _safe_float(case.get("latency_ms")) is not None
+    }
+    if len(signatures) == 1:
+        version, scope = next(iter(signatures))
+        return {"latency_schema_version": version, "latency_scope": scope}
+    if len(signatures) > 1:
+        return {"latency_schema_version": "mixed", "latency_scope": "mixed"}
+    return {}
+
+
+def _summarise_cases_with_latency(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     summary = _summarise_cases_base(cases)
+    summary.update(_latency_metadata(cases))
+    if summary.get("latency_scope") == "mixed":
+        summary.update(avg_latency_ms=None, avg_latency_ms_all_cases=None)
+    return summary
+
+
+def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    summary = _summarise_cases_with_latency(cases)
 
     tag_map: Dict[str, List[Dict[str, Any]]] = {}
     for case in cases:
@@ -955,7 +976,7 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
             tag_map.setdefault(norm, []).append(case)
 
     summary["summary_by_tag"] = {
-        tag: _summarise_cases_base(tag_cases)
+        tag: _summarise_cases_with_latency(tag_cases)
         for tag, tag_cases in sorted(tag_map.items())
     }
     return summary
@@ -1202,7 +1223,12 @@ async def _run_case(
         "followup_eligible": _safe_bool(system2.get("followup_eligible")),
         "stalled_followup": _safe_bool(system2.get("stalled_followup")),
         "truncation_signal": truncation_signal,
-        "latency_ms": latency_ms if latency_ms is not None else elapsed_ms,
+        "latency_ms": elapsed_ms,
+        "latency_scope": "process_wall",
+        "latency_schema_version": 2,
+        "controller_latency_ms": latency_ms,
+        "controller_latency_scope": metrics.get("latency_scope"),
+        "consult_latency_ms": _safe_float(metrics.get("consult_latency_ms")),
         "phase_latency_ms": phase_latency,
         "error": error_text,
         "answer_preview": (answer[:240] if answer else ""),
