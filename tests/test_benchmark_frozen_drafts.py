@@ -145,6 +145,7 @@ def test_failures_are_retained_and_never_count_as_valid_revisions(monkeypatch, m
 @pytest.mark.parametrize("finish_reason,expected", [
     ("content_filter", "incomplete"), ("tool_calls", "incomplete"),
     ("function_call", "incomplete"), (None, "incomplete"),
+    ("unknown_terminal_reason", "incomplete"), ({"malformed": True}, "incomplete"),
     ("length", "truncated"), ("max_tokens", "truncated"),
 ])
 @pytest.mark.parametrize("stage", ["review", "revision"])
@@ -171,6 +172,56 @@ def test_noncomplete_finish_reasons_cannot_reach_scoring(monkeypatch, finish_rea
         assert result["arms"][arm]["unavailable"] == 20
         assert result["arms"][arm]["failed_answers"] == 4
         assert result["arms"][arm]["repair_rate"] is None
+
+
+@pytest.mark.parametrize("finish_reason,expected", [
+    ("content_filter", "incomplete"), ("tool_calls", "incomplete"),
+    (None, "incomplete"), ("length", "truncated"),
+])
+@pytest.mark.parametrize("stage_index", [0, 1])
+def test_prepare_revalidates_legacy_ok_rows(monkeypatch, finish_reason, expected, stage_index):
+    report, rubric = live_report(monkeypatch)
+    assert report["schema_version"] == 1
+    for row in report["rows"]:
+        if row["arm"] != "no_revision":
+            row["stages"][stage_index]["receipts"][0]["finish_reason"] = finish_reason
+            assert row["status"] == "ok"  # Simulate an earlier producer's classification.
+    blind, key, ratings = bench.prepare_packets(report, rubric)
+    for assignment in key["assignments"]:
+        for item in assignment["labels"].values():
+            if item["arm"] != "no_revision":
+                assert item["status"] == expected
+    assert all(row["status"] == "ok" for row in report["rows"])  # Preserve original provenance.
+    fill_ratings(blind, key, ratings)
+    result = bench.score_packets(blind, key, ratings)
+    assert result["arms"]["self_review"]["unavailable"] == 20
+    assert result["arms"]["right_critic"]["failed_answers"] == 4
+
+
+@pytest.mark.parametrize("missing", ["stages", "receipts"])
+def test_prepare_marks_missing_stage_evidence_unavailable(monkeypatch, missing):
+    report, rubric = live_report(monkeypatch)
+    for row in report["rows"]:
+        if row["arm"] != "no_revision":
+            if missing == "stages":
+                row.pop("stages")
+            else:
+                row["stages"][0].pop("receipts")
+    blind, key, ratings = bench.prepare_packets(report, rubric)
+    fill_ratings(blind, key, ratings)
+    result = bench.score_packets(blind, key, ratings)
+    assert result["arms"]["self_review"]["unavailable"] == 20
+
+
+def test_score_requires_packets_prepared_under_completion_validation(monkeypatch):
+    report, rubric = live_report(monkeypatch)
+    blind, key, ratings = bench.prepare_packets(report, rubric)
+    fill_ratings(blind, key, ratings)
+    for item in (blind, key, ratings):
+        item["schema_version"] = 1
+    key["packet_sha256"] = ratings["packet_sha256"] = bench.digest(blind)
+    with pytest.raises(ValueError, match="Reprepare legacy packets"):
+        bench.score_packets(blind, key, ratings)
 
 
 def test_capture_real_client_usage_and_missing_usage(monkeypatch):

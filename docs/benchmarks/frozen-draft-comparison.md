@@ -101,6 +101,13 @@ Answer labels and packet order are shuffled; arm names, models and critic text
 are excluded. Identical answers or recognizable wording can still reveal an
 arm, so blinding is not guaranteed. Failed answers remain `null` and their
 criteria are `unavailable`; do not drop them or replace them with the draft.
+Preparation revalidates both active stages' finish receipts, even when an older
+schema-1 report marked a partial response `ok`. Missing stage/receipt evidence
+also makes the answer unavailable. The original report stays unchanged; the
+reveal key records the validated status used for scoring.
+Blind packets, keys and rating templates use schema version 2 to identify this
+validation contract. The scorer rejects legacy packets: regenerate them with
+`prepare` and review the validated answers before scoring.
 
 The reviewer fills their identity and every pending criterion's verdict/evidence
 in `ratings.json`. Use `uncertain` for genuinely ambiguous evidence and adjudicate

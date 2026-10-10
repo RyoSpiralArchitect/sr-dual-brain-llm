@@ -18,6 +18,7 @@ from core.llm_client import LLMClient, load_llm_config  # noqa: E402
 from benchmark_system2_ab import _source_revision  # noqa: E402
 
 ARMS = ("no_revision", "self_review", "right_critic")
+PACKET_SCHEMA_VERSION = 2  # Requires stop-only validation of persisted stage receipts.
 DEFAULT_RUBRIC = PROJECT_ROOT / "examples/system2_frozen_draft_rubric.json"
 REVIEW_SYSTEM = (
     'Review the supplied answer for concrete correctness, safety and missing requirements. '
@@ -109,6 +110,34 @@ def parse_review(text):
     return {"verdict": review["verdict"], "issues": review["issues"]}
 
 
+def completion_status(receipts):
+    if (not isinstance(receipts, list) or not receipts
+            or any(not isinstance(receipt, dict) for receipt in receipts)):
+        return "incomplete"
+    reasons = [receipt.get("finish_reason") for receipt in receipts]
+    if any(reason in ("length", "max_tokens") for reason in reasons):
+        return "truncated"
+    return "ok" if all(reason == "stop" for reason in reasons) else "incomplete"
+
+
+def scoring_status(row):
+    """Revalidate persisted evidence, including reports made by older producers."""
+    if row["status"] != "ok" or row["arm"] == "no_revision":
+        return row["status"]
+    stages = row.get("stages")
+    if not isinstance(stages, list) or len(stages) != 2:
+        return "incomplete"
+    for stage in stages:
+        if not isinstance(stage, dict):
+            return "incomplete"
+        if stage.get("status") != "ok":
+            return stage.get("status") or "incomplete"
+        status = completion_status(stage.get("receipts"))
+        if status != "ok":
+            return status
+    return "ok"
+
+
 async def call_stage(config, payload, system, client_factory):
     client = client_factory(config)  # No history or client state shared between calls.
     started = time.perf_counter()
@@ -127,13 +156,7 @@ async def call_stage(config, payload, system, client_factory):
     result["latency_ms"] = (time.perf_counter() - started) * 1000.0
     result["receipts"] = list(client.receipts)
     if result["status"] == "ok":
-        reasons = [r.get("finish_reason") for r in client.receipts]
-        if any(reason in {"length", "max_tokens"} for reason in reasons):
-            result["status"] = "truncated"
-        elif not reasons or any(reason != "stop" for reason in reasons):
-            # content_filter/tool_calls/missing or unknown terminal reasons do not
-            # establish a complete text answer, even when partial text is present.
-            result["status"] = "incomplete"
+        result["status"] = completion_status(result["receipts"])
     result["input_tokens"] = sum_usage(client.receipts, "input_tokens")
     result["output_tokens"] = sum_usage(client.receipts, "output_tokens")
     return result
@@ -250,7 +273,8 @@ def prepare_packets(report, rubric, seed=29):
         answers, scores, mapping = {}, {}, {}
         for label, arm in zip(("A", "B", "C"), order):
             row = group[arm]
-            available = row["status"] == "ok"
+            status = scoring_status(row)
+            available = status == "ok"
             if available and (not isinstance(row["answer"], str) or not row["answer"].strip()):
                 raise ValueError("Successful arm needs a complete answer")
             if arm == "no_revision" and (not available or row["answer"] != inputs[case_id]["draft"]):
@@ -259,22 +283,24 @@ def prepare_packets(report, rubric, seed=29):
             scores[label] = {c["id"]: {"verdict": "pending" if available else "unavailable",
                                        "evidence": "" if available else "No valid completion"}
                              for c in cases[case_id]["criteria"]}
-            mapping[label] = {"arm": arm, "status": row["status"]}
+            mapping[label] = {"arm": arm, "status": status}
         packets.append({"packet_id": packet_id, "question": inputs[case_id]["question"],
                         "context": inputs[case_id]["context"], "criteria": cases[case_id]["criteria"],
                         "answers": answers})
         ratings.append({"packet_id": packet_id, "scores": scores})
         assignments.append({"packet_id": packet_id, "id": case_id,
                             "repetition": repetition, "labels": mapping})
-    blind = {"schema_version": 1, "instructions": rubric["instructions"], "packets": packets}
-    key = {"schema_version": 1, "packet_sha256": digest(blind), "report_sha256": digest(report),
+    blind = {"schema_version": PACKET_SCHEMA_VERSION, "instructions": rubric["instructions"], "packets": packets}
+    key = {"schema_version": PACKET_SCHEMA_VERSION, "packet_sha256": digest(blind), "report_sha256": digest(report),
            "rubric_sha256": digest(rubric), "assignments": assignments}
-    template = {"schema_version": 1, "packet_sha256": digest(blind), "reviewer": "",
+    template = {"schema_version": PACKET_SCHEMA_VERSION, "packet_sha256": digest(blind), "reviewer": "",
                 "ratings": ratings}
     return blind, key, template
 
 
 def score_packets(blind, key, ratings):
+    if any(item.get("schema_version") != PACKET_SCHEMA_VERSION for item in (blind, key, ratings)):
+        raise ValueError("Reprepare legacy packets: schema_version 2 requires validated finish receipts")
     if key.get("packet_sha256") != digest(blind) or ratings.get("packet_sha256") != digest(blind):
         raise ValueError("Packet digest mismatch")
     if not isinstance(ratings.get("reviewer"), str) or not ratings["reviewer"].strip():
@@ -330,7 +356,7 @@ def score_packets(blind, key, ratings):
                                 if total["eligible_repairs"] else None)
         total["regression_rate"] = (total["introduced_defects"] / total["eligible_regressions"]
                                     if total["eligible_regressions"] else None)
-    return {"schema_version": 1, "reviewer": ratings["reviewer"],
+    return {"schema_version": PACKET_SCHEMA_VERSION, "reviewer": ratings["reviewer"],
             "packet_sha256": digest(blind), "rubric_sha256": key["rubric_sha256"],
             "report_sha256": key["report_sha256"], "scoring_units": "case-repetition-criterion",
             "unique_cases": len({a["id"] for a in key["assignments"]}),
