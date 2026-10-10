@@ -940,17 +940,24 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def _summarise_cases_with_latency(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
-    summary = _summarise_cases_base(cases)
+def _latency_metadata(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     signatures = {
         (case.get("latency_schema_version"), case.get("latency_scope"))
         for case in cases if _safe_float(case.get("latency_ms")) is not None
     }
     if len(signatures) == 1:
-        summary["latency_schema_version"], summary["latency_scope"] = next(iter(signatures))
-    elif len(signatures) > 1:
-        summary.update(latency_schema_version="mixed", latency_scope="mixed",
-                       avg_latency_ms=None, avg_latency_ms_all_cases=None)
+        version, scope = next(iter(signatures))
+        return {"latency_schema_version": version, "latency_scope": scope}
+    if len(signatures) > 1:
+        return {"latency_schema_version": "mixed", "latency_scope": "mixed"}
+    return {}
+
+
+def _summarise_cases_with_latency(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    summary = _summarise_cases_base(cases)
+    summary.update(_latency_metadata(cases))
+    if summary.get("latency_scope") == "mixed":
+        summary.update(avg_latency_ms=None, avg_latency_ms_all_cases=None)
     return summary
 
 

@@ -1,6 +1,10 @@
 import math
+import asyncio
 import sys
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "sr-dual-brain-llm" / "scripts"
@@ -13,6 +17,48 @@ from benchmark_unconscious_creativity import (  # noqa: E402
     _internal_leak_markers,
     _summarise_cases,
 )
+import benchmark_unconscious_creativity as creativity  # noqa: E402
+import benchmark_unconscious_incubation as incubation  # noqa: E402
+
+
+@pytest.mark.parametrize("runner", ["creativity", "incubation"])
+def test_unconscious_runners_measure_wall_time_and_preserve_scope(monkeypatch, runner):
+    clock = iter([10.0, 10.25])
+    monkeypatch.setattr(creativity.time, "perf_counter", lambda: next(clock))
+
+    async def answer(*_args, **_kwargs):
+        return "Fixture answer"
+
+    session = SimpleNamespace(
+        controller=SimpleNamespace(process=answer),
+        telemetry=SimpleNamespace(clear=lambda: None, events=[
+            {"event": "interaction_complete", "latency_ms": 1.0},
+        ]),
+    )
+    common = dict(session=session, run_id="wall-fixture", answer_mode="plain",
+                  leading_brain="auto", executive_mode="off", executive_observer_mode="off")
+    if runner == "creativity":
+        row = asyncio.run(creativity._run_case(
+            **common, question_entry={"id": "one", "question": "Why?"}, index=1, system2_mode="off"))
+        summary = creativity._summarise_cases([row])
+    else:
+        row = asyncio.run(incubation._run_turn(
+            **common, sequence_entry={"id": "seq"}, turn_entry={"id": "one", "question": "Why?"},
+            turn_index=1, default_system2_mode="off"))
+        summary = incubation._summarise_turns_by_role([row])["turn"]
+        report_summary = incubation._summarise_sequences([{"turns": [row], "observation": {}}])
+        assert report_summary["latency_scope"] == "process_wall"
+    assert row["latency_ms"] == 250.0
+    assert row["controller_latency_ms"] == 1.0
+    assert row["latency_scope"] == summary["latency_scope"] == "process_wall"
+    assert row["latency_schema_version"] == summary["latency_schema_version"] == 2
+
+
+def test_creativity_does_not_pool_legacy_and_current_latency():
+    legacy = {"error": None, "latency_ms": 1.0}
+    current = {"error": None, "latency_ms": 100.0, "latency_scope": "process_wall", "latency_schema_version": 2}
+    summary = creativity._summarise_cases([legacy, current])
+    assert summary["latency_scope"] == "mixed" and summary["avg_latency_ms"] is None
 
 
 def test_internal_leak_markers_detect_debug_sections_case_insensitively():

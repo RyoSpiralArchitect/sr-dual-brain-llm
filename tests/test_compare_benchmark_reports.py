@@ -26,6 +26,26 @@ def test_latency_scope_change_cannot_be_classified_as_speed_regression():
     assert "| avg_latency_ms_all_cases | 100.0 ms | 300.0 ms | +200.0 ms | regressed |" in compare_reports(before, after)
 
 
+def test_unknown_latency_scopes_are_incomparable_even_when_both_are_missing():
+    before = {"summary": {"avg_unconscious_score": 0.5, "avg_latency_ms": 100.0}}
+    after = {"summary": {"avg_unconscious_score": 0.5, "avg_latency_ms": 300.0}}
+    assert "| avg_latency_ms | 100.0 ms | 300.0 ms | - | incomparable |" in compare_reports(before, after)
+    assert "| avg_latency_ms | 100.0 ms | 300.0 ms | - | incomparable |" in summarize_history([before, after])
+    for report in (before, after):
+        report["summary"].update(latency_schema_version=2, latency_scope="process_wall")
+    after["summary"]["latency_scope"] = "controller_turn"
+    assert "| avg_latency_ms | 100.0 ms | 300.0 ms | - | incomparable |" in compare_reports(before, after)
+
+
+def test_ab_latency_deltas_require_known_matching_scope_per_mode():
+    before = {"summary_by_mode": {"off": {"avg_latency_ms_all_cases": 100.0}}}
+    after = {"summary_by_mode": {"off": {"avg_latency_ms_all_cases": 300.0}}}
+    assert "| off latency | 100.0 ms | 300.0 ms | - | incomparable |" in compare_reports(before, after)
+    for report in (before, after):
+        report["summary_by_mode"]["off"].update(latency_schema_version=2, latency_scope="process_wall")
+    assert "| off latency | 100.0 ms | 300.0 ms | +200.0 ms | regressed |" in compare_reports(before, after)
+
+
 def test_compare_reports_classifies_improvements_and_regressions():
     before = {
         "run_id": "creative-before",
@@ -37,6 +57,8 @@ def test_compare_reports_classifies_improvements_and_regressions():
             "leak_rate": 0.1,
             "avg_unconscious_score": 0.4,
             "avg_latency_ms": 800.0,
+            "latency_schema_version": 2,
+            "latency_scope": "process_wall",
         },
         "cases": [],
     }
@@ -50,6 +72,8 @@ def test_compare_reports_classifies_improvements_and_regressions():
             "leak_rate": 0.0,
             "avg_unconscious_score": 0.6,
             "avg_latency_ms": 950.0,
+            "latency_schema_version": 2,
+            "latency_scope": "process_wall",
         },
         "cases": [],
     }

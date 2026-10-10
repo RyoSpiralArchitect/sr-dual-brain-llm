@@ -269,6 +269,7 @@ def _comparison_rows(
                 return summary.get("latency_schema_version"), summary.get("latency_scope")
             before_signature, after_signature = signature(before), signature(after)
             comparable = (before_signature == after_signature
+                          and all(value is not None and value != "" for value in before_signature)
                           and "mixed" not in before_signature)
             if not comparable:
                 delta = None
@@ -313,7 +314,7 @@ def _attention_from_rows(rows: Sequence[Sequence[str]]) -> list[str]:
     improved = [row for row in rows if row[-1] == "improved"]
     items: list[str] = []
     if any(row[-1] == "incomparable" for row in rows):
-        items.append("Latency measurements use different scopes or schema versions; no delta is computed.")
+        items.append("Latency measurements use different or unspecified scopes/schema versions; no delta is computed.")
     if regressed:
         details = ", ".join(f"{row[0]} ({row[3]})" for row in regressed[:5])
         items.append(f"Regressions: {details}.")

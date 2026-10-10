@@ -25,7 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from benchmark_system2 import _filter_questions, _load_questions, _parse_question_paths  # noqa: E402
+from benchmark_system2 import _filter_questions, _latency_metadata, _load_questions, _parse_question_paths  # noqa: E402
 from engine_stdio import EngineSession, _extract_metrics  # noqa: E402
 
 INTERNAL_SECTION_MARKERS = (
@@ -569,6 +569,7 @@ def _extract_case_signals(
 
 
 def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
+    latency_metadata = _latency_metadata(cases)
     ok_cases = [case for case in cases if not case.get("error")]
     total = len(cases)
     ok_total = len(ok_cases)
@@ -682,7 +683,9 @@ def _summarise_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "avg_signifier_chain_len": _mean(floats(("psychoid", "signifier_chain_len"))),
         "avg_attention_bias_count": _mean(floats(("psychoid", "attention_bias_count"))),
         "avg_task_positive_load": _mean(floats(("default_mode", "task_positive_load"))),
-        "avg_latency_ms": _mean(floats(("latency_ms",))),
+        "avg_latency_ms": (_mean(floats(("latency_ms",)))
+                           if latency_metadata.get("latency_scope") != "mixed" else None),
+        **latency_metadata,
     }
 
 
@@ -742,7 +745,12 @@ async def _run_case(
         "tags": tags,
         "answer_mode": answer_mode,
         "system2_mode": system2_mode,
-        "latency_ms": _safe_float(metrics.get("latency_ms")) or elapsed_ms,
+        "latency_ms": elapsed_ms,
+        "latency_schema_version": 2,
+        "latency_scope": "process_wall",
+        "controller_latency_ms": _safe_float(metrics.get("latency_ms")),
+        "controller_latency_scope": metrics.get("latency_scope"),
+        "consult_latency_ms": _safe_float(metrics.get("consult_latency_ms")),
         "telemetry_events": len(events),
         "error": error_text,
         "answer_preview": answer[:280] if answer else "",

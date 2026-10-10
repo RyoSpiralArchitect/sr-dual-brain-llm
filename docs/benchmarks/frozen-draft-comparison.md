@@ -139,7 +139,7 @@ Defects outside the frozen criteria require separate adjudication.
 
 ## Latency compatibility
 
-New System2 benchmark cases use `latency_schema_version: 2`,
+New System2, unconscious-creativity and incubation benchmark turns use `latency_schema_version: 2`,
 `latency_scope: process_wall`, and measure the entire awaited `process()` call,
 including failures. `controller_latency_ms` records controller telemetry;
 `consult_latency_ms` retains the old consultation/integration interval. The
@@ -153,7 +153,8 @@ Historical reports lacking the schema/scope fields remain unchanged. Their
 `latency_ms` can describe a partial consultation interval and must not be pooled
 with version 2 full-turn measurements. New summaries retain the scope/version;
 mixed case scopes suppress latency averages, and comparison/history delta tables
-mark differing scopes/versions `incomparable` instead of assigning a speed gain.
-Two legacy reports without metadata retain the old comparison behavior; this
-does not certify their unknown measurement scopes. See the
+mark differing or unspecified scopes/versions `incomparable` instead of assigning
+a speed gain. Even two reports without metadata cannot support a speed comparison;
+new creativity summaries and incubation turns/role summaries retain the metadata.
+See the
 [evidence analysis](system2-evidence-analysis-2026-10-10.md) for the archive audit.
