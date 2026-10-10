@@ -18,7 +18,7 @@ from core.llm_client import LLMClient, load_llm_config  # noqa: E402
 from benchmark_system2_ab import _source_revision  # noqa: E402
 
 ARMS = ("no_revision", "self_review", "right_critic")
-PACKET_SCHEMA_VERSION = 2  # Requires stop-only validation of persisted stage receipts.
+PACKET_SCHEMA_VERSION = 3  # Requires complete stage evidence bound to the scored text.
 DEFAULT_RUBRIC = PROJECT_ROOT / "examples/system2_frozen_draft_rubric.json"
 REVIEW_SYSTEM = (
     'Review the supplied answer for concrete correctness, safety and missing requirements. '
@@ -127,14 +127,26 @@ def scoring_status(row):
     stages = row.get("stages")
     if not isinstance(stages, list) or len(stages) != 2:
         return "incomplete"
+    if row.get("call_budget") != 2 or row.get("attempted_calls") != 2:
+        return "invalid_budget"
     for stage in stages:
         if not isinstance(stage, dict):
             return "incomplete"
         if stage.get("status") != "ok":
             return stage.get("status") or "incomplete"
+        if not isinstance(stage.get("text"), str) or not stage["text"].strip():
+            return "incomplete"
         status = completion_status(stage.get("receipts"))
         if status != "ok":
             return status
+        if stage.get("attempted_calls") != 1 or len(stage["receipts"]) != 1:
+            return "invalid_budget"
+    if row.get("answer") != stages[1]["text"]:
+        return "invalid_answer"
+    try:
+        parse_review(stages[0]["text"])
+    except (ValueError, TypeError):
+        return "invalid_review"
     return "ok"
 
 
@@ -300,7 +312,7 @@ def prepare_packets(report, rubric, seed=29):
 
 def score_packets(blind, key, ratings):
     if any(item.get("schema_version") != PACKET_SCHEMA_VERSION for item in (blind, key, ratings)):
-        raise ValueError("Reprepare legacy packets: schema_version 2 requires validated finish receipts")
+        raise ValueError(f"Reprepare legacy packets: schema_version {PACKET_SCHEMA_VERSION} requires validated bound stage evidence")
     if key.get("packet_sha256") != digest(blind) or ratings.get("packet_sha256") != digest(blind):
         raise ValueError("Packet digest mismatch")
     if not isinstance(ratings.get("reviewer"), str) or not ratings["reviewer"].strip():

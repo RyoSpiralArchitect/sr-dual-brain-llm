@@ -213,15 +213,54 @@ def test_prepare_marks_missing_stage_evidence_unavailable(monkeypatch, missing):
     assert result["arms"]["self_review"]["unavailable"] == 20
 
 
-def test_score_requires_packets_prepared_under_completion_validation(monkeypatch):
+@pytest.mark.parametrize("legacy_version", [1, 2])
+def test_score_requires_packets_prepared_under_completion_validation(monkeypatch, legacy_version):
     report, rubric = live_report(monkeypatch)
     blind, key, ratings = bench.prepare_packets(report, rubric)
     fill_ratings(blind, key, ratings)
     for item in (blind, key, ratings):
-        item["schema_version"] = 1
+        item["schema_version"] = legacy_version
     key["packet_sha256"] = ratings["packet_sha256"] = bench.digest(blind)
     with pytest.raises(ValueError, match="Reprepare legacy packets"):
         bench.score_packets(blind, key, ratings)
+
+
+@pytest.mark.parametrize("corruption,expected", [
+    ("answer", "invalid_answer"), ("missing_revision", "incomplete"),
+    ("nontext_revision", "incomplete"), ("review", "invalid_review"),
+    ("row_budget", "invalid_budget"), ("stage_budget", "invalid_budget"),
+    ("extra_receipt", "invalid_budget"),
+])
+def test_prepare_binds_scored_answer_to_validated_stage_evidence(monkeypatch, corruption, expected):
+    report, rubric = live_report(monkeypatch)
+    for row in report["rows"]:
+        if row["arm"] == "no_revision":
+            continue
+        if corruption == "answer":
+            row["answer"] = "A different answer without a provider completion receipt."
+        elif corruption == "missing_revision":
+            row["stages"][1].pop("text")
+        elif corruption == "nontext_revision":
+            row["answer"] = row["stages"][1]["text"] = {"answer": "not text"}
+        elif corruption == "review":
+            row["stages"][0]["text"] = '{"verdict":"pass","issues":["inconsistent"]}'
+        elif corruption == "row_budget":
+            row["attempted_calls"] = 3
+        elif corruption == "stage_budget":
+            row["stages"][0]["attempted_calls"] = 2
+        else:
+            row["stages"][1]["receipts"].append(row["stages"][1]["receipts"][0])
+    blind, key, ratings = bench.prepare_packets(report, rubric)
+    for assignment in key["assignments"]:
+        for label, item in assignment["labels"].items():
+            if item["arm"] != "no_revision":
+                assert item["status"] == expected
+                packet = next(p for p in blind["packets"] if p["packet_id"] == assignment["packet_id"])
+                assert packet["answers"][label] is None
+    fill_ratings(blind, key, ratings)
+    scores = bench.score_packets(blind, key, ratings)
+    assert scores["arms"]["self_review"]["unavailable"] == 20
+    assert scores["arms"]["right_critic"]["failed_answers"] == 4
 
 
 def test_capture_real_client_usage_and_missing_usage(monkeypatch):

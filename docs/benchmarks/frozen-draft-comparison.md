@@ -105,7 +105,10 @@ Preparation revalidates both active stages' finish receipts, even when an older
 schema-1 report marked a partial response `ok`. Missing stage/receipt evidence
 also makes the answer unavailable. The original report stays unchanged; the
 reveal key records the validated status used for scoring.
-Blind packets, keys and rating templates use schema version 2 to identify this
+Preparation also requires nonempty stage text, a valid review JSON contract,
+one call/receipt per stage, and exact equality between the saved answer and the
+validated revision text. Inconsistent answers/budgets remain unavailable.
+Blind packets, keys and rating templates use schema version 3 to identify this
 validation contract. The scorer rejects legacy packets: regenerate them with
 `prepare` and review the validated answers before scoring.
 
