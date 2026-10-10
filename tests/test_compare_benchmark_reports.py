@@ -11,6 +11,21 @@ if str(SCRIPTS_DIR) not in sys.path:
 from compare_benchmark_reports import compare_reports, summarize_history  # noqa: E402
 
 
+def test_latency_scope_change_cannot_be_classified_as_speed_regression():
+    before = {"run_id": "system2-old", "summary": {"avg_latency_ms_all_cases": 100.0}}
+    after = {"run_id": "system2-new", "summary": {
+        "avg_latency_ms_all_cases": 300.0, "latency_schema_version": 2,
+        "latency_scope": "process_wall",
+    }}
+    markdown = compare_reports(before, after)
+    assert "| avg_latency_ms_all_cases | 100.0 ms | 300.0 ms | - | incomparable |" in markdown
+    assert "no delta is computed" in markdown
+    history = summarize_history([before, after])
+    assert "| avg_latency_ms_all_cases | 100.0 ms | 300.0 ms | - | incomparable |" in history
+    before["summary"].update(latency_schema_version=2, latency_scope="process_wall")
+    assert "| avg_latency_ms_all_cases | 100.0 ms | 300.0 ms | +200.0 ms | regressed |" in compare_reports(before, after)
+
+
 def test_compare_reports_classifies_improvements_and_regressions():
     before = {
         "run_id": "creative-before",

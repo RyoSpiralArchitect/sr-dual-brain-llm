@@ -321,6 +321,9 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         },
         "leading": lead_ev.get("leading"),
         "latency_ms": complete_ev.get("latency_ms"),
+        "consult_latency_ms": complete_ev.get("consult_latency_ms"),
+        "latency_scope": complete_ev.get("latency_scope"),
+        "latency_schema_version": complete_ev.get("latency_schema_version"),
         "latency": {
             "total_ms": complete_ev.get("latency_ms"),
             "phases_ms": (

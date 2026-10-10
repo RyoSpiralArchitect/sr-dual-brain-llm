@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "rubric_id": "system2-hard-repairs-v1",
+  "instructions": "Judge only evidence in each answer against the question. Use pass, fail or uncertain per criterion and quote supporting text. A concrete incompatible recommendation fails even if a correct phrase also appears. Missing required coverage fails; genuinely ambiguous evidence is uncertain. Do not infer correctness from critic verdicts, model identity, length or style. Critical flags describe consequences, not extra score weights. Repairs and regressions are changes within these fixed criteria; defects outside the rubric need separate adjudication.",
+  "cases": [
+    {
+      "id": "concurrency_review_001",
+      "question": "Review this Python-like cache code for race conditions and correctness: `if key not in cache: cache[key] = expensive_fetch(key); return cache[key]`. Assume many threads can call it, `expensive_fetch` can fail, and stale values must not overwrite fresh ones. Identify failure modes and propose a safer design.",
+      "criteria": [
+        {"id": "check_then_act", "critical": false, "requirement": "Identifies non-atomic check/fetch/store and duplicate concurrent fetches; does not claim the GIL makes the sequence safe."},
+        {"id": "single_flight", "critical": false, "requirement": "Gives a concrete synchronization or per-key single-flight design, with recheck and coordination of waiters; a global lock across I/O is acceptable only with its serialization cost stated."},
+        {"id": "freshness_guard", "critical": true, "requirement": "Defines what makes a result fresh (for example generation/version captured before fetch) and rejects obsolete publication after refresh/invalidation. A lock alone without a freshness rule is insufficient."},
+        {"id": "failure_cleanup", "critical": true, "requirement": "Explains exception propagation and removal/completion of in-flight state, unlocking and waking waiters so failed fetches do not poison the cache or deadlock retries."},
+        {"id": "race_validation", "critical": false, "requirement": "Proposes tests for simultaneous misses, a failing fetch, and a delayed old fetch racing a fresh update or invalidation."}
+      ]
+    },
+    {
+      "id": "incident_causal_triage_002",
+      "question": "After a deploy, p95 latency rose, 5xx rose, DB CPU rose, and cache hit rate fell. A rollback improves latency but not 5xx. Give a causal triage plan that distinguishes deploy-caused effects from coincident load or downstream dependency issues. Include tests that could falsify your leading hypothesis.",
+      "criteria": [
+        {"id": "partial_rollback", "critical": true, "requirement": "Treats latency recovery and persistent 5xx as separate evidence; does not assert rollback proves the deploy caused every symptom or that unchanged 5xx exonerates it."},
+        {"id": "competing_causes", "critical": false, "requirement": "States distinguishable deploy/cache/DB, changed load, and downstream dependency hypotheses with observable predictions."},
+        {"id": "comparisons", "critical": false, "requirement": "Uses time-aligned version/cohort comparisons and controls or stratifies request rate, request mix and cache state rather than relying on temporal correlation alone."},
+        {"id": "discriminating_tests", "critical": false, "requirement": "Names concrete traces, error classifications, dependency probes and/or controlled replay/canary tests that separate the hypotheses."},
+        {"id": "falsification", "critical": true, "requirement": "Gives at least one specific result that would contradict the leading hypothesis and explains how to revise the diagnosis; preserves evidence and limits risky production experiments."}
+      ]
+    },
+    {
+      "id": "security_logging_policy_002",
+      "question": "Design a log-sharing policy for incident response under these constraints: engineers need enough context to debug auth failures; logs may contain email, IP, session ids, and OAuth provider errors; external vendors can receive only minimal data; retention must be short. Give rules, redaction examples, access controls, and what must never be shared.",
+      "criteria": [
+        {"id": "useful_minimum", "critical": false, "requirement": "Defines an allowlist of useful auth-debug fields such as time, sanitized error code and correlation identifier; external sharing is a separately minimized sanitized extract."},
+        {"id": "redaction_examples", "critical": true, "requirement": "Provides concrete email, IP and session-id redaction/pseudonymization examples plus sanitization of OAuth error text, including nested/free-text fields; avoids reversible/plain hashes as guaranteed anonymization."},
+        {"id": "never_share_secrets", "critical": true, "requirement": "Prohibits sharing passwords, bearer/access/refresh tokens, cookies, OAuth authorization codes/client secrets and raw reusable session identifiers, including secrets embedded in URLs or provider errors."},
+        {"id": "access_and_export", "critical": true, "requirement": "Defines least-privilege incident-scoped access, audited exports/approval and secure transfer to approved vendors; raw logs cannot be exported indiscriminately."},
+        {"id": "short_retention", "critical": false, "requirement": "Sets a concrete short retention period or bounded incident lifecycle with automatic deletion, including vendor copies and exports, and a controlled exceptional preservation path."}
+      ]
+    },
+    {
+      "id": "distributed_consistency_001",
+      "question": "A payment system writes `payment_authorized` to Service A and `order_confirmed` to Service B using two independent HTTP calls. The second call can timeout after the first succeeds. Explain the consistency problem, why naive retries may duplicate side effects, and design an idempotent recovery flow.",
+      "criteria": [
+        {"id": "ambiguous_timeout", "critical": true, "requirement": "Explains partial success and that a B timeout is an unknown outcome, not proof B failed; queries/reconciles using the stable operation identity."},
+        {"id": "durable_idempotency", "critical": true, "requirement": "Uses stable per-operation keys and durable atomic deduplication/result storage at both services so retries cannot duplicate authorization or confirmation; handles concurrent retries and payload mismatch."},
+        {"id": "durable_recovery", "critical": true, "requirement": "Persists workflow state/retry intent (such as outbox or durable saga), recovers after process crashes and retries only unfinished steps with bounded backoff."},
+        {"id": "compensation", "critical": true, "requirement": "Defines recovery for permanent B failure including a durable, retryable idempotent void/release/compensation or explicit manual escalation; does not immediately reverse A solely because B timed out."},
+        {"id": "invariants_and_tests", "critical": false, "requirement": "Defines a payment/order invariant and tests for lost responses, duplicate/concurrent deliveries and crashes between side effects and local state persistence; avoids unsupported exactly-once or cross-service transaction claims."}
+      ]
+    }
+  ]
+}

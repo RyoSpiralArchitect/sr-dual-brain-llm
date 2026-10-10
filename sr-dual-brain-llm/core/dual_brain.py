@@ -4614,6 +4614,8 @@ class DualBrainController:
         unconscious_profile: Any,
         affect: Dict[str, float],
         novelty: float,
+        turn_started: float | None = None,
+        consult_latency_ms: float | None = None,
     ) -> None:
         self.memory.record_dialogue_flow(
             decision.qid,
@@ -4625,34 +4627,6 @@ class DualBrainController:
             steps=steps_payload,
             architecture=architecture_path,
         )
-        self.telemetry.log(
-            "interaction_complete",
-            qid=decision.qid,
-            success=success,
-            latency_ms=latency_ms,
-            reward=reward,
-            tags=list(tags),
-            amygdala_override=decision.state.get("amygdala_override", False),
-            hippocampal_total=episodic_total,
-        )
-        if phase_latencies_ms:
-            phases = {
-                key: round(value, 3)
-                for key, value in sorted(phase_latencies_ms.items())
-                if value > 0.0
-            }
-            if phases:
-                accounted_ms = round(sum(phases.values()), 3)
-                other_ms = round(max(0.0, float(latency_ms) - accounted_ms), 3)
-                decision.state["latency_phases_ms"] = phases
-                self.telemetry.log(
-                    "latency_breakdown",
-                    qid=decision.qid,
-                    phases=phases,
-                    accounted_ms=accounted_ms,
-                    other_ms=other_ms,
-                    total_ms=round(float(latency_ms), 3),
-                )
         if hippocampal_rollup is not None:
             self.telemetry.log(
                 "hippocampal_collaboration",
@@ -4702,6 +4676,40 @@ class DualBrainController:
                 outcome=outcome_meta,
             )
 
+        # Finish the wall timer after persistence, observer and feedback work.
+        # Only emitting these final telemetry events lies outside this interval.
+        if turn_started is not None:
+            latency_ms = (time.perf_counter() - turn_started) * 1000.0
+        self.telemetry.log(
+            "interaction_complete",
+            qid=decision.qid,
+            success=success,
+            latency_ms=latency_ms,
+            latency_scope="controller_turn" if turn_started is not None else "unspecified",
+            latency_schema_version=2,
+            consult_latency_ms=consult_latency_ms,
+            reward=reward,
+            tags=list(tags),
+            amygdala_override=decision.state.get("amygdala_override", False),
+            hippocampal_total=episodic_total,
+        )
+        phases = {
+            key: round(value, 3)
+            for key, value in sorted(phase_latencies_ms.items())
+            if value > 0.0
+        }
+        if phases:
+            accounted_ms = round(sum(phases.values()), 3)
+            decision.state["latency_phases_ms"] = phases
+            self.telemetry.log(
+                "latency_breakdown",
+                qid=decision.qid,
+                phases=phases,
+                accounted_ms=accounted_ms,
+                other_ms=round(max(0.0, float(latency_ms) - accounted_ms), 3),
+                total_ms=round(float(latency_ms), 3),
+            )
+
     async def process(
         self,
         question: str,
@@ -4716,6 +4724,7 @@ class DualBrainController:
         executive_mode: str = "off",
         executive_observer_mode: str = "off",
     ) -> str:
+        turn_started = time.perf_counter()
         mode = str(answer_mode or "plain").strip().lower()
         emit_debug_sections = mode in {"debug", "annotated", "meta"}
         if self.coherence_resonator is not None:
@@ -5580,7 +5589,9 @@ class DualBrainController:
                 )
             )
         finally:
-            latency_ms = (time.perf_counter() - start) * 1000.0
+            consult_latency_ms = (time.perf_counter() - start) * 1000.0
+            # Preserve the adaptive feedback signal while fixing reported wall time.
+            latency_ms = consult_latency_ms
             self.orchestrator.clear(decision.qid)
 
         if executive_payload is None and executive_task is not None:
@@ -5683,6 +5694,7 @@ class DualBrainController:
                     "response_source": response_source or "left_only",
                     "success": success,
                     "latency_ms": round(latency_ms, 3),
+                    "latency_scope": "consult_integration",
                     "action": decision.action,
                     **(
                         {"coherence": round(coherence_signal.combined_score, 4)}
@@ -6090,6 +6102,8 @@ class DualBrainController:
             unconscious_profile=unconscious_profile,
             affect=affect,
             novelty=novelty,
+            turn_started=turn_started,
+            consult_latency_ms=consult_latency_ms,
         )
         return final_answer
 

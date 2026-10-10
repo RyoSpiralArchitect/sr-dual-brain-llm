@@ -259,13 +259,26 @@ def _comparison_rows(
         if before_number is not None and after_number is not None:
             delta = after_number - before_number
         key = _metric_key(spec)
+        comparable = True
+        if key in {"avg_latency_ms", "avg_latency_ms_all_cases"}:
+            def signature(report: Mapping[str, Any]) -> tuple[Any, Any]:
+                summary = _as_dict(report.get("summary"))
+                if spec.key.startswith("summary_by_mode."):
+                    mode = spec.key.split(".", 2)[1]
+                    summary = _as_dict(_as_dict(report.get("summary_by_mode")).get(mode))
+                return summary.get("latency_schema_version"), summary.get("latency_scope")
+            before_signature, after_signature = signature(before), signature(after)
+            comparable = (before_signature == after_signature
+                          and "mixed" not in before_signature)
+            if not comparable:
+                delta = None
         rows.append(
             (
                 spec.label,
                 _fmt_value(before_value, key=key),
                 _fmt_value(after_value, key=key),
                 _fmt_delta(delta, key),
-                _assessment(delta, spec.polarity),
+                _assessment(delta, spec.polarity) if comparable else "incomparable",
             )
         )
     return rows
@@ -299,6 +312,8 @@ def _attention_from_rows(rows: Sequence[Sequence[str]]) -> list[str]:
     regressed = [row for row in rows if row[-1] == "regressed"]
     improved = [row for row in rows if row[-1] == "improved"]
     items: list[str] = []
+    if any(row[-1] == "incomparable" for row in rows):
+        items.append("Latency measurements use different scopes or schema versions; no delta is computed.")
     if regressed:
         details = ", ".join(f"{row[0]} ({row[3]})" for row in regressed[:5])
         items.append(f"Regressions: {details}.")

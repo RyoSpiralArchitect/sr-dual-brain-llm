@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "drafts": [
+    {"id": "concurrency_review_001", "origin": "synthetic", "context": "", "draft": "The GIL makes dictionary operations safe. Put the fetch in a lock and always store its result; retries can simply call the function again."},
+    {"id": "incident_causal_triage_002", "origin": "synthetic", "context": "", "draft": "The deploy caused all four changes because they happened together. Roll back and, since latency improves, the incident is resolved. Watch the graphs."},
+    {"id": "security_logging_policy_002", "origin": "synthetic", "context": "", "draft": "Give engineers and the vendor the raw auth logs including session IDs so they can reproduce the issue. Keep them until debugging is finished."},
+    {"id": "distributed_consistency_001", "origin": "synthetic", "context": "", "draft": "If B times out it failed. Retry both HTTP calls until they succeed; HTTP retries provide exactly-once execution. If it still fails, immediately refund A."}
+  ]
+}
