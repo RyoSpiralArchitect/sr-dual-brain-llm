@@ -35,6 +35,9 @@ from typing import Any, Optional
 
 _FLOAT_RE = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?")
 _FRACTION_RE = re.compile(r"(-?\d+)\s*/\s*(-?\d+)")
+_LATEX_FRACTION_RE = re.compile(
+    r"\\(?:dfrac|tfrac|frac)\s*\{\s*(-?\d+)\s*\}\s*\{\s*(-?\d+)\s*\}"
+)
 _PERCENT_RE = re.compile(r"(-?\d+(?:\.\d+)?)\s*%")
 
 
@@ -54,12 +57,13 @@ def _safe_float(value: Any) -> Optional[float]:
 def _numeric_candidates(text: str) -> list[float]:
     raw = str(text or "")
     out: list[float] = []
-    for m in _FRACTION_RE.finditer(raw):
-        num = _safe_float(m.group(1))
-        den = _safe_float(m.group(2))
-        if num is None or den is None or den == 0:
-            continue
-        out.append(num / den)
+    for pattern in (_FRACTION_RE, _LATEX_FRACTION_RE):
+        for m in pattern.finditer(raw):
+            num = _safe_float(m.group(1))
+            den = _safe_float(m.group(2))
+            if num is None or den is None or den == 0:
+                continue
+            out.append(num / den)
     for m in _PERCENT_RE.finditer(raw):
         pct = _safe_float(m.group(1))
         if pct is None:

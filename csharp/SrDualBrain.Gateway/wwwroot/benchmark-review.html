@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>回答の匿名レビュー · SrDualBrain</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/benchmark-review.css">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><div class="brand__title">SrDualBrain</div><div class="brand__subtitle">回答の匿名レビュー</div></div><span id="progress">読み込み中…</span></header>
+  <main class="review">
+    <h1>2つの回答を、あなたの目で。</h1>
+    <p class="intro">同じ問題への回答A・Bを読み、3つの観点で採点してください。迷う場合は「判断保留」を選べます。途中で保存して、あとから再開できます。</p>
+    <div class="review-settings">
+      <label>評価者名<input id="reviewer" maxlength="80" placeholder="名前"></label>
+      <label>これまでに見た評価結果<select id="exposure"><option value="unsure">覚えていない / 不明</option><option value="aggregate_results_seen">全体の集計を見た</option><option value="case_results_seen">設問別の結果も見た</option><option value="no_prior_results">まだ見ていない</option></select></label>
+    </div>
+    <p id="status" role="status" aria-live="polite">採点用データを読み込んでいます。</p>
+    <div id="workspace" hidden>
+      <div class="review-nav"><button class="btn" id="previous">前の組</button><label>回答の組<select id="packetSelect"></select></label><button class="btn btn--primary" id="next">保存して次へ</button></div>
+      <section class="question"><h2 id="questionHeading">問題</h2><p id="questionText"></p></section>
+      <div class="review-pair">
+        <section class="answer-pane" aria-label="回答A"><h2>回答 A</h2><div class="answer-text" id="answerA"></div><div class="score-fields" id="scoresA"></div></section>
+        <section class="answer-pane" aria-label="回答B"><h2>回答 B</h2><div class="answer-text" id="answerB"></div><div class="score-fields" id="scoresB"></div></section>
+      </div>
+      <section class="verdict"><label>全体としてどちらがよい？<select id="preferred"><option value="">選んでください</option><option value="a">A のほうがよい</option><option value="b">B のほうがよい</option><option value="tie">同等</option><option value="uncertain">判断保留</option></select></label><label>判断の理由<textarea id="rationale" rows="3" maxlength="4000" placeholder="違い・不足・判断に迷う点など。同等の場合は空欄でも構いません。"></textarea></label></section>
+      <p class="hint">正しさ → 十分さ → 根拠のない主張の少なさ、の順に重視してください。判断保留では採点を空欄にできます。理由を一言残してください。</p>
+      <div class="review-actions"><button class="btn" id="save">途中保存</button><button class="btn btn--primary" id="lock" disabled>全組の採点を確定</button><a id="export" href="/api/export" download="human-ratings.json" hidden>確定した採点をダウンロード</a></div>
+      <p class="hint">確定すると採点が固定されます。データはこの端末に保存され、対応するモードや他の評価者の点数は表示されません。</p>
+    </div>
+  </main>
+  <script src="/benchmark-review.js"></script>
+</body>
+</html>

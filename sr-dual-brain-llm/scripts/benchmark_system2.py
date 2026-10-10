@@ -518,10 +518,15 @@ def _summarise_diagnostics(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def _evaluate_critic_health_result(result: Dict[str, Any]) -> tuple[bool, str]:
+    status = str(result.get("critic_status") or "ok")
+    if status != "ok":
+        return False, status
     verdict = str(result.get("verdict") or "").strip().lower()
     if verdict not in {"ok", "issues"}:
         return False, "invalid_verdict"
     issues = result.get("issues")
+    if verdict == "ok" and (not isinstance(issues, list) or issues):
+        return False, "inconsistent_ok_issues"
     if verdict == "issues":
         if not isinstance(issues, list) or not issues:
             return False, "empty_issues"
@@ -691,15 +696,22 @@ async def _check_critic_health(
 def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     total = len(cases)
     ok_cases = [c for c in cases if not c.get("error")]
+    invalid_critic_cases = [c for c in ok_cases if c.get("critic_validity") == "invalid"]
+    issue_eligible_cases = [c for c in ok_cases if c.get("critic_validity") != "invalid"]
+    critic_invalid_by_reason: Dict[str, int] = {}
+    for case in invalid_critic_cases:
+        reasons = case.get("critic_failure_reasons") or ["unspecified"]
+        for reason in set(reasons):
+            critic_invalid_by_reason[str(reason)] = critic_invalid_by_reason.get(str(reason), 0) + 1
     measured = [
         c
-        for c in ok_cases
+        for c in issue_eligible_cases
         if c.get("initial_issues") is not None and c.get("final_issues") is not None
     ]
     measured_count = len(measured)
     no_op_cases = [
         c
-        for c in ok_cases
+        for c in issue_eligible_cases
         if c.get("initial_issues") is None or c.get("final_issues") is None
     ]
     system2_enabled_cases = [c for c in ok_cases if c.get("system2_enabled") is True]
@@ -757,7 +769,7 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         if case.get("followup_revision") is True:
             followup_count += 1
 
-    for case in ok_cases:
+    for case in issue_eligible_cases:
         initial_raw = case.get("initial_issues")
         final_raw = case.get("final_issues")
         if initial_raw is not None and final_raw is not None and int(initial_raw) > 0:
@@ -767,6 +779,7 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         else:
             per_case_reduction_all.append(0.0)
 
+    for case in ok_cases:
         rounds_all = _safe_float(case.get("rounds"))
         rounds_values_all.append(rounds_all if rounds_all is not None else 0.0)
 
@@ -778,9 +791,9 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     activation_rate = (
         len(system2_enabled_cases) / ok_count if ok_count > 0 else None
     )
-    measured_case_rate = measured_count / ok_count if ok_count > 0 else None
+    measured_case_rate = measured_count / len(issue_eligible_cases) if issue_eligible_cases else None
     resolved_issue_share_all = (
-        len(resolved_issue_cases) / ok_count if ok_count > 0 else None
+        len(resolved_issue_cases) / len(issue_eligible_cases) if issue_eligible_cases else None
     )
 
     acc_conflict_values = [
@@ -833,6 +846,9 @@ def _summarise_cases_base(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         "total_cases": total,
         "ok_cases": len(ok_cases),
         "error_cases": total - len(ok_cases),
+        "critic_invalid_cases": len(invalid_critic_cases),
+        "critic_invalid_by_reason": dict(sorted(critic_invalid_by_reason.items())),
+        "issue_metric_eligible_cases": len(issue_eligible_cases),
         "system2_enabled_cases": len(system2_enabled_cases),
         "system2_activation_rate": activation_rate,
         "truncation_signal_cases": len(truncation_signal_cases),
@@ -1041,6 +1057,7 @@ async def _run_case(
     executive_observer_mode: str,
     diagnostics_mode: str,
     include_answer: bool = False,
+    include_trace: bool = False,
 ) -> Dict[str, Any]:
     qid = f"{run_id}-c{index:03d}"
     question = str(question_entry.get("question") or "")
@@ -1200,8 +1217,43 @@ async def _run_case(
         "cerebellum_domain": cerebellum_domain,
         "cerebellum_confidence": cerebellum_confidence,
     }
+    critic_statuses = [
+        str(system2.get(metric_key) or policy_state.get(state_key) or "").strip().lower()
+        for metric_key, state_key in (
+            ("critic_status", "critic_status"),
+            ("verify_critic_status", "system2_verify_critic_status"),
+            ("round3_critic_status", "system2_round3_critic_status"),
+        )
+    ]
+    critic_issues_for_health = [
+        item
+        for source, key in (
+            (policy_state, "critic_issues_raw"),
+            (system2, "critic_issues"),
+            (system2, "verify_issues"),
+            (system2, "round3_issues"),
+        )
+        for item in _text_list(source.get(key))
+    ]
+    invalid_statuses = {
+        "provider_error", "unstructured", "empty_response", "inconsistent", "not_configured", "offline", "timeout"
+    }
+    critic_failure_reasons = {status for status in critic_statuses if status in invalid_statuses}
+    if any(_is_critic_fallback_issue(item) for item in critic_issues_for_health):
+        critic_failure_reasons.add("fallback_issue")
+    if str(system2.get("critic_kind") or policy_state.get("critic_kind") or "") == "micro_timeout_fallback":
+        critic_failure_reasons.add("micro_timeout_fallback")
+    case["critic_validity"] = (
+        "invalid" if critic_failure_reasons else
+        "valid" if system2_enabled is True and initial_issues is not None else
+        "not_applicable"
+    )
+    case["critic_statuses"] = [status for status in critic_statuses if status]
+    case["critic_failure_reasons"] = sorted(critic_failure_reasons)
     if include_answer:
         case["answer"] = answer
+    if include_trace:
+        case["dialogue_flow"] = session.memory.dialogue_flow(qid)
     diagnostics_norm = str(diagnostics_mode or "off").strip().lower()
     if diagnostics_norm not in {"off", "unresolved", "all"}:
         diagnostics_norm = "off"
