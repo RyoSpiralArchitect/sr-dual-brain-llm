@@ -142,6 +142,37 @@ def test_failures_are_retained_and_never_count_as_valid_revisions(monkeypatch, m
     assert result["arms"]["self_review"]["repair_rate"] is None
 
 
+@pytest.mark.parametrize("finish_reason,expected", [
+    ("content_filter", "incomplete"), ("tool_calls", "incomplete"),
+    ("function_call", "incomplete"), (None, "incomplete"),
+    ("length", "truncated"), ("max_tokens", "truncated"),
+])
+@pytest.mark.parametrize("stage", ["review", "revision"])
+def test_noncomplete_finish_reasons_cannot_reach_scoring(monkeypatch, finish_reason, expected, stage):
+    original = FakeClient.complete
+
+    async def incomplete(self, prompt, **kwargs):
+        text = await original(self, prompt, **kwargs)
+        is_review = kwargs["system"] == bench.REVIEW_SYSTEM
+        if is_review == (stage == "review"):
+            self.receipts[-1]["finish_reason"] = finish_reason
+        return text  # Nonempty valid JSON/answer must still be rejected.
+
+    monkeypatch.setattr(FakeClient, "complete", incomplete)
+    report, rubric = live_report(monkeypatch)
+    assert len(FakeClient.calls) == (8 if stage == "review" else 16)
+    for row in report["rows"]:
+        if row["arm"] != "no_revision":
+            assert row["status"] == expected and row["answer"] is None
+    blind, key, ratings = bench.prepare_packets(report, rubric)
+    fill_ratings(blind, key, ratings)
+    result = bench.score_packets(blind, key, ratings)
+    for arm in ("self_review", "right_critic"):
+        assert result["arms"][arm]["unavailable"] == 20
+        assert result["arms"][arm]["failed_answers"] == 4
+        assert result["arms"][arm]["repair_rate"] is None
+
+
 def test_capture_real_client_usage_and_missing_usage(monkeypatch):
     async def response(_self, *_args, **_kwargs):
         return {"choices": [{"finish_reason": "stop"}],

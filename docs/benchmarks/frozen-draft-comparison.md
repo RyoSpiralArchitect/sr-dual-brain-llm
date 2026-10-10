@@ -77,9 +77,12 @@ Reports preserve input/corpus/rubric hashes, source revision and dirty flag,
 origin, sanitized effective role configuration, each stage's text, wall time,
 attempted calls, finish reason and provider-reported input/output tokens. Missing
 usage is `null`, not zero. Budget failures are visible: invalid review JSON,
-contradictory verdicts, empty output, provider errors and truncated completions
+contradictory verdicts, empty output, provider errors and truncated/incomplete completions
 retain their rows; they cannot become successful revisions. After a failed
-review, the revision call is skipped. Raw provider exception messages are omitted
+review, the revision call is skipped. Only `finish_reason: stop` establishes a
+complete text completion; filtering, tool calls, missing/unknown terminal reasons
+are `incomplete`, and token-limit termination is `truncated`, even with nonempty
+text. Raw provider exception messages are omitted
 because they may contain credentials or private input.
 
 Run outputs need a new directory, and JSON files use mode `0600` and exclusive

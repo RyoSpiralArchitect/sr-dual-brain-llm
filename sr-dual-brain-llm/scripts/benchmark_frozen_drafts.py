@@ -126,8 +126,14 @@ async def call_stage(config, payload, system, client_factory):
         result["error_type"] = type(exc).__name__
     result["latency_ms"] = (time.perf_counter() - started) * 1000.0
     result["receipts"] = list(client.receipts)
-    if any(r.get("finish_reason") in {"length", "max_tokens"} for r in client.receipts):
-        result["status"] = "truncated"
+    if result["status"] == "ok":
+        reasons = [r.get("finish_reason") for r in client.receipts]
+        if any(reason in {"length", "max_tokens"} for reason in reasons):
+            result["status"] = "truncated"
+        elif not reasons or any(reason != "stop" for reason in reasons):
+            # content_filter/tool_calls/missing or unknown terminal reasons do not
+            # establish a complete text answer, even when partial text is present.
+            result["status"] = "incomplete"
     result["input_tokens"] = sum_usage(client.receipts, "input_tokens")
     result["output_tokens"] = sum_usage(client.receipts, "output_tokens")
     return result
