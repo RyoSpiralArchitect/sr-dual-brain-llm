@@ -12,10 +12,15 @@ fallbacks. Every arm receives the same frozen question, context and draft:
 | `right_critic` | Right model | Left model | 2 |
 
 Both active arms use identical review instructions and revision instructions,
-temperature 0.2, output-token caps and per-call timeouts. Continuation and retry
+requested temperature 0.2, token caps and per-call timeouts. Continuation and retry
 calls are disabled. Each call uses a new client and complete explicit input,
 with no shared conversation or controller memory. Matching caps and call
 budgets does not imply matching actual tokens, latency, cost, or model capability.
+Provider-specific request options are recorded: the existing client omits
+temperature for OpenAI GPT-5/6 models and uses `max_completion_tokens`, which also
+covers reasoning tokens. Other models use `temperature` and `max_tokens`.
+Consequently, identical configured caps need not allow identical visible answer
+lengths, and the requested temperature is not guaranteed to be effective.
 If both roles use the same model, this measures independent review rather than
 model diversity. Different providers/routes can introduce additional differences.
 

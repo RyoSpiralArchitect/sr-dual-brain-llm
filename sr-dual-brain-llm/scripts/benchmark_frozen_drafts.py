@@ -139,10 +139,15 @@ def sum_usage(items, field):
 
 
 def public_config(config):
-    return {name: getattr(config, name) for name in (
+    public = {name: getattr(config, name) for name in (
         "provider", "model", "max_output_tokens", "timeout_seconds", "auto_continue",
         "max_continuations",
     )}
+    payload = LLMClient(config)._openai_style_payload(
+        [], temperature=0.2, max_output_tokens=config.max_output_tokens,
+    )
+    public["request_options"] = {key: value for key, value in payload.items() if key != "messages"}
+    return public
 
 
 async def run_comparison(rubric, corpus, *, left=None, right=None, live=False,
@@ -206,7 +211,7 @@ async def run_comparison(rubric, corpus, *, left=None, right=None, live=False,
             "evaluation": "unscored", "live": live, "seed": seed,
             "rubric_sha256": digest(rubric), "corpus_sha256": digest(corpus),
             "source_revision": _source_revision(), "inputs": inputs,
-            "config": {"repetitions": repetitions, "temperature": 0.2,
+            "config": {"repetitions": repetitions, "requested_temperature": 0.2,
                        "roles": {role: public_config(c) for role, c in configs.items()}}, "rows": rows}
 
 

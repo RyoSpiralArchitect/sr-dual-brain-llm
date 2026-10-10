@@ -153,6 +153,15 @@ def test_capture_real_client_usage_and_missing_usage(monkeypatch):
     assert bench.sum_usage([{"input_tokens": 0}, {"input_tokens": None}], "input_tokens") is None
 
 
+def test_public_config_records_reasoning_model_request_options_without_secrets():
+    config = LLMConfig("openai", "gpt-6-luna", "SECRET", max_output_tokens=256)
+    public = bench.public_config(config)
+    assert public["request_options"] == {"model": "gpt-6-luna", "max_completion_tokens": 256}
+    assert "SECRET" not in json.dumps(public)
+    config.model = "ordinary-fixture"
+    assert bench.public_config(config)["request_options"]["temperature"] == 0.2
+
+
 def test_blind_scoring_records_repairs_regressions_and_uncertainty(monkeypatch):
     report, rubric = live_report(monkeypatch)
     blind, key, ratings = bench.prepare_packets(report, rubric)
