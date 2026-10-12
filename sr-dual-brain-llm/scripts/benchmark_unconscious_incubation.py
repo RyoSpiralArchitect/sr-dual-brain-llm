@@ -324,6 +324,8 @@ def _emergent_events_with_turns(turns: List[Dict[str, Any]]) -> List[Dict[str, A
                     "incubation_rounds": _safe_int(detail_payload.get("incubation_rounds")),
                     "trigger_similarity": _safe_float(detail_payload.get("trigger_similarity")),
                     "origin": str(detail_payload.get("origin") or ""),
+                    "seed_id": detail_payload.get("seed_id"),
+                    "source_qid": detail_payload.get("source_qid"),
                 }
             )
     return events
@@ -392,6 +394,8 @@ def _near_miss_events_with_turns(turns: List[Dict[str, Any]]) -> List[Dict[str, 
                     ],
                     "status": str(attempt_payload.get("status") or ""),
                     "origin": str(attempt_payload.get("origin") or ""),
+                    "seed_id": attempt_payload.get("seed_id"),
+                    "source_qid": attempt_payload.get("source_qid"),
                     "current_top1": top_k[0] if top_k else None,
                     "current_top1_matches_seed": bool(top_k and top_k[0] == archetype),
                     "state": _near_miss_state(attempt_payload, payload),

@@ -288,6 +288,10 @@ def test_judge_retry_only_calls_invalid_packets_preserves_failures_and_checks_id
         asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture", client_factory=Judge, retry_from=bad))
     with pytest.raises(ValueError, match="packets or judge identity"):
         asyncio.run(bench.judge_packets(blind, key, cfg, model="another-judge", client_factory=Judge, retry_from=initial))
+    for changed in ({"max_tokens": 1024}, {"timeout": 120}):
+        with pytest.raises(ValueError, match="judge identity/configuration"):
+            asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
+                                           client_factory=Judge, retry_from=initial, **changed))
     bad = deepcopy(initial)
     bad["judge_stages"].append(deepcopy(bad["judge_stages"][0]))
     with pytest.raises(ValueError, match="duplicate/unknown"):

@@ -294,8 +294,8 @@ async def judge_packets(blind, key, config, *, model, max_tokens=8192, timeout=9
     previous = {}
     if retry_from is not None:
         if (retry_from["packet_sha256"] != digest(blind)
-                or any(retry_from["judge_config"][name] != getattr(config, name) for name in ("provider", "model"))):
-            raise ValueError("Retry source differs in packets or judge identity")
+                or retry_from["judge_config"] != public_config(config)):
+            raise ValueError("Retry source differs in packets or judge identity/configuration")
         ids = [item["packet_id"] for item in retry_from["judge_stages"]]
         if len(set(ids)) != len(ids) or not set(ids).issubset({p["packet_id"] for p in blind["packets"]}):
             raise ValueError("Retry source has duplicate/unknown packets")
