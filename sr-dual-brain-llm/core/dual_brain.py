@@ -2716,6 +2716,7 @@ class DualBrainController:
                 payload["unconscious_hints"] = [
                     f"{idea.label} ({idea.archetype})" for idea in ideas
                 ]
+                payload["unconscious_seed_ids"] = [idea.seed_id for idea in ideas if idea.seed_id]
                 payload["unconscious_cache_depth"] = unconscious_summary.cache_depth
                 payload["unconscious_stress_released"] = unconscious_summary.stress_released
         if psychoid_signal:
@@ -2800,6 +2801,7 @@ class DualBrainController:
             "hemisphere_bias": round(hemisphere_bias, 4),
             "focus_keywords": len(payload.get("focus_keywords", [])),
             "unconscious_hints": len(payload.get("unconscious_hints", [])),
+            "unconscious_seed_ids": list(payload.get("unconscious_seed_ids", [])),
             "psychoid_bias": bool(payload.get("psychoid_attention_bias")),
             "default_mode_refs": len(payload.get("default_mode_reflections", [])),
         }
@@ -2830,6 +2832,12 @@ class DualBrainController:
         phase_add: Callable[[str, float], None],
     ) -> RightConsultStageResult:
         payload = consult_plan.payload
+        if payload.get("unconscious_seed_ids"):
+            self.telemetry.log(
+                "unconscious_seed_routed", qid=decision.qid,
+                seed_ids=list(payload["unconscious_seed_ids"]),
+                destination="right_consult_request", status="attempted",
+            )
         consult_started = time.perf_counter()
         response = await ask_callosum_with_timeout(
             payload,
@@ -4665,11 +4673,15 @@ class DualBrainController:
                 draft=draft,
                 final_answer=user_answer,
                 success=success,
-                decision_state=decision.state,
+                decision_state={**decision.state, "source_qid": decision.qid},
                 affect=affect,
                 novelty=novelty,
                 reward=reward,
             )
+            if outcome_meta.get("seed_id"):
+                binder = getattr(self.memory, "bind_seed", None)
+                if callable(binder) and binder(decision.qid, outcome_meta["seed_id"]):
+                    self.telemetry.log("memory_seed_linked", qid=decision.qid, seed_id=outcome_meta["seed_id"])
             self.telemetry.log(
                 "unconscious_outcome",
                 qid=decision.qid,
@@ -4898,6 +4910,20 @@ class DualBrainController:
                 self.callosum.slot_ms = original_slot
 
         delta_cb = _emit_delta if on_delta else None
+        memory_context = context_parts.get("memory", "")
+        selector = getattr(self.memory, "retrieve_related_traces", None)
+        if memory_context and memory_context in context and callable(selector):
+            # Context can be rebuilt/filtered before drafting. Attribute IDs only
+            # when the currently selected traces still reproduce the exact block.
+            if self.memory.retrieve_related(question) == memory_context:
+                traces = selector(question)
+                seed_ids = [trace.seed_id for trace in traces if getattr(trace, "seed_id", None)]
+                if seed_ids:
+                    self.telemetry.log(
+                        "memory_seed_injected", qid=qid_value, seed_ids=seed_ids,
+                        source_qids=[trace.qid for trace in traces if getattr(trace, "seed_id", None)],
+                        destination="draft_context", status="provided_to_stage",
+                    )
         draft_stage = await self._run_left_draft_stage(
             question=question,
             context=context,

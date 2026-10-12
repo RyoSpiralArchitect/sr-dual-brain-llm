@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 import time
 from collections import OrderedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 
@@ -135,6 +135,7 @@ class MemoryTrace:
     timestamp: float = field(default_factory=lambda: time.time())
     tags: Tuple[str, ...] = field(default_factory=tuple)
     question_tokens: Tuple[str, ...] = field(default_factory=tuple)
+    seed_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.question_tokens:
@@ -186,6 +187,15 @@ class SharedMemory:
             ]
         )
 
+    def bind_seed(self, qid: str, seed_id: str) -> bool:
+        """Link one in-memory QA trace to its latent seed without changing text."""
+        indexes = [index for index, trace in enumerate(self.past_qas) if trace.qid == qid]
+        if not qid or not seed_id or len(indexes) != 1:
+            return False
+        index = indexes[0]
+        self.past_qas[index] = replace(self.past_qas[index], seed_id=seed_id)
+        return True
+
     # ------------------------------------------------------------------
     def _score_trace(
         self,
@@ -221,8 +231,16 @@ class SharedMemory:
     def retrieve_related(self, question: str, n: int = 3) -> str:
         """Return a formatted slice of relevant memory traces."""
 
+        return "\n".join(
+            f"Q:{_sanitize_memory_text(trace.question)} A:{_sanitize_memory_text(trace.answer)}"
+            for trace in self.retrieve_related_traces(question, n)
+        )
+
+    def retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
+        """Expose exactly the traces used in formatted context for provenance."""
+
         if not self.past_qas:
-            return ""
+            return []
 
         q_tokens = _tokenize(question)
         q_tags = _derive_tags(question)
@@ -236,17 +254,17 @@ class SharedMemory:
                 scored.append((score, trace))
 
         if not scored:
-            return ""
+            return []
 
         scored.sort(key=lambda item: item[0], reverse=True)
-        top: List[str] = []
+        top: List[MemoryTrace] = []
         for _, trace in scored[:n]:
             q = _sanitize_memory_text(trace.question)
             a = _sanitize_memory_text(trace.answer)
             if not q or not a:
                 continue
-            top.append(f"Q:{q} A:{a}")
-        return "\n".join(top)
+            top.append(trace)
+        return top
 
     def retrieve_schema_related(self, question: str, n: int = 2) -> str:
         """Return condensed "schema memory" snippets stored in kv.

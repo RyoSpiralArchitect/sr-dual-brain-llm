@@ -208,6 +208,9 @@ opens a private, resumable A/B form at `http://127.0.0.1:8871/`. See the
 for locking ratings and handling uncertainty.
 
 Unconscious-field benchmark reports live under `target/benchmarks/` by default.
+For identical-state recall probes and four controlled memory conditions, see the
+[controlled-memory protocol](docs/benchmarks/controlled-memory-protocol.md) and
+[2026-10-13 live pilot](docs/benchmarks/controlled-memory-2026-10-13.md).
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.
