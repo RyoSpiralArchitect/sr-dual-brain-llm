@@ -142,10 +142,16 @@ output. A separate model is not an independent human reviewer; same-family error
 style preferences and grading mistakes still require human adjudication.
 For an incomplete judge run, `judge --retry-from PATH` explicitly reuses validated
 packet outputs and evaluates only missing/invalid packets into a new directory.
-Packets and the complete public judge configuration (including cap and timeout)
+Packets and the complete public judge configuration (including cap, timeout and
+the effective API-base hash)
 must match. Earlier failures are retained; valid grades
 are not rejudged, and the old result stays unchanged. A serialization reminder is
 added to failed-packet requests without supplying old ratings or changing criteria.
+Custom API URLs are never written to public configuration; endpoint identity uses
+a hash with the HTTP client's trailing-slash normalization. Older judge artifacts
+without an endpoint hash remain scoreable but cannot be reused for retries, because
+their endpoint identity was not recorded. Do not retrofit an inferred endpoint
+into an old artifact to bypass this check.
 
 Scores count pass/fail/uncertain/unavailable criteria, failed answers and grounding
 failures per condition. Transitions from the no-memory baseline count repaired

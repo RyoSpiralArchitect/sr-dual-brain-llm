@@ -87,3 +87,8 @@ and hashes identify those files, but cannot independently audit the model's grad
 without the raw evidence. The evaluator is a separate model from the same family,
 and visible contexts limit blinding. Repeated grades do not justify population
 significance claims.
+
+The original pilot recorded budgets and model names but did not record an endpoint
+hash. The reviewed producer now records an opaque effective API-base hash and
+rejects retries from these older artifacts. Historical validated grades remain
+scoreable; an endpoint identity has not been inferred and added to the old data.

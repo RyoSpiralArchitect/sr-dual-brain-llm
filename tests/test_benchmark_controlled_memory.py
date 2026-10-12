@@ -1,5 +1,6 @@
 import asyncio
 from copy import deepcopy
+from dataclasses import replace
 import json
 from pathlib import Path
 import sys
@@ -292,8 +293,28 @@ def test_judge_retry_only_calls_invalid_packets_preserves_failures_and_checks_id
         with pytest.raises(ValueError, match="judge identity/configuration"):
             asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
                                            client_factory=Judge, retry_from=initial, **changed))
+    with pytest.raises(ValueError, match="judge identity/configuration"):
+        asyncio.run(bench.judge_packets(blind, key, replace(cfg, api_base="https://other.example/v1"),
+                                       model="judge-fixture", client_factory=Judge, retry_from=initial))
+    legacy = deepcopy(initial)
+    legacy["judge_config"].pop("api_base_sha256")
+    with pytest.raises(ValueError, match="judge identity/configuration"):
+        asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
+                                       client_factory=Judge, retry_from=legacy))
     bad = deepcopy(initial)
     bad["judge_stages"].append(deepcopy(bad["judge_stages"][0]))
     with pytest.raises(ValueError, match="duplicate/unknown"):
         asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture", client_factory=Judge, retry_from=bad))
     assert len(Judge.calls) == 5
+
+
+def test_public_config_fingerprints_effective_endpoint_without_exposing_custom_urls():
+    cfg = LLMConfig("openai", "fixture", "private-api-key")
+    default = bench.public_config(cfg)
+    assert default == bench.public_config(replace(cfg, api_base="https://api.openai.com/v1/"))
+    private_url = "https://fixture-user:fixture-password@other.example/private-path"
+    custom = bench.public_config(replace(cfg, api_base=private_url))
+    assert custom["api_base_sha256"] != default["api_base_sha256"]
+    serialized = json.dumps(custom)
+    assert all(secret not in serialized for secret in (
+        cfg.api_key, private_url, "fixture-password", "private-path"))

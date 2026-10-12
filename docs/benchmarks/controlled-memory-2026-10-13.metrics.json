@@ -205,6 +205,7 @@
     "Stale/noise grounding success in this fixture does not establish general resilience.",
     "Field-only lexical recall and direct model quality trials do not evaluate full-controller routing or adaptive feedback.",
     "Generation ran on a dirty working tree based on the recorded base commit; relevant sources were captured locally.",
-    "Raw answer/rating evidence and source copies are private ignored artifacts; public hashes alone cannot audit grades."
+    "Raw answer/rating evidence and source copies are private ignored artifacts; public hashes alone cannot audit grades.",
+    "Original pilot configs did not record an API-base hash. The reviewed producer records endpoint hashes and rejects retry reuse of these legacy artifacts; historical grades remain scoreable without retrofitted endpoint metadata."
   ]
 }

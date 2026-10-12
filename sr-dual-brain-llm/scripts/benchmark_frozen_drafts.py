@@ -184,7 +184,11 @@ def public_config(config):
         "provider", "model", "max_output_tokens", "timeout_seconds", "auto_continue",
         "max_continuations",
     )}
-    payload = LLMClient(config)._openai_style_payload(
+    client = LLMClient(config)
+    # Fingerprint the effective endpoint without exposing custom URLs, which
+    # can contain credentials. Normalize exactly as the HTTP client does.
+    public["api_base_sha256"] = digest((config.api_base or client._default_base()).rstrip("/"))
+    payload = client._openai_style_payload(
         [], temperature=0.2, max_output_tokens=config.max_output_tokens,
     )
     public["request_options"] = {key: value for key, value in payload.items() if key != "messages"}
