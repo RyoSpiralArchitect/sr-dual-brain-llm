@@ -96,3 +96,14 @@ def test_schema_memory_retrieval_sanitises_internal_lines():
     out = memory.retrieve_schema_related("cats", n=1)
     assert "User likes cats" in out
     assert "Architecture Path" not in out
+def test_seed_binding_exposes_exact_retrieval_sources_without_changing_text():
+    from core.shared_memory import SharedMemory
+
+    memory = SharedMemory()
+    memory.store({"Q": "Project cache policy", "A": "Use generation checks"}, qid="source")
+    before = memory.retrieve_related("Project cache policy")
+    assert memory.bind_seed("source", "seed-one")
+    assert memory.retrieve_related("Project cache policy") == before
+    assert memory.retrieve_related_traces("Project cache policy")[0].seed_id == "seed-one"
+    memory.store({"Q": "duplicate source", "A": "another answer"}, qid="source")
+    assert memory.bind_seed("source", "ambiguous") is False

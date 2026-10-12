@@ -9,6 +9,7 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from benchmark_unconscious_incubation import (  # noqa: E402
+    _emergent_details,
     _near_miss_events_with_turns,
     _filter_sequences,
     _load_sequences,
@@ -16,6 +17,27 @@ from benchmark_unconscious_incubation import (  # noqa: E402
     _sequence_lineage,
     _summarise_sequences,
 )
+
+
+def test_telemetry_seed_identity_survives_turn_reconstruction_and_lineage():
+    detail = {"seed_id": "older-exact", "source_qid": "source-one",
+              "archetype": "hero", "origin": "Identical origin text"}
+    extracted = _emergent_details([{"event": "unconscious_field",
+                                   "summary": {"emergent_ideas": [detail]}}])
+    # Two identical-looking seeds make approximate matching prefer the newer one.
+    turns = [
+        {"turn_index": 1, "cached_seed": {**detail, "turn_index": 1}, "unconscious": {}},
+        {"turn_index": 2, "cached_seed": {**detail, "seed_id": "newer-wrong",
+                                            "source_qid": "source-two", "turn_index": 2}, "unconscious": {}},
+        {"turn_index": 3, "unconscious": {"emergent_details": extracted}},
+    ]
+    link = _sequence_lineage({"turns": turns})["links"][0]
+    assert link["match_type"] == "seed_id"
+    assert link["seed"]["seed_id"] == link["emergent"]["seed_id"] == "older-exact"
+    assert link["emergent"]["source_qid"] == "source-one"
+    turns[-1]["unconscious"]["emergent_details"][0]["seed_id"] = "missing"
+    link = _sequence_lineage({"turns": turns})["links"][0]
+    assert link["match_type"] == "unmatched_seed_id" and link["seed"] is None
 
 
 def test_load_sequences_accepts_object_wrapper(tmp_path):

@@ -157,7 +157,7 @@ class LLMClient:
         timeout_seconds: Optional[float] = None,
     ) -> Dict[str, object]:
         timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.config.timeout_seconds)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
             async with session.post(url, json=payload, headers=headers) as resp:
                 data = await resp.json(content_type=None)
                 if resp.status >= 400:
@@ -417,7 +417,7 @@ class LLMClient:
         headers.update(self.config.extra_headers)
 
         timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.config.timeout_seconds)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
             async with session.post(url, json=payload, headers=headers) as resp:
                 if resp.status >= 400:
                     text = await resp.text()

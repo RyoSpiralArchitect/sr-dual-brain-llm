@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "analysis_date": "2026-10-13",
+  "timezone": "Asia/Tokyo",
+  "scope": "Synthetic SharedMemory interventions and isolated model calls; separate lexical UnconsciousField recall diagnostics",
+  "generation_model": {
+    "provider": "openai",
+    "model": "gpt-6-luna",
+    "max_output_tokens": 1024,
+    "timeout_seconds": 40,
+    "auto_continue": false,
+    "max_continuations": 0,
+    "request_options": {
+      "model": "gpt-6-luna",
+      "max_completion_tokens": 1024
+    }
+  },
+  "judge_model": {
+    "provider": "openai",
+    "model": "gpt-6-sol",
+    "max_output_tokens": 8192,
+    "timeout_seconds": 90,
+    "auto_continue": false,
+    "max_continuations": 0,
+    "request_options": {
+      "model": "gpt-6-sol",
+      "max_completion_tokens": 8192
+    }
+  },
+  "generation_source_revision": {
+    "commit": "906c86dbc7e64f553f7a786a074ef4f0a8bb562f",
+    "dirty": true
+  },
+  "captured_generation_sources": {
+    "base_commit": "906c86dbc7e64f553f7a786a074ef4f0a8bb562f",
+    "files": {
+      "sr-dual-brain-llm/scripts/benchmark_controlled_memory.py": "4d854ca0b6d73647a57a765161e2c3d951b6f4a38aa0c74752649e5bce00a103",
+      "sr-dual-brain-llm/scripts/benchmark_frozen_drafts.py": "2281ae00ec0c280b755227a288dc3d8171fea3e651b2842e4c2a745bd4b13108",
+      "sr-dual-brain-llm/scripts/benchmark_system2_ab.py": "37a17ce8c369f036701da9046a6590b2bfd49010f829e026b6be616a6a4bf7b0",
+      "sr-dual-brain-llm/core/unconscious_field.py": "48043eef05f17080b0f17a6e8efa94b0e3349fc20d8fd4aae2684bdb0238d6b5",
+      "sr-dual-brain-llm/core/shared_memory.py": "74939b0aac4a44bea630ed99c2940ee764c0538f1f5ec716286e93cdd81a9116",
+      "sr-dual-brain-llm/core/schema.py": "e3507e8adca19909b9b89a14012b6fbbd71d61bed142edb4530c6c7a325b6337",
+      "sr-dual-brain-llm/core/llm_client.py": "0e8fb406248d195415ca5b160c0aff19a6f50272f2d369a1211867fd37e38ff2"
+    }
+  },
+  "fixture": {
+    "path": "sr-dual-brain-llm/examples/controlled_memory_benchmark.json",
+    "canonical_sha256": "4451a282d5ac6d6d0e0fabb34a368b05b9c65a2725b33863440101a073339f50",
+    "file_sha256": "a874377a9c7963e28e4b61fb8a1e59d86f0dfe5dd7f081677ca85afee76cc294"
+  },
+  "private_artifacts": {
+    "report": {
+      "path": "target/benchmarks/controlled-memory-live-2026-10-13/report.json",
+      "file_sha256": "da01d2b4344684ac7a343115a509b99ed4c411710a70d8bbec5b6036f35f9cd0"
+    },
+    "blind": {
+      "path": "target/benchmarks/controlled-memory-review-2026-10-13/blind.json",
+      "file_sha256": "e9f640443f566d6c1f6523f202c3118aa57105071b7a0a630177e8bd43ec4ea7"
+    },
+    "key": {
+      "path": "target/benchmarks/controlled-memory-review-2026-10-13/reveal_key.json",
+      "file_sha256": "7fe7a0ec8461035b6ebb7d1e8e95e276dd9d72fc17d70a6949a61a3c78d5e77a"
+    },
+    "initial_judge": {
+      "path": "target/benchmarks/controlled-memory-judge-2026-10-13/ratings.json",
+      "file_sha256": "60fd0270b17eb9e9fb28077e10ef4fce89623a2feaf0ecadda0e3d364360141c"
+    },
+    "final_judge": {
+      "path": "target/benchmarks/controlled-memory-judge-retry-2026-10-13/ratings.json",
+      "file_sha256": "7385039a13954143a066c2a4d2c0f868ea92bb12df245eea8dd727d597cd6013"
+    },
+    "scores": {
+      "path": "target/benchmarks/controlled-memory-judge-retry-2026-10-13/scores.json",
+      "file_sha256": "875392353f5a232470edf6050da68203985310fa367045f91d250d6d1b3d123e"
+    },
+    "source_manifest": {
+      "path": "target/benchmarks/controlled-memory-live-2026-10-13/source/manifest.json",
+      "file_sha256": "3b5cee049e6a004794c6117c3297b7d61e0f2d93f6701c1f5fe7002c6b1dfe7d"
+    }
+  },
+  "canonical_packet_sha256": "37a8ab103ce809ff42e49a6536cfcc9f6b0b87921d91ffd547a05eb99adeb65e",
+  "canonical_report_sha256": "cbb9ba859641477ed859e0ee353a782c8f2c2797de00b3c30e1725818a85a6b6",
+  "unique_quality_cases": 4,
+  "repetitions": 4,
+  "generation_calls": 64,
+  "generation_valid_answers": 64,
+  "judge_initial_calls": 16,
+  "judge_retry_calls": 1,
+  "judge_valid_packets": 16,
+  "judge_initial_invalid_packets": [
+    "m0013"
+  ],
+  "judge_retry_preserved_valid_packets": 15,
+  "arms": {
+    "no_memory": {
+      "units": 64,
+      "pass": 16,
+      "fail": 48,
+      "uncertain": 0,
+      "unavailable": 0,
+      "repaired_coverage_or_defects": 0,
+      "introduced_failures": 0,
+      "eligible_repairs": 48,
+      "eligible_regressions": 16,
+      "grounding_failures": 0,
+      "failed_answers": 0,
+      "factual_coverage_pass": 0,
+      "factual_coverage_units": 48,
+      "grounding_pass": 16,
+      "grounding_units": 16,
+      "generation_calls": 16,
+      "input_tokens": 1984,
+      "output_tokens": 3435,
+      "mean_call_latency_ms": 2905.997
+    },
+    "correct": {
+      "units": 64,
+      "pass": 63,
+      "fail": 1,
+      "uncertain": 0,
+      "unavailable": 0,
+      "repaired_coverage_or_defects": 47,
+      "introduced_failures": 0,
+      "eligible_repairs": 48,
+      "eligible_regressions": 16,
+      "grounding_failures": 0,
+      "failed_answers": 0,
+      "factual_coverage_pass": 47,
+      "factual_coverage_units": 48,
+      "grounding_pass": 16,
+      "grounding_units": 16,
+      "generation_calls": 16,
+      "input_tokens": 3272,
+      "output_tokens": 5298,
+      "mean_call_latency_ms": 3635.99
+    },
+    "stale": {
+      "units": 64,
+      "pass": 20,
+      "fail": 44,
+      "uncertain": 0,
+      "unavailable": 0,
+      "repaired_coverage_or_defects": 4,
+      "introduced_failures": 0,
+      "eligible_repairs": 48,
+      "eligible_regressions": 16,
+      "grounding_failures": 0,
+      "failed_answers": 0,
+      "factual_coverage_pass": 4,
+      "factual_coverage_units": 48,
+      "grounding_pass": 16,
+      "grounding_units": 16,
+      "generation_calls": 16,
+      "input_tokens": 2824,
+      "output_tokens": 6330,
+      "mean_call_latency_ms": 4632.859
+    },
+    "noise": {
+      "units": 64,
+      "pass": 16,
+      "fail": 48,
+      "uncertain": 0,
+      "unavailable": 0,
+      "repaired_coverage_or_defects": 0,
+      "introduced_failures": 0,
+      "eligible_repairs": 48,
+      "eligible_regressions": 16,
+      "grounding_failures": 0,
+      "failed_answers": 0,
+      "factual_coverage_pass": 0,
+      "factual_coverage_units": 48,
+      "grounding_pass": 16,
+      "grounding_units": 16,
+      "generation_calls": 16,
+      "input_tokens": 2440,
+      "output_tokens": 3599,
+      "mean_call_latency_ms": 2862.028
+    }
+  },
+  "recall": {
+    "unique_scenes": 3,
+    "embedding": "deterministic_hash",
+    "dim": 128,
+    "seed": 17,
+    "repetitions": 4,
+    "summary": {
+      "echo": {
+        "probes": 12,
+        "recovered_probes": 12
+      },
+      "paraphrase": {
+        "probes": 12,
+        "recovered_probes": 4
+      },
+      "motifless": {
+        "probes": 12,
+        "recovered_probes": 4
+      }
+    }
+  },
+  "limitations": [
+    "Four unique quality questions; repeated criteria and probes are correlated.",
+    "Correct memory supplies facts withheld from baseline; missing coverage is not necessarily a false answer.",
+    "Single same-family model judge, no human adjudication; historical context makes blinding limited.",
+    "Stale/noise grounding success in this fixture does not establish general resilience.",
+    "Field-only lexical recall and direct model quality trials do not evaluate full-controller routing or adaptive feedback.",
+    "Generation ran on a dirty working tree based on the recorded base commit; relevant sources were captured locally.",
+    "Raw answer/rating evidence and source copies are private ignored artifacts; public hashes alone cannot audit grades.",
+    "Original pilot configs did not record an API-base hash or judge-prompt policy identity. The reviewed producer records endpoint/prompt identities and stage request hashes, and rejects retry reuse of these legacy artifacts; historical grades remain scoreable without retrofitted metadata."
+  ]
+}

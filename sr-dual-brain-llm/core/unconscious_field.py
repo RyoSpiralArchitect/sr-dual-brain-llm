@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import copy
 import dataclasses
 import json
 import math
@@ -47,8 +48,9 @@ import random
 import re
 import sys
 import time
+import uuid
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Deque, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -146,6 +148,8 @@ class LatentSeed:
     vector: List[float]
     created_at: float
     exposures: int = 0
+    seed_id: str = field(default_factory=lambda: uuid.uuid4().hex)
+    source_qid: str | None = None
 
     def short_origin(self) -> str:
         base = self.question.strip() or self.draft.strip()
@@ -1069,6 +1073,24 @@ class UnconsciousField:
         self._psychoid_sampler = PsychoidArchetypeSampler(self.prototypes)
         self._last_psychoid_signal: Optional[PsychoidSignalModel] = None
 
+    def fork(self) -> "UnconsciousField":
+        """Independent in-memory snapshot of all field/pipeline/sampler state.
+
+        This clones the field, not controller history, model clients or sessions.
+        Custom embedders must support deepcopy; no snapshot is deserialized.
+        """
+        return copy.deepcopy(self)
+
+    def memory_state(self) -> Dict[str, Any]:
+        """Auditable cache/sampler state; not a fingerprint of model weights."""
+        return {
+            "scope": "unconscious_cache_and_sampler",
+            "seeds": [dataclasses.asdict(seed) for seed in self._seed_cache],
+            "pending_stress_release": self._pending_stress_release,
+            "sampler_chain": list(self._psychoid_sampler._chain),
+            "sampler_resonance": self._psychoid_sampler._latent_resonance,
+        }
+
     @staticmethod
     def _payload(question: str, draft: Optional[str]) -> str:
         payload = f"Question: {question.strip()}"
@@ -1108,6 +1130,8 @@ class UnconsciousField:
             status = "emerged" if emerged else ("survived" if decayed_intensity >= 0.05 else "decayed")
             attempts.append(
                 HarvestAttemptModel(
+                    seed_id=seed.seed_id,
+                    source_qid=seed.source_qid,
                     archetype=seed.archetype_id,
                     label=seed.archetype_label,
                     intensity=round(seed.intensity, 4),
@@ -1129,6 +1153,8 @@ class UnconsciousField:
             if emerged:
                 ideas.append(
                     EmergentIdeaModel(
+                        seed_id=seed.seed_id,
+                        source_qid=seed.source_qid,
                         archetype=seed.archetype_id,
                         label=seed.archetype_label,
                         intensity=round(seed.intensity, 4),
@@ -1211,6 +1237,7 @@ class UnconsciousField:
             stress_val += 0.1
 
         should_cache = False
+        seed: LatentSeed | None = None
         if affect and float(affect.get("valence", 0.0)) < -0.25:
             should_cache = False
         else:
@@ -1231,6 +1258,7 @@ class UnconsciousField:
                 novelty=float(novelty_value),
                 vector=vector,
                 created_at=time.time(),
+                source_qid=decision_state.get("source_qid"),
             )
             self._seed_cache.append(seed)
             self._trim_cache()
@@ -1242,6 +1270,8 @@ class UnconsciousField:
         self._psychoid_sampler.integrate_feedback(success=success, reward=reward)
         return {
             "seed_cached": should_cache,
+            "seed_id": seed.seed_id if seed is not None else None,
+            "source_qid": seed.source_qid if seed is not None else None,
             "stress_delta": stress_val,
             "cache_depth": len(self._seed_cache),
         }

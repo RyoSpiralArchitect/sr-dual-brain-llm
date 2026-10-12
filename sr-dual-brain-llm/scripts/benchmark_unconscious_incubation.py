@@ -137,6 +137,8 @@ def _emergent_details(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "incubation_rounds": _safe_int(payload.get("incubation_rounds")),
                 "trigger_similarity": _safe_float(payload.get("trigger_similarity")),
                 "origin": str(payload.get("origin") or ""),
+                "seed_id": payload.get("seed_id"),
+                "source_qid": payload.get("source_qid"),
             }
         )
     return details
@@ -194,6 +196,8 @@ def _cached_seed_snapshot(
         "intensity": _safe_float(top.get("intensity")),
         "cache_depth_after": _safe_int(outcome.get("cache_depth")),
         "origin": str(question or "")[:160],
+        "seed_id": outcome.get("seed_id"),
+        "source_qid": outcome.get("source_qid"),
         "cue_alignment": trace.get("cue_alignment"),
         "cue_ids": _as_list(_as_dict(trace.get("cue")).get("ids")),
         "top_k": _as_list(_as_dict(signals.get("unconscious")).get("top_k")),
@@ -320,6 +324,8 @@ def _emergent_events_with_turns(turns: List[Dict[str, Any]]) -> List[Dict[str, A
                     "incubation_rounds": _safe_int(detail_payload.get("incubation_rounds")),
                     "trigger_similarity": _safe_float(detail_payload.get("trigger_similarity")),
                     "origin": str(detail_payload.get("origin") or ""),
+                    "seed_id": detail_payload.get("seed_id"),
+                    "source_qid": detail_payload.get("source_qid"),
                 }
             )
     return events
@@ -388,6 +394,8 @@ def _near_miss_events_with_turns(turns: List[Dict[str, Any]]) -> List[Dict[str, 
                     ],
                     "status": str(attempt_payload.get("status") or ""),
                     "origin": str(attempt_payload.get("origin") or ""),
+                    "seed_id": attempt_payload.get("seed_id"),
+                    "source_qid": attempt_payload.get("source_qid"),
                     "current_top1": top_k[0] if top_k else None,
                     "current_top1_matches_seed": bool(top_k and top_k[0] == archetype),
                     "state": _near_miss_state(attempt_payload, payload),
@@ -434,6 +442,16 @@ def _match_emergent_to_seed(
         }
 
     emergent_archetype = str(emergent.get("archetype") or "")
+    seed_id = emergent.get("seed_id")
+    if seed_id:
+        exact = [seed for seed in prior if seed.get("seed_id") == seed_id]
+        seed = exact[0] if len(exact) == 1 else None
+        return {
+            "seed": seed, "match_type": "seed_id" if seed else "unmatched_seed_id",
+            "match_confidence": 1.0 if seed else 0.0,
+            "same_archetype": bool(seed and seed.get("archetype") == emergent_archetype),
+            "origin_match": bool(seed and _origin_matches(seed.get("origin"), emergent.get("origin"))),
+        }
     scored: List[tuple[float, Dict[str, Any], bool, bool]] = []
     for seed in prior:
         same_archetype = bool(emergent_archetype and seed.get("archetype") == emergent_archetype)

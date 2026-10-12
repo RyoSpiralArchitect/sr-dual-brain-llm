@@ -118,6 +118,8 @@ class EmergentIdeaModel:
     incubation_rounds: int
     trigger_similarity: float
     origin: str
+    seed_id: str | None = None
+    source_qid: str | None = None
 
     def __post_init__(self) -> None:
         self.archetype = str(self.archetype)
@@ -135,6 +137,8 @@ class EmergentIdeaModel:
             "incubation_rounds": self.incubation_rounds,
             "trigger_similarity": self.trigger_similarity,
             "origin": self.origin,
+            "seed_id": self.seed_id,
+            "source_qid": self.source_qid,
         }
 
 
@@ -158,6 +162,8 @@ class HarvestAttemptModel:
     failure_reasons: List[str] = field(default_factory=list)
     status: str = ""
     origin: str = ""
+    seed_id: str | None = None
+    source_qid: str | None = None
 
     def __post_init__(self) -> None:
         self.archetype = str(self.archetype)
@@ -195,6 +201,8 @@ class HarvestAttemptModel:
             "failure_reasons": list(self.failure_reasons),
             "status": self.status,
             "origin": self.origin,
+            "seed_id": self.seed_id,
+            "source_qid": self.source_qid,
         }
 
 

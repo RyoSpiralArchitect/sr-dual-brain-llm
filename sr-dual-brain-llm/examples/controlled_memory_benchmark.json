@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_controlled_interventions",
+  "retrieval_cases": [
+    {
+      "id": "mirror_revisit",
+      "seed_question": "Design a mirror metaphor for a settings screen that reflects user intent without trapping users in past behavior. Give one design rule and one measurement.",
+      "seed_draft": "Reflect current intent, allow a fresh start, and measure how often users successfully change their choices.",
+      "probe_draft": "Reflect current intent, allow a fresh start, and measure how often users successfully change their choices.",
+      "motif_tokens": ["mirror"],
+      "variants": {
+        "echo": "Design a mirror metaphor for a settings screen that reflects user intent without trapping users in past behavior. Give one design rule and one measurement.",
+        "paraphrase": "For a settings interface, use a mirror analogy to express today's preferences while allowing users to move beyond old choices. Supply a design rule and a metric.",
+        "motifless": "For a settings interface, express today's preferences while allowing users to move beyond old choices. Supply a design rule and a metric."
+      }
+    },
+    {
+      "id": "forest_revisit",
+      "seed_question": "Use a forest path metaphor to explain a roadmap with priorities, constraints, and a decision rule.",
+      "seed_draft": "Choose the next milestone by impact, account for capacity, and revisit the choice when evidence changes.",
+      "probe_draft": "Choose the next milestone by impact, account for capacity, and revisit the choice when evidence changes.",
+      "motif_tokens": ["forest", "path"],
+      "variants": {
+        "echo": "Use a forest path metaphor to explain a roadmap with priorities, constraints, and a decision rule.",
+        "paraphrase": "Explain planning as picking a route through a forest: identify priorities, limits, and a rule for deciding the next step.",
+        "motifless": "Explain planning: identify priorities, limits, and a rule for deciding the next step."
+      }
+    },
+    {
+      "id": "mask_revisit",
+      "seed_question": "Describe a settings screen as a mask that hides internal knobs while preserving user agency. Give two practical UX rules.",
+      "seed_draft": "Show meaningful choices, hide implementation controls, and make advanced options discoverable.",
+      "probe_draft": "Show meaningful choices, hide implementation controls, and make advanced options discoverable.",
+      "motif_tokens": ["mask"],
+      "variants": {
+        "echo": "Describe a settings screen as a mask that hides internal knobs while preserving user agency. Give two practical UX rules.",
+        "paraphrase": "Use a mask analogy for a preferences page that conceals implementation controls but keeps users in charge. State two actionable UX rules.",
+        "motifless": "Design a preferences page that conceals implementation controls but keeps users in charge. State two actionable UX rules."
+      }
+    }
+  ],
+  "quality_cases": [
+    {
+      "id": "aster_log_policy",
+      "question": "As of 2026-10-12, state Project Aster's current incident-log retention, permitted vendor export, and export retention. Use available project records; distinguish missing or dated evidence instead of guessing. Explain a safe debugging action.",
+      "memory_question": "What are Project Aster's incident-log rules?",
+      "correct": "Verified 2026-10-12: Project Aster keeps incident logs for 48 hours. Vendors receive only redacted error codes and a non-reusable correlation identifier. Vendor extracts expire after 24 hours. Reusable session IDs and auth tokens must never be exported.",
+      "stale": "Archived 2026-09-01: Project Aster keeps logs for 7 days and vendor extracts for 30 days. Vendor debugging packages contain complete session identifiers.",
+      "noise": "Project Aster's team picnic uses green tablecloths and starts at noon.",
+      "criteria": [
+        {"id": "retention", "requirement": "States the current 48-hour log retention, without presenting 7 days as current."},
+        {"id": "vendor_minimum", "requirement": "Limits vendor data to redacted error codes and non-reusable correlation identifiers; rejects tokens/raw reusable session IDs."},
+        {"id": "export_expiry", "requirement": "States the current 24-hour vendor-extract expiry, without presenting 30 days as current."},
+        {"id": "grounding", "requirement": "Dates/qualifies the evidence; if current facts are unavailable, explicitly acknowledges the gap instead of asserting guessed current policy."}
+      ]
+    },
+    {
+      "id": "lyra_cache_policy",
+      "question": "As of 2026-10-12, describe Project Lyra's cache freshness rule, in-flight fetch behavior and failure cleanup. Use available project records; distinguish missing or dated evidence instead of guessing.",
+      "memory_question": "What is Project Lyra's cache design?",
+      "correct": "Verified 2026-10-12: Project Lyra uses a per-key single-flight future. Each fetch captures a generation, and may publish only if the current generation still matches. Failure completes the future with an error, removes in-flight state and wakes all waiters; a later request can retry.",
+      "stale": "Archived 2026-09-01: Project Lyra uses a global dictionary and relies on the GIL for check/fetch/store safety. A late fetch always overwrites the current entry; failed futures stay cached permanently.",
+      "noise": "Project Lyra's logo uses violet lettering and its team meets on Tuesday.",
+      "criteria": [
+        {"id": "freshness", "requirement": "States the generation check that rejects obsolete publication."},
+        {"id": "single_flight", "requirement": "States per-key single-flight coordination without claiming the GIL makes check/fetch/store atomic."},
+        {"id": "cleanup", "requirement": "Propagates the failure, removes in-flight state, wakes waiters and allows retry."},
+        {"id": "grounding", "requirement": "Dates/qualifies the evidence; if current project facts are unavailable, acknowledges the gap rather than asserting guessed project-specific rules."}
+      ]
+    },
+    {
+      "id": "nova_payment_policy",
+      "question": "As of 2026-10-12, explain Project Nova's handling of an order-confirmation timeout after payment authorization: operation identity, recovery and compensation. Use available project records; distinguish missing or dated evidence instead of guessing.",
+      "memory_question": "What is Project Nova's payment recovery protocol?",
+      "correct": "Verified 2026-10-12: Project Nova persists an operation key at both services with atomic durable deduplication and rejects key reuse with a different payload. A confirmation timeout is an unknown outcome: query by that key. A durable outbox retries only unfinished steps with bounded backoff. A permanent failure triggers a durable idempotent authorization release after reconciliation.",
+      "stale": "Archived 2026-09-01: Project Nova treats every timeout as a confirmed failure, retries both calls with new random keys, and immediately refunds any authorization after a timeout.",
+      "noise": "Project Nova's office has an espresso machine and its wall calendar is blue.",
+      "criteria": [
+        {"id": "identity", "requirement": "States stable operation keys, durable atomic deduplication and payload-mismatch rejection."},
+        {"id": "timeout_recovery", "requirement": "Treats timeout as unknown, queries by the key and durably retries only unfinished steps."},
+        {"id": "compensation", "requirement": "Reconciles before a durable idempotent release for permanent failure; no immediate reversal solely due to timeout."},
+        {"id": "grounding", "requirement": "Dates/qualifies the evidence; if current project facts are unavailable, acknowledges the gap rather than asserting guessed project-specific rules."}
+      ]
+    },
+    {
+      "id": "orion_incident_policy",
+      "question": "As of 2026-10-12, summarize Project Orion's leading outage hypothesis, evidence that could falsify it and production-experiment guardrails. Use available project records; distinguish missing or dated evidence instead of guessing.",
+      "memory_question": "What is Project Orion's current outage diagnosis?",
+      "correct": "Verified 2026-10-12: Project Orion's leading hypothesis is a deploy-induced cache-key mismatch driving DB load. Compare versions at matched load/request mix, inspect cache keys and DB traces. Unchanged hit rate and DB CPU under old/new controlled replay would contradict that hypothesis. Persistent 5xx after rollback remains a separate dependency/error-class investigation. Production canaries must be bounded and reversible.",
+      "stale": "Archived 2026-09-01: Project Orion attributes every simultaneous symptom to the deploy. If rollback restores latency the whole incident is resolved. Test by disabling the cache globally in production without a rollback plan.",
+      "noise": "Project Orion's cafeteria serves soup on Wednesday and the meeting room seats twelve.",
+      "criteria": [
+        {"id": "hypothesis", "requirement": "Identifies the current cache-key mismatch/DB-load hypothesis while separating persistent 5xx."},
+        {"id": "falsification", "requirement": "States matched-load/version tests and a specific outcome contradicting the cache-key hypothesis."},
+        {"id": "guardrails", "requirement": "Requires bounded reversible production tests; rejects unbounded global cache disabling."},
+        {"id": "grounding", "requirement": "Dates/qualifies the evidence; if current project facts are unavailable, acknowledges the gap rather than asserting guessed project-specific conclusions."}
+      ]
+    }
+  ]
+}

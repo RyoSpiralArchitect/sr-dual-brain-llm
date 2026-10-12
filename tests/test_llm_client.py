@@ -1,6 +1,51 @@
 import asyncio
+from types import SimpleNamespace
+
+import pytest
 
 from core.llm_client import LLMConfig, LLMClient, load_llm_config
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_http_clients_honor_proxy_environment_without_disabling_tls(monkeypatch, stream):
+    async def chunks():
+        yield b'data: {"choices":[{"delta":{"content":"answer"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n'
+
+    class Response:
+        status = 200
+        content = SimpleNamespace(iter_any=chunks)
+
+        async def json(self, **kwargs):
+            return {"choices": [{"message": {"content": "answer"}, "finish_reason": "stop"}]}
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            pass
+
+    class Session:
+        def __init__(self, **kwargs):
+            assert kwargs["trust_env"] is True
+            assert "connector" not in kwargs
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            pass
+
+        def post(self, _url, **kwargs):
+            assert "ssl" not in kwargs
+            return Response()
+
+    monkeypatch.setattr("core.llm_client.aiohttp.ClientSession", Session)
+    client = LLMClient(LLMConfig("openai", "fixture", "key", auto_continue=False))
+    if stream:
+        answer = asyncio.run(client.complete_stream("question"))
+    else:
+        answer = asyncio.run(client.complete("question"))
+    assert answer == "answer"
 
 
 def test_load_llm_config_prefers_scoped_and_provider_base(monkeypatch):

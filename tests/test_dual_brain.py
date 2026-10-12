@@ -4109,3 +4109,24 @@ def test_executive_observer_metrics_stores_memo_out_of_band():
     assert isinstance(observer, dict)
     assert observer.get("observer_mode") == "metrics"
     assert observer.get("memo")
+
+
+def test_controller_links_cached_seed_and_records_draft_context_injection():
+    telemetry = TrackingTelemetry()
+    memory = SharedMemory()
+    field = UnconsciousField()
+    question = "Explain a heroic journey through difficult constraints and a guarded gate."
+    controller = make_stage_controller(
+        left_model=CaptureLeftModel(draft="The hero plans a careful route and checks the gate.", confidence=0.3),
+        memory=memory, telemetry=telemetry, unconscious_field=field,
+    )
+    asyncio.run(controller.process(question, qid="seed-source", system2_mode="off"))
+    outcome = next(p["outcome"] for event, p in telemetry.events if event == "unconscious_outcome")
+    assert outcome["seed_cached"] and outcome["seed_id"]
+    assert outcome["source_qid"] == "seed-source"
+    assert memory.past_qas[0].seed_id == outcome["seed_id"]
+    asyncio.run(controller.process(question, qid="seed-revisit", system2_mode="off"))
+    injected = next(p for event, p in telemetry.events if event == "memory_seed_injected")
+    assert injected["seed_ids"] == [outcome["seed_id"]]
+    assert injected["source_qids"] == ["seed-source"]
+    assert injected["destination"] == "draft_context"
