@@ -144,14 +144,18 @@ For an incomplete judge run, `judge --retry-from PATH` explicitly reuses validat
 packet outputs and evaluates only missing/invalid packets into a new directory.
 Packets and the complete public judge configuration (including cap, timeout and
 the effective API-base hash)
-must match. Earlier failures are retained; valid grades
+and the recorded base judge-prompt/retry-reminder policy must match. Individual
+stage hashes bind the actual system-prompt variant and input to each packet.
+Earlier failures are retained; valid grades
 are not rejudged, and the old result stays unchanged. A serialization reminder is
 added to failed-packet requests without supplying old ratings or changing criteria.
 Custom API URLs are never written to public configuration; endpoint identity uses
 a hash with the HTTP client's trailing-slash normalization. Older judge artifacts
-without an endpoint hash remain scoreable but cannot be reused for retries, because
-their endpoint identity was not recorded. Do not retrofit an inferred endpoint
-into an old artifact to bypass this check.
+without an endpoint hash or recorded prompt policy remain scoreable but cannot be
+reused for retries, because their evaluator identity was not fully recorded.
+Do not retrofit inferred endpoint/prompt metadata into an old artifact to bypass
+this check. Stored policy texts and digests allow historical grades to be validated
+even after the producer's prompt changes.
 
 Scores count pass/fail/uncertain/unavailable criteria, failed answers and grounding
 failures per condition. Transitions from the no-memory baseline count repaired

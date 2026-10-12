@@ -89,6 +89,7 @@ and visible contexts limit blinding. Repeated grades do not justify population
 significance claims.
 
 The original pilot recorded budgets and model names but did not record an endpoint
-hash. The reviewed producer now records an opaque effective API-base hash and
+hash or judge-prompt policy identity. The reviewed producer now records an opaque
+effective API-base hash, its judge-prompt policy and per-stage request hashes, and
 rejects retries from these older artifacts. Historical validated grades remain
-scoreable; an endpoint identity has not been inferred and added to the old data.
+scoreable; endpoint/prompt identities have not been inferred and added to the old data.

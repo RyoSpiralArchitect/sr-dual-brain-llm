@@ -225,6 +225,15 @@ def test_model_judge_is_distinct_and_ratings_are_bound_to_its_complete_output(mo
     assert ratings["complete"] and len(ratings["ratings"]) == 4
     assert "NOT_STORE" not in json.dumps(ratings)
     assert bench.score_packets(blind, key, ratings)["arms"]["correct"]["pass"] == 16
+    bad = deepcopy(ratings)
+    bad["judge_prompt_policy"]["system"] += " changed"
+    with pytest.raises(ValueError, match="prompt policy digest"):
+        bench.score_packets(blind, key, bad)
+    for name in ("input_sha256", "system_sha256"):
+        bad = deepcopy(ratings)
+        bad["judge_stages"][0][name] = "different"
+        with pytest.raises(ValueError, match="request prompt binding"):
+            bench.score_packets(blind, key, bad)
     ratings["ratings"][0]["scores"]["A"][next(iter(ratings["ratings"][0]["scores"]["A"]))]["verdict"] = "fail"
     with pytest.raises(ValueError, match="validated judge output"):
         bench.score_packets(blind, key, ratings)
@@ -301,6 +310,18 @@ def test_judge_retry_only_calls_invalid_packets_preserves_failures_and_checks_id
     with pytest.raises(ValueError, match="judge identity/configuration"):
         asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
                                        client_factory=Judge, retry_from=legacy))
+    legacy = deepcopy(initial)
+    legacy.pop("judge_prompt_sha256")
+    with pytest.raises(ValueError, match="recorded prompt identity"):
+        asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
+                                       client_factory=Judge, retry_from=legacy))
+    for name in ("JUDGE_SYSTEM", "JUDGE_RETRY_REMINDER"):
+        with monkeypatch.context() as patch:
+            patch.setattr(bench, name, getattr(bench, name) + " Changed grading policy.")
+            assert bench.score_packets(blind, key, retried)["packets"] == 4
+            with pytest.raises(ValueError, match="judge prompt policy"):
+                asyncio.run(bench.judge_packets(blind, key, cfg, model="judge-fixture",
+                                               client_factory=Judge, retry_from=initial))
     bad = deepcopy(initial)
     bad["judge_stages"].append(deepcopy(bad["judge_stages"][0]))
     with pytest.raises(ValueError, match="duplicate/unknown"):
