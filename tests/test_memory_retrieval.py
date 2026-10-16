@@ -144,6 +144,26 @@ def test_semantic_seed_recall_is_separate_from_archetype_encoder_and_forks():
     assert field.semantic_index.vectors
 
 
+def test_question_encoding_cost_is_independent_of_seed_count(monkeypatch):
+    field, question, draft = seed_field()
+    for i in range(2):
+        seed = deepcopy(field._seed_cache[0])
+        seed.seed_id = "another-" + str(i)
+        field._seed_cache.append(seed)
+    calls = []
+    encode = field._question_embedder.encode
+
+    def capture(texts):
+        calls.append(texts)
+        return encode(texts)
+
+    monkeypatch.setattr(field._question_embedder, "encode", capture)
+    mapping = field.analyse(question=question, draft=draft)
+    assert len(field.summary(mapping).emergent_ideas) == 3
+    assert calls == [[question]]
+    assert field._question_embedder is not field.pipeline.embedder
+
+
 def test_evidence_resolves_final_qa_excludes_expired_superseded_or_ambiguous():
     memory = SharedMemory()
     memory.store(MemoryTrace("Original question", "Final QA answer", qid="source", seed_id="seed"))

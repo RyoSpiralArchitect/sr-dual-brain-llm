@@ -206,6 +206,11 @@ async def run(fixture, *, backend=None, on_embeddings=None, embedding_cache=None
                               "relative_cutoff": index.relative_cutoff, "strong_lexical_override": 0.75,
                               "preparation_latency_ms": (time.perf_counter() - started) * 1000,
                               "provider_calls": getattr(backend, "calls", None), "input_tokens": getattr(backend, "input_tokens", None)}
+        report["runtime_default_semantic"] = {
+            "min_similarity": index.min_similarity,
+            "summaries": {split: summarize(retrieval_rows(fixture, index, method="hybrid", split=split))
+                          for split in ("calibration", "evaluation")},
+        }
         report["calibration"] = calibrate(fixture, index)
     for method in ("legacy_lexical", "question_lexical", "hybrid"):
         if method == "hybrid" and index is None:

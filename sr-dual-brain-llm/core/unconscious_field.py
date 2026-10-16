@@ -1070,6 +1070,7 @@ class UnconsciousField:
             raise ValueError("Unknown recall mode")
         self.recall_mode = recall_mode
         self.semantic_index = semantic_index
+        self._question_embedder = HashEmbedder(dim=self.config.dim, seed=self.config.seed)
         self._seed_cache: List[LatentSeed] = []
         self._max_cache = 24
         self._pending_stress_release = 0.0
@@ -1093,6 +1094,8 @@ class UnconsciousField:
         return {
             "scope": "unconscious_cache_and_sampler",
             "recall_mode": self.recall_mode,
+            "question_embedding": {"kind": "deterministic_hash", "dim": self._question_embedder.dim,
+                                   "seed": self._question_embedder.seed},
             "semantic_index": self.semantic_index.snapshot() if self.semantic_index is not None else None,
             "seeds": [dataclasses.asdict(seed) for seed in self._seed_cache],
             "pending_stress_release": self._pending_stress_release,
@@ -1120,11 +1123,12 @@ class UnconsciousField:
         ideas: List[EmergentIdeaModel] = []
         attempts: List[HarvestAttemptModel] = []
         survivors: List[LatentSeed] = []
+        question_vector = self._question_embedder.encode([question])[0] if self.recall_mode == "question" else None
         for seed in self._seed_cache:
             similarity = cosine(vector, seed.vector)
             similarity_source = "legacy_payload"
             if self.recall_mode == "question" and seed.question_vector is not None:
-                similarity = cosine(self._vectorize(question), seed.question_vector)
+                similarity = cosine(question_vector, seed.question_vector)
                 similarity_source = "question_hash"
             incubation = seed.exposures + 1
             threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
@@ -1280,7 +1284,7 @@ class UnconsciousField:
                 vector=vector,
                 created_at=time.time(),
                 source_qid=decision_state.get("source_qid"),
-                question_vector=self._vectorize(question),
+                question_vector=list(self._question_embedder.encode([question])[0]),
             )
             self._seed_cache.append(seed)
             self._trim_cache()
