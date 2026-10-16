@@ -169,6 +169,9 @@ class PostgresStateStore:
                     """
                 )
                 cur.execute(
+                    f"ALTER TABLE {memory} ADD COLUMN IF NOT EXISTS evidence_metadata JSONB NOT NULL DEFAULT '{{}}'::jsonb;"
+                )
+                cur.execute(
                     f"CREATE INDEX IF NOT EXISTS {memory}_session_ts ON {memory}(session_id, ts DESC);"
                 )
                 cur.execute(
@@ -205,7 +208,16 @@ class PostgresStateStore:
                 cur.execute(
                     f"CREATE INDEX IF NOT EXISTS {episodes}_session_id_id ON {episodes}(session_id, id);"
                 )
-                self._ensure_pgvector(cur, episodes)
+                # Optional extension errors must not abort the required QA
+                # metadata migration and the remaining schema transaction.
+                cur.execute("SAVEPOINT srdb_optional_vector;")
+                try:
+                    self._ensure_pgvector(cur, episodes)
+                    cur.execute("RELEASE SAVEPOINT srdb_optional_vector;")
+                except Exception:
+                    cur.execute("ROLLBACK TO SAVEPOINT srdb_optional_vector;")
+                    cur.execute("RELEASE SAVEPOINT srdb_optional_vector;")
+                    self._has_pgvector = False
                 cur.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {telemetry} (
@@ -329,7 +341,8 @@ class PostgresStateStore:
                           answer,
                           ts,
                           tags::text,
-                          question_tokens::text
+                          question_tokens::text,
+                          evidence_metadata::text
                         FROM {memory_table}
                         WHERE session_id = %s
                         ORDER BY ts ASC;
@@ -345,7 +358,8 @@ class PostgresStateStore:
                           answer,
                           ts,
                           tags::text,
-                          question_tokens::text
+                          question_tokens::text,
+                          evidence_metadata::text
                         FROM (
                           SELECT
                             qid,
@@ -353,7 +367,8 @@ class PostgresStateStore:
                             answer,
                             ts,
                             tags,
-                            question_tokens
+                            question_tokens,
+                            evidence_metadata
                           FROM {memory_table}
                           WHERE session_id = %s
                           ORDER BY ts DESC
@@ -363,9 +378,10 @@ class PostgresStateStore:
                         """,
                         (session_id, int(memory_limit)),
                     )
-                for qid, question, answer, ts, tags_json, tokens_json in cur.fetchall():
+                for qid, question, answer, ts, tags_json, tokens_json, evidence_json in cur.fetchall():
                     tags = tuple(json.loads(tags_json or "[]"))
                     question_tokens = tuple(json.loads(tokens_json or "[]"))
+                    evidence = json.loads(evidence_json or "{}")
                     memory_traces.append(
                         MemoryTrace(
                             qid=qid,
@@ -374,6 +390,9 @@ class PostgresStateStore:
                             timestamp=float(ts),
                             tags=tags,
                             question_tokens=question_tokens,
+                            seed_id=evidence.get("seed_id"),
+                            evidence_status=evidence.get("evidence_status", "unverified"),
+                            valid_until=evidence.get("valid_until"),
                         )
                     )
 
@@ -539,9 +558,9 @@ class PostgresStateStore:
                     cur.execute(
                         f"""
                         INSERT INTO {table}
-                          (session_id, qid, question, answer, ts, tags, question_tokens)
+                          (session_id, qid, question, answer, ts, tags, question_tokens, evidence_metadata)
                         VALUES
-                          (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb);
+                          (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb);
                         """,
                         (
                             session_id,
@@ -551,6 +570,8 @@ class PostgresStateStore:
                             float(trace.timestamp),
                             _json_dumps(list(trace.tags)),
                             _json_dumps(list(trace.question_tokens)),
+                            _json_dumps({"seed_id": trace.seed_id, "evidence_status": trace.evidence_status,
+                                         "valid_until": trace.valid_until}),
                         ),
                     )
             conn.commit()

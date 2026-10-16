@@ -4130,3 +4130,93 @@ def test_controller_links_cached_seed_and_records_draft_context_injection():
     assert injected["seed_ids"] == [outcome["seed_id"]]
     assert injected["source_qids"] == ["seed-source"]
     assert injected["destination"] == "draft_context"
+
+
+def test_controller_routes_exact_final_qa_with_source_and_respects_recall_gate():
+    from core.shared_memory import MemoryTrace
+
+    question = "Explain a heroic journey through difficult constraints and a guarded gate."
+    field = UnconsciousField()
+    mapping = field.analyse(question=question, draft="UNRESOLVED INITIAL DRAFT")
+    outcome = field.integrate_outcome(mapping=mapping, question=question,
+        draft="UNRESOLVED INITIAL DRAFT", final_answer="Resolved QA",
+        success=False, decision_state={"source_qid": "original", "novelty": .8})
+    field.analyse(question="Independent warmup", draft="")
+    memory = SharedMemory()
+    memory.store(MemoryTrace(question, "Final QA: preserve a reversible route.",
+                             qid="original", seed_id=outcome["seed_id"]))
+    controller = make_stage_controller(memory=memory, unconscious_field=field,
+        left_model=CaptureLeftModel(draft="Completely different current draft", confidence=.3))
+    controller.policy = AlwaysConsultPolicy()
+    asyncio.run(controller.process(question, qid="revisit", system2_mode="off"))
+    request = controller.callosum.payloads[0]["payload"]
+    assert request["memory_evidence"][0]["source_qid"] == "original"
+    assert "Final QA: preserve a reversible route." in request["context"]
+    assert "UNRESOLVED INITIAL DRAFT" not in request["context"]
+    assert any(event == "memory_evidence_routed" for event, _payload in controller.telemetry.events)
+
+    # A gated request must not reintroduce memories through the new ID route.
+    summary = field.summary(mapping)
+    args = dict(question=question, decision=make_decision(), draft="Current draft", context="",
+                focus=None, system2_active=False, system2_mode="off", hemisphere_mode="balanced",
+                hemisphere_bias=0, unconscious_summary=summary, psychoid_signal=None,
+                psychoid_projection=None, left_coherence=None, default_mode_reflections=None,
+                suppress_default_mode_reflections=True)
+    plan = controller._build_consult_request(**args, allow_memory_recall=False)
+    assert "memory_evidence" not in plan.payload
+    assert not controller._allow_recalled_evidence(question, None, {"memory": {"long_term": " DROP "}})
+    assert controller._allow_recalled_evidence(question, None, {"memory": "malformed"})
+
+
+def test_trivial_chat_does_not_prepare_semantics_or_bypass_recall_policy():
+    from core.memory_retrieval import QuestionSemanticIndex
+
+    class NoEmbeddingForGreetings:
+        identity = "fixture"
+        calls = 0
+
+        async def embed(self, _questions):
+            self.calls += 1
+            raise AssertionError("Greeting must not call the embedding provider")
+
+    backend = NoEmbeddingForGreetings()
+    memory = SharedMemory(semantic_index=QuestionSemanticIndex(backend))
+    class GreetingAwareCortex(PrefrontalCortex):
+        @staticmethod
+        def is_trivial_chat_turn(question):
+            return question.startswith("こんにちは") or PrefrontalCortex.is_trivial_chat_turn(question)
+
+    controller = make_stage_controller(memory=memory, unconscious_field=UnconsciousField(),
+                                       prefrontal_cortex=GreetingAwareCortex())
+    greeting = "こんにちは！今日もよろしくお願いします！"
+    assert controller.prefrontal_cortex.is_trivial_chat_turn(greeting)
+    asyncio.run(controller.process(greeting, system2_mode="off"))
+    assert backend.calls == 0
+    assert not controller._allow_recalled_evidence(greeting, None, {})
+    assert controller._allow_recalled_evidence(greeting, None, {"memory": {"long_term": "keep"}})
+    assert not any(event == "memory_semantic_preparation" for event, _payload in controller.telemetry.events)
+
+
+def test_embedding_outage_keeps_lexical_answer_path_and_hides_provider_error_text():
+    import json
+    from core.memory_retrieval import QuestionSemanticIndex
+
+    class FailingBackend:
+        identity = "outage-fixture"
+        calls = 0
+        input_tokens = None
+
+        async def embed(self, _questions):
+            self.calls += 1
+            raise RuntimeError("PRIVATE-PROVIDER-ERROR")
+
+    backend = FailingBackend()
+    memory = SharedMemory(semantic_index=QuestionSemanticIndex(backend))
+    memory.store({"Q": "Explain retained incident records", "A": "Earlier record"})
+    controller = make_stage_controller(memory=memory, unconscious_field=UnconsciousField())
+    result = asyncio.run(controller.process("Explain retained incident records", system2_mode="off"))
+    assert result and backend.calls == 1
+    preparation = next(payload for event, payload in controller.telemetry.events if event == "memory_semantic_preparation")
+    assert preparation["status"] == "lexical_fallback" and preparation["embedding_calls"] == 1
+    assert preparation["error_type"] == "RuntimeError"
+    assert "PRIVATE-PROVIDER-ERROR" not in json.dumps(controller.telemetry.events)

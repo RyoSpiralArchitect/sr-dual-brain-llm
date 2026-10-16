@@ -51,6 +51,8 @@ from core.prefrontal_cortex import PrefrontalCortex
 from core.psychoid_attention import PsychoidAttentionAdapter
 from core.shared_memory import SharedMemory
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
+from core.memory_evidence import request_memory_context
+from core.memory_retrieval import semantic_index_from_environment
 from core.unconscious_field import UnconsciousField
 
 
@@ -624,6 +626,9 @@ async def _resolve_vision_images(
 async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
     while True:
         req = await callosum.recv_request()
+        memory_context = request_memory_context(req)
+        if memory_context is not None:
+            req = {**req, "context": memory_context}
         if req.get("type") == "ASK_DETAIL":
             qid = req["qid"]
             try:
@@ -751,7 +756,8 @@ class EngineSession:
     ) -> "EngineSession":
         trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
         trace_cache_limit = max(4, min(512, trace_cache_limit))
-        memory = SharedMemory(max_dialogue_flows=trace_cache_limit)
+        semantic_index = semantic_index_from_environment(left_llm_config)
+        memory = SharedMemory(max_dialogue_flows=trace_cache_limit, semantic_index=semantic_index)
         hippocampus = TemporalHippocampalIndexing()
         persisted_memory = 0
         persisted_episodes = 0
@@ -785,7 +791,7 @@ class EngineSession:
         except AssertionError:
             dial = ReasoningDial(mode="evaluative")
         prefrontal = PrefrontalCortex()
-        unconscious = UnconsciousField()
+        unconscious = UnconsciousField(semantic_index=semantic_index)
         default_mode = DefaultModeNetwork()
         psychoid_adapter = PsychoidAttentionAdapter()
         telemetry = InMemoryTelemetry()

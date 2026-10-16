@@ -1,0 +1,501 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_competing_memory_questions",
+  "description": "Fixed synthetic examples; calibration and evaluation project scenes are disjoint. Variants within a scene are correlated. Generic action guidance is not a project fact.",
+  "memories": [
+    {
+      "qid": "aster-current",
+      "question": "How long does Project Aster keep incident logs?",
+      "answer": "The retention is 48 hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-aster",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "aster-old",
+      "question": "How long does Project Aster keep incident logs?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-aster",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "lyra-current",
+      "question": "How does Project Lyra prevent obsolete cache writes?",
+      "answer": "Publication requires a matching generation.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-lyra",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "lyra-old",
+      "question": "How does Project Lyra prevent obsolete cache writes?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-lyra",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "nova-current",
+      "question": "How does Project Nova recover from a payment confirmation timeout?",
+      "answer": "Treat the outcome as unknown and query using the same operation key.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-nova",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "nova-old",
+      "question": "How does Project Nova recover from a payment confirmation timeout?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-nova",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "orion-current",
+      "question": "How does Project Orion test the cache-key outage hypothesis?",
+      "answer": "Compare cache keys and DB load under matched request replay.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-orion",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "orion-old",
+      "question": "How does Project Orion test the cache-key outage hypothesis?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-orion",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "sable-current",
+      "question": "How does Project Sable roll back a feature release?",
+      "answer": "Disable the release flag for the affected cohort and retain the rollback audit.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-sable",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "sable-old",
+      "question": "How does Project Sable roll back a feature release?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-sable",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "vega-current",
+      "question": "How often does Project Vega back up its database?",
+      "answer": "A verified snapshot is made every six hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-vega",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "vega-old",
+      "question": "How often does Project Vega back up its database?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-vega",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "lumen-current",
+      "question": "How does Project Lumen limit access credentials?",
+      "answer": "Use a scoped token for one tenant, expiring after fifteen minutes.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-lumen",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "lumen-old",
+      "question": "How does Project Lumen limit access credentials?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-lumen",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "atlas-current",
+      "question": "How does Project Atlas retry failed queue jobs?",
+      "answer": "Retry at most three times with exponential backoff, then move to the dead-letter queue.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-atlas",
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "atlas-old",
+      "question": "How does Project Atlas retry failed queue jobs?",
+      "answer": "Archived policy: use the previous procedure.",
+      "timestamp": 1791000000,
+      "seed_id": "old-atlas",
+      "evidence_status": "superseded"
+    },
+    {
+      "qid": "aster-logo",
+      "question": "What color is the Project Aster logo?",
+      "answer": "Green.",
+      "timestamp": 1791000000
+    },
+    {
+      "qid": "rigel-logs",
+      "question": "How long does Project Rigel keep incident logs?",
+      "answer": "Thirty days.",
+      "timestamp": 1791000000
+    },
+    {
+      "qid": "expired-vega",
+      "question": "How often does Project Vega back up its database?",
+      "answer": "Once a month.",
+      "timestamp": 1791000001,
+      "valid_until": 0
+    },
+    {
+      "qid": "mira-one",
+      "question": "What retry delay does Project Mira record?",
+      "answer": "The retry delay is five seconds.",
+      "timestamp": 1791000000,
+      "evidence_status": "verified"
+    },
+    {
+      "qid": "mira-two",
+      "question": "What retry delay does Project Mira record?",
+      "answer": "The retry delay is thirty seconds.",
+      "timestamp": 1791000000,
+      "evidence_status": "verified"
+    }
+  ],
+  "queries": [
+    {
+      "id": "aster-echo",
+      "scene": "aster",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How long does Project Aster keep incident logs?",
+      "relevant_qids": [
+        "aster-current"
+      ]
+    },
+    {
+      "id": "aster-paraphrase",
+      "scene": "aster",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "When must Aster discard its stored incident records?",
+      "relevant_qids": [
+        "aster-current"
+      ]
+    },
+    {
+      "id": "aster-japanese",
+      "scene": "aster",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "アスター案件の障害記録は何時間残す決まり？",
+      "relevant_qids": [
+        "aster-current"
+      ]
+    },
+    {
+      "id": "lyra-echo",
+      "scene": "lyra",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How does Project Lyra prevent obsolete cache writes?",
+      "relevant_qids": [
+        "lyra-current"
+      ]
+    },
+    {
+      "id": "lyra-paraphrase",
+      "scene": "lyra",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "How can Lyra stop an old fetch from replacing a newer cache entry?",
+      "relevant_qids": [
+        "lyra-current"
+      ]
+    },
+    {
+      "id": "lyra-japanese",
+      "scene": "lyra",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ライラのキャッシュで遅れて返った取得結果が新しい値を上書きするのをどう防ぐ？",
+      "relevant_qids": [
+        "lyra-current"
+      ]
+    },
+    {
+      "id": "nova-echo",
+      "scene": "nova",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How does Project Nova recover from a payment confirmation timeout?",
+      "relevant_qids": [
+        "nova-current"
+      ]
+    },
+    {
+      "id": "nova-paraphrase",
+      "scene": "nova",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "What should Nova do if it cannot tell whether an authorized purchase was confirmed?",
+      "relevant_qids": [
+        "nova-current"
+      ]
+    },
+    {
+      "id": "nova-japanese",
+      "scene": "nova",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ノヴァで支払い承認後の注文確定がタイムアウトしたらどう復旧する？",
+      "relevant_qids": [
+        "nova-current"
+      ]
+    },
+    {
+      "id": "orion-echo",
+      "scene": "orion",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How does Project Orion test the cache-key outage hypothesis?",
+      "relevant_qids": [
+        "orion-current"
+      ]
+    },
+    {
+      "id": "orion-paraphrase",
+      "scene": "orion",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "What comparison could disprove Orion’s suspected key mismatch during the service disruption?",
+      "relevant_qids": [
+        "orion-current"
+      ]
+    },
+    {
+      "id": "orion-japanese",
+      "scene": "orion",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "オリオンの障害でキャッシュキー不一致という仮説をどう検証する？",
+      "relevant_qids": [
+        "orion-current"
+      ]
+    },
+    {
+      "id": "sable-echo",
+      "scene": "sable",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How does Project Sable roll back a feature release?",
+      "relevant_qids": [
+        "sable-current"
+      ]
+    },
+    {
+      "id": "sable-paraphrase",
+      "scene": "sable",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "How can Sable undo a rollout for only the users it affected?",
+      "relevant_qids": [
+        "sable-current"
+      ]
+    },
+    {
+      "id": "sable-japanese",
+      "scene": "sable",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "セーブルの機能公開を対象ユーザーだけ元に戻す方法は？",
+      "relevant_qids": [
+        "sable-current"
+      ]
+    },
+    {
+      "id": "vega-echo",
+      "scene": "vega",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How often does Project Vega back up its database?",
+      "relevant_qids": [
+        "vega-current"
+      ]
+    },
+    {
+      "id": "vega-paraphrase",
+      "scene": "vega",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "What is Vega’s interval between persistent database snapshots?",
+      "relevant_qids": [
+        "vega-current"
+      ]
+    },
+    {
+      "id": "vega-japanese",
+      "scene": "vega",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ベガ案件のデータベースのバックアップ間隔は？",
+      "relevant_qids": [
+        "vega-current"
+      ]
+    },
+    {
+      "id": "lumen-echo",
+      "scene": "lumen",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How does Project Lumen limit access credentials?",
+      "relevant_qids": [
+        "lumen-current"
+      ]
+    },
+    {
+      "id": "lumen-paraphrase",
+      "scene": "lumen",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "What permissions and lifetime should a Lumen integration credential have?",
+      "relevant_qids": [
+        "lumen-current"
+      ]
+    },
+    {
+      "id": "lumen-japanese",
+      "scene": "lumen",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ルーメンの連携用認証情報はどの範囲でいつまで有効？",
+      "relevant_qids": [
+        "lumen-current"
+      ]
+    },
+    {
+      "id": "atlas-echo",
+      "scene": "atlas",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How does Project Atlas retry failed queue jobs?",
+      "relevant_qids": [
+        "atlas-current"
+      ]
+    },
+    {
+      "id": "atlas-paraphrase",
+      "scene": "atlas",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "How many further attempts can Atlas make before setting a failed background task aside?",
+      "relevant_qids": [
+        "atlas-current"
+      ]
+    },
+    {
+      "id": "atlas-japanese",
+      "scene": "atlas",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "アトラスでキュー処理が失敗したら何回まで再試行して最後はどこへ移す？",
+      "relevant_qids": [
+        "atlas-current"
+      ]
+    },
+    {
+      "id": "unrelated-0",
+      "scene": "unrelated-0",
+      "split": "evaluation",
+      "kind": "unrelated",
+      "question": "Who invented the telescope?",
+      "relevant_qids": []
+    },
+    {
+      "id": "unrelated-1",
+      "scene": "unrelated-1",
+      "split": "evaluation",
+      "kind": "unrelated",
+      "question": "Describe the rings of Saturn.",
+      "relevant_qids": []
+    },
+    {
+      "id": "unrelated-2",
+      "scene": "unrelated-2",
+      "split": "evaluation",
+      "kind": "unrelated",
+      "question": "How do volcanoes form on islands?",
+      "relevant_qids": []
+    },
+    {
+      "id": "unrelated-3",
+      "scene": "unrelated-3",
+      "split": "evaluation",
+      "kind": "unrelated",
+      "question": "Explain photosynthesis in green plants.",
+      "relevant_qids": []
+    },
+    {
+      "id": "calibration-unrelated-0",
+      "scene": "calibration-unrelated-0",
+      "split": "calibration",
+      "kind": "unrelated",
+      "question": "How are coral reefs formed?",
+      "relevant_qids": []
+    },
+    {
+      "id": "calibration-unrelated-1",
+      "scene": "calibration-unrelated-1",
+      "split": "calibration",
+      "kind": "unrelated",
+      "question": "Who composed the Four Seasons?",
+      "relevant_qids": []
+    },
+    {
+      "id": "aster-unsupported",
+      "scene": "aster",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Aster's cafeteria schedule?",
+      "relevant_qids": []
+    },
+    {
+      "id": "nova-unsupported",
+      "scene": "nova",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What brand of coffee machine does Project Nova use?",
+      "relevant_qids": []
+    },
+    {
+      "id": "vega-unsupported",
+      "scene": "vega",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Vega's office lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "sable-unsupported",
+      "scene": "sable",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What furniture does Project Sable keep in its meeting room?",
+      "relevant_qids": []
+    },
+    {
+      "id": "mira-conflict",
+      "scene": "mira",
+      "split": "evaluation",
+      "kind": "conflicting_records",
+      "question": "What conflicting retry delays are recorded for Project Mira?",
+      "relevant_qids": [
+        "mira-one",
+        "mira-two"
+      ]
+    }
+  ]
+}

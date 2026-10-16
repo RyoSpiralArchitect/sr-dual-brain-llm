@@ -1,0 +1,748 @@
+{
+  "schema_version": 1,
+  "analysis_date": "2026-10-16",
+  "timezone": "Asia/Tokyo",
+  "scope": "Competing-memory source retrieval, field-only recall diagnostics, and two live worker/model path smokes; no independent answer-quality grading",
+  "paid_source_revision": {
+    "commit": "a6cab6424430d30d5128ddcb054fbe87b7c73284",
+    "dirty": false
+  },
+  "replay_source_revision": {
+    "commit": "1436debb5f58af0c32b110c6cacd06e06d05e992",
+    "dirty": false
+  },
+  "fixture": {
+    "path": "sr-dual-brain-llm/examples/memory_retrieval_benchmark.json",
+    "canonical_sha256": "bbd64ac244419a1a94591067d1fb29643b2c054d8aebc0843c91e1282c88a4ec",
+    "file_sha256": "54f76dd27815b9bb81ef2840f28f42c52058413d6d1eb19f13d00dd4967b6427",
+    "memory_records": 21,
+    "queries": 35,
+    "calibration_positive_scenes": 4,
+    "evaluation_positive_scenes": 5
+  },
+  "embedding": {
+    "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+    "requested_model": "text-embedding-3-small",
+    "served_model": "text-embedding-3-small",
+    "frozen_replay": false,
+    "dimension": 1536,
+    "relative_cutoff": 0.8,
+    "strong_lexical_override": 0.75,
+    "preparation_latency_ms": 1780.0800770055503,
+    "provider_calls": 1,
+    "input_tokens": 781
+  },
+  "calibration": {
+    "objective": "calibration macro set-F1; stricter threshold on ties",
+    "chosen_threshold": 0.45,
+    "candidates": [
+      {
+        "threshold": 0.4,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 11,
+        "hits_at_3": 11,
+        "correct_abstentions": 2,
+        "unrelated_selected_slots": 3,
+        "selected_slots": 14,
+        "mean_set_f1": 0.8125
+      },
+      {
+        "threshold": 0.45,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 11,
+        "hits_at_3": 11,
+        "correct_abstentions": 3,
+        "unrelated_selected_slots": 2,
+        "selected_slots": 13,
+        "mean_set_f1": 0.875
+      },
+      {
+        "threshold": 0.5,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 8,
+        "hits_at_3": 8,
+        "correct_abstentions": 3,
+        "unrelated_selected_slots": 1,
+        "selected_slots": 9,
+        "mean_set_f1": 0.6875
+      },
+      {
+        "threshold": 0.55,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 8,
+        "hits_at_3": 8,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 8,
+        "mean_set_f1": 0.75
+      },
+      {
+        "threshold": 0.6,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 8,
+        "hits_at_3": 8,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 8,
+        "mean_set_f1": 0.75
+      },
+      {
+        "threshold": 0.65,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 6,
+        "hits_at_3": 6,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 6,
+        "mean_set_f1": 0.625
+      },
+      {
+        "threshold": 0.7,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 5,
+        "hits_at_3": 5,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 5,
+        "mean_set_f1": 0.5625
+      },
+      {
+        "threshold": 0.75,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 4,
+        "hits_at_3": 4,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 4,
+        "mean_set_f1": 0.5
+      },
+      {
+        "threshold": 0.8,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 4,
+        "hits_at_3": 4,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 4,
+        "mean_set_f1": 0.5
+      },
+      {
+        "threshold": 0.85,
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 4,
+        "hits_at_3": 4,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 4,
+        "mean_set_f1": 0.5
+      }
+    ],
+    "evaluation_used_for_selection": false
+  },
+  "summaries": {
+    "legacy_lexical": {
+      "calibration": {
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 0,
+        "hits_at_3": 7,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 29,
+        "selected_slots": 36,
+        "mean_set_f1": 0.21875
+      },
+      "evaluation": {
+        "queries": 19,
+        "positive_queries": 13,
+        "no_answer_queries": 6,
+        "hits_at_1": 1,
+        "hits_at_3": 8,
+        "correct_abstentions": 1,
+        "unrelated_selected_slots": 33,
+        "selected_slots": 42,
+        "mean_set_f1": 0.2789473684210526
+      }
+    },
+    "question_lexical": {
+      "calibration": {
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 8,
+        "hits_at_3": 8,
+        "correct_abstentions": 2,
+        "unrelated_selected_slots": 18,
+        "selected_slots": 26,
+        "mean_set_f1": 0.4375
+      },
+      "evaluation": {
+        "queries": 19,
+        "positive_queries": 13,
+        "no_answer_queries": 6,
+        "hits_at_1": 9,
+        "hits_at_3": 9,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 15,
+        "selected_slots": 25,
+        "mean_set_f1": 0.5684210526315789
+      }
+    },
+    "hybrid": {
+      "calibration": {
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 11,
+        "hits_at_3": 11,
+        "correct_abstentions": 3,
+        "unrelated_selected_slots": 2,
+        "selected_slots": 13,
+        "mean_set_f1": 0.875
+      },
+      "evaluation": {
+        "queries": 19,
+        "positive_queries": 13,
+        "no_answer_queries": 6,
+        "hits_at_1": 10,
+        "hits_at_3": 10,
+        "correct_abstentions": 5,
+        "unrelated_selected_slots": 1,
+        "selected_slots": 12,
+        "mean_set_f1": 0.7894736842105263
+      }
+    }
+  },
+  "runtime_default_semantic": {
+    "min_similarity": 0.7,
+    "summaries": {
+      "calibration": {
+        "queries": 16,
+        "positive_queries": 12,
+        "no_answer_queries": 4,
+        "hits_at_1": 5,
+        "hits_at_3": 5,
+        "correct_abstentions": 4,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 5,
+        "mean_set_f1": 0.5625
+      },
+      "evaluation": {
+        "queries": 19,
+        "positive_queries": 13,
+        "no_answer_queries": 6,
+        "hits_at_1": 5,
+        "hits_at_3": 5,
+        "correct_abstentions": 6,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 6,
+        "mean_set_f1": 0.5789473684210527
+      }
+    }
+  },
+  "calibrated_recall_ablation_counts": {
+    "legacy_payload": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 1,
+        "motifless": 1
+      },
+      "none": {
+        "echo": 2,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "rewritten": {
+        "echo": 0,
+        "paraphrase": 0,
+        "motifless": 0
+      }
+    },
+    "question": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "none": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "rewritten": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      }
+    },
+    "hybrid": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 3
+      },
+      "none": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 3
+      },
+      "rewritten": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 3
+      }
+    }
+  },
+  "runtime_default_recall_ablation_counts": {
+    "legacy_payload": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 1,
+        "motifless": 1
+      },
+      "none": {
+        "echo": 2,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "rewritten": {
+        "echo": 0,
+        "paraphrase": 0,
+        "motifless": 0
+      }
+    },
+    "question": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "none": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      },
+      "rewritten": {
+        "echo": 3,
+        "paraphrase": 0,
+        "motifless": 0
+      }
+    },
+    "hybrid": {
+      "same": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 1
+      },
+      "none": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 1
+      },
+      "rewritten": {
+        "echo": 3,
+        "paraphrase": 3,
+        "motifless": 1
+      }
+    }
+  },
+  "worker_smoke": {
+    "source_revision": {
+      "commit": "1436debb5f58af0c32b110c6cacd06e06d05e992",
+      "dirty": false
+    },
+    "model": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 1024,
+      "timeout_seconds": 40,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 1024
+      }
+    },
+    "valid_paths": 2,
+    "provider_calls": 2,
+    "input_tokens": 1032,
+    "output_tokens": 168,
+    "finish_reasons": [
+      "stop",
+      "stop"
+    ],
+    "full_system_prompts_retained": false
+  },
+  "private_artifacts": {
+    "paid_report": {
+      "path": "target/benchmarks/question-memory-semantic-2026-10-16/report.json",
+      "file_sha256": "e625600cce45b9580c26d4d399ddfaa8fac2e1eb534c9ad0a6d308757392c126"
+    },
+    "replay_report": {
+      "path": "target/benchmarks/question-memory-replay-2026-10-16/report.json",
+      "file_sha256": "21eac55983a8145737bcbbc6cb36df41b906c1e959b7fdb81ad3b3b5ea76eb59"
+    },
+    "embedding_cache": {
+      "path": "target/benchmarks/question-memory-semantic-2026-10-16/embeddings.partial.json",
+      "file_sha256": "6faae915d9b2f61e22145b35fac675f59ec2fc713c4e4b653e7af14c461c06b3"
+    },
+    "runtime_default_ablation": {
+      "path": "target/benchmarks/question-memory-replay-2026-10-16/runtime-default-field-ablation.json",
+      "file_sha256": "777966347cbbfb81af0c694f7f3606f23cf04a8928b896461d6b66a2205daadd"
+    },
+    "worker_smoke": {
+      "path": "target/benchmarks/question-memory-worker-smoke-2026-10-16/report.json",
+      "file_sha256": "3c1e1e9311bddc38f548e1efdbcc6ac55003a65f9268c4f14cde28c223a57569"
+    },
+    "worker_smoke_runner": {
+      "path": "target/benchmarks/question-memory-worker-smoke-2026-10-16/run.py",
+      "file_sha256": "ad520015c4d3f968f751827c6bfd5e9a76c594e58d788c75e1fbc6dece025f6b"
+    }
+  },
+  "limitations": [
+    "Synthetic corpus; variants within a project scene are correlated, not independent questions.",
+    "Legacy comparison ignores explicitly supplied status/expiry metadata; most baseline gain is filtering, not learned semantics.",
+    "Calibrated threshold 0.45 differs from conservative runtime default 0.70; default retrieves fewer positive sources.",
+    "Question-only hash recall removes identical-draft assistance but does not encode paraphrase semantics.",
+    "Field ablation has only three positive scenes and no negative-seed precision estimate; rewritten drafts lack independent equivalence review.",
+    "Two real worker path smokes are not full-controller paired trials or independent answer-quality grades.",
+    "Raw vectors, receipts and worker outputs remain private ignored artifacts; public hashes alone do not independently audit provider execution.",
+    "No real PostgreSQL server was exercised; persistence adapter behavior was tested with a fake cursor."
+  ],
+  "evaluation_rankings": {
+    "sable-echo": {
+      "kind": "echo",
+      "relevant_qids": [
+        "sable-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "sable-old",
+          "sable-current",
+          "expired-vega"
+        ],
+        "question_lexical": [
+          "sable-current",
+          "vega-current",
+          "mira-two"
+        ],
+        "hybrid": [
+          "sable-current"
+        ]
+      }
+    },
+    "sable-paraphrase": {
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "sable-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "sable-old",
+          "sable-current",
+          "orion-old"
+        ],
+        "question_lexical": [
+          "sable-current"
+        ],
+        "hybrid": [
+          "sable-current"
+        ]
+      }
+    },
+    "sable-japanese": {
+      "kind": "japanese",
+      "relevant_qids": [
+        "sable-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "vega-echo": {
+      "kind": "echo",
+      "relevant_qids": [
+        "vega-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "expired-vega",
+          "vega-old",
+          "vega-current"
+        ],
+        "question_lexical": [
+          "vega-current",
+          "sable-current",
+          "mira-two"
+        ],
+        "hybrid": [
+          "vega-current"
+        ]
+      }
+    },
+    "vega-paraphrase": {
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "vega-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "expired-vega",
+          "vega-old",
+          "vega-current"
+        ],
+        "question_lexical": [
+          "vega-current"
+        ],
+        "hybrid": [
+          "vega-current"
+        ]
+      }
+    },
+    "vega-japanese": {
+      "kind": "japanese",
+      "relevant_qids": [
+        "vega-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [],
+        "question_lexical": [],
+        "hybrid": [
+          "vega-current"
+        ]
+      }
+    },
+    "lumen-echo": {
+      "kind": "echo",
+      "relevant_qids": [
+        "lumen-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "lumen-old",
+          "lumen-current",
+          "rigel-logs"
+        ],
+        "question_lexical": [
+          "lumen-current",
+          "aster-logo",
+          "mira-two"
+        ],
+        "hybrid": [
+          "lumen-current"
+        ]
+      }
+    },
+    "lumen-paraphrase": {
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "lumen-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "mira-two",
+          "mira-one",
+          "aster-logo"
+        ],
+        "question_lexical": [
+          "lumen-current"
+        ],
+        "hybrid": [
+          "lumen-current"
+        ]
+      }
+    },
+    "lumen-japanese": {
+      "kind": "japanese",
+      "relevant_qids": [
+        "lumen-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "atlas-echo": {
+      "kind": "echo",
+      "relevant_qids": [
+        "atlas-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "atlas-old",
+          "atlas-current",
+          "mira-two"
+        ],
+        "question_lexical": [
+          "atlas-current",
+          "mira-two",
+          "mira-one"
+        ],
+        "hybrid": [
+          "atlas-current"
+        ]
+      }
+    },
+    "atlas-paraphrase": {
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "atlas-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "atlas-old",
+          "atlas-current",
+          "sable-old"
+        ],
+        "question_lexical": [
+          "atlas-current"
+        ],
+        "hybrid": [
+          "atlas-current"
+        ]
+      }
+    },
+    "atlas-japanese": {
+      "kind": "japanese",
+      "relevant_qids": [
+        "atlas-current"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "unrelated-0": {
+      "kind": "unrelated",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [
+          "aster-logo",
+          "orion-old",
+          "orion-current"
+        ],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "unrelated-1": {
+      "kind": "unrelated",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [
+          "aster-logo",
+          "orion-old",
+          "orion-current"
+        ],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "unrelated-2": {
+      "kind": "unrelated",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [
+          "rigel-logs",
+          "expired-vega",
+          "lumen-old"
+        ],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "unrelated-3": {
+      "kind": "unrelated",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [],
+        "question_lexical": [],
+        "hybrid": []
+      }
+    },
+    "vega-unsupported": {
+      "kind": "unsupported_same_project",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [
+          "aster-logo",
+          "mira-two",
+          "mira-one"
+        ],
+        "question_lexical": [
+          "vega-current",
+          "mira-two",
+          "aster-logo"
+        ],
+        "hybrid": [
+          "vega-current"
+        ]
+      }
+    },
+    "sable-unsupported": {
+      "kind": "unsupported_same_project",
+      "relevant_qids": [],
+      "selected_qids": {
+        "legacy_lexical": [
+          "mira-two",
+          "mira-one",
+          "rigel-logs"
+        ],
+        "question_lexical": [
+          "rigel-logs",
+          "sable-current",
+          "aster-current"
+        ],
+        "hybrid": []
+      }
+    },
+    "mira-conflict": {
+      "kind": "conflicting_records",
+      "relevant_qids": [
+        "mira-one",
+        "mira-two"
+      ],
+      "selected_qids": {
+        "legacy_lexical": [
+          "mira-two",
+          "mira-one",
+          "aster-logo"
+        ],
+        "question_lexical": [
+          "mira-two",
+          "mira-one",
+          "atlas-current"
+        ],
+        "hybrid": [
+          "mira-two",
+          "mira-one"
+        ]
+      }
+    }
+  }
+}

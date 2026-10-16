@@ -17,6 +17,7 @@ from .default_mode_network import DefaultModeNetwork, DefaultModeReflection
 from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
+from .memory_evidence import request_memory_context
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -393,6 +394,9 @@ class DualBrainController:
         self.amygdala = amygdala or Amygdala()
         self.hippocampus = hippocampus
         self.unconscious_field = unconscious_field
+        if (unconscious_field is not None and hasattr(unconscious_field, "semantic_index")
+                and unconscious_field.semantic_index is None):
+            unconscious_field.semantic_index = getattr(memory, "semantic_index", None)
         self.prefrontal_cortex = prefrontal_cortex
         self.basal_ganglia = basal_ganglia or BasalGanglia()
         self.default_mode_network = default_mode_network
@@ -2660,6 +2664,18 @@ class DualBrainController:
             director_append_question=director_append_question,
         )
 
+    def _allow_recalled_evidence(self, question: str, relay, control) -> bool:
+        memory_control = control.get("memory") if isinstance(control, dict) else None
+        long_term = str(memory_control.get("long_term") or "auto").strip().lower() if isinstance(memory_control, dict) else "auto"
+        if long_term == "drop":
+            return False
+        if long_term == "keep":
+            return True
+        return bool((self.prefrontal_cortex is None or (
+                        not self.prefrontal_cortex.is_trivial_chat_turn(question)
+                        and self.prefrontal_cortex.should_include_long_term_memory(question)))
+                    and (relay is None or relay.keep_long_term_memory))
+
     def _build_consult_request(
         self,
         *,
@@ -2678,6 +2694,7 @@ class DualBrainController:
         left_coherence: HemisphericCoherence | None,
         default_mode_reflections: List[DefaultModeReflection] | None,
         suppress_default_mode_reflections: bool,
+        allow_memory_recall: bool = True,
     ) -> ConsultRequestPlan:
         payload_type = "ASK_CRITIC" if system2_active else "ASK_DETAIL"
         payload: Dict[str, Any] = {
@@ -2717,6 +2734,14 @@ class DualBrainController:
                     f"{idea.label} ({idea.archetype})" for idea in ideas
                 ]
                 payload["unconscious_seed_ids"] = [idea.seed_id for idea in ideas if idea.seed_id]
+                resolver = getattr(self.memory, "evidence_for_seeds", None)
+                if allow_memory_recall and callable(resolver):
+                    ordered = sorted(ideas, key=lambda idea: idea.trigger_similarity, reverse=True)
+                    evidence = resolver([idea.seed_id for idea in ordered if idea.seed_id])
+                    identities = {(idea.seed_id, idea.source_qid) for idea in ideas if idea.source_qid}
+                    evidence = [item for item in evidence if (item["seed_id"], item["source_qid"]) in identities]
+                    if evidence:
+                        payload["memory_evidence"] = evidence
                 payload["unconscious_cache_depth"] = unconscious_summary.cache_depth
                 payload["unconscious_stress_released"] = unconscious_summary.stress_released
         if psychoid_signal:
@@ -2802,6 +2827,7 @@ class DualBrainController:
             "focus_keywords": len(payload.get("focus_keywords", [])),
             "unconscious_hints": len(payload.get("unconscious_hints", [])),
             "unconscious_seed_ids": list(payload.get("unconscious_seed_ids", [])),
+            "memory_evidence_sources": [item["source_qid"] for item in payload.get("memory_evidence", [])],
             "psychoid_bias": bool(payload.get("psychoid_attention_bias")),
             "default_mode_refs": len(payload.get("default_mode_reflections", [])),
         }
@@ -4743,6 +4769,24 @@ class DualBrainController:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
         qid_value = str(qid) if qid else str(uuid.uuid4())
+        prepare_retrieval = getattr(self.memory, "prepare_retrieval", None)
+        if (callable(prepare_retrieval) and getattr(self.memory, "semantic_index", None) is not None
+                and self._allow_recalled_evidence(question, None, None)):
+            seeds = getattr(self.unconscious_field, "_seed_cache", [])
+            backend = self.memory.semantic_index.backend
+            before_calls = getattr(backend, "calls", None)
+            before_tokens = getattr(backend, "input_tokens", None)
+            prepare_started = time.perf_counter()
+            try:
+                prepared = await prepare_retrieval(question, seed_questions=[seed.question for seed in seeds])
+            except Exception as exc:
+                # Provider errors may echo credentials or private text.
+                prepared = {"status": "lexical_fallback", "error_type": type(exc).__name__}
+            for metric, before, after in (("embedding_calls", before_calls, getattr(backend, "calls", None)),
+                                           ("input_tokens", before_tokens, getattr(backend, "input_tokens", None))):
+                prepared[metric] = after - before if type(before) is int and type(after) is int else None
+            prepared["latency_ms"] = (time.perf_counter() - prepare_started) * 1000
+            self.telemetry.log("memory_semantic_preparation", qid=qid_value, **prepared)
         system2_settings = self._build_system2_settings(system2_mode)
         system2_norm = system2_settings.mode
         system2_priority = system2_settings.priority
@@ -5198,7 +5242,17 @@ class DualBrainController:
                     left_coherence=left_coherence,
                     default_mode_reflections=default_mode_reflections,
                     suppress_default_mode_reflections=suppress_default_mode_reflections,
+                    allow_memory_recall=self._allow_recalled_evidence(question, thalamic_relay, director_control),
                 )
+                context = request_memory_context(consult_plan.payload)
+                consult_plan.payload["context"] = context
+                if consult_plan.payload.get("memory_evidence"):
+                    self.telemetry.log(
+                        "memory_evidence_routed", qid=decision.qid,
+                        seed_ids=[item["seed_id"] for item in consult_plan.payload["memory_evidence"]],
+                        source_qids=[item["source_qid"] for item in consult_plan.payload["memory_evidence"]],
+                        destination="right_consult_context", status="provided_to_stage",
+                    )
                 payload = consult_plan.payload
                 q_type_hint = consult_plan.q_type_hint
                 system2_draft_limit = consult_plan.system2_draft_limit

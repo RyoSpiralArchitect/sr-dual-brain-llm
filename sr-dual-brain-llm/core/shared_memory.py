@@ -19,14 +19,21 @@
 from __future__ import annotations
 
 import re
+import math
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
+from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
+
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
 _CJK_RE = re.compile(r"[\u3040-\u30ff\u4e00-\u9fff]")
+_RETRIEVAL_STOPWORDS = frozenset(
+    "a an the is are was were be been do does did what which when where why how "
+    "of for in on at to and or can could should would will with about please explain describe tell me i it this that".split()
+)
 _INTERNAL_DEBUG_TOKENS = (
     "left brain",
     "right brain",
@@ -136,8 +143,14 @@ class MemoryTrace:
     tags: Tuple[str, ...] = field(default_factory=tuple)
     question_tokens: Tuple[str, ...] = field(default_factory=tuple)
     seed_id: str | None = None
+    evidence_status: str = "unverified"
+    valid_until: float | None = None
 
     def __post_init__(self) -> None:
+        if self.evidence_status not in EVIDENCE_STATUSES:
+            raise ValueError("Unknown memory evidence status")
+        if self.valid_until is not None and not math.isfinite(self.valid_until):
+            raise ValueError("Memory validity date must be finite")
         if not self.question_tokens:
             object.__setattr__(self, "question_tokens", tuple(_tokenize(self.question)))
         if not self.tags:
@@ -145,12 +158,47 @@ class MemoryTrace:
 
 
 class SharedMemory:
-    def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64):
+    def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64, semantic_index=None):
         self.max_items = max_items
         self.max_dialogue_flows = max(1, int(max_dialogue_flows))
         self.past_qas: List[MemoryTrace] = []
         self.kv: Dict[str, Any] = {}
         self.dialogue_flows: OrderedDict[str, Dict[str, Any]] = OrderedDict()
+        self.semantic_index = semantic_index
+
+    @staticmethod
+    def _available(trace: MemoryTrace, now: float) -> bool:
+        return trace.evidence_status != "superseded" and (trace.valid_until is None or trace.valid_until > now)
+
+    async def prepare_retrieval(self, question: str, *, seed_questions: Sequence[str] = ()) -> dict:
+        if self.semantic_index is None:
+            return {"status": "disabled"}
+        now = time.time()
+        candidates = [t.question for t in reversed(self.past_qas[-256:]) if self._available(t, now)]
+        result = await self.semantic_index.prepare([question, *seed_questions, *candidates])
+        query_cached = question in self.semantic_index.vectors
+        return {"status": "ready" if query_cached and not result["unprepared_questions"] else "partial",
+                "query_cached": query_cached, **result}
+
+    def evidence_for_seeds(self, seed_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        """Resolve exact, unambiguous identities to final QA text, never a seed draft."""
+        entries = []
+        now = time.time()
+        for seed_id in dict.fromkeys(seed_ids):
+            matches = [trace for trace in self.past_qas if trace.seed_id == seed_id]
+            if len(matches) != 1:
+                continue
+            trace = matches[0]
+            if (not self._available(trace, now) or not trace.qid
+                    or sum(item.qid == trace.qid for item in self.past_qas) != 1):
+                continue
+            entries.append({"seed_id": trace.seed_id, "source_qid": trace.qid,
+                            "question": _sanitize_memory_text(trace.question),
+                            "answer": _sanitize_memory_text(trace.answer),
+                            "status": trace.evidence_status, "recorded_at": trace.timestamp,
+                            "truncated": (_sanitize_memory_text(trace.question) != trace.question
+                                          or _sanitize_memory_text(trace.answer) != trace.answer)})
+        return bounded_evidence(entries)
 
     # ------------------------------------------------------------------
     # Storage helpers
@@ -179,11 +227,14 @@ class SharedMemory:
 
     # ------------------------------------------------------------------
     def get_context(self, n: int = 5) -> str:
+        if n <= 0:
+            return ""
+        available = [trace for trace in self.past_qas if self._available(trace, time.time())]
         return "\n".join(
             [
                 f"Q:{_sanitize_memory_text(trace.question) or trace.question} "
                 f"A:{_sanitize_memory_text(trace.answer) or trace.answer}"
-                for trace in self.past_qas[-n:]
+                for trace in available[-n:]
             ]
         )
 
@@ -207,8 +258,10 @@ class SharedMemory:
         if not q_tokens:
             return 0.0
 
-        trace_tokens = set(trace.question_tokens)
-        q_tokens_set = set(q_tokens)
+        trace_tokens = set(trace.question_tokens) - _RETRIEVAL_STOPWORDS
+        q_tokens_set = set(q_tokens) - _RETRIEVAL_STOPWORDS
+        if not q_tokens_set:
+            return 0.0
         if not trace_tokens:
             lexical_score = 0.0
         else:
@@ -216,7 +269,7 @@ class SharedMemory:
             union = len(trace_tokens | q_tokens_set)
             lexical_score = intersection / union if union else 0.0
 
-        q_tags_set = set(q_tags)
+        q_tags_set = set(q_tags) - _RETRIEVAL_STOPWORDS
         tag_bonus = 0.0
         if q_tags_set and trace.tags:
             tag_bonus = len(q_tags_set & set(trace.tags)) / max(len(q_tags_set), 1)
@@ -239,7 +292,7 @@ class SharedMemory:
     def retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
         """Expose exactly the traces used in formatted context for provenance."""
 
-        if not self.past_qas:
+        if not self.past_qas or n <= 0:
             return []
 
         q_tokens = _tokenize(question)
@@ -247,9 +300,22 @@ class SharedMemory:
         total = len(self.past_qas)
 
         scored = []
+        now = time.time()
+        has_semantic_scores = False
         for idx, trace in enumerate(self.past_qas):
+            if not self._available(trace, now):
+                continue
             recency_weight = (idx + 1) / total
             score = self._score_trace(trace, q_tokens, q_tags, recency_weight)
+            if self.semantic_index is not None:
+                similarity = self.semantic_index.similarity(question, trace.question)
+                has_semantic_scores = has_semantic_scores or similarity is not None
+                if similarity is not None and similarity >= self.semantic_index.min_similarity:
+                    score = max(score, 0.65 * similarity + 0.35 * score)
+                elif similarity is not None and score < 0.75:
+                    # A shared entity/function word is insufficient when the
+                    # prepared semantic comparison rejects the question's topic.
+                    score = 0.0
             if score > 0.0:
                 scored.append((score, trace))
 
@@ -264,6 +330,10 @@ class SharedMemory:
             if not q or not a:
                 continue
             top.append(trace)
+        if has_semantic_scores and scored:
+            floor = scored[0][0] * self.semantic_index.relative_cutoff
+            eligible = {id(trace) for score, trace in scored if score >= floor}
+            top = [trace for trace in top if id(trace) in eligible]
         return top
 
     def retrieve_schema_related(self, question: str, n: int = 2) -> str:
