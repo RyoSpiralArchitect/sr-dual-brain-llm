@@ -185,6 +185,9 @@ def test_evidence_resolves_final_qa_excludes_expired_superseded_or_ambiguous():
     ambiguous_qid.store(MemoryTrace("q", "a", qid="same", seed_id="unique"))
     ambiguous_qid.store(MemoryTrace("q2", "a2", qid="same", seed_id="another"))
     assert not ambiguous_qid.evidence_for_seeds(["unique"])
+    edited = SharedMemory()
+    edited.store(MemoryTrace("Q", "Visible text\n[Telemetry]", qid="edited", seed_id="edited"))
+    assert edited.evidence_for_seeds(["edited"])[0]["truncated"]
 
 
 def test_evidence_caps_and_invalid_statuses():
@@ -192,6 +195,8 @@ def test_evidence_caps_and_invalid_statuses():
                 "status": "unverified", "question": "Q" * 2000, "answer": "A" * 10000} for i in range(20)]
     evidence = bounded_evidence(entries)
     assert len(evidence) <= 3 and len(json.dumps(evidence, ensure_ascii=False)) <= 2800
+    assert all(item["truncated"] for item in evidence)
+    assert bounded_evidence(evidence) == evidence
     assert bounded_evidence([{**entries[0], "status": "superseded"}]) == []
     with pytest.raises(ValueError):
         MemoryTrace("q", "a", evidence_status="model_says_verified")

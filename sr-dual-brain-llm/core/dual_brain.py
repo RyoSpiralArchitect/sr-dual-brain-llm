@@ -2671,7 +2671,9 @@ class DualBrainController:
             return False
         if long_term == "keep":
             return True
-        return bool((self.prefrontal_cortex is None or self.prefrontal_cortex.should_include_long_term_memory(question))
+        return bool((self.prefrontal_cortex is None or (
+                        not self.prefrontal_cortex.is_trivial_chat_turn(question)
+                        and self.prefrontal_cortex.should_include_long_term_memory(question)))
                     and (relay is None or relay.keep_long_term_memory))
 
     def _build_consult_request(
@@ -4769,7 +4771,7 @@ class DualBrainController:
         qid_value = str(qid) if qid else str(uuid.uuid4())
         prepare_retrieval = getattr(self.memory, "prepare_retrieval", None)
         if (callable(prepare_retrieval) and getattr(self.memory, "semantic_index", None) is not None
-                and (self.prefrontal_cortex is None or self.prefrontal_cortex.should_include_long_term_memory(question))):
+                and self._allow_recalled_evidence(question, None, None)):
             seeds = getattr(self.unconscious_field, "_seed_cache", [])
             backend = self.memory.semantic_index.backend
             before_calls = getattr(backend, "calls", None)

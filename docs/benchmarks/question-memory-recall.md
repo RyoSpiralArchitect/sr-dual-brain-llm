@@ -28,7 +28,9 @@ resolution. Ambiguous seed IDs or source qids are not attributed.
 Evidence includes at most three entries and 2,800 JSON characters, with each
 question/answer capped at 240/640 characters. Truncation makes this a bounded
 snippet, not a complete original document. Context labels entries as historical
-data and warns that unverified past answers are not confirmed current facts.
+data, marks truncated excerpts, and warns against assuming omitted qualifications.
+It labels unverified past answers explicitly;
+they are not confirmed current facts.
 Explicit director memory drops, thalamic gating and prefrontal recall policy are
 honored; an explicit director keep follows the existing director override order.
 Seed identity alone does not override these gates.

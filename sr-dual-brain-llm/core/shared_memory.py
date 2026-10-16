@@ -195,7 +195,9 @@ class SharedMemory:
             entries.append({"seed_id": trace.seed_id, "source_qid": trace.qid,
                             "question": _sanitize_memory_text(trace.question),
                             "answer": _sanitize_memory_text(trace.answer),
-                            "status": trace.evidence_status, "recorded_at": trace.timestamp})
+                            "status": trace.evidence_status, "recorded_at": trace.timestamp,
+                            "truncated": (_sanitize_memory_text(trace.question) != trace.question
+                                          or _sanitize_memory_text(trace.answer) != trace.answer)})
         return bounded_evidence(entries)
 
     # ------------------------------------------------------------------

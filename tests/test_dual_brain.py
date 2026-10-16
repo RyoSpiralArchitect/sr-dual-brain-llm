@@ -4166,3 +4166,57 @@ def test_controller_routes_exact_final_qa_with_source_and_respects_recall_gate()
     assert "memory_evidence" not in plan.payload
     assert not controller._allow_recalled_evidence(question, None, {"memory": {"long_term": " DROP "}})
     assert controller._allow_recalled_evidence(question, None, {"memory": "malformed"})
+
+
+def test_trivial_chat_does_not_prepare_semantics_or_bypass_recall_policy():
+    from core.memory_retrieval import QuestionSemanticIndex
+
+    class NoEmbeddingForGreetings:
+        identity = "fixture"
+        calls = 0
+
+        async def embed(self, _questions):
+            self.calls += 1
+            raise AssertionError("Greeting must not call the embedding provider")
+
+    backend = NoEmbeddingForGreetings()
+    memory = SharedMemory(semantic_index=QuestionSemanticIndex(backend))
+    class GreetingAwareCortex(PrefrontalCortex):
+        @staticmethod
+        def is_trivial_chat_turn(question):
+            return question.startswith("こんにちは") or PrefrontalCortex.is_trivial_chat_turn(question)
+
+    controller = make_stage_controller(memory=memory, unconscious_field=UnconsciousField(),
+                                       prefrontal_cortex=GreetingAwareCortex())
+    greeting = "こんにちは！今日もよろしくお願いします！"
+    assert controller.prefrontal_cortex.is_trivial_chat_turn(greeting)
+    asyncio.run(controller.process(greeting, system2_mode="off"))
+    assert backend.calls == 0
+    assert not controller._allow_recalled_evidence(greeting, None, {})
+    assert controller._allow_recalled_evidence(greeting, None, {"memory": {"long_term": "keep"}})
+    assert not any(event == "memory_semantic_preparation" for event, _payload in controller.telemetry.events)
+
+
+def test_embedding_outage_keeps_lexical_answer_path_and_hides_provider_error_text():
+    import json
+    from core.memory_retrieval import QuestionSemanticIndex
+
+    class FailingBackend:
+        identity = "outage-fixture"
+        calls = 0
+        input_tokens = None
+
+        async def embed(self, _questions):
+            self.calls += 1
+            raise RuntimeError("PRIVATE-PROVIDER-ERROR")
+
+    backend = FailingBackend()
+    memory = SharedMemory(semantic_index=QuestionSemanticIndex(backend))
+    memory.store({"Q": "Explain retained incident records", "A": "Earlier record"})
+    controller = make_stage_controller(memory=memory, unconscious_field=UnconsciousField())
+    result = asyncio.run(controller.process("Explain retained incident records", system2_mode="off"))
+    assert result and backend.calls == 1
+    preparation = next(payload for event, payload in controller.telemetry.events if event == "memory_semantic_preparation")
+    assert preparation["status"] == "lexical_fallback" and preparation["embedding_calls"] == 1
+    assert preparation["error_type"] == "RuntimeError"
+    assert "PRIVATE-PROVIDER-ERROR" not in json.dumps(controller.telemetry.events)
