@@ -40,8 +40,11 @@ def bounded_evidence(items: Any) -> list[dict]:
     return result
 
 
-def request_memory_context(request: dict) -> str:
-    context = str(request.get("context") or "")
+def request_memory_context(request: dict) -> str | None:
+    # Missing context allows the legacy model's memory lookup. An explicit
+    # empty context is a deliberate gate and must remain distinct from None.
+    original = request.get("context")
+    context = str(original) if original is not None else None
     evidence = bounded_evidence(request.get("memory_evidence"))
     if not evidence:
         return context
@@ -51,4 +54,4 @@ def request_memory_context(request: dict) -> str:
         "acknowledge missing or conflicting evidence. Entries marked truncated are incomplete excerpts; "
         "do not assume omitted qualifications or complete policy.\n" + json.dumps(evidence, ensure_ascii=False)
     )
-    return context if block in context else "\n\n".join(part for part in (context, block) if part)
+    return context if context is not None and block in context else "\n\n".join(part for part in (context, block) if part)

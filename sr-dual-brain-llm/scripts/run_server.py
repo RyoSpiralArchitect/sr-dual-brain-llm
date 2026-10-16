@@ -41,7 +41,9 @@ async def right_worker(callosum, mem, right_model):
     if hasattr(callosum, "recv_request"):
         while True:
             req = await callosum.recv_request()
-            req = {**req, "context": request_memory_context(req)}
+            memory_context = request_memory_context(req)
+            if memory_context is not None:
+                req = {**req, "context": memory_context}
             if req.get("type") == "ASK_DETAIL":
                 qid = req["qid"]
                 try:

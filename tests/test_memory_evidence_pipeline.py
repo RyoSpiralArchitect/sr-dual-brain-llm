@@ -101,6 +101,31 @@ def test_postgres_metadata_write_load_and_legacy_defaults_without_database(monke
     assert loaded[0].seed_id is None and loaded[0].evidence_status == "unverified"
 
 
+@pytest.mark.parametrize("worker_fn", [_right_worker, right_worker])
+def test_missing_context_preserves_legacy_memory_lookup_but_explicit_empty_is_gated(worker_fn):
+    model = RightBrainModel()
+    model._llm_client = None
+    memory = SharedMemory()
+    memory.store({"Q": "incident records", "A": "lookup-sentinel"})
+
+    async def run():
+        callosum = Callosum(slot_ms=0)
+        task = asyncio.create_task(worker_fn(callosum, memory, model))
+        try:
+            base = {"type": "ASK_DETAIL", "question": "incident records", "draft_sum": "draft"}
+            missing = await callosum.ask_detail({**base, "qid": "missing"}, timeout_ms=1500)
+            empty = await callosum.ask_detail({**base, "qid": "empty", "context": ""}, timeout_ms=1500)
+            return missing, empty
+        finally:
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+
+    missing, empty = asyncio.run(run())
+    assert "lookup-sentinel" in missing["notes_sum"]
+    assert "lookup-sentinel" not in empty["notes_sum"]
+
+
 def test_optional_vector_failure_does_not_abort_required_metadata_migration(monkeypatch):
     class TransactionCursor:
         aborted = False

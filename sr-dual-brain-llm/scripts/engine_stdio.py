@@ -626,7 +626,9 @@ async def _resolve_vision_images(
 async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
     while True:
         req = await callosum.recv_request()
-        req = {**req, "context": request_memory_context(req)}
+        memory_context = request_memory_context(req)
+        if memory_context is not None:
+            req = {**req, "context": memory_context}
         if req.get("type") == "ASK_DETAIL":
             qid = req["qid"]
             try:
