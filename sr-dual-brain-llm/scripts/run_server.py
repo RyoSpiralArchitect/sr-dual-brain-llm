@@ -35,11 +35,13 @@ from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
+from core.memory_evidence import request_memory_context
 
 async def right_worker(callosum, mem, right_model):
     if hasattr(callosum, "recv_request"):
         while True:
             req = await callosum.recv_request()
+            req = {**req, "context": request_memory_context(req)}
             if req.get("type") == "ASK_DETAIL":
                 qid = req["qid"]
                 try:

@@ -164,6 +164,7 @@ class HarvestAttemptModel:
     origin: str = ""
     seed_id: str | None = None
     source_qid: str | None = None
+    similarity_source: str = "legacy_payload"
 
     def __post_init__(self) -> None:
         self.archetype = str(self.archetype)
@@ -203,6 +204,7 @@ class HarvestAttemptModel:
             "origin": self.origin,
             "seed_id": self.seed_id,
             "source_qid": self.source_qid,
+            "similarity_source": self.similarity_source,
         }
 
 

@@ -10,7 +10,7 @@ import sys
 
 
 def offline_environment(source):
-    scopes = ("LLM_", "LEFT_BRAIN_", "RIGHT_BRAIN_", "EXECUTIVE_", "DIRECTOR_")
+    scopes = ("LLM_", "LEFT_BRAIN_", "RIGHT_BRAIN_", "EXECUTIVE_", "DIRECTOR_", "MEMORY_", "DUALBRAIN_MEMORY_")
     provider_secrets = {"OPENAI_API_KEY", "OPENAI_ORGANIZATION", "ANTHROPIC_API_KEY",
                         "GOOGLE_API_KEY", "MISTRAL_API_KEY", "XAI_API_KEY",
                         "HUGGINGFACE_API_TOKEN", "HF_TOKEN", "DUALBRAIN_PG_DSN"}

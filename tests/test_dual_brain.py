@@ -4130,3 +4130,39 @@ def test_controller_links_cached_seed_and_records_draft_context_injection():
     assert injected["seed_ids"] == [outcome["seed_id"]]
     assert injected["source_qids"] == ["seed-source"]
     assert injected["destination"] == "draft_context"
+
+
+def test_controller_routes_exact_final_qa_with_source_and_respects_recall_gate():
+    from core.shared_memory import MemoryTrace
+
+    question = "Explain a heroic journey through difficult constraints and a guarded gate."
+    field = UnconsciousField()
+    mapping = field.analyse(question=question, draft="UNRESOLVED INITIAL DRAFT")
+    outcome = field.integrate_outcome(mapping=mapping, question=question,
+        draft="UNRESOLVED INITIAL DRAFT", final_answer="Resolved QA",
+        success=False, decision_state={"source_qid": "original", "novelty": .8})
+    field.analyse(question="Independent warmup", draft="")
+    memory = SharedMemory()
+    memory.store(MemoryTrace(question, "Final QA: preserve a reversible route.",
+                             qid="original", seed_id=outcome["seed_id"]))
+    controller = make_stage_controller(memory=memory, unconscious_field=field,
+        left_model=CaptureLeftModel(draft="Completely different current draft", confidence=.3))
+    controller.policy = AlwaysConsultPolicy()
+    asyncio.run(controller.process(question, qid="revisit", system2_mode="off"))
+    request = controller.callosum.payloads[0]["payload"]
+    assert request["memory_evidence"][0]["source_qid"] == "original"
+    assert "Final QA: preserve a reversible route." in request["context"]
+    assert "UNRESOLVED INITIAL DRAFT" not in request["context"]
+    assert any(event == "memory_evidence_routed" for event, _payload in controller.telemetry.events)
+
+    # A gated request must not reintroduce memories through the new ID route.
+    summary = field.summary(mapping)
+    args = dict(question=question, decision=make_decision(), draft="Current draft", context="",
+                focus=None, system2_active=False, system2_mode="off", hemisphere_mode="balanced",
+                hemisphere_bias=0, unconscious_summary=summary, psychoid_signal=None,
+                psychoid_projection=None, left_coherence=None, default_mode_reflections=None,
+                suppress_default_mode_reflections=True)
+    plan = controller._build_consult_request(**args, allow_memory_recall=False)
+    assert "memory_evidence" not in plan.payload
+    assert not controller._allow_recalled_evidence(question, None, {"memory": {"long_term": " DROP "}})
+    assert controller._allow_recalled_evidence(question, None, {"memory": "malformed"})

@@ -68,7 +68,7 @@ def _coerce_bool(value: Optional[str], default: bool) -> bool:
     return default
 
 
-def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
+def load_llm_config(scope: str = "LLM", *, default_model: Optional[str] = None) -> Optional[LLMConfig]:
     """Load an LLM configuration from environment variables.
 
     The function is intentionally permissive so that users can quickly try out
@@ -79,7 +79,7 @@ def load_llm_config(scope: str = "LLM") -> Optional[LLMConfig]:
 
     prefix = scope.upper()
     provider = _env(f"{prefix}_PROVIDER") or _env("LLM_PROVIDER")
-    model = _env(f"{prefix}_MODEL") or _env("LLM_MODEL_ID")
+    model = _env(f"{prefix}_MODEL") or _env("LLM_MODEL_ID") or default_model
 
     if not provider or not model:
         return None
