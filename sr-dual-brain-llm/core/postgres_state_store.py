@@ -208,7 +208,16 @@ class PostgresStateStore:
                 cur.execute(
                     f"CREATE INDEX IF NOT EXISTS {episodes}_session_id_id ON {episodes}(session_id, id);"
                 )
-                self._ensure_pgvector(cur, episodes)
+                # Optional extension errors must not abort the required QA
+                # metadata migration and the remaining schema transaction.
+                cur.execute("SAVEPOINT srdb_optional_vector;")
+                try:
+                    self._ensure_pgvector(cur, episodes)
+                    cur.execute("RELEASE SAVEPOINT srdb_optional_vector;")
+                except Exception:
+                    cur.execute("ROLLBACK TO SAVEPOINT srdb_optional_vector;")
+                    cur.execute("RELEASE SAVEPOINT srdb_optional_vector;")
+                    self._has_pgvector = False
                 cur.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {telemetry} (

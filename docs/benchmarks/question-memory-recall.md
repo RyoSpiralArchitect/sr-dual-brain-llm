@@ -36,7 +36,9 @@ Seed identity alone does not override these gates.
 PostgreSQL's idempotent schema setup adds an `evidence_metadata` JSONB column.
 Seed IDs, status and expiry survive QA save/load; historical rows default to no
 seed ID and unverified status. SQL adapter tests cover serialization and legacy
-defaults. A real PostgreSQL server is not exercised by these local unit tests.
+defaults; an unavailable optional pgvector extension is rolled back to a savepoint
+so the required schema migration can commit. A real PostgreSQL server is not
+exercised by these local unit tests.
 Latent cache contents and learned vectors remain session-local. Independent
 hippocampal/schema memories retain their existing retrieval/lifecycle behavior;
 the new QA status filters do not constitute global deletion of their copies.
@@ -58,6 +60,10 @@ default, not a universally calibrated probability. Chat model settings and the
 symbolic/archetype embedder remain separate. The standalone server consumes
 evidence packets but does not automatically create the optional semantic index;
 custom controllers can inject `QuestionSemanticIndex` into SharedMemory.
+The [2026-10-16 pilot](question-memory-2026-10-16.md) shows the tradeoff explicitly:
+the 0.70 default retrieves fewer relevant sources than lexical search on that
+fixture, while a calibration-selected 0.45 improves recall but admits one
+unsupported-source selection. The calibrated setting is not automatically enabled.
 
 Before perception, the controller prepares the current question, latent-seed
 questions and up to 256 recent available QA questions. Drafts and answers are not

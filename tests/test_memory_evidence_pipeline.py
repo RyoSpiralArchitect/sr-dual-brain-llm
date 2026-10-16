@@ -99,3 +99,50 @@ def test_postgres_metadata_write_load_and_legacy_defaults_without_database(monke
     cursor.rows = [("old", "Q", "A", 10, '[]', '[]', '{}')]
     loaded, _ = store._load_session_sync("session", None, None)
     assert loaded[0].seed_id is None and loaded[0].evidence_status == "unverified"
+
+
+def test_optional_vector_failure_does_not_abort_required_metadata_migration(monkeypatch):
+    class TransactionCursor:
+        aborted = False
+
+        def __init__(self):
+            self.statements = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            pass
+
+        def execute(self, sql, _params=()):
+            self.statements.append(sql)
+            if "ROLLBACK TO SAVEPOINT" in sql:
+                self.aborted = False
+            elif self.aborted:
+                raise RuntimeError("transaction aborted")
+            elif "CREATE EXTENSION" in sql:
+                self.aborted = True
+                raise RuntimeError("optional extension unavailable")
+
+    cursor = TransactionCursor()
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            pass
+
+        def cursor(self):
+            return cursor
+
+        def commit(self):
+            assert not cursor.aborted
+
+    store = PostgresStateStore("NOT_A_REAL_DSN")
+    monkeypatch.setattr(store, "_connect", Connection)
+    store._ensure_schema_sync()
+    store._ensure_schema_sync()
+    assert store._has_pgvector is False
+    assert sum("ADD COLUMN IF NOT EXISTS evidence_metadata" in sql for sql in cursor.statements) == 2
+    assert sum("ROLLBACK TO SAVEPOINT" in sql for sql in cursor.statements) == 2
