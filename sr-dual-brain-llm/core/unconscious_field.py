@@ -1071,6 +1071,7 @@ class UnconsciousField:
         self.recall_mode = recall_mode
         self.semantic_index = semantic_index
         self.recall_scope_resolver = None
+        self.recall_evidence_allowlist = None
         self._question_embedder = HashEmbedder(dim=self.config.dim, seed=self.config.seed)
         self._seed_cache: List[LatentSeed] = []
         self._max_cache = 24
@@ -1099,6 +1100,7 @@ class UnconsciousField:
                                    "seed": self._question_embedder.seed},
             "semantic_index": self.semantic_index.snapshot() if self.semantic_index is not None else None,
             "recall_scope": self.recall_scope_resolver.snapshot() if self.recall_scope_resolver is not None else None,
+            "recall_evidence_allowlist": sorted(self.recall_evidence_allowlist) if self.recall_evidence_allowlist is not None else None,
             "seeds": [dataclasses.asdict(seed) for seed in self._seed_cache],
             "pending_stress_release": self._pending_stress_release,
             "sampler_chain": list(self._psychoid_sampler._chain),
@@ -1149,13 +1151,17 @@ class UnconsciousField:
                     similarity = semantic
                     threshold = semantic_threshold
                     similarity_source = "question_semantic"
-            similarity_pass = similarity >= threshold and scope_allowed
+            support_allowed = (self.recall_evidence_allowlist is None
+                               or (seed.seed_id, seed.source_qid) in self.recall_evidence_allowlist)
+            similarity_pass = similarity >= threshold and scope_allowed and support_allowed
             incubation_pass = incubation >= 2
             intensity_pass = seed.intensity >= 0.08
             emerged = similarity_pass and incubation_pass and intensity_pass
             failure_reasons: List[str] = []
             if not scope_allowed:
                 failure_reasons.append("scope_mismatch_or_ambiguity")
+            if not support_allowed:
+                failure_reasons.append("evidence_support_not_approved")
             if not similarity_pass:
                 failure_reasons.append("similarity_below_threshold")
             if not incubation_pass:

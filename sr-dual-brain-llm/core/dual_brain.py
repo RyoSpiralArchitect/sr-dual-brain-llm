@@ -4773,10 +4773,16 @@ class DualBrainController:
         if callable(scope_resolver) and hasattr(self.unconscious_field, "recall_scope_resolver"):
             self.unconscious_field.recall_scope_resolver = scope_resolver()
         prepare_retrieval = getattr(self.memory, "prepare_retrieval", None)
-        if (callable(prepare_retrieval) and getattr(self.memory, "semantic_index", None) is not None
+        if (callable(prepare_retrieval) and (getattr(self.memory, "semantic_index", None) is not None
+                                           or getattr(self.memory, "answerability_gate", None) is not None)
                 and self._allow_recalled_evidence(question, None, None)):
             seeds = getattr(self.unconscious_field, "_seed_cache", [])
-            backend = self.memory.semantic_index.backend
+            index = getattr(self.memory, "semantic_index", None)
+            gate = getattr(self.memory, "answerability_gate", None)
+            backend = index.backend if index is not None else None
+            checker = gate.backend if gate is not None else None
+            checker_calls = getattr(checker, "calls", None)
+            checker_tokens = getattr(checker, "input_tokens", None)
             before_calls = getattr(backend, "calls", None)
             before_tokens = getattr(backend, "input_tokens", None)
             prepare_started = time.perf_counter()
@@ -4784,12 +4790,22 @@ class DualBrainController:
                 prepared = await prepare_retrieval(question, seed_questions=[seed.question for seed in seeds])
             except Exception as exc:
                 # Provider errors may echo credentials or private text.
-                prepared = {"status": "lexical_fallback", "error_type": type(exc).__name__}
+                prepared = {"status": "withheld" if gate is not None else "lexical_fallback",
+                            "error_type": type(exc).__name__}
             for metric, before, after in (("embedding_calls", before_calls, getattr(backend, "calls", None)),
                                            ("input_tokens", before_tokens, getattr(backend, "input_tokens", None))):
                 prepared[metric] = after - before if type(before) is int and type(after) is int else None
+            for metric, before, after in (("answerability_calls", checker_calls, getattr(checker, "calls", None)),
+                                          ("answerability_input_tokens", checker_tokens, getattr(checker, "input_tokens", None))):
+                prepared[metric] = after - before if type(before) is int and type(after) is int else None
             prepared["latency_ms"] = (time.perf_counter() - prepare_started) * 1000
             self.telemetry.log("memory_semantic_preparation", qid=qid_value, **prepared)
+        if hasattr(self.unconscious_field, "recall_evidence_allowlist"):
+            gate = getattr(self.memory, "answerability_gate", None)
+            self.unconscious_field.recall_evidence_allowlist = (
+                frozenset((t.seed_id, t.qid) for t in self.memory.retrieve_related_traces(question, gate.candidate_limit)
+                          if t.seed_id and t.qid) if gate is not None
+                and self._allow_recalled_evidence(question, None, None) else (frozenset() if gate is not None else None))
         system2_settings = self._build_system2_settings(system2_mode)
         system2_norm = system2_settings.mode
         system2_priority = system2_settings.priority

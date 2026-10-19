@@ -17,7 +17,8 @@ from core.shared_memory import MemoryTrace, SharedMemory  # noqa: E402
 
 @pytest.mark.parametrize("worker_fn", [_right_worker, right_worker])
 @pytest.mark.parametrize("request_type", ["ASK_DETAIL", "ASK_CRITIC"])
-def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(worker_fn, request_type):
+@pytest.mark.parametrize("guarded", [False, True])
+def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(worker_fn, request_type, guarded):
     prompts = []
 
     class CaptureClient:
@@ -27,9 +28,15 @@ def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(wor
 
     model = RightBrainModel(LLMConfig("openai", "fixture", "NOT_A_KEY"))
     model._llm_client = CaptureClient()
-    memory = SharedMemory()
+    from core.memory_answerability import AnswerabilityGate
+    from test_memory_answerability import Checks
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(Checks()) if guarded else None)
     memory.store(MemoryTrace("Earlier Project Helix question", "The recorded retention is 48 hours.",
                              qid="original-qa", seed_id="seed", retrieval_scope="helix", scope_aliases=("Helix",)))
+    if guarded:
+        memory.store(MemoryTrace("Earlier Project Helix question", "DENY-MARKER wrong facet",
+                                 qid="denied-qa", seed_id="denied-seed", retrieval_scope="helix", scope_aliases=("Helix",)))
+        asyncio.run(memory.prepare_retrieval("What did the earlier Helix record say?"))
 
     async def run():
         callosum = Callosum(slot_ms=0)
@@ -38,7 +45,7 @@ def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(wor
             return await callosum.ask_detail({
                 "qid": "new-question", "type": request_type, "question": "What did the earlier Helix record say?",
                 "draft": "Unknown", "draft_sum": "Unknown", "context": "Base context",
-                "memory_evidence": memory.evidence_for_seeds(["seed"], question="What did the earlier Helix record say?"),
+                "memory_evidence": memory.evidence_for_seeds(["seed", "denied-seed"], question="What did the earlier Helix record say?"),
             }, timeout_ms=1000)
         finally:
             task.cancel()
@@ -52,6 +59,7 @@ def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(wor
     assert '"status": "unverified"' in system and "not confirmed facts" in system
     assert '"retrieval_scope": "helix"' in system
     assert "Base context" in system and "NOT_A_KEY" not in prompt + system
+    assert "DENY-MARKER" not in prompt + system
 
 
 def test_postgres_metadata_write_load_and_legacy_defaults_without_database(monkeypatch):

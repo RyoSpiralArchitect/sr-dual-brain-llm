@@ -222,6 +222,10 @@ records the default/calibrated comparisons, remaining Japanese misses, and limit
 The [same-topic precision study](docs/benchmarks/memory-precision-2026-10-19.md)
 tests nearby unanswered facets, exposes the lower-threshold false-retrieval cost,
 and adds calibration that explicitly reports when its abstention constraint is infeasible.
+An [optional question/evidence support check](docs/benchmarks/memory-answerability.md)
+verifies quoted support before QA delivery. Its
+[2026-10-19 experiment](docs/benchmarks/memory-answerability-2026-10-19.md)
+records the candidate-coverage repair, new multilingual evaluation, cost and limits.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.

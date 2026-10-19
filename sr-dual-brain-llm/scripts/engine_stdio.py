@@ -53,6 +53,7 @@ from core.shared_memory import SharedMemory
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from core.memory_evidence import request_memory_context
 from core.memory_retrieval import semantic_index_from_environment
+from core.memory_answerability import answerability_gate_from_environment
 from core.unconscious_field import UnconsciousField
 
 
@@ -757,7 +758,8 @@ class EngineSession:
         trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
         trace_cache_limit = max(4, min(512, trace_cache_limit))
         semantic_index = semantic_index_from_environment(left_llm_config)
-        memory = SharedMemory(max_dialogue_flows=trace_cache_limit, semantic_index=semantic_index)
+        memory = SharedMemory(max_dialogue_flows=trace_cache_limit, semantic_index=semantic_index,
+                              answerability_gate=answerability_gate_from_environment(left_llm_config))
         hippocampus = TemporalHippocampalIndexing()
         persisted_memory = 0
         persisted_episodes = 0
