@@ -1,0 +1,3630 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-19",
+  "study": "question_evidence_support_v1",
+  "protocol_commit": "8457ab4",
+  "feature_default": "off",
+  "answer_quality_evaluated": false,
+  "runs": {
+    "development_shortlist": {
+      "source_revision": {
+        "commit": "b8558833bf32e14d9d5e080aaa5bab4b557ea8db",
+        "dirty": false
+      },
+      "fixture_sha256": "d01b478dc29803d817230d1c0e828b88f320011d8ef762f8b91a3426c3beae57",
+      "policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+      "phase": "development",
+      "summaries": {
+        "scoped_025": {
+          "all": {
+            "queries": 24,
+            "positive_queries": 16,
+            "no_answer_queries": 8,
+            "hits_at_1": 16,
+            "hits_at_3": 13,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 9,
+            "selected_slots": 26,
+            "mean_set_f1": 0.625
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 3,
+              "mean_set_f1": 0.8333333333333333
+            },
+            "compound_japanese": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 2,
+              "mean_set_f1": 0.6666666666666666
+            },
+            "echo": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 4,
+              "selected_slots": 4,
+              "mean_set_f1": 0.0
+            },
+            "near_miss_japanese": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 5,
+              "selected_slots": 5,
+              "mean_set_f1": 0.0
+            },
+            "paraphrase": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            }
+          }
+        },
+        "answerability": {
+          "all": {
+            "queries": 24,
+            "positive_queries": 16,
+            "no_answer_queries": 8,
+            "hits_at_1": 16,
+            "hits_at_3": 13,
+            "correct_abstentions": 8,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 17,
+            "mean_set_f1": 0.9583333333333331
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 3,
+              "mean_set_f1": 0.8333333333333333
+            },
+            "compound_japanese": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 2,
+              "mean_set_f1": 0.6666666666666666
+            },
+            "echo": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 4,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "near_miss_japanese": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 4,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "paraphrase": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            }
+          }
+        }
+      },
+      "provider_calls": 24,
+      "input_tokens": 7516,
+      "output_tokens": 1383,
+      "embedding_usage": {
+        "provider_calls": 2,
+        "input_tokens": 2429,
+        "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+        "dimension": 1536
+      },
+      "candidate_mode": "shortlist",
+      "requested_model": "gpt-6-luna",
+      "served_model": "gpt-6-luna",
+      "candidate_full_gold_queries": 13,
+      "withheld_checks": 0,
+      "latency_ms": {
+        "p50": 1471.3527874991996,
+        "p95_nearest_rank": 2058.1139409914613,
+        "max": 2208.221943001263
+      },
+      "frozen_replay": {
+        "source_revision": {
+          "commit": "270900d06de2c16eb6b5ba3d8d37abdb68826488",
+          "dirty": false
+        },
+        "provider_calls": 0,
+        "embedding_calls": 0,
+        "all_decisions_selections_checks_and_summaries_identical": true
+      },
+      "selections": [
+        {
+          "id": "cobalt-width-echo",
+          "scene": "cobalt",
+          "kind": "echo",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-paraphrase",
+          "scene": "cobalt",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-japanese",
+          "scene": "cobalt",
+          "kind": "japanese",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-near_miss",
+          "scene": "cobalt",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-near_miss_japanese",
+          "scene": "cobalt",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-echo",
+          "scene": "cobalt",
+          "kind": "echo",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-paraphrase",
+          "scene": "cobalt",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-japanese",
+          "scene": "cobalt",
+          "kind": "japanese",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-near_miss",
+          "scene": "cobalt",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-near_miss_japanese",
+          "scene": "cobalt",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata",
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-compound",
+          "scene": "cobalt",
+          "kind": "compound",
+          "relevant_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width",
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-width",
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-compound_japanese",
+          "scene": "cobalt",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-echo",
+          "scene": "indigo",
+          "kind": "echo",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-paraphrase",
+          "scene": "indigo",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-japanese",
+          "scene": "indigo",
+          "kind": "japanese",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-near_miss",
+          "scene": "indigo",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-near_miss_japanese",
+          "scene": "indigo",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-echo",
+          "scene": "indigo",
+          "kind": "echo",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-paraphrase",
+          "scene": "indigo",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-japanese",
+          "scene": "indigo",
+          "kind": "japanese",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-near_miss",
+          "scene": "indigo",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-near_miss_japanese",
+          "scene": "indigo",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-compound",
+          "scene": "indigo",
+          "kind": "compound",
+          "relevant_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-compound_japanese",
+          "scene": "indigo",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        }
+      ]
+    },
+    "development_expanded": {
+      "source_revision": {
+        "commit": "2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7",
+        "dirty": false
+      },
+      "fixture_sha256": "d01b478dc29803d817230d1c0e828b88f320011d8ef762f8b91a3426c3beae57",
+      "policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+      "phase": "development",
+      "summaries": {
+        "scoped_025": {
+          "all": {
+            "queries": 24,
+            "positive_queries": 16,
+            "no_answer_queries": 8,
+            "hits_at_1": 16,
+            "hits_at_3": 13,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 9,
+            "selected_slots": 26,
+            "mean_set_f1": 0.625
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 3,
+              "mean_set_f1": 0.8333333333333333
+            },
+            "compound_japanese": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 2,
+              "mean_set_f1": 0.6666666666666666
+            },
+            "echo": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 4,
+              "selected_slots": 4,
+              "mean_set_f1": 0.0
+            },
+            "near_miss_japanese": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 5,
+              "selected_slots": 5,
+              "mean_set_f1": 0.0
+            },
+            "paraphrase": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            }
+          }
+        },
+        "answerability": {
+          "all": {
+            "queries": 24,
+            "positive_queries": 16,
+            "no_answer_queries": 8,
+            "hits_at_1": 16,
+            "hits_at_3": 16,
+            "correct_abstentions": 8,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 20,
+            "mean_set_f1": 1.0
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 2,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "compound_japanese": {
+              "queries": 2,
+              "positive_queries": 2,
+              "no_answer_queries": 0,
+              "hits_at_1": 2,
+              "hits_at_3": 2,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "echo": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 4,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "near_miss_japanese": {
+              "queries": 4,
+              "positive_queries": 0,
+              "no_answer_queries": 4,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 4,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "paraphrase": {
+              "queries": 4,
+              "positive_queries": 4,
+              "no_answer_queries": 0,
+              "hits_at_1": 4,
+              "hits_at_3": 4,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 4,
+              "mean_set_f1": 1.0
+            }
+          }
+        }
+      },
+      "provider_calls": 24,
+      "input_tokens": 8399,
+      "output_tokens": 1834,
+      "embedding_usage": {
+        "provider_calls": 0,
+        "input_tokens": 0,
+        "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+        "dimension": 1536
+      },
+      "candidate_mode": "scope",
+      "requested_model": "gpt-6-luna",
+      "served_model": "gpt-6-luna",
+      "candidate_full_gold_queries": 16,
+      "withheld_checks": 0,
+      "latency_ms": {
+        "p50": 1567.9862399992999,
+        "p95_nearest_rank": 2435.288696011412,
+        "max": 3089.83533900755
+      },
+      "frozen_replay": {
+        "source_revision": {
+          "commit": "270900d06de2c16eb6b5ba3d8d37abdb68826488",
+          "dirty": false
+        },
+        "provider_calls": 0,
+        "embedding_calls": 0,
+        "all_decisions_selections_checks_and_summaries_identical": true
+      },
+      "selections": [
+        {
+          "id": "cobalt-width-echo",
+          "scene": "cobalt",
+          "kind": "echo",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-paraphrase",
+          "scene": "cobalt",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-japanese",
+          "scene": "cobalt",
+          "kind": "japanese",
+          "relevant_qids": [
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": [
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-near_miss",
+          "scene": "cobalt",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-width-near_miss_japanese",
+          "scene": "cobalt",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-echo",
+          "scene": "cobalt",
+          "kind": "echo",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-paraphrase",
+          "scene": "cobalt",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-japanese",
+          "scene": "cobalt",
+          "kind": "japanese",
+          "relevant_qids": [
+            "cobalt-metadata"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-near_miss",
+          "scene": "cobalt",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-metadata-near_miss_japanese",
+          "scene": "cobalt",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata",
+              "cobalt-width"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-compound",
+          "scene": "cobalt",
+          "kind": "compound",
+          "relevant_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-width",
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-width",
+              "cobalt-metadata"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-width",
+            "cobalt-metadata"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "cobalt-compound_japanese",
+          "scene": "cobalt",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "cobalt-metadata"
+            ],
+            "answerability": [
+              "cobalt-metadata",
+              "cobalt-width"
+            ]
+          },
+          "candidate_qids": [
+            "cobalt-metadata",
+            "cobalt-width"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-echo",
+          "scene": "indigo",
+          "kind": "echo",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due",
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-paraphrase",
+          "scene": "indigo",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due",
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-japanese",
+          "scene": "indigo",
+          "kind": "japanese",
+          "relevant_qids": [
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": [
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-due",
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-near_miss",
+          "scene": "indigo",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-due",
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-due-near_miss_japanese",
+          "scene": "indigo",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-due"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-due",
+            "indigo-currency"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-echo",
+          "scene": "indigo",
+          "kind": "echo",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-paraphrase",
+          "scene": "indigo",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-japanese",
+          "scene": "indigo",
+          "kind": "japanese",
+          "relevant_qids": [
+            "indigo-currency"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-near_miss",
+          "scene": "indigo",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-currency-near_miss_japanese",
+          "scene": "indigo",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-compound",
+          "scene": "indigo",
+          "kind": "compound",
+          "relevant_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency",
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "indigo-compound_japanese",
+          "scene": "indigo",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "indigo-currency"
+            ],
+            "answerability": [
+              "indigo-currency",
+              "indigo-due"
+            ]
+          },
+          "candidate_qids": [
+            "indigo-currency",
+            "indigo-due"
+          ],
+          "check_status": "ready"
+        }
+      ]
+    },
+    "evaluation_expanded": {
+      "source_revision": {
+        "commit": "2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7",
+        "dirty": false
+      },
+      "fixture_sha256": "d01b478dc29803d817230d1c0e828b88f320011d8ef762f8b91a3426c3beae57",
+      "policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+      "phase": "evaluation",
+      "summaries": {
+        "scoped_025": {
+          "all": {
+            "queries": 36,
+            "positive_queries": 26,
+            "no_answer_queries": 10,
+            "hits_at_1": 26,
+            "hits_at_3": 26,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 15,
+            "selected_slots": 52,
+            "mean_set_f1": 0.7083333333333334
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 3,
+              "positive_queries": 3,
+              "no_answer_queries": 0,
+              "hits_at_1": 3,
+              "hits_at_3": 3,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "compound_japanese": {
+              "queries": 3,
+              "positive_queries": 3,
+              "no_answer_queries": 0,
+              "hits_at_1": 3,
+              "hits_at_3": 3,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "echo": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "explicit_absence": {
+              "queries": 1,
+              "positive_queries": 1,
+              "no_answer_queries": 0,
+              "hits_at_1": 1,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 1,
+              "mean_set_f1": 1.0
+            },
+            "explicit_absence_japanese": {
+              "queries": 1,
+              "positive_queries": 1,
+              "no_answer_queries": 0,
+              "hits_at_1": 1,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 2,
+              "selected_slots": 3,
+              "mean_set_f1": 0.5
+            },
+            "japanese": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 5,
+              "positive_queries": 0,
+              "no_answer_queries": 5,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 6,
+              "selected_slots": 6,
+              "mean_set_f1": 0.0
+            },
+            "near_miss_japanese": {
+              "queries": 5,
+              "positive_queries": 0,
+              "no_answer_queries": 5,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 7,
+              "selected_slots": 7,
+              "mean_set_f1": 0.0
+            },
+            "paraphrase": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            }
+          }
+        },
+        "answerability": {
+          "all": {
+            "queries": 36,
+            "positive_queries": 26,
+            "no_answer_queries": 10,
+            "hits_at_1": 26,
+            "hits_at_3": 26,
+            "correct_abstentions": 10,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 37,
+            "mean_set_f1": 1.0
+          },
+          "by_kind": {
+            "compound": {
+              "queries": 3,
+              "positive_queries": 3,
+              "no_answer_queries": 0,
+              "hits_at_1": 3,
+              "hits_at_3": 3,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "compound_japanese": {
+              "queries": 3,
+              "positive_queries": 3,
+              "no_answer_queries": 0,
+              "hits_at_1": 3,
+              "hits_at_3": 3,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "echo": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "explicit_absence": {
+              "queries": 1,
+              "positive_queries": 1,
+              "no_answer_queries": 0,
+              "hits_at_1": 1,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 1,
+              "mean_set_f1": 1.0
+            },
+            "explicit_absence_japanese": {
+              "queries": 1,
+              "positive_queries": 1,
+              "no_answer_queries": 0,
+              "hits_at_1": 1,
+              "hits_at_3": 1,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 1,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 5,
+              "positive_queries": 0,
+              "no_answer_queries": 5,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 5,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "near_miss_japanese": {
+              "queries": 5,
+              "positive_queries": 0,
+              "no_answer_queries": 5,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 5,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "paraphrase": {
+              "queries": 6,
+              "positive_queries": 6,
+              "no_answer_queries": 0,
+              "hits_at_1": 6,
+              "hits_at_3": 6,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 7,
+              "mean_set_f1": 1.0
+            }
+          }
+        }
+      },
+      "provider_calls": 36,
+      "input_tokens": 12949,
+      "output_tokens": 3094,
+      "embedding_usage": {
+        "provider_calls": 0,
+        "input_tokens": 0,
+        "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+        "dimension": 1536
+      },
+      "candidate_mode": "scope",
+      "requested_model": "gpt-6-luna",
+      "served_model": "gpt-6-luna",
+      "candidate_full_gold_queries": 26,
+      "withheld_checks": 0,
+      "latency_ms": {
+        "p50": 1615.19104350009,
+        "p95_nearest_rank": 2208.6517039861064,
+        "max": 2253.6083570012124
+      },
+      "frozen_replay": {
+        "source_revision": {
+          "commit": "270900d06de2c16eb6b5ba3d8d37abdb68826488",
+          "dirty": false
+        },
+        "provider_calls": 0,
+        "embedding_calls": 0,
+        "all_decisions_selections_checks_and_summaries_identical": true
+      },
+      "selections": [
+        {
+          "id": "vega-units-echo",
+          "scene": "vega",
+          "kind": "echo",
+          "relevant_qids": [
+            "vega-units"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-units"
+            ],
+            "answerability": [
+              "vega-units"
+            ]
+          },
+          "candidate_qids": [
+            "vega-units",
+            "vega-missing"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-units-paraphrase",
+          "scene": "vega",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "vega-units"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-units"
+            ],
+            "answerability": [
+              "vega-units"
+            ]
+          },
+          "candidate_qids": [
+            "vega-units",
+            "vega-missing"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-units-japanese",
+          "scene": "vega",
+          "kind": "japanese",
+          "relevant_qids": [
+            "vega-units"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-units"
+            ],
+            "answerability": [
+              "vega-units"
+            ]
+          },
+          "candidate_qids": [
+            "vega-units",
+            "vega-missing"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-units-near_miss",
+          "scene": "vega",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-units"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "vega-units",
+            "vega-missing"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-units-near_miss_japanese",
+          "scene": "vega",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-units"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "vega-units",
+            "vega-missing"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-missing-echo",
+          "scene": "vega",
+          "kind": "echo",
+          "relevant_qids": [
+            "vega-missing"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing"
+            ],
+            "answerability": [
+              "vega-missing"
+            ]
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-missing-paraphrase",
+          "scene": "vega",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "vega-missing"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing"
+            ],
+            "answerability": [
+              "vega-missing"
+            ]
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-missing-japanese",
+          "scene": "vega",
+          "kind": "japanese",
+          "relevant_qids": [
+            "vega-missing"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing"
+            ],
+            "answerability": [
+              "vega-missing"
+            ]
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-missing-near_miss",
+          "scene": "vega",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-missing-near_miss_japanese",
+          "scene": "vega",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-compound",
+          "scene": "vega",
+          "kind": "compound",
+          "relevant_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing",
+              "vega-units"
+            ],
+            "answerability": [
+              "vega-missing",
+              "vega-units"
+            ]
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "vega-compound_japanese",
+          "scene": "vega",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "vega-missing",
+              "vega-units"
+            ],
+            "answerability": [
+              "vega-missing",
+              "vega-units"
+            ]
+          },
+          "candidate_qids": [
+            "vega-missing",
+            "vega-units"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-weight-echo",
+          "scene": "onyx",
+          "kind": "echo",
+          "relevant_qids": [
+            "onyx-weight"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-weight"
+            ],
+            "answerability": [
+              "onyx-weight"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-weight",
+            "onyx-prefix"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-weight-paraphrase",
+          "scene": "onyx",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "onyx-weight"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-weight"
+            ],
+            "answerability": [
+              "onyx-weight"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-weight",
+            "onyx-prefix"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-weight-japanese",
+          "scene": "onyx",
+          "kind": "japanese",
+          "relevant_qids": [
+            "onyx-weight"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-weight"
+            ],
+            "answerability": [
+              "onyx-weight"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-weight",
+            "onyx-prefix"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-weight-near_miss",
+          "scene": "onyx",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-weight"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "onyx-weight",
+            "onyx-prefix"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-weight-near_miss_japanese",
+          "scene": "onyx",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-weight"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "onyx-weight",
+            "onyx-prefix"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-prefix-echo",
+          "scene": "onyx",
+          "kind": "echo",
+          "relevant_qids": [
+            "onyx-prefix"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix"
+            ],
+            "answerability": [
+              "onyx-prefix"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-prefix-paraphrase",
+          "scene": "onyx",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "onyx-prefix"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix"
+            ],
+            "answerability": [
+              "onyx-prefix"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-prefix-japanese",
+          "scene": "onyx",
+          "kind": "japanese",
+          "relevant_qids": [
+            "onyx-prefix"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix"
+            ],
+            "answerability": [
+              "onyx-prefix"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-prefix-near_miss",
+          "scene": "onyx",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-prefix-near_miss_japanese",
+          "scene": "onyx",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix",
+              "onyx-weight"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-compound",
+          "scene": "onyx",
+          "kind": "compound",
+          "relevant_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix",
+              "onyx-weight"
+            ],
+            "answerability": [
+              "onyx-prefix",
+              "onyx-weight"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "onyx-compound_japanese",
+          "scene": "onyx",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "onyx-prefix",
+              "onyx-weight"
+            ],
+            "answerability": [
+              "onyx-prefix",
+              "onyx-weight"
+            ]
+          },
+          "candidate_qids": [
+            "onyx-prefix",
+            "onyx-weight"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-format-echo",
+          "scene": "maple",
+          "kind": "echo",
+          "relevant_qids": [
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format-conflict",
+              "maple-format"
+            ],
+            "answerability": [
+              "maple-format-conflict",
+              "maple-format"
+            ]
+          },
+          "candidate_qids": [
+            "maple-format-conflict",
+            "maple-format",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-format-paraphrase",
+          "scene": "maple",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format-conflict",
+              "maple-format"
+            ],
+            "answerability": [
+              "maple-format-conflict",
+              "maple-format"
+            ]
+          },
+          "candidate_qids": [
+            "maple-format-conflict",
+            "maple-format",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-format-japanese",
+          "scene": "maple",
+          "kind": "japanese",
+          "relevant_qids": [
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format",
+              "maple-format-conflict"
+            ],
+            "answerability": [
+              "maple-format",
+              "maple-format-conflict"
+            ]
+          },
+          "candidate_qids": [
+            "maple-format",
+            "maple-format-conflict",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-format-near_miss",
+          "scene": "maple",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format-conflict",
+              "maple-format"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "maple-format-conflict",
+            "maple-format",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-format-near_miss_japanese",
+          "scene": "maple",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format",
+              "maple-format-conflict"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "maple-format",
+            "maple-format-conflict",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-speakers-echo",
+          "scene": "maple",
+          "kind": "echo",
+          "relevant_qids": [
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers"
+            ],
+            "answerability": [
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format-conflict",
+            "maple-format"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-speakers-paraphrase",
+          "scene": "maple",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers"
+            ],
+            "answerability": [
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format-conflict",
+            "maple-format"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-speakers-japanese",
+          "scene": "maple",
+          "kind": "japanese",
+          "relevant_qids": [
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers"
+            ],
+            "answerability": [
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-speakers-near_miss",
+          "scene": "maple",
+          "kind": "explicit_absence",
+          "relevant_qids": [
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers"
+            ],
+            "answerability": [
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format-conflict",
+            "maple-format"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-speakers-near_miss_japanese",
+          "scene": "maple",
+          "kind": "explicit_absence_japanese",
+          "relevant_qids": [
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers",
+              "maple-format",
+              "maple-format-conflict"
+            ],
+            "answerability": [
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-compound",
+          "scene": "maple",
+          "kind": "compound",
+          "relevant_qids": [
+            "maple-format",
+            "maple-format-conflict",
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-format-conflict",
+              "maple-format",
+              "maple-speakers"
+            ],
+            "answerability": [
+              "maple-format-conflict",
+              "maple-format",
+              "maple-speakers"
+            ]
+          },
+          "candidate_qids": [
+            "maple-format-conflict",
+            "maple-format",
+            "maple-speakers"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "maple-compound_japanese",
+          "scene": "maple",
+          "kind": "compound_japanese",
+          "relevant_qids": [
+            "maple-format",
+            "maple-format-conflict",
+            "maple-speakers"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "maple-speakers",
+              "maple-format",
+              "maple-format-conflict"
+            ],
+            "answerability": [
+              "maple-speakers",
+              "maple-format",
+              "maple-format-conflict"
+            ]
+          },
+          "candidate_qids": [
+            "maple-speakers",
+            "maple-format",
+            "maple-format-conflict"
+          ],
+          "check_status": "ready"
+        }
+      ]
+    },
+    "prior_precision_development": {
+      "source_revision": {
+        "commit": "2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7",
+        "dirty": false
+      },
+      "fixture_sha256": "475daab5dcd7f68d084dd13602df4fed8e149695d13856d4025b874978ef67d8",
+      "policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+      "phase": "development",
+      "summaries": {
+        "scoped_025": {
+          "all": {
+            "queries": 45,
+            "positive_queries": 27,
+            "no_answer_queries": 18,
+            "hits_at_1": 27,
+            "hits_at_3": 27,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 34,
+            "selected_slots": 61,
+            "mean_set_f1": 0.5481481481481482
+          },
+          "by_kind": {
+            "echo": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 9,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 4,
+              "selected_slots": 13,
+              "mean_set_f1": 0.8703703703703703
+            },
+            "near_miss": {
+              "queries": 9,
+              "positive_queries": 0,
+              "no_answer_queries": 9,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 13,
+              "selected_slots": 13,
+              "mean_set_f1": 0.0
+            },
+            "near_miss_japanese": {
+              "queries": 9,
+              "positive_queries": 0,
+              "no_answer_queries": 9,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 13,
+              "selected_slots": 13,
+              "mean_set_f1": 0.0
+            },
+            "paraphrase": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 4,
+              "selected_slots": 13,
+              "mean_set_f1": 0.8703703703703703
+            }
+          }
+        },
+        "answerability": {
+          "all": {
+            "queries": 45,
+            "positive_queries": 27,
+            "no_answer_queries": 18,
+            "hits_at_1": 27,
+            "hits_at_3": 27,
+            "correct_abstentions": 18,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 27,
+            "mean_set_f1": 1.0
+          },
+          "by_kind": {
+            "echo": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 9,
+              "mean_set_f1": 1.0
+            },
+            "japanese": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 9,
+              "mean_set_f1": 1.0
+            },
+            "near_miss": {
+              "queries": 9,
+              "positive_queries": 0,
+              "no_answer_queries": 9,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 9,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "near_miss_japanese": {
+              "queries": 9,
+              "positive_queries": 0,
+              "no_answer_queries": 9,
+              "hits_at_1": 0,
+              "hits_at_3": 0,
+              "correct_abstentions": 9,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 0,
+              "mean_set_f1": 1.0
+            },
+            "paraphrase": {
+              "queries": 9,
+              "positive_queries": 9,
+              "no_answer_queries": 0,
+              "hits_at_1": 9,
+              "hits_at_3": 9,
+              "correct_abstentions": 0,
+              "unrelated_selected_slots": 0,
+              "selected_slots": 9,
+              "mean_set_f1": 1.0
+            }
+          }
+        }
+      },
+      "provider_calls": 45,
+      "input_tokens": 17676,
+      "output_tokens": 3945,
+      "embedding_usage": {
+        "provider_calls": 0,
+        "input_tokens": 0,
+        "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+        "dimension": 1536
+      },
+      "candidate_mode": "scope",
+      "requested_model": "gpt-6-luna",
+      "served_model": "gpt-6-luna",
+      "candidate_full_gold_queries": 27,
+      "withheld_checks": 0,
+      "latency_ms": {
+        "p50": 1509.802561995457,
+        "p95_nearest_rank": 2008.5112169908825,
+        "max": 2508.677860998432
+      },
+      "frozen_replay": {
+        "source_revision": {
+          "commit": "270900d06de2c16eb6b5ba3d8d37abdb68826488",
+          "dirty": false
+        },
+        "provider_calls": 0,
+        "embedding_calls": 0,
+        "all_decisions_selections_checks_and_summaries_identical": true
+      },
+      "selections": [
+        {
+          "id": "aster-signature-echo",
+          "scene": "aster",
+          "kind": "echo",
+          "relevant_qids": [
+            "aster-signature"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-signature"
+            ],
+            "answerability": [
+              "aster-signature"
+            ]
+          },
+          "candidate_qids": [
+            "aster-signature",
+            "aster-failure",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-signature-paraphrase",
+          "scene": "aster",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "aster-signature"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-signature"
+            ],
+            "answerability": [
+              "aster-signature"
+            ]
+          },
+          "candidate_qids": [
+            "aster-signature",
+            "aster-failure",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-signature-japanese",
+          "scene": "aster",
+          "kind": "japanese",
+          "relevant_qids": [
+            "aster-signature"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-signature"
+            ],
+            "answerability": [
+              "aster-signature"
+            ]
+          },
+          "candidate_qids": [
+            "aster-signature",
+            "aster-age",
+            "aster-failure"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-signature-near_miss",
+          "scene": "aster",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-signature"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-signature",
+            "aster-age",
+            "aster-failure"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-signature-near_miss_japanese",
+          "scene": "aster",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-signature"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-signature",
+            "aster-age",
+            "aster-failure"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-age-echo",
+          "scene": "aster",
+          "kind": "echo",
+          "relevant_qids": [
+            "aster-age"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-age"
+            ],
+            "answerability": [
+              "aster-age"
+            ]
+          },
+          "candidate_qids": [
+            "aster-age",
+            "aster-signature",
+            "aster-failure"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-age-paraphrase",
+          "scene": "aster",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "aster-age"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-age"
+            ],
+            "answerability": [
+              "aster-age"
+            ]
+          },
+          "candidate_qids": [
+            "aster-age",
+            "aster-failure",
+            "aster-signature"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-age-japanese",
+          "scene": "aster",
+          "kind": "japanese",
+          "relevant_qids": [
+            "aster-age"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-age"
+            ],
+            "answerability": [
+              "aster-age"
+            ]
+          },
+          "candidate_qids": [
+            "aster-age",
+            "aster-failure",
+            "aster-signature"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-age-near_miss",
+          "scene": "aster",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-age"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-age",
+            "aster-signature",
+            "aster-failure"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-age-near_miss_japanese",
+          "scene": "aster",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-age"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-age",
+            "aster-failure",
+            "aster-signature"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-failure-echo",
+          "scene": "aster",
+          "kind": "echo",
+          "relevant_qids": [
+            "aster-failure"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-failure"
+            ],
+            "answerability": [
+              "aster-failure"
+            ]
+          },
+          "candidate_qids": [
+            "aster-failure",
+            "aster-signature",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-failure-paraphrase",
+          "scene": "aster",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "aster-failure"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-failure"
+            ],
+            "answerability": [
+              "aster-failure"
+            ]
+          },
+          "candidate_qids": [
+            "aster-failure",
+            "aster-signature",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-failure-japanese",
+          "scene": "aster",
+          "kind": "japanese",
+          "relevant_qids": [
+            "aster-failure"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-failure"
+            ],
+            "answerability": [
+              "aster-failure"
+            ]
+          },
+          "candidate_qids": [
+            "aster-failure",
+            "aster-signature",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-failure-near_miss",
+          "scene": "aster",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-failure"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-failure",
+            "aster-signature",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "aster-failure-near_miss_japanese",
+          "scene": "aster",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "aster-failure"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "aster-failure",
+            "aster-signature",
+            "aster-age"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-encoding-echo",
+          "scene": "lumen",
+          "kind": "echo",
+          "relevant_qids": [
+            "lumen-encoding"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding"
+            ],
+            "answerability": [
+              "lumen-encoding"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-delimiter",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-encoding-paraphrase",
+          "scene": "lumen",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "lumen-encoding"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding"
+            ],
+            "answerability": [
+              "lumen-encoding"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-size",
+            "lumen-delimiter"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-encoding-japanese",
+          "scene": "lumen",
+          "kind": "japanese",
+          "relevant_qids": [
+            "lumen-encoding"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding"
+            ],
+            "answerability": [
+              "lumen-encoding"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-delimiter",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-encoding-near_miss",
+          "scene": "lumen",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding",
+              "lumen-size",
+              "lumen-delimiter"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-size",
+            "lumen-delimiter"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-encoding-near_miss_japanese",
+          "scene": "lumen",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding",
+              "lumen-delimiter",
+              "lumen-size"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-delimiter",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-delimiter-echo",
+          "scene": "lumen",
+          "kind": "echo",
+          "relevant_qids": [
+            "lumen-delimiter"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-delimiter"
+            ],
+            "answerability": [
+              "lumen-delimiter"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-delimiter",
+            "lumen-encoding",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-delimiter-paraphrase",
+          "scene": "lumen",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "lumen-delimiter"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-delimiter",
+              "lumen-encoding"
+            ],
+            "answerability": [
+              "lumen-delimiter"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-delimiter",
+            "lumen-encoding",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-delimiter-japanese",
+          "scene": "lumen",
+          "kind": "japanese",
+          "relevant_qids": [
+            "lumen-delimiter"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-delimiter",
+              "lumen-encoding"
+            ],
+            "answerability": [
+              "lumen-delimiter"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-delimiter",
+            "lumen-encoding",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-delimiter-near_miss",
+          "scene": "lumen",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-delimiter",
+              "lumen-encoding"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-delimiter",
+            "lumen-encoding",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-delimiter-near_miss_japanese",
+          "scene": "lumen",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-encoding",
+              "lumen-delimiter"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-encoding",
+            "lumen-delimiter",
+            "lumen-size"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-size-echo",
+          "scene": "lumen",
+          "kind": "echo",
+          "relevant_qids": [
+            "lumen-size"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-size"
+            ],
+            "answerability": [
+              "lumen-size"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-size",
+            "lumen-encoding",
+            "lumen-delimiter"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-size-paraphrase",
+          "scene": "lumen",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "lumen-size"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-size"
+            ],
+            "answerability": [
+              "lumen-size"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-size",
+            "lumen-encoding",
+            "lumen-delimiter"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-size-japanese",
+          "scene": "lumen",
+          "kind": "japanese",
+          "relevant_qids": [
+            "lumen-size"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-size",
+              "lumen-encoding",
+              "lumen-delimiter"
+            ],
+            "answerability": [
+              "lumen-size"
+            ]
+          },
+          "candidate_qids": [
+            "lumen-size",
+            "lumen-encoding",
+            "lumen-delimiter"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-size-near_miss",
+          "scene": "lumen",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-size",
+              "lumen-delimiter"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-size",
+            "lumen-delimiter",
+            "lumen-encoding"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "lumen-size-near_miss_japanese",
+          "scene": "lumen",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "lumen-size"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "lumen-size",
+            "lumen-delimiter",
+            "lumen-encoding"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-format-echo",
+          "scene": "mosaic",
+          "kind": "echo",
+          "relevant_qids": [
+            "mosaic-format"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-format"
+            ],
+            "answerability": [
+              "mosaic-format"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-format",
+            "mosaic-region",
+            "mosaic-link"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-format-paraphrase",
+          "scene": "mosaic",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "mosaic-format"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-format",
+              "mosaic-link"
+            ],
+            "answerability": [
+              "mosaic-format"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-format",
+            "mosaic-link",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-format-japanese",
+          "scene": "mosaic",
+          "kind": "japanese",
+          "relevant_qids": [
+            "mosaic-format"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-format"
+            ],
+            "answerability": [
+              "mosaic-format"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-format",
+            "mosaic-link",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-format-near_miss",
+          "scene": "mosaic",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-format"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-format",
+            "mosaic-link",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-format-near_miss_japanese",
+          "scene": "mosaic",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-format",
+              "mosaic-link"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-format",
+            "mosaic-link",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-link-echo",
+          "scene": "mosaic",
+          "kind": "echo",
+          "relevant_qids": [
+            "mosaic-link"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-link"
+            ],
+            "answerability": [
+              "mosaic-link"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-link",
+            "mosaic-format",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-link-paraphrase",
+          "scene": "mosaic",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "mosaic-link"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-link"
+            ],
+            "answerability": [
+              "mosaic-link"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-link",
+            "mosaic-format",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-link-japanese",
+          "scene": "mosaic",
+          "kind": "japanese",
+          "relevant_qids": [
+            "mosaic-link"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-link"
+            ],
+            "answerability": [
+              "mosaic-link"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-link",
+            "mosaic-format",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-link-near_miss",
+          "scene": "mosaic",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-link"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-link",
+            "mosaic-format",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-link-near_miss_japanese",
+          "scene": "mosaic",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-link"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-link",
+            "mosaic-format",
+            "mosaic-region"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-region-echo",
+          "scene": "mosaic",
+          "kind": "echo",
+          "relevant_qids": [
+            "mosaic-region"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-region"
+            ],
+            "answerability": [
+              "mosaic-region"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-region",
+            "mosaic-format",
+            "mosaic-link"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-region-paraphrase",
+          "scene": "mosaic",
+          "kind": "paraphrase",
+          "relevant_qids": [
+            "mosaic-region"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-region",
+              "mosaic-format",
+              "mosaic-link"
+            ],
+            "answerability": [
+              "mosaic-region"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-region",
+            "mosaic-format",
+            "mosaic-link"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-region-japanese",
+          "scene": "mosaic",
+          "kind": "japanese",
+          "relevant_qids": [
+            "mosaic-region"
+          ],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-region",
+              "mosaic-format"
+            ],
+            "answerability": [
+              "mosaic-region"
+            ]
+          },
+          "candidate_qids": [
+            "mosaic-region",
+            "mosaic-format",
+            "mosaic-link"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-region-near_miss",
+          "scene": "mosaic",
+          "kind": "near_miss",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-region"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-region",
+            "mosaic-link",
+            "mosaic-format"
+          ],
+          "check_status": "ready"
+        },
+        {
+          "id": "mosaic-region-near_miss_japanese",
+          "scene": "mosaic",
+          "kind": "near_miss_japanese",
+          "relevant_qids": [],
+          "selected_qids_by_method": {
+            "scoped_025": [
+              "mosaic-region"
+            ],
+            "answerability": []
+          },
+          "candidate_qids": [
+            "mosaic-region",
+            "mosaic-format",
+            "mosaic-link"
+          ],
+          "check_status": "ready"
+        }
+      ]
+    }
+  },
+  "private_artifacts": {
+    "target/benchmarks/answerability-shortlist-dev-2026-10-19/report.json": {
+      "sha256": "b57ed778392ddade7761d9054e001047732e69cd7751b050d49cbb2409d2b40f"
+    },
+    "target/benchmarks/answerability-shortlist-dev-2026-10-19/support.partial.json": {
+      "sha256": "4fc6a6005c700a2631624c3b19ab61cfe9865b67f36eb35ac4dde932c22a0a6b"
+    },
+    "target/benchmarks/answerability-shortlist-final-replay-2026-10-19/report.json": {
+      "sha256": "2418182dfd4e87cf533734837231e96c265e9a875a3eeefd0d33a22f2d81ad07"
+    },
+    "target/benchmarks/answerability-expanded-dev-2026-10-19/report.json": {
+      "sha256": "70822621e06ca1cbc7e97012e343cbb71f2c287e65f082d02b770847fa0c3317"
+    },
+    "target/benchmarks/answerability-expanded-dev-2026-10-19/support.partial.json": {
+      "sha256": "080fee1fb025a639a5be19bdfb37a3c6498ebca9ef06ad9d7b4ff6c9dfb08bc3"
+    },
+    "target/benchmarks/answerability-expanded-final-replay-2026-10-19/report.json": {
+      "sha256": "19f5bcbea176b7658e3814f265153f183ea6c890d40987306eaa022eeea0158c"
+    },
+    "target/benchmarks/answerability-evaluation-2026-10-19/report.json": {
+      "sha256": "b5fa073ef64c4b63ed913c4baa78f803b109f5892326aa6638b8fe58f9db16e8"
+    },
+    "target/benchmarks/answerability-evaluation-2026-10-19/support.partial.json": {
+      "sha256": "1828555d3f38fdc3ae8cae9e08b7b0d40c41cde21d66d64f408b0e468312322d"
+    },
+    "target/benchmarks/answerability-evaluation-final-replay-2026-10-19/report.json": {
+      "sha256": "17e4dda9cac7f0ba492a2540699cea99ea62dcf73fd10744632dd52c152f49f7"
+    },
+    "target/benchmarks/answerability-precision-regression-2026-10-19/report.json": {
+      "sha256": "b0478a2061ed7a3bc326091cb9e4d0d339834a5edbfbc70c3085f8059c0702b6"
+    },
+    "target/benchmarks/answerability-precision-regression-2026-10-19/support.partial.json": {
+      "sha256": "ecf289d92772f5a5b03caf692b825ebd481deaa9b3262ce374181a3bee16144d"
+    },
+    "target/benchmarks/answerability-precision-final-replay-2026-10-19/report.json": {
+      "sha256": "2887761e9a60c68bbdf6bac50fb0919236b7eefe20d3d8935d8d81763baba6ed"
+    },
+    "target/benchmarks/scoped-memory-answerability-disabled-2026-10-19/report.json": {
+      "sha256": "5511a777347691f85324270132c8d219a541b3f57034390b9d51c167994aae5d"
+    },
+    "target/benchmarks/scoped-memory-precision-regression-2026-10-19/report.json": {
+      "sha256": "7dbc5932131aebc686590c60987aa659b99d441092868fb5f8ff594e186eaba2"
+    },
+    "target/benchmarks/question-memory-answerability-disabled-2026-10-19/report.json": {
+      "sha256": "5af30325c378ae0727ed007e6ab3c72744fd5cd09729b1e641b4211a398404bc"
+    },
+    "target/benchmarks/question-memory-precision-regression-2026-10-19/report.json": {
+      "sha256": "7c96a39de78844e986ec02f33af8f98201ecd4ff15f6f2c7c4ed8c08a027f714"
+    },
+    "target/benchmarks/answerability-shortlist-dev-2026-10-19/embeddings.partial.json": {
+      "sha256": "24895b0f752e8d26303b1a17f1d2f24e1400fb58bba792094244017ab56980ad"
+    },
+    "target/benchmarks/memory-precision-semantic-2026-10-19/embeddings.partial.json": {
+      "sha256": "540147574de0f7f64c6fe52a4ec1fd30631a5f17f5369a61e19fc5d181710548"
+    }
+  },
+  "disabled_regressions": {
+    "scoped-memory-answerability-disabled-2026-10-19": {
+      "source_revision": {
+        "commit": "2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7",
+        "dirty": false
+      },
+      "compared_with": "scoped-memory-precision-regression-2026-10-19",
+      "provider_calls": 0,
+      "selections_calibration_default_metrics_and_field_recovery_decisions_unchanged": true
+    },
+    "question-memory-answerability-disabled-2026-10-19": {
+      "source_revision": {
+        "commit": "2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7",
+        "dirty": false
+      },
+      "compared_with": "question-memory-precision-regression-2026-10-19",
+      "provider_calls": 0,
+      "selections_calibration_default_metrics_and_field_recovery_decisions_unchanged": true
+    }
+  },
+  "total_live_support_usage": {
+    "provider_calls": 129,
+    "input_tokens": 46540,
+    "output_tokens": 10256
+  }
+}
