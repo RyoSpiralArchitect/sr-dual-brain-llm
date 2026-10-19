@@ -1,0 +1,4258 @@
+{
+  "schema_version": 1,
+  "study": "scoped_same_topic_precision_v1",
+  "source_revision": {
+    "commit": "f53aca0990b230187324ae91df528ce0e8baa203",
+    "dirty": false
+  },
+  "fixture_sha256": "475daab5dcd7f68d084dd13602df4fed8e149695d13856d4025b874978ef67d8",
+  "semantic": {
+    "embedding_id": "9327adc5a244fdb0293921a1ffea92a933fb09eeccd6a2ca07cf2d173b1d5b2f",
+    "dimension": 1536,
+    "requested_model": "text-embedding-3-small",
+    "served_model": "text-embedding-3-small",
+    "provider_calls": 3,
+    "input_tokens": 3779,
+    "frozen_replay": false,
+    "question_views": 180,
+    "preparation_latency_ms": 4050.7821749924915,
+    "note": "Includes raw baseline and content views; not a production per-turn cost"
+  },
+  "operating_points": {
+    "raw_default": 0.7,
+    "content_default": 0.5,
+    "relative_cutoff": 0.8,
+    "strong_lexical_override": 0.75
+  },
+  "calibration": {
+    "previous_hybrid_calibrated": {
+      "chosen_threshold": 0.55,
+      "candidates": [
+        {
+          "threshold": 0.2,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 44,
+          "selected_slots": 71,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.25,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 44,
+          "selected_slots": 71,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.3,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 44,
+          "selected_slots": 71,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.35,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 44,
+          "selected_slots": 71,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.4,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 44,
+          "selected_slots": 71,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.45,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 40,
+          "selected_slots": 67,
+          "mean_set_f1": 0.5259259259259259
+        },
+        {
+          "threshold": 0.5,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 1,
+          "unrelated_selected_slots": 33,
+          "selected_slots": 60,
+          "mean_set_f1": 0.5518518518518518
+        },
+        {
+          "threshold": 0.55,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 7,
+          "unrelated_selected_slots": 23,
+          "selected_slots": 50,
+          "mean_set_f1": 0.7148148148148148
+        },
+        {
+          "threshold": 0.6,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 21,
+          "hits_at_3": 21,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 21,
+          "selected_slots": 42,
+          "mean_set_f1": 0.625925925925926
+        },
+        {
+          "threshold": 0.65,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 21,
+          "selected_slots": 39,
+          "mean_set_f1": 0.5592592592592592
+        },
+        {
+          "threshold": 0.7,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 17,
+          "selected_slots": 35,
+          "mean_set_f1": 0.5629629629629629
+        },
+        {
+          "threshold": 0.75,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 16,
+          "selected_slots": 34,
+          "mean_set_f1": 0.5703703703703704
+        },
+        {
+          "threshold": 0.8,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 12,
+          "unrelated_selected_slots": 10,
+          "selected_slots": 28,
+          "mean_set_f1": 0.6444444444444445
+        }
+      ],
+      "objective": "calibration macro source-set F1; stricter threshold on ties",
+      "evaluation_used_for_selection": false
+    },
+    "scoped_hybrid_calibrated": {
+      "chosen_threshold": 0.6,
+      "candidates": [
+        {
+          "threshold": 0.2,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.25,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.3,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.35,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.4,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.45,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 30,
+          "selected_slots": 57,
+          "mean_set_f1": 0.5481481481481482
+        },
+        {
+          "threshold": 0.5,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 2,
+          "unrelated_selected_slots": 26,
+          "selected_slots": 53,
+          "mean_set_f1": 0.6037037037037037
+        },
+        {
+          "threshold": 0.55,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 5,
+          "unrelated_selected_slots": 21,
+          "selected_slots": 48,
+          "mean_set_f1": 0.6851851851851851
+        },
+        {
+          "threshold": 0.6,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 23,
+          "hits_at_3": 23,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 15,
+          "selected_slots": 38,
+          "mean_set_f1": 0.6851851851851851
+        },
+        {
+          "threshold": 0.65,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 19,
+          "hits_at_3": 19,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 14,
+          "selected_slots": 33,
+          "mean_set_f1": 0.6037037037037037
+        },
+        {
+          "threshold": 0.7,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 12,
+          "selected_slots": 30,
+          "mean_set_f1": 0.5814814814814815
+        },
+        {
+          "threshold": 0.75,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 17,
+          "hits_at_3": 17,
+          "correct_abstentions": 12,
+          "unrelated_selected_slots": 7,
+          "selected_slots": 24,
+          "mean_set_f1": 0.6370370370370371
+        },
+        {
+          "threshold": 0.8,
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 15,
+          "hits_at_3": 15,
+          "correct_abstentions": 15,
+          "unrelated_selected_slots": 3,
+          "selected_slots": 18,
+          "mean_set_f1": 0.6666666666666666
+        }
+      ],
+      "objective": "calibration macro source-set F1; stricter threshold on ties",
+      "evaluation_used_for_selection": false
+    }
+  },
+  "precision_calibration": {
+    "feasible": true,
+    "chosen_threshold": 0.85,
+    "max_calibration_false_retrieval_rate": 0.0,
+    "objective": "calibration macro source-set F1 subject to zero no-answer false retrievals; stricter ties",
+    "evaluation_used_for_selection": false,
+    "best_effort_diagnostic": {
+      "threshold": 0.85,
+      "queries": 45,
+      "positive_queries": 27,
+      "no_answer_queries": 18,
+      "hits_at_1": 12,
+      "hits_at_3": 12,
+      "correct_abstentions": 18,
+      "unrelated_selected_slots": 0,
+      "selected_slots": 12,
+      "mean_set_f1": 0.6666666666666666,
+      "false_retrieval_queries": 0
+    },
+    "candidates": [
+      {
+        "threshold": 0.2,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 34,
+        "selected_slots": 61,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.25,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 34,
+        "selected_slots": 61,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.3,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 34,
+        "selected_slots": 61,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.35,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 34,
+        "selected_slots": 61,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.4,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 34,
+        "selected_slots": 61,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.45,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 0,
+        "unrelated_selected_slots": 30,
+        "selected_slots": 57,
+        "mean_set_f1": 0.5481481481481482,
+        "false_retrieval_queries": 18
+      },
+      {
+        "threshold": 0.5,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 2,
+        "unrelated_selected_slots": 26,
+        "selected_slots": 53,
+        "mean_set_f1": 0.6037037037037037,
+        "false_retrieval_queries": 16
+      },
+      {
+        "threshold": 0.55,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 27,
+        "hits_at_3": 27,
+        "correct_abstentions": 5,
+        "unrelated_selected_slots": 21,
+        "selected_slots": 48,
+        "mean_set_f1": 0.6851851851851851,
+        "false_retrieval_queries": 13
+      },
+      {
+        "threshold": 0.6,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 23,
+        "hits_at_3": 23,
+        "correct_abstentions": 9,
+        "unrelated_selected_slots": 15,
+        "selected_slots": 38,
+        "mean_set_f1": 0.6851851851851851,
+        "false_retrieval_queries": 9
+      },
+      {
+        "threshold": 0.65,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 19,
+        "hits_at_3": 19,
+        "correct_abstentions": 9,
+        "unrelated_selected_slots": 14,
+        "selected_slots": 33,
+        "mean_set_f1": 0.6037037037037037,
+        "false_retrieval_queries": 9
+      },
+      {
+        "threshold": 0.7,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 18,
+        "hits_at_3": 18,
+        "correct_abstentions": 9,
+        "unrelated_selected_slots": 12,
+        "selected_slots": 30,
+        "mean_set_f1": 0.5814814814814815,
+        "false_retrieval_queries": 9
+      },
+      {
+        "threshold": 0.75,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 17,
+        "hits_at_3": 17,
+        "correct_abstentions": 12,
+        "unrelated_selected_slots": 7,
+        "selected_slots": 24,
+        "mean_set_f1": 0.6370370370370371,
+        "false_retrieval_queries": 6
+      },
+      {
+        "threshold": 0.8,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 15,
+        "hits_at_3": 15,
+        "correct_abstentions": 15,
+        "unrelated_selected_slots": 3,
+        "selected_slots": 18,
+        "mean_set_f1": 0.6666666666666666,
+        "false_retrieval_queries": 3
+      },
+      {
+        "threshold": 0.85,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 12,
+        "hits_at_3": 12,
+        "correct_abstentions": 18,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 12,
+        "mean_set_f1": 0.6666666666666666,
+        "false_retrieval_queries": 0
+      },
+      {
+        "threshold": 0.9,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 9,
+        "hits_at_3": 9,
+        "correct_abstentions": 18,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 9,
+        "mean_set_f1": 0.6,
+        "false_retrieval_queries": 0
+      },
+      {
+        "threshold": 0.95,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 9,
+        "hits_at_3": 9,
+        "correct_abstentions": 18,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 9,
+        "mean_set_f1": 0.6,
+        "false_retrieval_queries": 0
+      },
+      {
+        "threshold": 1.0,
+        "queries": 45,
+        "positive_queries": 27,
+        "no_answer_queries": 18,
+        "hits_at_1": 9,
+        "hits_at_3": 9,
+        "correct_abstentions": 18,
+        "unrelated_selected_slots": 0,
+        "selected_slots": 9,
+        "mean_set_f1": 0.6,
+        "false_retrieval_queries": 0
+      }
+    ]
+  },
+  "summaries": {
+    "previous_hybrid_calibrated": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 7,
+          "unrelated_selected_slots": 23,
+          "selected_slots": 50,
+          "mean_set_f1": 0.7148148148148148
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 14,
+            "selected_slots": 14,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 7,
+            "unrelated_selected_slots": 2,
+            "selected_slots": 2,
+            "mean_set_f1": 0.7777777777777778
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 7,
+            "selected_slots": 16,
+            "mean_set_f1": 0.7962962962962963
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 20,
+          "hits_at_3": 20,
+          "correct_abstentions": 8,
+          "unrelated_selected_slots": 22,
+          "selected_slots": 44,
+          "mean_set_f1": 0.5881481481481481
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 2,
+            "hits_at_3": 2,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 2,
+            "mean_set_f1": 0.2222222222222222
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 15,
+            "selected_slots": 15,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 8,
+            "unrelated_selected_slots": 1,
+            "selected_slots": 1,
+            "mean_set_f1": 0.8888888888888888
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 6,
+            "selected_slots": 16,
+            "mean_set_f1": 0.8296296296296296
+          }
+        }
+      }
+    },
+    "previous_hybrid_default": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 17,
+          "selected_slots": 35,
+          "mean_set_f1": 0.5629629629629629
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 0.0
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 11,
+            "selected_slots": 11,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 6,
+            "selected_slots": 15,
+            "mean_set_f1": 0.8148148148148148
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 15,
+          "selected_slots": 35,
+          "mean_set_f1": 0.5955555555555556
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 0.0
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 14,
+            "selected_slots": 14,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 1,
+            "selected_slots": 11,
+            "mean_set_f1": 0.9777777777777779
+          }
+        }
+      }
+    },
+    "previous_lexical": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 20,
+          "hits_at_3": 24,
+          "correct_abstentions": 3,
+          "unrelated_selected_slots": 93,
+          "selected_slots": 117,
+          "mean_set_f1": 0.3333333333333333
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 3,
+            "hits_at_3": 6,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 12,
+            "selected_slots": 18,
+            "mean_set_f1": 0.3333333333333333
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 27,
+            "selected_slots": 27,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 3,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 18,
+            "mean_set_f1": 0.3333333333333333
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 8,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 16,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 62,
+          "selected_slots": 82,
+          "mean_set_f1": 0.42444444444444446
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 17,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5333333333333333
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 1,
+            "hits_at_3": 1,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 1,
+            "mean_set_f1": 0.1111111111111111
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 27,
+            "selected_slots": 27,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 6,
+            "hits_at_3": 8,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 27,
+            "mean_set_f1": 0.47777777777777775
+          }
+        }
+      }
+    },
+    "scoped_hybrid_calibrated": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 23,
+          "hits_at_3": 23,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 15,
+          "selected_slots": 38,
+          "mean_set_f1": 0.6851851851851851
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 5,
+            "hits_at_3": 5,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 5,
+            "mean_set_f1": 0.5555555555555556
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 11,
+            "selected_slots": 11,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 4,
+            "selected_slots": 13,
+            "mean_set_f1": 0.8703703703703703
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 20,
+          "hits_at_3": 20,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 12,
+          "selected_slots": 34,
+          "mean_set_f1": 0.6444444444444445
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 2,
+            "hits_at_3": 2,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 2,
+            "mean_set_f1": 0.2222222222222222
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 12,
+            "selected_slots": 12,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          }
+        }
+      }
+    },
+    "scoped_hybrid_default": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 2,
+          "unrelated_selected_slots": 26,
+          "selected_slots": 53,
+          "mean_set_f1": 0.6037037037037037
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 2,
+            "selected_slots": 11,
+            "mean_set_f1": 0.925925925925926
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 13,
+            "selected_slots": 13,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 2,
+            "unrelated_selected_slots": 7,
+            "selected_slots": 7,
+            "mean_set_f1": 0.2222222222222222
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 4,
+            "selected_slots": 13,
+            "mean_set_f1": 0.8703703703703703
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 23,
+          "hits_at_3": 23,
+          "correct_abstentions": 6,
+          "unrelated_selected_slots": 16,
+          "selected_slots": 41,
+          "mean_set_f1": 0.64
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 5,
+            "hits_at_3": 5,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 5,
+            "mean_set_f1": 0.5555555555555556
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 12,
+            "selected_slots": 12,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 6,
+            "unrelated_selected_slots": 3,
+            "selected_slots": 3,
+            "mean_set_f1": 0.6666666666666666
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 1,
+            "selected_slots": 11,
+            "mean_set_f1": 0.9777777777777779
+          }
+        }
+      }
+    },
+    "scoped_lexical": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 18,
+          "hits_at_3": 24,
+          "correct_abstentions": 3,
+          "unrelated_selected_slots": 93,
+          "selected_slots": 117,
+          "mean_set_f1": 0.3333333333333333
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 2,
+            "hits_at_3": 6,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 12,
+            "selected_slots": 18,
+            "mean_set_f1": 0.3333333333333333
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 27,
+            "selected_slots": 27,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 3,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 18,
+            "mean_set_f1": 0.3333333333333333
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 7,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 18,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 15,
+          "hits_at_3": 18,
+          "correct_abstentions": 9,
+          "unrelated_selected_slots": 57,
+          "selected_slots": 77,
+          "mean_set_f1": 0.4355555555555556
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 17,
+            "selected_slots": 27,
+            "mean_set_f1": 0.5333333333333333
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 1,
+            "hits_at_3": 1,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 1,
+            "mean_set_f1": 0.1111111111111111
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 27,
+            "selected_slots": 27,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 5,
+            "hits_at_3": 8,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 13,
+            "selected_slots": 22,
+            "mean_set_f1": 0.5333333333333333
+          }
+        }
+      }
+    },
+    "scoped_precision_calibrated": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 12,
+          "hits_at_3": 12,
+          "correct_abstentions": 18,
+          "unrelated_selected_slots": 0,
+          "selected_slots": 12,
+          "mean_set_f1": 0.6666666666666666
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 0.0
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 3,
+            "hits_at_3": 3,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 3,
+            "mean_set_f1": 0.3333333333333333
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 9,
+          "hits_at_3": 9,
+          "correct_abstentions": 16,
+          "unrelated_selected_slots": 3,
+          "selected_slots": 13,
+          "mean_set_f1": 0.5555555555555556
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 0.0
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 7,
+            "unrelated_selected_slots": 3,
+            "selected_slots": 3,
+            "mean_set_f1": 0.7777777777777778
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 9,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 1.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 0,
+            "mean_set_f1": 0.0
+          }
+        }
+      }
+    },
+    "scoped_prior_calibrated_025": {
+      "calibration": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 27,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 34,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5481481481481482
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 9,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 4,
+            "selected_slots": 13,
+            "mean_set_f1": 0.8703703703703703
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 13,
+            "selected_slots": 13,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 13,
+            "selected_slots": 13,
+            "mean_set_f1": 0.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 4,
+            "selected_slots": 13,
+            "mean_set_f1": 0.8703703703703703
+          }
+        }
+      },
+      "evaluation": {
+        "all": {
+          "queries": 45,
+          "positive_queries": 27,
+          "no_answer_queries": 18,
+          "hits_at_1": 26,
+          "hits_at_3": 27,
+          "correct_abstentions": 0,
+          "unrelated_selected_slots": 31,
+          "selected_slots": 61,
+          "mean_set_f1": 0.5688888888888889
+        },
+        "by_kind": {
+          "echo": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 0,
+            "selected_slots": 10,
+            "mean_set_f1": 1.0
+          },
+          "japanese": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 8,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 4,
+            "selected_slots": 14,
+            "mean_set_f1": 0.8666666666666667
+          },
+          "near_miss": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 12,
+            "selected_slots": 12,
+            "mean_set_f1": 0.0
+          },
+          "near_miss_japanese": {
+            "queries": 9,
+            "positive_queries": 0,
+            "no_answer_queries": 9,
+            "hits_at_1": 0,
+            "hits_at_3": 0,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 14,
+            "selected_slots": 14,
+            "mean_set_f1": 0.0
+          },
+          "paraphrase": {
+            "queries": 9,
+            "positive_queries": 9,
+            "no_answer_queries": 0,
+            "hits_at_1": 9,
+            "hits_at_3": 9,
+            "correct_abstentions": 0,
+            "unrelated_selected_slots": 1,
+            "selected_slots": 11,
+            "mean_set_f1": 0.9777777777777779
+          }
+        }
+      }
+    }
+  },
+  "answer_quality_evaluated": false,
+  "runtime_defaults_changed": false,
+  "date": "2026-10-19",
+  "protocol_commit": "7c80ce1",
+  "frozen_replay": {
+    "source_revision": {
+      "commit": "f53aca0990b230187324ae91df528ce0e8baa203",
+      "dirty": false
+    },
+    "provider_calls": 0,
+    "all_source_selections_summaries_calibration_and_diagnostics_identical": true
+  },
+  "regressions": {
+    "scoped-memory-precision-regression-2026-10-19": {
+      "compared_with": "scoped-memory-japanese-replay-2026-10-19",
+      "source_revision": {
+        "commit": "f53aca0990b230187324ae91df528ce0e8baa203",
+        "dirty": false
+      },
+      "provider_calls": 0,
+      "summaries_and_calibration_unchanged": true,
+      "source_selections_unchanged": true,
+      "field_recovery_decisions_unchanged": null
+    },
+    "question-memory-precision-regression-2026-10-19": {
+      "compared_with": "question-memory-japanese-regression-2026-10-19",
+      "source_revision": {
+        "commit": "f53aca0990b230187324ae91df528ce0e8baa203",
+        "dirty": false
+      },
+      "provider_calls": 0,
+      "summaries_and_calibration_unchanged": true,
+      "source_selections_unchanged": true,
+      "field_recovery_decisions_unchanged": true
+    }
+  },
+  "evaluation_selections": [
+    {
+      "id": "harbor-readiness-echo",
+      "scene": "harbor",
+      "kind": "echo",
+      "relevant_qids": [
+        "harbor-readiness"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-readiness",
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "scoped_lexical": [
+          "harbor-readiness",
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-readiness"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-readiness"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-readiness"
+        ],
+        "scoped_precision_calibrated": [
+          "harbor-readiness"
+        ]
+      }
+    },
+    {
+      "id": "harbor-readiness-paraphrase",
+      "scene": "harbor",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "harbor-readiness"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-readiness",
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-readiness"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-readiness"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-readiness-japanese",
+      "scene": "harbor",
+      "kind": "japanese",
+      "relevant_qids": [
+        "harbor-readiness"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-readiness",
+          "harbor-poll"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-readiness-near_miss",
+      "scene": "harbor",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-readiness",
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "scoped_lexical": [
+          "harbor-readiness",
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-readiness"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-readiness"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-readiness"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-readiness"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-readiness-near_miss_japanese",
+      "scene": "harbor",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-readiness"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-echo",
+      "scene": "harbor",
+      "kind": "echo",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-shutdown",
+          "harbor-poll",
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-shutdown",
+          "harbor-poll",
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown"
+        ],
+        "scoped_precision_calibrated": [
+          "harbor-shutdown"
+        ]
+      }
+    },
+    {
+      "id": "harbor-shutdown-paraphrase",
+      "scene": "harbor",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-shutdown",
+          "harbor-poll"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-japanese",
+      "scene": "harbor",
+      "kind": "japanese",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-near_miss",
+      "scene": "harbor",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-shutdown",
+          "harbor-poll",
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-shutdown",
+          "harbor-poll",
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-shutdown"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-near_miss_japanese",
+      "scene": "harbor",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-poll-echo",
+      "scene": "harbor",
+      "kind": "echo",
+      "relevant_qids": [
+        "harbor-poll"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-poll",
+          "harbor-readiness",
+          "harbor-shutdown"
+        ],
+        "scoped_lexical": [
+          "harbor-poll",
+          "harbor-readiness",
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_default": [
+          "harbor-poll"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-poll"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-poll"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-poll"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-poll"
+        ],
+        "scoped_precision_calibrated": [
+          "harbor-poll"
+        ]
+      }
+    },
+    {
+      "id": "harbor-poll-paraphrase",
+      "scene": "harbor",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "harbor-poll"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "scoped_lexical": [
+          "harbor-poll",
+          "harbor-shutdown",
+          "harbor-readiness"
+        ],
+        "previous_hybrid_default": [
+          "harbor-poll"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-poll"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-poll"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-poll"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-poll"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-poll-japanese",
+      "scene": "harbor",
+      "kind": "japanese",
+      "relevant_qids": [
+        "harbor-poll"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "harbor-poll"
+        ],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-poll-near_miss",
+      "scene": "harbor",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "harbor-poll",
+          "harbor-readiness",
+          "harbor-shutdown"
+        ],
+        "scoped_lexical": [
+          "harbor-poll",
+          "harbor-readiness",
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_default": [
+          "harbor-poll",
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_default": [
+          "harbor-poll"
+        ],
+        "previous_hybrid_calibrated": [
+          "harbor-poll",
+          "harbor-readiness",
+          "harbor-shutdown"
+        ],
+        "scoped_hybrid_calibrated": [
+          "harbor-poll"
+        ],
+        "scoped_prior_calibrated_025": [
+          "harbor-poll"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "harbor-poll-near_miss_japanese",
+      "scene": "harbor",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "harbor-shutdown"
+        ],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "harbor-shutdown",
+          "harbor-poll"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-echo",
+      "scene": "nimbus",
+      "kind": "echo",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-deadletter"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": [
+          "nimbus-deadletter"
+        ]
+      }
+    },
+    {
+      "id": "nimbus-deadletter-paraphrase",
+      "scene": "nimbus",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-deadletter"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-japanese",
+      "scene": "nimbus",
+      "kind": "japanese",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-near_miss",
+      "scene": "nimbus",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_lexical": [
+          "nimbus-deadletter",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-deadletter",
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-deadletter",
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-deadletter"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-near_miss_japanese",
+      "scene": "nimbus",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter",
+          "nimbus-visibility"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-echo",
+      "scene": "nimbus",
+      "kind": "echo",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_lexical": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-visibility"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-visibility"
+        ],
+        "scoped_precision_calibrated": [
+          "nimbus-visibility"
+        ]
+      }
+    },
+    {
+      "id": "nimbus-visibility-paraphrase",
+      "scene": "nimbus",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-visibility"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-visibility"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-japanese",
+      "scene": "nimbus",
+      "kind": "japanese",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-visibility"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-near_miss",
+      "scene": "nimbus",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "scoped_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-visibility",
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-near_miss_japanese",
+      "scene": "nimbus",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-visibility"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-batch-echo",
+      "scene": "nimbus",
+      "kind": "echo",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_precision_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ]
+      }
+    },
+    {
+      "id": "nimbus-batch-paraphrase",
+      "scene": "nimbus",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-batch-japanese",
+      "scene": "nimbus",
+      "kind": "japanese",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-deadletter",
+          "nimbus-batch",
+          "nimbus-batch-conflict"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "nimbus-batch-near_miss",
+      "scene": "nimbus",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "scoped_lexical": [
+          "nimbus-batch-conflict",
+          "nimbus-batch",
+          "nimbus-visibility"
+        ],
+        "previous_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_hybrid_default": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "previous_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_hybrid_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_prior_calibrated_025": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ],
+        "scoped_precision_calibrated": [
+          "nimbus-batch-conflict",
+          "nimbus-batch"
+        ]
+      }
+    },
+    {
+      "id": "nimbus-batch-near_miss_japanese",
+      "scene": "nimbus",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "nimbus-batch",
+          "nimbus-batch-conflict",
+          "nimbus-deadletter"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-languages-echo",
+      "scene": "saffron",
+      "kind": "echo",
+      "relevant_qids": [
+        "saffron-languages"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "scoped_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "previous_hybrid_default": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-languages"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": [
+          "saffron-languages"
+        ]
+      }
+    },
+    {
+      "id": "saffron-languages-paraphrase",
+      "scene": "saffron",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "saffron-languages"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "scoped_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "previous_hybrid_default": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-languages"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-languages-japanese",
+      "scene": "saffron",
+      "kind": "japanese",
+      "relevant_qids": [
+        "saffron-languages"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "saffron-languages"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-languages-near_miss",
+      "scene": "saffron",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "scoped_lexical": [
+          "saffron-languages",
+          "saffron-refresh",
+          "saffron-prefix"
+        ],
+        "previous_hybrid_default": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-languages"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-languages-near_miss_japanese",
+      "scene": "saffron",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "saffron-languages"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-languages"
+        ],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-refresh-echo",
+      "scene": "saffron",
+      "kind": "echo",
+      "relevant_qids": [
+        "saffron-refresh"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-refresh",
+          "saffron-languages",
+          "saffron-prefix"
+        ],
+        "scoped_lexical": [
+          "saffron-refresh",
+          "saffron-prefix",
+          "saffron-languages"
+        ],
+        "previous_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-refresh"
+        ],
+        "scoped_precision_calibrated": [
+          "saffron-refresh"
+        ]
+      }
+    },
+    {
+      "id": "saffron-refresh-paraphrase",
+      "scene": "saffron",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "saffron-refresh"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-refresh",
+          "saffron-prefix",
+          "saffron-languages"
+        ],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-refresh"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-refresh-japanese",
+      "scene": "saffron",
+      "kind": "japanese",
+      "relevant_qids": [
+        "saffron-refresh"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-refresh"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-refresh-near_miss",
+      "scene": "saffron",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-refresh",
+          "saffron-languages",
+          "saffron-prefix"
+        ],
+        "scoped_lexical": [
+          "saffron-refresh",
+          "saffron-prefix",
+          "saffron-languages"
+        ],
+        "previous_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-refresh"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-refresh"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-refresh-near_miss_japanese",
+      "scene": "saffron",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [
+          "saffron-refresh"
+        ],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "saffron-refresh"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-prefix-echo",
+      "scene": "saffron",
+      "kind": "echo",
+      "relevant_qids": [
+        "saffron-prefix"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-prefix",
+          "saffron-refresh",
+          "saffron-languages"
+        ],
+        "scoped_lexical": [
+          "saffron-prefix",
+          "saffron-refresh",
+          "saffron-languages"
+        ],
+        "previous_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-prefix"
+        ],
+        "scoped_precision_calibrated": [
+          "saffron-prefix"
+        ]
+      }
+    },
+    {
+      "id": "saffron-prefix-paraphrase",
+      "scene": "saffron",
+      "kind": "paraphrase",
+      "relevant_qids": [
+        "saffron-prefix"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-prefix",
+          "saffron-refresh",
+          "saffron-languages"
+        ],
+        "scoped_lexical": [
+          "saffron-prefix"
+        ],
+        "previous_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-prefix"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-prefix-japanese",
+      "scene": "saffron",
+      "kind": "japanese",
+      "relevant_qids": [
+        "saffron-prefix"
+      ],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "saffron-prefix",
+          "saffron-languages"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    },
+    {
+      "id": "saffron-prefix-near_miss",
+      "scene": "saffron",
+      "kind": "near_miss",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [
+          "saffron-prefix",
+          "saffron-refresh",
+          "saffron-languages"
+        ],
+        "scoped_lexical": [
+          "saffron-prefix",
+          "saffron-refresh",
+          "saffron-languages"
+        ],
+        "previous_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_default": [
+          "saffron-prefix"
+        ],
+        "previous_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_hybrid_calibrated": [
+          "saffron-prefix"
+        ],
+        "scoped_prior_calibrated_025": [
+          "saffron-prefix"
+        ],
+        "scoped_precision_calibrated": [
+          "saffron-prefix"
+        ]
+      }
+    },
+    {
+      "id": "saffron-prefix-near_miss_japanese",
+      "scene": "saffron",
+      "kind": "near_miss_japanese",
+      "relevant_qids": [],
+      "selected_qids_by_method": {
+        "previous_lexical": [],
+        "scoped_lexical": [],
+        "previous_hybrid_default": [],
+        "scoped_hybrid_default": [],
+        "previous_hybrid_calibrated": [],
+        "scoped_hybrid_calibrated": [],
+        "scoped_prior_calibrated_025": [
+          "saffron-prefix"
+        ],
+        "scoped_precision_calibrated": []
+      }
+    }
+  ],
+  "evaluation_candidate_diagnostics": [
+    {
+      "id": "harbor-readiness-echo",
+      "top_distinct_question_gap": 0.4059651911914812,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 1.0,
+          "lexical_score": 0.9763157894736841
+        },
+        "harbor-shutdown": {
+          "cosine": 0.41144840055179005,
+          "lexical_score": 0.13712918660287082
+        },
+        "harbor-poll": {
+          "cosine": 0.5940348088085188,
+          "lexical_score": 0.27824561403508774
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-readiness-paraphrase",
+      "top_distinct_question_gap": 0.15450302982535746,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.6330903170194391,
+          "lexical_score": 0.09449760765550239
+        },
+        "harbor-shutdown": {
+          "cosine": 0.432709741265655,
+          "lexical_score": 0.09712918660287082
+        },
+        "harbor-poll": {
+          "cosine": 0.4785872871940816,
+          "lexical_score": 0.10657894736842106
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-readiness-japanese",
+      "top_distinct_question_gap": 0.06662570411836277,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.4779535965408509,
+          "lexical_score": 0.04975328947368421
+        },
+        "harbor-shutdown": {
+          "cosine": 0.2896491047401538,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.41132789242248813,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-readiness-near_miss",
+      "top_distinct_question_gap": 0.1830548571689521,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.8032472808490747,
+          "lexical_score": 0.5613157894736842
+        },
+        "harbor-shutdown": {
+          "cosine": 0.42492946923131963,
+          "lexical_score": 0.13712918660287082
+        },
+        "harbor-poll": {
+          "cosine": 0.6201924236801226,
+          "lexical_score": 0.27824561403508774
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-readiness-near_miss_japanese",
+      "top_distinct_question_gap": 0.10441650343919556,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.4729708142892647,
+          "lexical_score": 0.0
+        },
+        "harbor-shutdown": {
+          "cosine": 0.2888269480571043,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.3685543108500691,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-echo",
+      "top_distinct_question_gap": 0.5169828273693355,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.41144840055179005,
+          "lexical_score": 0.1278309409888357
+        },
+        "harbor-shutdown": {
+          "cosine": 1.0,
+          "lexical_score": 0.9789473684210526
+        },
+        "harbor-poll": {
+          "cosine": 0.4830171726306644,
+          "lexical_score": 0.13991228070175438
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-paraphrase",
+      "top_distinct_question_gap": 0.1654301670384083,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.36873450812664077,
+          "lexical_score": 0.11988721804511279
+        },
+        "harbor-shutdown": {
+          "cosine": 0.6709992526036705,
+          "lexical_score": 0.12251879699248122
+        },
+        "harbor-poll": {
+          "cosine": 0.5055690855652623,
+          "lexical_score": 0.12927125506072876
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-japanese",
+      "top_distinct_question_gap": 0.1646850869862203,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.33368304534596405,
+          "lexical_score": 0.0
+        },
+        "harbor-shutdown": {
+          "cosine": 0.5338145429306121,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.36912945594439184,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-near_miss",
+      "top_distinct_question_gap": 0.2708228005763512,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.5015333049873473,
+          "lexical_score": 0.12881578947368422
+        },
+        "harbor-shutdown": {
+          "cosine": 0.7807450912125314,
+          "lexical_score": 0.44228070175438594
+        },
+        "harbor-poll": {
+          "cosine": 0.5099222906361802,
+          "lexical_score": 0.13976076555023925
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-shutdown-near_miss_japanese",
+      "top_distinct_question_gap": 0.06407281966760836,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.389210017125792,
+          "lexical_score": 0.0
+        },
+        "harbor-shutdown": {
+          "cosine": 0.45328283679340037,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.36138284261951276,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-poll-echo",
+      "top_distinct_question_gap": 0.4059651911914812,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.5940348088085188,
+          "lexical_score": 0.2729824561403509
+        },
+        "harbor-shutdown": {
+          "cosine": 0.4830171726306644,
+          "lexical_score": 0.14394736842105266
+        },
+        "harbor-poll": {
+          "cosine": 1.0,
+          "lexical_score": 0.981578947368421
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-poll-paraphrase",
+      "top_distinct_question_gap": 0.2870553600158936,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.4727279598425481,
+          "lexical_score": 0.15964912280701754
+        },
+        "harbor-shutdown": {
+          "cosine": 0.5084492961950854,
+          "lexical_score": 0.16228070175438597
+        },
+        "harbor-poll": {
+          "cosine": 0.795504656210979,
+          "lexical_score": 0.3458646616541353
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-poll-japanese",
+      "top_distinct_question_gap": 0.09370199687657149,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.3439589748733543,
+          "lexical_score": 0.0
+        },
+        "harbor-shutdown": {
+          "cosine": 0.4339464373905855,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.527648434267157,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-poll-near_miss",
+      "top_distinct_question_gap": 0.13887503345170527,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.6046330261931983,
+          "lexical_score": 0.22934609250398721
+        },
+        "harbor-shutdown": {
+          "cosine": 0.6103426209551098,
+          "lexical_score": 0.12478070175438596
+        },
+        "harbor-poll": {
+          "cosine": 0.7492176544068151,
+          "lexical_score": 0.381578947368421
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "harbor-poll-near_miss_japanese",
+      "top_distinct_question_gap": 0.05170789972943968,
+      "candidate_scores": {
+        "harbor-readiness": {
+          "cosine": 0.3830215919325103,
+          "lexical_score": 0.0
+        },
+        "harbor-shutdown": {
+          "cosine": 0.5082228555098889,
+          "lexical_score": 0.0
+        },
+        "harbor-poll": {
+          "cosine": 0.4565149557804492,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-echo",
+      "top_distinct_question_gap": 0.3924200449456303,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 1.0,
+          "lexical_score": 0.9842105263157894
+        },
+        "nimbus-visibility": {
+          "cosine": 0.6075799550543697,
+          "lexical_score": 0.13041353383458648
+        },
+        "nimbus-batch": {
+          "cosine": 0.5409035096909559,
+          "lexical_score": 0.24447368421052634
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.5409035096909559,
+          "lexical_score": 0.24710526315789474
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-paraphrase",
+      "top_distinct_question_gap": 0.23446177594409773,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.717835166638171,
+          "lexical_score": 0.25728744939271253
+        },
+        "nimbus-visibility": {
+          "cosine": 0.4833733906940733,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.4491517292911846,
+          "lexical_score": 0.13947368421052633
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.4491517292911846,
+          "lexical_score": 0.14210526315789473
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-japanese",
+      "top_distinct_question_gap": 0.12059296171974998,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.4768917227896601,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.3562987610699101,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.3253431584598907,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.3253431584598907,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-near_miss",
+      "top_distinct_question_gap": 0.12112824644954412,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.7928672791638333,
+          "lexical_score": 0.5508771929824562
+        },
+        "nimbus-visibility": {
+          "cosine": 0.6717390327142891,
+          "lexical_score": 0.21889338731443997
+        },
+        "nimbus-batch": {
+          "cosine": 0.5414556274333066,
+          "lexical_score": 0.23114035087719298
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.5414556274333066,
+          "lexical_score": 0.23377192982456138
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-deadletter-near_miss_japanese",
+      "top_distinct_question_gap": 0.02793090244112212,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.4223098871582504,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.3943789847171283,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.24643939025520883,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.24643939025520883,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-echo",
+      "top_distinct_question_gap": 0.37858497904104316,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.6075799550543697,
+          "lexical_score": 0.12778195488721805
+        },
+        "nimbus-visibility": {
+          "cosine": 1.0,
+          "lexical_score": 0.9868421052631579
+        },
+        "nimbus-batch": {
+          "cosine": 0.6214150209589568,
+          "lexical_score": 0.1330451127819549
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.6214150209589568,
+          "lexical_score": 0.1356766917293233
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-paraphrase",
+      "top_distinct_question_gap": 0.23446572992682185,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.44612940088078995,
+          "lexical_score": 0.13421052631578947
+        },
+        "nimbus-visibility": {
+          "cosine": 0.6805951308076118,
+          "lexical_score": 0.16392543859649122
+        },
+        "nimbus-batch": {
+          "cosine": 0.4339815134343163,
+          "lexical_score": 0.17280701754385966
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.4339815134343163,
+          "lexical_score": 0.17543859649122806
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-japanese",
+      "top_distinct_question_gap": 0.10985806784279067,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.41049204857197236,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.520350116414763,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.33323200887282217,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.33323200887282217,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-near_miss",
+      "top_distinct_question_gap": 0.0663394617889318,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.5157518566757947,
+          "lexical_score": 0.11754385964912281
+        },
+        "nimbus-visibility": {
+          "cosine": 0.682665148679403,
+          "lexical_score": 0.20350877192982458
+        },
+        "nimbus-batch": {
+          "cosine": 0.6163256868904712,
+          "lexical_score": 0.31255060728744943
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.6163256868904712,
+          "lexical_score": 0.31518218623481786
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-visibility-near_miss_japanese",
+      "top_distinct_question_gap": 0.116928712724786,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.27789367299079065,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.39482238571557665,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.24441799332699227,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.24441799332699227,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-batch-echo",
+      "top_distinct_question_gap": 0.37858497904104316,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.5409035096909559,
+          "lexical_score": 0.23921052631578948
+        },
+        "nimbus-visibility": {
+          "cosine": 0.6214150209589568,
+          "lexical_score": 0.13041353383458648
+        },
+        "nimbus-batch": {
+          "cosine": 1.0,
+          "lexical_score": 0.9894736842105263
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 1.0,
+          "lexical_score": 0.9921052631578947
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-batch-paraphrase",
+      "top_distinct_question_gap": 0.10917223560196188,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.5847908591956281,
+          "lexical_score": 0.1319028340080972
+        },
+        "nimbus-visibility": {
+          "cosine": 0.5629190527245621,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.69396309479759,
+          "lexical_score": 0.13716599190283402
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.69396309479759,
+          "lexical_score": 0.13979757085020245
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-batch-japanese",
+      "top_distinct_question_gap": 0.022628319812059927,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.3753258262546254,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.3059056393730193,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.3526975064425655,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.3526975064425655,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-batch-near_miss",
+      "top_distinct_question_gap": 0.26578326760489634,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.5509569371463704,
+          "lexical_score": 0.12111528822055137
+        },
+        "nimbus-visibility": {
+          "cosine": 0.6079996711653708,
+          "lexical_score": 0.2765856950067476
+        },
+        "nimbus-batch": {
+          "cosine": 0.8737829387702671,
+          "lexical_score": 0.3269736842105263
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.8737829387702671,
+          "lexical_score": 0.32960526315789473
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "nimbus-batch-near_miss_japanese",
+      "top_distinct_question_gap": 0.0264521842437635,
+      "candidate_scores": {
+        "nimbus-deadletter": {
+          "cosine": 0.29118979557355296,
+          "lexical_score": 0.0
+        },
+        "nimbus-visibility": {
+          "cosine": 0.2856835761196369,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch": {
+          "cosine": 0.31764197981731646,
+          "lexical_score": 0.0
+        },
+        "nimbus-batch-conflict": {
+          "cosine": 0.31764197981731646,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-languages-echo",
+      "top_distinct_question_gap": 0.5951521065044905,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 1.0,
+          "lexical_score": 0.9947368421052631
+        },
+        "saffron-refresh": {
+          "cosine": 0.36028306540047383,
+          "lexical_score": 0.19111842105263158
+        },
+        "saffron-prefix": {
+          "cosine": 0.4048478934955096,
+          "lexical_score": 0.18333333333333335
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-languages-paraphrase",
+      "top_distinct_question_gap": 0.42428500736116753,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.7663310320539928,
+          "lexical_score": 0.4459868421052632
+        },
+        "saffron-refresh": {
+          "cosine": 0.31214804588806483,
+          "lexical_score": 0.1707017543859649
+        },
+        "saffron-prefix": {
+          "cosine": 0.34204602469282525,
+          "lexical_score": 0.16500000000000004
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-languages-japanese",
+      "top_distinct_question_gap": 0.34417093594992704,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.6140813018830901,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.26991036593316303,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.2687207737619078,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-languages-near_miss",
+      "top_distinct_question_gap": 0.4214092193168711,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.8026408040800752,
+          "lexical_score": 0.31223684210526315
+        },
+        "saffron-refresh": {
+          "cosine": 0.32180769026304173,
+          "lexical_score": 0.1811184210526316
+        },
+        "saffron-prefix": {
+          "cosine": 0.3812315847632041,
+          "lexical_score": 0.17333333333333334
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-languages-near_miss_japanese",
+      "top_distinct_question_gap": 0.34338295618143955,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.5610186613106353,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.2176357051291957,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.21691397365758222,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-refresh-echo",
+      "top_distinct_question_gap": 0.6277549908777248,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.36028306540047383,
+          "lexical_score": 0.18848684210526315
+        },
+        "saffron-refresh": {
+          "cosine": 1.0,
+          "lexical_score": 0.9973684210526316
+        },
+        "saffron-prefix": {
+          "cosine": 0.3722450091222752,
+          "lexical_score": 0.19374999999999998
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-refresh-paraphrase",
+      "top_distinct_question_gap": 0.38846101192893506,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.37422621461352784,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.7704966365969211,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.3820356246679861,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-refresh-japanese",
+      "top_distinct_question_gap": 0.3630131777101279,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.251460718285031,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.6479907988832325,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.2849776211731046,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-refresh-near_miss",
+      "top_distinct_question_gap": 0.377808892587818,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.33393195557886785,
+          "lexical_score": 0.14625199362041466
+        },
+        "saffron-refresh": {
+          "cosine": 0.7131609552596969,
+          "lexical_score": 0.2807017543859649
+        },
+        "saffron-prefix": {
+          "cosine": 0.3353520626718789,
+          "lexical_score": 0.1515151515151515
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-refresh-near_miss_japanese",
+      "top_distinct_question_gap": 0.30002545983933687,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.26920562969596556,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.5692310895353024,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.21392839815686526,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-prefix-echo",
+      "top_distinct_question_gap": 0.5951521065044905,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.4048478934955096,
+          "lexical_score": 0.16807017543859648
+        },
+        "saffron-refresh": {
+          "cosine": 0.3722450091222752,
+          "lexical_score": 0.1811184210526316
+        },
+        "saffron-prefix": {
+          "cosine": 1.0,
+          "lexical_score": 1.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-prefix-paraphrase",
+      "top_distinct_question_gap": 0.22004988823764898,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.38576996540609115,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.2729838477463598,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.6058198536437401,
+          "lexical_score": 0.14583333333333331
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-prefix-japanese",
+      "top_distinct_question_gap": 0.050308969295907446,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.38834508589832195,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.2661240789118394,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.4386540551942294,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-prefix-near_miss",
+      "top_distinct_question_gap": 0.49947669898917435,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.4159664294379469,
+          "lexical_score": 0.16807017543859648
+        },
+        "saffron-refresh": {
+          "cosine": 0.3674763207662924,
+          "lexical_score": 0.1811184210526316
+        },
+        "saffron-prefix": {
+          "cosine": 0.9154431284271213,
+          "lexical_score": 0.7100000000000001
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    },
+    {
+      "id": "saffron-prefix-near_miss_japanese",
+      "top_distinct_question_gap": 0.10721351608385438,
+      "candidate_scores": {
+        "saffron-languages": {
+          "cosine": 0.32383909391106536,
+          "lexical_score": 0.0
+        },
+        "saffron-refresh": {
+          "cosine": 0.22364366437070307,
+          "lexical_score": 0.0
+        },
+        "saffron-prefix": {
+          "cosine": 0.43105260999491973,
+          "lexical_score": 0.0
+        }
+      },
+      "below_threshold_lexical_override_qids": {
+        "scoped_hybrid_default": [],
+        "scoped_prior_calibrated_025": []
+      }
+    }
+  ],
+  "below_threshold_lexical_override_selected_slots_by_split": {
+    "calibration": {
+      "scoped_hybrid_default": 0,
+      "scoped_prior_calibrated_025": 0
+    },
+    "evaluation": {
+      "scoped_hybrid_default": 0,
+      "scoped_prior_calibrated_025": 0
+    }
+  },
+  "private_artifacts": {
+    "target/benchmarks/memory-precision-semantic-2026-10-19/report.json": {
+      "sha256": "a8f506350fd3c7d51324f71207b98f14a385dd921d66e294ea323b295a687313"
+    },
+    "target/benchmarks/memory-precision-semantic-2026-10-19/embeddings.partial.json": {
+      "sha256": "540147574de0f7f64c6fe52a4ec1fd30631a5f17f5369a61e19fc5d181710548"
+    },
+    "target/benchmarks/memory-precision-replay-2026-10-19/report.json": {
+      "sha256": "41b82d88545554c07a68f103006b89f7b0c8cd2fa0e5f14d653b7ce53977c9e6"
+    },
+    "target/benchmarks/scoped-memory-precision-regression-2026-10-19/report.json": {
+      "sha256": "7dbc5932131aebc686590c60987aa659b99d441092868fb5f8ff594e186eaba2"
+    },
+    "target/benchmarks/question-memory-precision-regression-2026-10-19/report.json": {
+      "sha256": "7c96a39de78844e986ec02f33af8f98201ecd4ff15f6f2c7c4ed8c08a027f714"
+    },
+    "target/benchmarks/scoped-memory-japanese-replay-2026-10-19/report.json": {
+      "sha256": "d213cbf6490070cf7418d164b12e7f6d0e90fc49f861222b95bb0f0bf8f89f27"
+    },
+    "target/benchmarks/question-memory-japanese-regression-2026-10-19/report.json": {
+      "sha256": "547440ecb4e190f935b1140c33acbfe632e2d5ffcf4e2b3cc6e045dbbd838d9e"
+    },
+    "target/benchmarks/scoped-memory-semantic-2026-10-19/embeddings.partial.json": {
+      "sha256": "4c1c67fead407dd894d938a226917abc5b3cb6e0927ad2ab9878831a0b254019"
+    }
+  }
+}
