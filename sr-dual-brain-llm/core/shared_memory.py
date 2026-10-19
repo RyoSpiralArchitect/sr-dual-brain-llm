@@ -170,13 +170,15 @@ class MemoryTrace:
 
 
 class SharedMemory:
-    def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64, semantic_index=None):
+    def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64, semantic_index=None,
+                 answerability_gate=None):
         self.max_items = max_items
         self.max_dialogue_flows = max(1, int(max_dialogue_flows))
         self.past_qas: List[MemoryTrace] = []
         self.kv: Dict[str, Any] = {}
         self.dialogue_flows: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self.semantic_index = semantic_index
+        self.answerability_gate = answerability_gate
         self._scope_signature = None
         self._scope_resolver = MemoryScopeResolver()
 
@@ -196,19 +198,37 @@ class SharedMemory:
 
     async def prepare_retrieval(self, question: str, *, seed_questions: Sequence[str] = ()) -> dict:
         self.scope_resolver()
-        if self.semantic_index is None:
-            return {"status": "disabled"}
-        now = time.time()
-        candidates = [t.question for t in reversed(self.past_qas[-256:]) if self._available(t, now)]
-        questions = self.semantic_index.embedding_questions([question, *seed_questions, *candidates])
-        result = await self.semantic_index.prepare(questions)
-        query_cached = self._scope_resolver.query(question).content in self.semantic_index.vectors
-        return {"status": "ready" if query_cached and not result["unprepared_questions"] else "partial",
-                "query_cached": query_cached, **result}
+        result = {"status": "disabled"}
+        if self.semantic_index is not None:
+            now = time.time()
+            candidates = [t.question for t in reversed(self.past_qas[-256:]) if self._available(t, now)]
+            questions = self.semantic_index.embedding_questions([question, *seed_questions, *candidates])
+            prepared = await self.semantic_index.prepare(questions)
+            query_cached = self._scope_resolver.query(question).content in self.semantic_index.vectors
+            result = {"status": "ready" if query_cached and not prepared["unprepared_questions"] else "partial",
+                      "query_cached": query_cached, **prepared}
+        if self.answerability_gate is not None:
+            candidates = self.answerability_candidates(question)
+            result["answerability"] = await self.answerability_gate.prepare(
+                question, [self._answerability_source(t) for t in candidates])
+        return result
+
+    @staticmethod
+    def _answerability_source(trace):
+        return {"qid": trace.qid, "seed_id": trace.seed_id, "question": _sanitize_memory_text(trace.question),
+                "answer": _sanitize_memory_text(trace.answer), "status": trace.evidence_status,
+                "recorded_at": trace.timestamp, "valid_until": trace.valid_until,
+                "retrieval_scope": trace.retrieval_scope}
+
+    def answerability_candidates(self, question):
+        limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
+        return self._retrieve_related_traces(question, limit)
 
     def evidence_for_seeds(self, seed_ids: Sequence[str], *, question: str | None = None) -> List[Dict[str, Any]]:
         """Resolve exact, unambiguous identities to final QA text, never a seed draft."""
         entries = []
+        if self.answerability_gate is not None and question is None:
+            return entries
         now = time.time()
         # A seed's hash trigger is not sufficient to establish scoped QA relevance.
         eligible = ({id(trace) for trace in self.retrieve_related_traces(question, len(self.past_qas))}
@@ -218,7 +238,8 @@ class SharedMemory:
             if len(matches) != 1:
                 continue
             trace = matches[0]
-            if eligible is not None and (trace.retrieval_scope or self._scope_resolver.query(question).scopes) and id(trace) not in eligible:
+            if eligible is not None and (self.answerability_gate is not None or trace.retrieval_scope
+                                         or self._scope_resolver.query(question).scopes) and id(trace) not in eligible:
                 continue
             if (not self._available(trace, now) or not trace.qid
                     or sum(item.qid == trace.qid for item in self.past_qas) != 1):
@@ -259,7 +280,7 @@ class SharedMemory:
 
     # ------------------------------------------------------------------
     def get_context(self, n: int = 5) -> str:
-        if n <= 0:
+        if n <= 0 or self.answerability_gate is not None:
             return ""
         available = [trace for trace in self.past_qas if self._available(trace, time.time())]
         return "\n".join(
@@ -325,6 +346,13 @@ class SharedMemory:
 
     def retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
         """Expose exactly the traces used in formatted context for provenance."""
+
+        if self.answerability_gate is not None:
+            return [trace for trace in self.answerability_candidates(question)
+                    if self.answerability_gate.allows(question, self._answerability_source(trace))][:max(0, n)]
+        return self._retrieve_related_traces(question, n)
+
+    def _retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
 
         if not self.past_qas or n <= 0:
             return []
