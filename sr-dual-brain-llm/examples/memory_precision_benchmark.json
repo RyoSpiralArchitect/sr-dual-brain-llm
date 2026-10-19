@@ -1,0 +1,1214 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_competing_memory_questions",
+  "study": "scoped_same_topic_precision_v1",
+  "notes": "Authored synthetic QA; not operational verified facts or independent human labels. Positive and negative variants are correlated. Topic families and scopes are disjoint across calibration/evaluation. Question content only is embedded.",
+  "memories": [
+    {
+      "qid": "aster-signature",
+      "question": "In Project Aster, which HTTP header carries the webhook signature?",
+      "answer": "Read the signature from X-Aster-Signature.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-aster-signature",
+      "evidence_status": "verified",
+      "retrieval_scope": "aster",
+      "scope_aliases": [
+        "Aster",
+        "アスター"
+      ]
+    },
+    {
+      "qid": "aster-age",
+      "question": "In Project Aster, what is the maximum accepted age of a webhook delivery timestamp?",
+      "answer": "Accept delivery timestamps no more than 300 seconds old.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-aster-age",
+      "evidence_status": "verified",
+      "retrieval_scope": "aster",
+      "scope_aliases": [
+        "Aster",
+        "アスター"
+      ]
+    },
+    {
+      "qid": "aster-failure",
+      "question": "In Project Aster, which HTTP status code should a receiver return after a webhook processing failure?",
+      "answer": "Return HTTP 503 when webhook processing fails.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-aster-failure",
+      "evidence_status": "verified",
+      "retrieval_scope": "aster",
+      "scope_aliases": [
+        "Aster",
+        "アスター"
+      ]
+    },
+    {
+      "qid": "lumen-encoding",
+      "question": "In Project Lumen, which character encoding must an imported CSV file use?",
+      "answer": "CSV input must use UTF-8.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-lumen-encoding",
+      "evidence_status": "verified",
+      "retrieval_scope": "lumen",
+      "scope_aliases": [
+        "Lumen",
+        "ルーメン"
+      ]
+    },
+    {
+      "qid": "lumen-delimiter",
+      "question": "In Project Lumen, which delimiter separates columns in an imported CSV file?",
+      "answer": "Separate CSV columns with a semicolon.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-lumen-delimiter",
+      "evidence_status": "verified",
+      "retrieval_scope": "lumen",
+      "scope_aliases": [
+        "Lumen",
+        "ルーメン"
+      ]
+    },
+    {
+      "qid": "lumen-size",
+      "question": "In Project Lumen, what is the maximum imported CSV file size?",
+      "answer": "The CSV upload limit is 20 MiB per file.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-lumen-size",
+      "evidence_status": "verified",
+      "retrieval_scope": "lumen",
+      "scope_aliases": [
+        "Lumen",
+        "ルーメン"
+      ]
+    },
+    {
+      "qid": "mosaic-format",
+      "question": "In Project Mosaic, which file format is used for a downloaded monthly report?",
+      "answer": "Monthly reports are downloaded as PDF files.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-mosaic-format",
+      "evidence_status": "verified",
+      "retrieval_scope": "mosaic",
+      "scope_aliases": [
+        "Mosaic",
+        "モザイク"
+      ]
+    },
+    {
+      "qid": "mosaic-link",
+      "question": "In Project Mosaic, how long is a monthly report download link valid?",
+      "answer": "A report download link expires after 15 minutes.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-mosaic-link",
+      "evidence_status": "verified",
+      "retrieval_scope": "mosaic",
+      "scope_aliases": [
+        "Mosaic",
+        "モザイク"
+      ]
+    },
+    {
+      "qid": "mosaic-region",
+      "question": "In Project Mosaic, in which storage region are monthly report files kept?",
+      "answer": "Monthly report files are stored in eu-west-1.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-mosaic-region",
+      "evidence_status": "verified",
+      "retrieval_scope": "mosaic",
+      "scope_aliases": [
+        "Mosaic",
+        "モザイク"
+      ]
+    },
+    {
+      "qid": "harbor-readiness",
+      "question": "In Project Harbor, which URL path serves the container readiness probe?",
+      "answer": "The readiness probe uses /readyz.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-harbor-readiness",
+      "evidence_status": "verified",
+      "retrieval_scope": "harbor",
+      "scope_aliases": [
+        "Harbor",
+        "ハーバー"
+      ]
+    },
+    {
+      "qid": "harbor-shutdown",
+      "question": "In Project Harbor, how many seconds is the container shutdown grace period?",
+      "answer": "The shutdown grace period is 45 seconds.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-harbor-shutdown",
+      "evidence_status": "verified",
+      "retrieval_scope": "harbor",
+      "scope_aliases": [
+        "Harbor",
+        "ハーバー"
+      ]
+    },
+    {
+      "qid": "harbor-poll",
+      "question": "In Project Harbor, how often is the container liveness probe polled?",
+      "answer": "Poll the liveness probe every 10 seconds.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-harbor-poll",
+      "evidence_status": "verified",
+      "retrieval_scope": "harbor",
+      "scope_aliases": [
+        "Harbor",
+        "ハーバー"
+      ]
+    },
+    {
+      "qid": "nimbus-deadletter",
+      "question": "In Project Nimbus, which queue receives messages after delivery attempts are exhausted?",
+      "answer": "Exhausted messages go to the nimbus-failed queue.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-nimbus-deadletter",
+      "evidence_status": "verified",
+      "retrieval_scope": "nimbus",
+      "scope_aliases": [
+        "Nimbus",
+        "ニンバス"
+      ]
+    },
+    {
+      "qid": "nimbus-visibility",
+      "question": "In Project Nimbus, how long does a received queue message remain invisible to other consumers?",
+      "answer": "A received message is invisible for 90 seconds.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-nimbus-visibility",
+      "evidence_status": "verified",
+      "retrieval_scope": "nimbus",
+      "scope_aliases": [
+        "Nimbus",
+        "ニンバス"
+      ]
+    },
+    {
+      "qid": "nimbus-batch",
+      "question": "In Project Nimbus, how many queue messages does a consumer request in one batch?",
+      "answer": "A consumer requests 20 messages per batch.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-nimbus-batch",
+      "evidence_status": "verified",
+      "retrieval_scope": "nimbus",
+      "scope_aliases": [
+        "Nimbus",
+        "ニンバス"
+      ]
+    },
+    {
+      "qid": "nimbus-batch-conflict",
+      "question": "In Project Nimbus, how many queue messages does a consumer request in one batch?",
+      "answer": "A consumer requests 50 messages per batch.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-nimbus-batch-conflict",
+      "evidence_status": "verified",
+      "retrieval_scope": "nimbus",
+      "scope_aliases": [
+        "Nimbus",
+        "ニンバス"
+      ]
+    },
+    {
+      "qid": "saffron-languages",
+      "question": "In Project Saffron, which languages are supported by the search analyzer?",
+      "answer": "The search analyzer supports English and Japanese.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-saffron-languages",
+      "evidence_status": "verified",
+      "retrieval_scope": "saffron",
+      "scope_aliases": [
+        "Saffron",
+        "サフラン"
+      ]
+    },
+    {
+      "qid": "saffron-refresh",
+      "question": "In Project Saffron, how often is the search index refreshed?",
+      "answer": "Refresh the search index every 60 seconds.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-saffron-refresh",
+      "evidence_status": "verified",
+      "retrieval_scope": "saffron",
+      "scope_aliases": [
+        "Saffron",
+        "サフラン"
+      ]
+    },
+    {
+      "qid": "saffron-prefix",
+      "question": "In Project Saffron, what is the minimum query length for prefix search?",
+      "answer": "Prefix search requires at least three characters.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-saffron-prefix",
+      "evidence_status": "verified",
+      "retrieval_scope": "saffron",
+      "scope_aliases": [
+        "Saffron",
+        "サフラン"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "aster-signature-echo",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Aster, which HTTP header carries the webhook signature?",
+      "relevant_qids": [
+        "aster-signature"
+      ]
+    },
+    {
+      "id": "aster-signature-paraphrase",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Aster, where in the HTTP headers should the receiver read the webhook authentication signature?",
+      "relevant_qids": [
+        "aster-signature"
+      ]
+    },
+    {
+      "id": "aster-signature-japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "Webhookが正規の送信元から来たことを確かめる署名は、アスターではどのヘッダーに入っている？",
+      "relevant_qids": [
+        "aster-signature"
+      ]
+    },
+    {
+      "id": "aster-signature-near_miss",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Aster, which cryptographic algorithm creates the webhook signature?",
+      "relevant_qids": [],
+      "no_answer_reason": "Header location does not specify the cryptographic algorithm."
+    },
+    {
+      "id": "aster-signature-near_miss_japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "アスターのWebhookの署名は、どの暗号アルゴリズムで計算する？",
+      "relevant_qids": [],
+      "no_answer_reason": "Header location does not specify the cryptographic algorithm."
+    },
+    {
+      "id": "aster-age-echo",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Aster, what is the maximum accepted age of a webhook delivery timestamp?",
+      "relevant_qids": [
+        "aster-age"
+      ]
+    },
+    {
+      "id": "aster-age-paraphrase",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Aster, how old may the delivery timestamp be before a webhook must be rejected?",
+      "relevant_qids": [
+        "aster-age"
+      ]
+    },
+    {
+      "id": "aster-age-japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "アスターのWebhookは、送信時刻から何秒過ぎたら古いものとして拒否する？",
+      "relevant_qids": [
+        "aster-age"
+      ]
+    },
+    {
+      "id": "aster-age-near_miss",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Aster, what is the maximum accepted clock skew into the future for a webhook delivery timestamp?",
+      "relevant_qids": [],
+      "no_answer_reason": "An age bound does not specify future clock skew tolerance."
+    },
+    {
+      "id": "aster-age-near_miss_japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "アスターのWebhookの送信時刻が未来にずれている場合は、何秒まで許容する？",
+      "relevant_qids": [],
+      "no_answer_reason": "An age bound does not specify future clock skew tolerance."
+    },
+    {
+      "id": "aster-failure-echo",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Aster, which HTTP status code should a receiver return after a webhook processing failure?",
+      "relevant_qids": [
+        "aster-failure"
+      ]
+    },
+    {
+      "id": "aster-failure-paraphrase",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Aster, what response status tells the sender that processing its webhook failed?",
+      "relevant_qids": [
+        "aster-failure"
+      ]
+    },
+    {
+      "id": "aster-failure-japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "アスターのWebhookの処理に失敗したら、受信側はどのHTTPステータスを返す？",
+      "relevant_qids": [
+        "aster-failure"
+      ]
+    },
+    {
+      "id": "aster-failure-near_miss",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Aster, what response body should a receiver return after a webhook processing failure?",
+      "relevant_qids": [],
+      "no_answer_reason": "A status code does not specify the response body."
+    },
+    {
+      "id": "aster-failure-near_miss_japanese",
+      "scene": "aster",
+      "topic_group": "webhook_delivery",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "アスターのWebhookの処理に失敗したら、受信側はレスポンス本文に何を書いて返す？",
+      "relevant_qids": [],
+      "no_answer_reason": "A status code does not specify the response body."
+    },
+    {
+      "id": "lumen-encoding-echo",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Lumen, which character encoding must an imported CSV file use?",
+      "relevant_qids": [
+        "lumen-encoding"
+      ]
+    },
+    {
+      "id": "lumen-encoding-paraphrase",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Lumen, what text encoding is required when uploading a CSV?",
+      "relevant_qids": [
+        "lumen-encoding"
+      ]
+    },
+    {
+      "id": "lumen-encoding-japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ルーメンにCSVを取り込む際、文字コードは何にする？",
+      "relevant_qids": [
+        "lumen-encoding"
+      ]
+    },
+    {
+      "id": "lumen-encoding-near_miss",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Lumen, must an imported CSV file include a byte order mark?",
+      "relevant_qids": [],
+      "no_answer_reason": "UTF-8 does not specify whether a BOM is required."
+    },
+    {
+      "id": "lumen-encoding-near_miss_japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "ルーメンに取り込むCSVにはBOMを付ける必要がある？",
+      "relevant_qids": [],
+      "no_answer_reason": "UTF-8 does not specify whether a BOM is required."
+    },
+    {
+      "id": "lumen-delimiter-echo",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Lumen, which delimiter separates columns in an imported CSV file?",
+      "relevant_qids": [
+        "lumen-delimiter"
+      ]
+    },
+    {
+      "id": "lumen-delimiter-paraphrase",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Lumen, what separator character should appear between fields in the uploaded CSV?",
+      "relevant_qids": [
+        "lumen-delimiter"
+      ]
+    },
+    {
+      "id": "lumen-delimiter-japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ルーメンに取り込むCSVの列と列の区切りには、どの文字を使う？",
+      "relevant_qids": [
+        "lumen-delimiter"
+      ]
+    },
+    {
+      "id": "lumen-delimiter-near_miss",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Lumen, which quote character escapes delimiters inside an imported CSV field?",
+      "relevant_qids": [],
+      "no_answer_reason": "A column separator does not define quoting rules."
+    },
+    {
+      "id": "lumen-delimiter-near_miss_japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "ルーメンに取り込むCSVの値の中に区切り文字があるとき、どの引用符で囲む？",
+      "relevant_qids": [],
+      "no_answer_reason": "A column separator does not define quoting rules."
+    },
+    {
+      "id": "lumen-size-echo",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Lumen, what is the maximum imported CSV file size?",
+      "relevant_qids": [
+        "lumen-size"
+      ]
+    },
+    {
+      "id": "lumen-size-paraphrase",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Lumen, how large can one CSV upload be?",
+      "relevant_qids": [
+        "lumen-size"
+      ]
+    },
+    {
+      "id": "lumen-size-japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ルーメンでは、取り込めるCSVは1ファイル何MiBまで？",
+      "relevant_qids": [
+        "lumen-size"
+      ]
+    },
+    {
+      "id": "lumen-size-near_miss",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Lumen, what is the maximum number of columns in an imported CSV file?",
+      "relevant_qids": [],
+      "no_answer_reason": "A byte size limit does not specify a column count."
+    },
+    {
+      "id": "lumen-size-near_miss_japanese",
+      "scene": "lumen",
+      "topic_group": "csv_ingestion",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "ルーメンに取り込むCSVの列数は、最大いくつまで？",
+      "relevant_qids": [],
+      "no_answer_reason": "A byte size limit does not specify a column count."
+    },
+    {
+      "id": "mosaic-format-echo",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Mosaic, which file format is used for a downloaded monthly report?",
+      "relevant_qids": [
+        "mosaic-format"
+      ]
+    },
+    {
+      "id": "mosaic-format-paraphrase",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Mosaic, what type of file do I receive when I download a monthly report?",
+      "relevant_qids": [
+        "mosaic-format"
+      ]
+    },
+    {
+      "id": "mosaic-format-japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "モザイクの月次レポートをダウンロードすると、ファイル形式は何になる？",
+      "relevant_qids": [
+        "mosaic-format"
+      ]
+    },
+    {
+      "id": "mosaic-format-near_miss",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Mosaic, which PDF version is used for a downloaded monthly report?",
+      "relevant_qids": [],
+      "no_answer_reason": "PDF as a format does not specify the PDF version."
+    },
+    {
+      "id": "mosaic-format-near_miss_japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "モザイクの月次レポートで使われるPDFのバージョンはいくつ？",
+      "relevant_qids": [],
+      "no_answer_reason": "PDF as a format does not specify the PDF version."
+    },
+    {
+      "id": "mosaic-link-echo",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Mosaic, how long is a monthly report download link valid?",
+      "relevant_qids": [
+        "mosaic-link"
+      ]
+    },
+    {
+      "id": "mosaic-link-paraphrase",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Mosaic, after how much time does a link to download a monthly report stop working?",
+      "relevant_qids": [
+        "mosaic-link"
+      ]
+    },
+    {
+      "id": "mosaic-link-japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "モザイクの月次レポートのダウンロードリンクは、発行から何分で無効になる？",
+      "relevant_qids": [
+        "mosaic-link"
+      ]
+    },
+    {
+      "id": "mosaic-link-near_miss",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Mosaic, who may renew an expired monthly report download link?",
+      "relevant_qids": [],
+      "no_answer_reason": "Link validity duration does not identify who can renew it."
+    },
+    {
+      "id": "mosaic-link-near_miss_japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "モザイクの月次レポートの期限切れダウンロードリンクは、誰が再発行できる？",
+      "relevant_qids": [],
+      "no_answer_reason": "Link validity duration does not identify who can renew it."
+    },
+    {
+      "id": "mosaic-region-echo",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Mosaic, in which storage region are monthly report files kept?",
+      "relevant_qids": [
+        "mosaic-region"
+      ]
+    },
+    {
+      "id": "mosaic-region-paraphrase",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Mosaic, where geographically are the downloadable monthly report files stored?",
+      "relevant_qids": [
+        "mosaic-region"
+      ]
+    },
+    {
+      "id": "mosaic-region-japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "モザイクの月次レポートのファイルは、どのリージョンに保管される？",
+      "relevant_qids": [
+        "mosaic-region"
+      ]
+    },
+    {
+      "id": "mosaic-region-near_miss",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Mosaic, how many replicas of monthly report files are kept in the storage region?",
+      "relevant_qids": [],
+      "no_answer_reason": "A storage region does not specify replication count."
+    },
+    {
+      "id": "mosaic-region-near_miss_japanese",
+      "scene": "mosaic",
+      "topic_group": "report_artifacts",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "モザイクの月次レポートは、保管先リージョン内で何個の複製を保持する？",
+      "relevant_qids": [],
+      "no_answer_reason": "A storage region does not specify replication count."
+    },
+    {
+      "id": "harbor-readiness-echo",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Harbor, which URL path serves the container readiness probe?",
+      "relevant_qids": [
+        "harbor-readiness"
+      ]
+    },
+    {
+      "id": "harbor-readiness-paraphrase",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Harbor, what endpoint should Kubernetes call to check that the container is ready?",
+      "relevant_qids": [
+        "harbor-readiness"
+      ]
+    },
+    {
+      "id": "harbor-readiness-japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ハーバーのコンテナがリクエストを受け付けられる状態か調べるURLパスは？",
+      "relevant_qids": [
+        "harbor-readiness"
+      ]
+    },
+    {
+      "id": "harbor-readiness-near_miss",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Harbor, which TCP port serves the container readiness probe?",
+      "relevant_qids": [],
+      "no_answer_reason": "A URL path does not identify a TCP port."
+    },
+    {
+      "id": "harbor-readiness-near_miss_japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ハーバーのコンテナの準備完了確認は、どのTCPポートに接続する？",
+      "relevant_qids": [],
+      "no_answer_reason": "A URL path does not identify a TCP port."
+    },
+    {
+      "id": "harbor-shutdown-echo",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Harbor, how many seconds is the container shutdown grace period?",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ]
+    },
+    {
+      "id": "harbor-shutdown-paraphrase",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Harbor, how much time does a container get to finish work before forced termination?",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ]
+    },
+    {
+      "id": "harbor-shutdown-japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ハーバーのコンテナは終了を求められてから、強制停止まで何秒の猶予がある？",
+      "relevant_qids": [
+        "harbor-shutdown"
+      ]
+    },
+    {
+      "id": "harbor-shutdown-near_miss",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Harbor, which process signal starts the container shutdown grace period?",
+      "relevant_qids": [],
+      "no_answer_reason": "Grace duration does not specify the process signal."
+    },
+    {
+      "id": "harbor-shutdown-near_miss_japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ハーバーのコンテナの終了猶予を開始するプロセスシグナルは何？",
+      "relevant_qids": [],
+      "no_answer_reason": "Grace duration does not specify the process signal."
+    },
+    {
+      "id": "harbor-poll-echo",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Harbor, how often is the container liveness probe polled?",
+      "relevant_qids": [
+        "harbor-poll"
+      ]
+    },
+    {
+      "id": "harbor-poll-paraphrase",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Harbor, at what interval should the container be checked for liveness?",
+      "relevant_qids": [
+        "harbor-poll"
+      ]
+    },
+    {
+      "id": "harbor-poll-japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ハーバーのコンテナが生きているかどうかは、何秒ごとに確認する？",
+      "relevant_qids": [
+        "harbor-poll"
+      ]
+    },
+    {
+      "id": "harbor-poll-near_miss",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Harbor, how long is the timeout for each container liveness probe request?",
+      "relevant_qids": [],
+      "no_answer_reason": "Polling interval does not specify request timeout."
+    },
+    {
+      "id": "harbor-poll-near_miss_japanese",
+      "scene": "harbor",
+      "topic_group": "container_lifecycle",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ハーバーのコンテナの生存確認リクエストは、何秒でタイムアウトにする？",
+      "relevant_qids": [],
+      "no_answer_reason": "Polling interval does not specify request timeout."
+    },
+    {
+      "id": "nimbus-deadletter-echo",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Nimbus, which queue receives messages after delivery attempts are exhausted?",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ]
+    },
+    {
+      "id": "nimbus-deadletter-paraphrase",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Nimbus, where are messages sent when the worker has used up all delivery attempts?",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ]
+    },
+    {
+      "id": "nimbus-deadletter-japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ニンバスで配送を何度試しても処理できないメッセージは、どのキューに送られる？",
+      "relevant_qids": [
+        "nimbus-deadletter"
+      ]
+    },
+    {
+      "id": "nimbus-deadletter-near_miss",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Nimbus, how long are messages retained in the queue for exhausted delivery attempts?",
+      "relevant_qids": [],
+      "no_answer_reason": "A destination queue name does not specify retention duration."
+    },
+    {
+      "id": "nimbus-deadletter-near_miss_japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ニンバスで配送失敗したメッセージは、退避先キューに何日保管する？",
+      "relevant_qids": [],
+      "no_answer_reason": "A destination queue name does not specify retention duration."
+    },
+    {
+      "id": "nimbus-visibility-echo",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Nimbus, how long does a received queue message remain invisible to other consumers?",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ]
+    },
+    {
+      "id": "nimbus-visibility-paraphrase",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Nimbus, for how many seconds is a message hidden from other workers after one receives it?",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ]
+    },
+    {
+      "id": "nimbus-visibility-japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ニンバスのキューで誰かが受け取ったメッセージは、ほかの処理担当から何秒間見えなくなる？",
+      "relevant_qids": [
+        "nimbus-visibility"
+      ]
+    },
+    {
+      "id": "nimbus-visibility-near_miss",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Nimbus, how many times may a consumer extend the queue message visibility timeout?",
+      "relevant_qids": [],
+      "no_answer_reason": "An initial visibility duration does not specify extension count."
+    },
+    {
+      "id": "nimbus-visibility-near_miss_japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ニンバスのキューのメッセージを見えなくしておく時間は、何回まで延長できる？",
+      "relevant_qids": [],
+      "no_answer_reason": "An initial visibility duration does not specify extension count."
+    },
+    {
+      "id": "nimbus-batch-echo",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Nimbus, how many queue messages does a consumer request in one batch?",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ]
+    },
+    {
+      "id": "nimbus-batch-paraphrase",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Nimbus, what number of queued messages is fetched by a worker at a time?",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ]
+    },
+    {
+      "id": "nimbus-batch-japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ニンバスの処理担当は、キューのメッセージを一度に何件まとめて取り出す？",
+      "relevant_qids": [
+        "nimbus-batch",
+        "nimbus-batch-conflict"
+      ]
+    },
+    {
+      "id": "nimbus-batch-near_miss",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Nimbus, how many consumers may request queue message batches concurrently?",
+      "relevant_qids": [],
+      "no_answer_reason": "Messages per batch does not specify concurrent consumer count."
+    },
+    {
+      "id": "nimbus-batch-near_miss_japanese",
+      "scene": "nimbus",
+      "topic_group": "queue_consumption",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ニンバスのキューのメッセージは、同時に何人の処理担当がまとめて取得できる？",
+      "relevant_qids": [],
+      "no_answer_reason": "Messages per batch does not specify concurrent consumer count."
+    },
+    {
+      "id": "saffron-languages-echo",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Saffron, which languages are supported by the search analyzer?",
+      "relevant_qids": [
+        "saffron-languages"
+      ]
+    },
+    {
+      "id": "saffron-languages-paraphrase",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Saffron, what human languages can the text search analyzer process?",
+      "relevant_qids": [
+        "saffron-languages"
+      ]
+    },
+    {
+      "id": "saffron-languages-japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "サフランの検索の解析器は、どの言語の文章に対応している？",
+      "relevant_qids": [
+        "saffron-languages"
+      ]
+    },
+    {
+      "id": "saffron-languages-near_miss",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Saffron, which algorithm detects the language for the search analyzer?",
+      "relevant_qids": [],
+      "no_answer_reason": "A supported-language list does not specify language detection."
+    },
+    {
+      "id": "saffron-languages-near_miss_japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "サフランの検索の解析器に渡す文章の言語は、どのアルゴリズムで判定する？",
+      "relevant_qids": [],
+      "no_answer_reason": "A supported-language list does not specify language detection."
+    },
+    {
+      "id": "saffron-refresh-echo",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Saffron, how often is the search index refreshed?",
+      "relevant_qids": [
+        "saffron-refresh"
+      ]
+    },
+    {
+      "id": "saffron-refresh-paraphrase",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Saffron, how frequently do indexed changes become searchable?",
+      "relevant_qids": [
+        "saffron-refresh"
+      ]
+    },
+    {
+      "id": "saffron-refresh-japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "サフランの検索インデックスは、何秒おきに更新される？",
+      "relevant_qids": [
+        "saffron-refresh"
+      ]
+    },
+    {
+      "id": "saffron-refresh-near_miss",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Saffron, who is allowed to trigger a search index refresh manually?",
+      "relevant_qids": [],
+      "no_answer_reason": "A refresh interval does not specify authorization for manual refresh."
+    },
+    {
+      "id": "saffron-refresh-near_miss_japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "サフランの検索インデックスの更新は、誰が手動で実行できる？",
+      "relevant_qids": [],
+      "no_answer_reason": "A refresh interval does not specify authorization for manual refresh."
+    },
+    {
+      "id": "saffron-prefix-echo",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Saffron, what is the minimum query length for prefix search?",
+      "relevant_qids": [
+        "saffron-prefix"
+      ]
+    },
+    {
+      "id": "saffron-prefix-paraphrase",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Saffron, how many characters must I enter before prefix matching starts?",
+      "relevant_qids": [
+        "saffron-prefix"
+      ]
+    },
+    {
+      "id": "saffron-prefix-japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "サフランの前方一致検索は、何文字以上の入力から利用できる？",
+      "relevant_qids": [
+        "saffron-prefix"
+      ]
+    },
+    {
+      "id": "saffron-prefix-near_miss",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Saffron, what is the maximum query length for prefix search?",
+      "relevant_qids": [],
+      "no_answer_reason": "A minimum length does not specify a maximum length."
+    },
+    {
+      "id": "saffron-prefix-near_miss_japanese",
+      "scene": "saffron",
+      "topic_group": "search_indexing",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "サフランの前方一致検索は、最大何文字まで入力できる？",
+      "relevant_qids": [],
+      "no_answer_reason": "A minimum length does not specify a maximum length."
+    }
+  ]
+}
