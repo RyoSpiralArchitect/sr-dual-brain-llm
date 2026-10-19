@@ -113,7 +113,7 @@ disabled: selections, calibration/default metrics and field recovery decisions
 match their prior results. Independent field seed identities/state hashes are
 not asserted identical.
 
-Local validation passed **458 Python unit tests and five gateway contracts**.
+Local validation passed **459 Python unit tests and five gateway contracts**.
 Tests exercise controller preparation without embeddings, approved/denied QA and
 latent seeds, both actual worker/model prompt builders on detail/critic routes,
 source/model invalidation, excerpt and scope limits, literal quotes, malformed
@@ -126,10 +126,12 @@ enabled.
 Protocol and fixture were committed at `8457ab4`. Clean `b855883` measured the
 initial shortlist; clean `2cf0eeb71b3bc48f0cd30749fdc6af16ebc92bd7` measured the
 coverage repair and was frozen before new evaluation. Subsequent correctness
-checks reject duplicate JSON fields/corrupt frozen requests and bind model
-configuration changes. Clean `270900d` replays all four complete measurements
-without changing any selection or summary; prompt, API payloads, candidate rules
-and labels were unchanged. Original paid provenance remains attached to each
+checks reject duplicate JSON fields/corrupt frozen requests, bind model
+configuration changes and withhold sources changed by text sanitization. A removed
+line could contain a condition rather than a debug instruction. Clean `b75cc43`
+replays all four complete measurements without changing any measured selection
+or summary; prompt, API payloads, ranking weights, candidate budget and labels
+were unchanged. Original paid provenance remains attached to each
 run. Private checkpoints are ignored and not distributed; the metrics retain
 their hashes and every measured selection. Hashes identify local artifacts,
 not an independent execution audit.
