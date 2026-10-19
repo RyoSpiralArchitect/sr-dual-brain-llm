@@ -26,7 +26,7 @@ DEFAULT_FIXTURE = scoped.PROJECT / "examples/memory_answerability_benchmark.json
 class RecordedChecks:
     def __init__(self, backend, metadata, *, frozen=None, save=None):
         self.backend, self.frozen, self.save = backend, frozen, save
-        self.identity = frozen["backend_identity"] if frozen else backend.identity
+        self._frozen_identity = frozen["backend_identity"] if frozen else str(backend.identity)
         self.calls = self.input_tokens = self.output_tokens = 0
         self.used, self.missing = set(), set()
         self.journal = dict(metadata, backend_identity=self.identity, policy_sha256=digest(POLICY),
@@ -34,6 +34,10 @@ class RecordedChecks:
         if frozen and (not frozen.get("complete") or frozen["policy_sha256"] != digest(POLICY)
                        or any(frozen.get(k) != v for k, v in metadata.items())):
             raise ValueError("Frozen support checkpoint differs or is incomplete")
+
+    @property
+    def identity(self):
+        return self._frozen_identity if self.frozen is not None else str(self.backend.identity)
 
     async def evaluate(self, request):
         key = request_identity(self.identity, request)
@@ -46,6 +50,7 @@ class RecordedChecks:
             if row["request"] != request:
                 self.missing.add(key)
                 raise ValueError("Frozen support input mismatch")
+            self._frozen_identity = row.get("backend_identity_after", self._frozen_identity)
             if row.get("error_type"):
                 kind = getattr(builtins, row["error_type"], RuntimeError)
                 raise (kind if isinstance(kind, type) and issubclass(kind, Exception) else RuntimeError)("Frozen provider failure")
@@ -65,6 +70,7 @@ class RecordedChecks:
         finally:
             self.input_tokens, self.output_tokens = self.backend.input_tokens, self.backend.output_tokens
             row.update(latency_ms=(time.perf_counter() - started) * 1000,
+                       backend_identity_after=str(self.backend.identity),
                        input_tokens=self.input_tokens - before_in if type(self.input_tokens) is int and type(before_in) is int else None,
                        output_tokens=self.output_tokens - before_out if type(self.output_tokens) is int and type(before_out) is int else None)
             self.journal["responses"][key] = row
@@ -172,10 +178,12 @@ def main():
     try:
         fixture = read_json(args.fixture)
         validate_fixture(fixture)
-        config = load_llm_config("MEMORY_ANSWERABILITY", default_model=args.support_model)
+        config = load_llm_config("MEMORY_ANSWERABILITY", default_model=args.support_model or args.embedding_model)
         backend = OpenAIAnswerability(config, args.support_model) if args.support_model and config else None
         if args.support_model and backend is None:
             raise ValueError("Provider credentials required")
+        if args.embedding_model and config is None:
+            raise ValueError("Embedding provider credentials required")
         embedding = OpenAIQuestionEmbeddings(config, args.embedding_model) if args.embedding_model else None
         index = asyncio.run(prepare_vectors(fixture, backend=embedding,
                     frozen=read_json(args.embedding_cache) if args.embedding_cache else None,

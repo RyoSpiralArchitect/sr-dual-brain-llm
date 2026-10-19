@@ -178,3 +178,24 @@ def test_sanitization_must_not_remove_a_condition_before_support_checking():
     assert result["answerability"]["status"] == "empty" and backend.calls == 0
     assert not memory.retrieve_related_traces(q)
     assert not memory.evidence_for_seeds(["seed-source"], question=q)
+
+
+def test_served_model_drift_permanently_invalidates_previous_approvals():
+    backend = OpenAIAnswerability(LLMConfig("openai", "requested", "NOT_A_KEY"), "requested")
+    models = iter(["served-v1", "served-v2"])
+    async def post(*args, **kwargs):
+        return {"model": next(models), "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({"decisions": [
+                    {"id": "m0", "supported": True, "quote": "At least three characters."}]})}}]}
+    backend.client._post_json = post
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(backend))
+    memory.store(source())
+    q = "Alpha minimum query length"
+    asyncio.run(memory.prepare_retrieval(q))
+    assert memory.retrieve_related_traces(q)
+    old_identity = backend.identity
+    result = asyncio.run(memory.prepare_retrieval("Alpha minimum input length"))
+    assert result["answerability"]["status"] == "withheld" and backend.identity != old_identity
+    assert not memory.retrieve_related_traces(q)
+    assert asyncio.run(memory.prepare_retrieval(q))["answerability"]["error_type"] == "IdentityChanged"
+    assert backend.calls == 2

@@ -59,12 +59,16 @@ class OpenAIAnswerability:
         self.calls = 0
         self.input_tokens = self.output_tokens = 0
         self.served_model = None
+        self._invalidated = False
 
     @property
     def identity(self):
-        return hashlib.sha256((self.url + "\n" + self.config.model).encode()).hexdigest()
+        suffix = "\ninvalidated-served-model" if self._invalidated else ""
+        return hashlib.sha256((self.url + "\n" + self.config.model + suffix).encode()).hexdigest()
 
     async def evaluate(self, request):
+        if self._invalidated:
+            raise ValueError("Evidence support model changed; create a new backend")
         payload = self.client._openai_style_payload(
             [{"role": "system", "content": POLICY},
              {"role": "user", "content": json.dumps(request, ensure_ascii=False)}],
@@ -87,6 +91,7 @@ class OpenAIAnswerability:
             setattr(self, attribute, before + tokens if type(before) is int and type(tokens) is int and tokens >= 0 else None)
         model = response.get("model")
         if not isinstance(model, str) or not model or (self.served_model is not None and self.served_model != model):
+            self._invalidated = True
             raise ValueError("Evidence support response model missing or changed")
         self.served_model = model
         choices = response.get("choices", [])
