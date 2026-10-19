@@ -35,6 +35,8 @@ timestamp, expiry, scope, backend endpoint/model identity and policy bind each
 approval. The session-local LRU holds at most 512 decisions; it is not persisted.
 Changed sources/models/policies require new approval. Expiry, supersession and
 scope ambiguity are checked again independently of approvals.
+Missing or changed served-model metadata permanently invalidates that backend's
+identity and previous approvals; a new backend is required to resume checking.
 
 Oversized source questions (over 240 characters) or answers (over 640 characters)
 are withheld in full, rather than approving an excerpt with omitted conditions.

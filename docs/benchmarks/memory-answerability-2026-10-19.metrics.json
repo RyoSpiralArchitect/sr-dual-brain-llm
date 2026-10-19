@@ -221,7 +221,7 @@
       },
       "frozen_replay": {
         "source_revision": {
-          "commit": "b75cc43c7c4b7f68f4078905e97f0cb26af529bc",
+          "commit": "cd84ef08e4fe965ba1960ce78755d2d310e47679",
           "dirty": false
         },
         "provider_calls": 0,
@@ -903,7 +903,7 @@
       },
       "frozen_replay": {
         "source_revision": {
-          "commit": "b75cc43c7c4b7f68f4078905e97f0cb26af529bc",
+          "commit": "cd84ef08e4fe965ba1960ce78755d2d310e47679",
           "dirty": false
         },
         "provider_calls": 0,
@@ -1654,7 +1654,7 @@
       },
       "frozen_replay": {
         "source_revision": {
-          "commit": "b75cc43c7c4b7f68f4078905e97f0cb26af529bc",
+          "commit": "cd84ef08e4fe965ba1960ce78755d2d310e47679",
           "dirty": false
         },
         "provider_calls": 0,
@@ -2601,7 +2601,7 @@
       },
       "frozen_replay": {
         "source_revision": {
-          "commit": "b75cc43c7c4b7f68f4078905e97f0cb26af529bc",
+          "commit": "cd84ef08e4fe965ba1960ce78755d2d310e47679",
           "dirty": false
         },
         "provider_calls": 0,
@@ -3553,8 +3553,8 @@
     "target/benchmarks/answerability-shortlist-dev-2026-10-19/support.partial.json": {
       "sha256": "4fc6a6005c700a2631624c3b19ab61cfe9865b67f36eb35ac4dde932c22a0a6b"
     },
-    "target/benchmarks/answerability-shortlist-sanitizer-replay-2026-10-19/report.json": {
-      "sha256": "8aa44ad11a43bd3a68a4879fd8887f5a6da00f5a6f31d6140279dfdb72366891"
+    "target/benchmarks/answerability-shortlist-reviewed-replay-2026-10-19/report.json": {
+      "sha256": "b9c85b7fd8a7e582d0dee91601f78f7668340dd3c32a7ead61323bf63811e15c"
     },
     "target/benchmarks/answerability-expanded-dev-2026-10-19/report.json": {
       "sha256": "70822621e06ca1cbc7e97012e343cbb71f2c287e65f082d02b770847fa0c3317"
@@ -3562,8 +3562,8 @@
     "target/benchmarks/answerability-expanded-dev-2026-10-19/support.partial.json": {
       "sha256": "080fee1fb025a639a5be19bdfb37a3c6498ebca9ef06ad9d7b4ff6c9dfb08bc3"
     },
-    "target/benchmarks/answerability-expanded-sanitizer-replay-2026-10-19/report.json": {
-      "sha256": "9cd91af700cdff972f113e1f91622f70ca1bcb80538a931c0c812d4ca0f64d1b"
+    "target/benchmarks/answerability-expanded-reviewed-replay-2026-10-19/report.json": {
+      "sha256": "05e804546f167fbd2b1ba737e0a84349073fbfda1d19deb2e07e9168f5ea8c26"
     },
     "target/benchmarks/answerability-evaluation-2026-10-19/report.json": {
       "sha256": "b5fa073ef64c4b63ed913c4baa78f803b109f5892326aa6638b8fe58f9db16e8"
@@ -3571,8 +3571,8 @@
     "target/benchmarks/answerability-evaluation-2026-10-19/support.partial.json": {
       "sha256": "1828555d3f38fdc3ae8cae9e08b7b0d40c41cde21d66d64f408b0e468312322d"
     },
-    "target/benchmarks/answerability-evaluation-sanitizer-replay-2026-10-19/report.json": {
-      "sha256": "ff6730bf931b8f171ffde99997847a159ab345bf39c8ff78a43f3770858512b3"
+    "target/benchmarks/answerability-evaluation-reviewed-replay-2026-10-19/report.json": {
+      "sha256": "6383baf5324512fe6068e5d2b02c984aae41ea77252483017239a91c99a3a686"
     },
     "target/benchmarks/answerability-precision-regression-2026-10-19/report.json": {
       "sha256": "b0478a2061ed7a3bc326091cb9e4d0d339834a5edbfbc70c3085f8059c0702b6"
@@ -3580,8 +3580,8 @@
     "target/benchmarks/answerability-precision-regression-2026-10-19/support.partial.json": {
       "sha256": "ecf289d92772f5a5b03caf692b825ebd481deaa9b3262ce374181a3bee16144d"
     },
-    "target/benchmarks/answerability-precision-sanitizer-replay-2026-10-19/report.json": {
-      "sha256": "6226462794facee76ee8a6a215fcc725ff8085a33c418f41c838c135c65e6b23"
+    "target/benchmarks/answerability-precision-reviewed-replay-2026-10-19/report.json": {
+      "sha256": "0341a672ce975feabd70ba0657ce1e3250216e0edb46c685ff433b749e34bb0d"
     },
     "target/benchmarks/scoped-memory-answerability-disabled-2026-10-19/report.json": {
       "sha256": "5511a777347691f85324270132c8d219a541b3f57034390b9d51c167994aae5d"
