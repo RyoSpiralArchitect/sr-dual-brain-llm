@@ -393,6 +393,8 @@ class PostgresStateStore:
                             seed_id=evidence.get("seed_id"),
                             evidence_status=evidence.get("evidence_status", "unverified"),
                             valid_until=evidence.get("valid_until"),
+                            retrieval_scope=evidence.get("retrieval_scope"),
+                            scope_aliases=tuple(evidence.get("scope_aliases", [])),
                         )
                     )
 
@@ -571,7 +573,8 @@ class PostgresStateStore:
                             _json_dumps(list(trace.tags)),
                             _json_dumps(list(trace.question_tokens)),
                             _json_dumps({"seed_id": trace.seed_id, "evidence_status": trace.evidence_status,
-                                         "valid_until": trace.valid_until}),
+                                         "valid_until": trace.valid_until, "retrieval_scope": trace.retrieval_scope,
+                                         "scope_aliases": list(trace.scope_aliases)}),
                         ),
                     )
             conn.commit()

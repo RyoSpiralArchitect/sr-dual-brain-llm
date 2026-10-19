@@ -47,6 +47,10 @@ the new QA status filters do not constitute global deletion of their copies.
 
 ## Optional learned question index
 
+For declared project identities, Japanese aliases, and separate content cues,
+see the [scope-aware recall guide](scoped-memory-recall.md). Unannotated records
+retain the raw-question path described below.
+
 The default remains local and requires no embedding API. To opt into OpenAI
 question embeddings, use the existing shared LLM credentials or `MEMORY_*` role
 configuration and set:

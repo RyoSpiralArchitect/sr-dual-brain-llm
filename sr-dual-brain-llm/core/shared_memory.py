@@ -26,6 +26,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
+from .memory_scope import MemoryScopeResolver, normalize_name
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -145,12 +146,23 @@ class MemoryTrace:
     seed_id: str | None = None
     evidence_status: str = "unverified"
     valid_until: float | None = None
+    retrieval_scope: str | None = None
+    scope_aliases: Tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if self.evidence_status not in EVIDENCE_STATUSES:
             raise ValueError("Unknown memory evidence status")
         if self.valid_until is not None and not math.isfinite(self.valid_until):
             raise ValueError("Memory validity date must be finite")
+        if self.retrieval_scope is not None:
+            if (not isinstance(self.retrieval_scope, str) or not self.retrieval_scope.strip()
+                    or len(self.retrieval_scope) > 128 or not isinstance(self.scope_aliases, (tuple, list))
+                    or not 1 <= len(self.scope_aliases) <= 16
+                    or any(not isinstance(a, str) or not a.strip() or len(a) > 128 for a in self.scope_aliases)):
+                raise ValueError("Declared memory scope requires bounded explicit aliases")
+            object.__setattr__(self, "scope_aliases", tuple(dict.fromkeys(normalize_name(a.strip()) for a in self.scope_aliases)))
+        elif self.scope_aliases:
+            raise ValueError("Memory aliases require a declared scope")
         if not self.question_tokens:
             object.__setattr__(self, "question_tokens", tuple(_tokenize(self.question)))
         if not self.tags:
@@ -165,30 +177,49 @@ class SharedMemory:
         self.kv: Dict[str, Any] = {}
         self.dialogue_flows: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self.semantic_index = semantic_index
+        self._scope_signature = None
+        self._scope_resolver = MemoryScopeResolver()
 
     @staticmethod
     def _available(trace: MemoryTrace, now: float) -> bool:
         return trace.evidence_status != "superseded" and (trace.valid_until is None or trace.valid_until > now)
 
+    def scope_resolver(self) -> MemoryScopeResolver:
+        traces = [trace for trace in self.past_qas if self._available(trace, time.time())]
+        signature = tuple(traces)
+        if signature != self._scope_signature:
+            self._scope_resolver = MemoryScopeResolver(traces)
+            self._scope_signature = signature
+        if self.semantic_index is not None:
+            self.semantic_index.scope_resolver = self._scope_resolver
+        return self._scope_resolver
+
     async def prepare_retrieval(self, question: str, *, seed_questions: Sequence[str] = ()) -> dict:
+        self.scope_resolver()
         if self.semantic_index is None:
             return {"status": "disabled"}
         now = time.time()
         candidates = [t.question for t in reversed(self.past_qas[-256:]) if self._available(t, now)]
-        result = await self.semantic_index.prepare([question, *seed_questions, *candidates])
-        query_cached = question in self.semantic_index.vectors
+        questions = self.semantic_index.embedding_questions([question, *seed_questions, *candidates])
+        result = await self.semantic_index.prepare(questions)
+        query_cached = self._scope_resolver.query(question).content in self.semantic_index.vectors
         return {"status": "ready" if query_cached and not result["unprepared_questions"] else "partial",
                 "query_cached": query_cached, **result}
 
-    def evidence_for_seeds(self, seed_ids: Sequence[str]) -> List[Dict[str, Any]]:
+    def evidence_for_seeds(self, seed_ids: Sequence[str], *, question: str | None = None) -> List[Dict[str, Any]]:
         """Resolve exact, unambiguous identities to final QA text, never a seed draft."""
         entries = []
         now = time.time()
+        # A seed's hash trigger is not sufficient to establish scoped QA relevance.
+        eligible = ({id(trace) for trace in self.retrieve_related_traces(question, len(self.past_qas))}
+                    if question is not None else None)
         for seed_id in dict.fromkeys(seed_ids):
             matches = [trace for trace in self.past_qas if trace.seed_id == seed_id]
             if len(matches) != 1:
                 continue
             trace = matches[0]
+            if eligible is not None and (trace.retrieval_scope or self._scope_resolver.query(question).scopes) and id(trace) not in eligible:
+                continue
             if (not self._available(trace, now) or not trace.qid
                     or sum(item.qid == trace.qid for item in self.past_qas) != 1):
                 continue
@@ -196,6 +227,7 @@ class SharedMemory:
                             "question": _sanitize_memory_text(trace.question),
                             "answer": _sanitize_memory_text(trace.answer),
                             "status": trace.evidence_status, "recorded_at": trace.timestamp,
+                            "retrieval_scope": trace.retrieval_scope,
                             "truncated": (_sanitize_memory_text(trace.question) != trace.question
                                           or _sanitize_memory_text(trace.answer) != trace.answer)})
         return bounded_evidence(entries)
@@ -254,11 +286,12 @@ class SharedMemory:
         q_tokens: Sequence[str],
         q_tags: Sequence[str],
         recency_weight: float,
+        *, trace_question: str | None = None,
     ) -> float:
         if not q_tokens:
             return 0.0
 
-        trace_tokens = set(trace.question_tokens) - _RETRIEVAL_STOPWORDS
+        trace_tokens = set(trace.question_tokens if trace_question is None else _tokenize(trace_question)) - _RETRIEVAL_STOPWORDS
         q_tokens_set = set(q_tokens) - _RETRIEVAL_STOPWORDS
         if not q_tokens_set:
             return 0.0
@@ -271,8 +304,9 @@ class SharedMemory:
 
         q_tags_set = set(q_tags) - _RETRIEVAL_STOPWORDS
         tag_bonus = 0.0
-        if q_tags_set and trace.tags:
-            tag_bonus = len(q_tags_set & set(trace.tags)) / max(len(q_tags_set), 1)
+        trace_tags = trace.tags if trace_question is None else _derive_tags(trace_question)
+        if q_tags_set and trace_tags:
+            tag_bonus = len(q_tags_set & set(trace_tags)) / max(len(q_tags_set), 1)
 
         if lexical_score <= 0.0 and tag_bonus <= 0.0:
             # Avoid "recency-only" stickiness (especially on short acknowledgements).
@@ -295,22 +329,26 @@ class SharedMemory:
         if not self.past_qas or n <= 0:
             return []
 
-        q_tokens = _tokenize(question)
-        q_tags = _derive_tags(question)
+        resolver = self.scope_resolver()
+        query = resolver.query(question)
+        q_tokens = _tokenize(query.content)
+        q_tags = _derive_tags(query.content)
         total = len(self.past_qas)
 
         scored = []
         now = time.time()
         has_semantic_scores = False
         for idx, trace in enumerate(self.past_qas):
-            if not self._available(trace, now):
+            if not self._available(trace, now) or not resolver.allows_trace(query, trace):
                 continue
             recency_weight = (idx + 1) / total
-            score = self._score_trace(trace, q_tokens, q_tags, recency_weight)
+            score = self._score_trace(trace, q_tokens, q_tags, recency_weight,
+                                      trace_question=resolver.source(trace.question, trace.retrieval_scope).content
+                                      if trace.retrieval_scope else None)
             if self.semantic_index is not None:
-                similarity = self.semantic_index.similarity(question, trace.question)
+                similarity = self.semantic_index.similarity(question, trace.question, source_scope=trace.retrieval_scope)
                 has_semantic_scores = has_semantic_scores or similarity is not None
-                if similarity is not None and similarity >= self.semantic_index.min_similarity:
+                if similarity is not None and similarity >= self.semantic_index.threshold_for(question, trace.question, source_scope=trace.retrieval_scope):
                     score = max(score, 0.65 * similarity + 0.35 * score)
                 elif similarity is not None and score < 0.75:
                     # A shared entity/function word is insufficient when the

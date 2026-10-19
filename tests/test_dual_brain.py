@@ -1,4 +1,5 @@
 import asyncio
+import pytest
 import os
 import time
 
@@ -4220,3 +4221,32 @@ def test_embedding_outage_keeps_lexical_answer_path_and_hides_provider_error_tex
     assert preparation["status"] == "lexical_fallback" and preparation["embedding_calls"] == 1
     assert preparation["error_type"] == "RuntimeError"
     assert "PRIVATE-PROVIDER-ERROR" not in json.dumps(controller.telemetry.events)
+
+
+@pytest.mark.parametrize("probe,expected", [
+    ("Explain Project Helix's heroic journey through difficult constraints and a guarded gate.", True),
+    ("Explain Project Cedar's heroic journey through difficult constraints and a guarded gate.", False),
+    ("What is Project Helix's cafeteria lunch menu?", False),
+])
+def test_controller_applies_declared_scope_and_topic_before_routing_qa(probe, expected):
+    from core.shared_memory import MemoryTrace
+
+    question = "Explain Project Helix's heroic journey through difficult constraints and a guarded gate."
+    field = UnconsciousField()
+    mapping = field.analyse(question=question, draft="Unresolved draft")
+    outcome = field.integrate_outcome(mapping=mapping, question=question, draft="Unresolved draft",
+                                    final_answer="Resolved QA", success=False,
+                                    decision_state={"source_qid": "original", "novelty": .8})
+    field.analyse(question="Independent warmup", draft="")
+    memory = SharedMemory()
+    memory.store(MemoryTrace(question, "SCOPED FINAL QA", qid="original", seed_id=outcome["seed_id"],
+                             retrieval_scope="helix", scope_aliases=("Helix",)))
+    memory.store(MemoryTrace("What color is Project Cedar's logo?", "Blue.",
+                             retrieval_scope="cedar", scope_aliases=("Cedar",)))
+    controller = make_stage_controller(memory=memory, unconscious_field=field,
+        left_model=CaptureLeftModel(draft="Completely different current draft", confidence=.3))
+    controller.policy = AlwaysConsultPolicy()
+    asyncio.run(controller.process(probe, system2_mode="off"))
+    request = controller.callosum.payloads[0]["payload"]
+    assert ("SCOPED FINAL QA" in request["context"]) is expected
+    assert bool(request.get("memory_evidence")) is expected

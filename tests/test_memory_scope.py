@@ -1,0 +1,128 @@
+import asyncio
+from dataclasses import replace
+import json
+
+import pytest
+
+from core.memory_retrieval import QuestionSemanticIndex
+from core.shared_memory import MemoryTrace, SharedMemory
+from test_memory_retrieval import seed_field
+
+
+class TopicBackend:
+    identity = "test-topic-space"
+
+    def __init__(self):
+        self.questions = []
+
+    async def embed(self, questions):
+        self.questions.extend(questions)
+        return [(1, 0, 0) if "audit" in q or "監査" in q else
+                (0, 1, 0) if "backup" in q or "バックアップ" in q else (0, 0, 1) for q in questions]
+
+
+def trace(scope="helix", aliases=("Helix", "ヘリックス"), *, question=None, **kwargs):
+    return MemoryTrace(question or f"How long does Project {scope.title()} retain audit logs?", "PRIVATE FINAL ANSWER",
+                       retrieval_scope=scope, scope_aliases=aliases, **kwargs)
+
+
+def test_scope_and_topic_are_independent_cross_language_signals():
+    backend = TopicBackend()
+    index = QuestionSemanticIndex(backend)
+    memory = SharedMemory(semantic_index=index)
+    memory.store(trace(qid="helix-logs", seed_id="seed-logs"))
+    memory.store(trace(question="How often does Project Helix create database backups?", qid="helix-backup"))
+    memory.store(trace("cedar", ("Cedar", "シダー"), qid="cedar-logs"))
+    query = "ヘリックスの監査記録はいつまで保存する？"
+    asyncio.run(memory.prepare_retrieval(query))
+    assert [t.qid for t in memory.retrieve_related_traces(query)] == ["helix-logs"]
+    assert [e["source_qid"] for e in memory.evidence_for_seeds(["seed-logs"], question=query)] == ["helix-logs"]
+    assert not any("ヘリックス" in q or "helix" in q or "PRIVATE FINAL ANSWER" in q for q in backend.questions)
+    assert not memory.evidence_for_seeds(["seed-logs"], question="How long does Project Cedar retain audit logs?")
+    menu = "What is Project Helix's lunch menu?"
+    asyncio.run(memory.prepare_retrieval(menu))
+    assert not memory.retrieve_related_traces(menu)
+    assert not memory.evidence_for_seeds(["seed-logs"], question=menu)
+
+
+def test_local_scope_guard_abstains_on_entity_only_unknown_and_missing_scopes():
+    memory = SharedMemory()
+    memory.store(trace(qid="helix"))
+    memory.store(trace("cedar", ("Cedar", "シダー"), qid="cedar"))
+    assert [t.qid for t in memory.retrieve_related_traces("How long does Project Helix retain audit logs?")] == ["helix"]
+    for query in ("Project Helix", "What is Project Helix’s cafeteria menu?",
+                  "How long does Project Unknown retain audit logs?", "How long are audit logs retained?"):
+        assert not memory.retrieve_related_traces(query)
+    memory.store(MemoryTrace("How do I record errors?", "Preserved global guidance", qid="global"))
+    assert memory.retrieve_related_traces("How do I record errors?")[0].qid == "global"
+
+
+def test_original_utf8_budget_still_applies_after_alias_removal():
+    index = QuestionSemanticIndex(TopicBackend())
+    memory = SharedMemory(semantic_index=index)
+    source = trace()
+    memory.store(source)
+    short = "Helix audit logs"
+    asyncio.run(memory.prepare_retrieval(short))
+    oversized = "Helix " * 1100 + "audit logs"
+    assert not index.embedding_questions([oversized])
+    assert index.similarity(oversized, source.question) is None
+
+
+def test_aliases_normalize_width_case_and_do_not_match_neighboring_names():
+    memory = SharedMemory()
+    memory.store(trace())
+    resolver = memory.scope_resolver()
+    assert resolver.query("Ｐｒｏｊｅｃｔ　ＨｅＬｉＸ の監査記録").scopes == {"helix"}
+    assert resolver.query("ヘリックスの監査記録").scopes == {"helix"}
+    assert not resolver.query("Project Helixation audit logs").scopes
+    assert not resolver.query("スーパーヘリックスの監査記録").scopes
+
+
+def test_ambiguous_alias_cannot_choose_a_scope_and_registry_tracks_lifecycle():
+    memory = SharedMemory()
+    first = trace(aliases=("Helix", "North"), qid="one")
+    second = trace("cedar", ("Cedar", "North"), qid="two")
+    memory.store(first)
+    memory.store(second)
+    assert not memory.retrieve_related_traces("How long does Project North retain audit logs?")
+    memory.past_qas[1] = replace(second, evidence_status="superseded")
+    assert memory.scope_resolver().query("Project North").scopes == {"helix"}
+    assert memory.retrieve_related_traces("How long does Project North retain audit logs?")[0].qid == "one"
+    memory.past_qas[0] = replace(first, valid_until=0)
+    assert not memory.scope_resolver().query("Project North").scopes
+
+
+def test_explicit_multi_scope_query_and_conflicting_records_keep_all_sources():
+    memory = SharedMemory()
+    memory.store(trace(qid="one"))
+    memory.store(trace(qid="two"))
+    memory.store(trace("cedar", ("Cedar",), qid="other"))
+    selected = memory.retrieve_related_traces("Compare Helix and Cedar audit log retention.")
+    assert {t.qid for t in selected} == {"one", "two", "other"}
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"retrieval_scope": "", "scope_aliases": ("name",)},
+    {"retrieval_scope": "scope"},
+    {"scope_aliases": ("name",)},
+    {"retrieval_scope": "scope", "scope_aliases": (" ",)},
+    {"retrieval_scope": "scope", "scope_aliases": ("name",) * 17},
+])
+def test_invalid_scope_metadata_is_rejected(kwargs):
+    with pytest.raises(ValueError):
+        MemoryTrace("Q", "A", **kwargs)
+
+
+def test_scope_guard_also_blocks_a_latent_seed_even_with_an_identical_question_hash():
+    field, question, _ = seed_field()
+    memory = SharedMemory()
+    memory.store(trace(question=question, qid="source", seed_id=field._seed_cache[0].seed_id))
+    field.recall_scope_resolver = memory.scope_resolver()
+    mapping = field.analyse(question=question, draft="different")
+    summary = field.summary(mapping)
+    assert not summary.emergent_ideas
+    assert "scope_mismatch_or_ambiguity" in summary.harvest_attempts[0].failure_reasons
+    clone = field.fork()
+    assert clone.memory_state() == field.memory_state()
+    assert "PRIVATE FINAL ANSWER" not in json.dumps(field.memory_state())

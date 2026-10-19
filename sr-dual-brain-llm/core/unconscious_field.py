@@ -1070,6 +1070,7 @@ class UnconsciousField:
             raise ValueError("Unknown recall mode")
         self.recall_mode = recall_mode
         self.semantic_index = semantic_index
+        self.recall_scope_resolver = None
         self._question_embedder = HashEmbedder(dim=self.config.dim, seed=self.config.seed)
         self._seed_cache: List[LatentSeed] = []
         self._max_cache = 24
@@ -1097,6 +1098,7 @@ class UnconsciousField:
             "question_embedding": {"kind": "deterministic_hash", "dim": self._question_embedder.dim,
                                    "seed": self._question_embedder.seed},
             "semantic_index": self.semantic_index.snapshot() if self.semantic_index is not None else None,
+            "recall_scope": self.recall_scope_resolver.snapshot() if self.recall_scope_resolver is not None else None,
             "seeds": [dataclasses.asdict(seed) for seed in self._seed_cache],
             "pending_stress_release": self._pending_stress_release,
             "sampler_chain": list(self._psychoid_sampler._chain),
@@ -1132,18 +1134,25 @@ class UnconsciousField:
                 similarity_source = "question_hash"
             incubation = seed.exposures + 1
             threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
+            scope_allowed = True
+            if self.recall_mode == "question" and self.recall_scope_resolver is not None:
+                resolver = self.recall_scope_resolver
+                scope_allowed = resolver.compatible(resolver.query(question), resolver.source(seed.question))
             if self.recall_mode == "question" and self.semantic_index is not None:
                 semantic = self.semantic_index.similarity(question, seed.question)
-                if (semantic is not None and semantic >= self.semantic_index.min_similarity
+                semantic_threshold = self.semantic_index.threshold_for(question, seed.question)
+                if (semantic is not None and semantic >= semantic_threshold
                         and similarity < threshold):
                     similarity = semantic
-                    threshold = self.semantic_index.min_similarity
+                    threshold = semantic_threshold
                     similarity_source = "question_semantic"
-            similarity_pass = similarity >= threshold
+            similarity_pass = similarity >= threshold and scope_allowed
             incubation_pass = incubation >= 2
             intensity_pass = seed.intensity >= 0.08
             emerged = similarity_pass and incubation_pass and intensity_pass
             failure_reasons: List[str] = []
+            if not scope_allowed:
+                failure_reasons.append("scope_mismatch_or_ambiguity")
             if not similarity_pass:
                 failure_reasons.append("similarity_below_threshold")
             if not incubation_pass:
