@@ -103,6 +103,35 @@ def test_unicode_name_boundaries_prevent_wrong_scope_assignment(alias, query, ex
         assert not memory.retrieve_related_traces(query)
 
 
+@pytest.mark.parametrize("alias,query,expected", [
+    ("東京", "東京都の audit logs", False),
+    ("星", "星空の audit logs", False),
+    ("ひかり", "ひかりのぞみの audit logs", False),
+    ("東京", "東京の監査記録", True),
+    ("星", "星の監査記録", True),
+    ("ひかり", "ひかりの監査記録", True),
+    ("ひかり", "ひかりは監査を行う", True),
+    ("東京", "東京案件の監査記録", True),
+    ("東京", "新東京 audit logs", False),
+    ("ひかり", "よるひかり audit logs", False),
+    ("東京", "東京案件管理 audit logs", False),
+    ("ひかり", "ひかり のぞみ audit logs", True),
+    ("𠮷", "𠮷野 audit logs", False),
+    ("𠮷", "𠮷の監査記録", True),
+    ("東京", "東京々 audit logs", False),
+    ("ひかりー", "ひかりーのぞみ audit logs", False),
+    ("ひかりー", "ひかりーの監査記録", True),
+    ("ひかり", "ひかりの\u3099 audit logs", False),
+    ("東京", "東京案件\u200d audit logs", False),
+])
+def test_japanese_name_continuations_are_distinct_from_grammatical_context(alias, query, expected):
+    memory = SharedMemory()
+    memory.store(trace("scope", (alias,), question=f"How long does Project {alias} retain audit logs?"))
+    assert bool(memory.scope_resolver().query(query).scopes) is expected
+    if not expected:
+        assert not memory.retrieve_related_traces(query)
+
+
 @pytest.mark.parametrize("query,expected", [
     ("Foo Bars audit logs", {"short"}),
     ("Foo Bar audit logs", {"long"}),

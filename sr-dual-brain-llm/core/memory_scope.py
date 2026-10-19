@@ -13,19 +13,58 @@ def normalize_name(text: str) -> str:
     return unicodedata.normalize("NFKC", text).casefold()
 
 
-def _continues_name(character: str, alias_edge: str) -> bool:
+def _japanese_script(character: str) -> str | None:
+    name = unicodedata.name(character, "")
+    if "KATAKANA-HIRAGANA" in name:
+        return "kana"
+    if "KATAKANA" in name:
+        return "katakana"
+    if "HIRAGANA" in name:
+        return "hiragana"
+    if character in "々〆〇" or "CJK" in name and "IDEOGRAPH" in name:
+        return "han"
+    return None
+
+
+def _particle_boundary(following: str) -> bool:
+    # A particle before non-Hiragana content can separate a Hiragana name.
+    # Do not read the first の of another all-Hiragana name as a separator.
+    particles = ("について", "における", "からの", "までの", "への", "での", "との",
+                 "では", "には", "とは", "から", "まで", "の", "は", "が", "を", "に", "で", "へ", "と", "も", "や")
+    for particle in particles:
+        if not following.startswith(particle):
+            continue
+        rest = following[len(particle):]
+        if (not rest or _japanese_script(rest[0]) not in {"hiragana", "kana"}
+                and unicodedata.category(rest[0])[0] != "M" and unicodedata.category(rest[0]) != "Cf"):
+            return True
+    return False
+
+
+def _continues_name(character: str, alias_edge: str, *, following: str = "") -> bool:
     if not character:
         return False
     category = unicodedata.category(character)
-    if category[0] == "M" or category == "Cf":
+    if category[0] in "MN" or category == "Cf":
         return True
-    # Japanese particles/wrappers can adjoin a Latin name (e.g. Caféの記録).
-    # Other Unicode letters, numbers, marks and underscores extend the name.
-    japanese = bool(re.fullmatch(r"[\u3040-\u30ff\u4e00-\u9fff]", character))
+    # Script transitions can separate Japanese context (e.g. Caféの記録).
+    # Same-script names need a separator or the conservative grammar below.
+    script, edge_script = _japanese_script(character), _japanese_script(alias_edge)
+    japanese = script is not None
     word = character == "_" or category[0] in "LN"
-    katakana_extension = (bool(re.fullmatch(r"[\u30a0-\u30ff]", alias_edge))
-                          and bool(re.fullmatch(r"[\u30a0-\u30ff]", character)))
-    return (word and not japanese) or katakana_extension
+    same_script = japanese and (script == edge_script
+                               or "kana" in {script, edge_script}
+                               and script in {"kana", "hiragana", "katakana"}
+                               and edge_script in {"kana", "hiragana", "katakana"})
+    if same_script and script == "hiragana" and _particle_boundary(following):
+        return False
+    if same_script and script == "han" and following.startswith("案件"):
+        rest = following[2:]
+        if (not rest or rest[0].isspace()
+                or unicodedata.category(rest[0])[0] in "PS" and rest[0] != "_"
+                or _particle_boundary(rest)):
+            return False
+    return (word and not japanese) or same_script
 
 
 @dataclass(frozen=True)
@@ -76,7 +115,8 @@ class MemoryScopeResolver:
                 alias = node.get("")
                 if (alias is not None
                         and not _continues_name(text[start - 1] if start else "", alias[0])
-                        and not _continues_name(text[end] if end < len(text) else "", alias[-1])):
+                        and not _continues_name(text[end] if end < len(text) else "", alias[-1],
+                                                following=text[end:end + 16])):
                     best = (start, end, alias)
             if best is None:
                 start += 1

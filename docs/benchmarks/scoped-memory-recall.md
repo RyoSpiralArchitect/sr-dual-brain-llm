@@ -25,7 +25,14 @@ retrieval behavior when used without declared scopes.
 Names use Unicode NFKC and case folding. Alias boundaries recognize Unicode
 letters, numbers and combining marks, including accented Latin names;
 Japanese particles/wrappers can directly adjoin a name (such as `Caféの記録`).
-Katakana aliases cannot match inside a longer Katakana name. Matching selects
+Same-script Katakana, Hiragana and Han name continuations are rejected. Explicit
+particle boundaries before non-Hiragana content and the `案件` wrapper can
+separate names from Japanese grammar. This is conservative rather than a full
+morphological parser; ambiguous all-Hiragana context may require a space.
+Script transitions are treated as possible Japanese word boundaries. Full mixed-
+script entity names are not inferred; declare complete aliases and use clear
+separators when names and surrounding text are ambiguous.
+Matching selects
 the longest boundary-valid alias; a rejected longer name does not hide a
 valid shorter alias, and an ambiguous valid longer name cannot fall back to a
 unique shorter one. Rejected name fragments remain part of the content cue.
