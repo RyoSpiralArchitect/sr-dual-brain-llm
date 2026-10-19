@@ -281,7 +281,7 @@
       "topic_group": "webhook_delivery",
       "split": "calibration",
       "kind": "japanese",
-      "question": "Webhookが正規の送信元から来たことを確かめる署名は、アスターではどのヘッダーに入っている？",
+      "question": "アスターのWebhookは、正規の送信元から来たことを確かめる署名がどのヘッダーに入っている？",
       "relevant_qids": [
         "aster-signature"
       ]
