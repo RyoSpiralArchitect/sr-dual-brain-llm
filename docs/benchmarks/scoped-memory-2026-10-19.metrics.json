@@ -1788,7 +1788,9 @@
     "target/benchmarks/scoped-memory-unicode-replay-2026-10-19/report.json": "884a0d8451be4cd61b719281b8300c5cbd099894d2f9754b27fd027c74237cc7",
     "target/benchmarks/question-memory-unicode-regression-2026-10-19/report.json": "386a5bf14c9487bc2df3d062077bfa9d90e977d7c2bfc67f3cea5b34a0203837",
     "target/benchmarks/scoped-memory-alias-replay-2026-10-19/report.json": "f8c24d9c6c895022edd4b23e94ae0d9bf6167382dd345a08bfa02cc234ae05e0",
-    "target/benchmarks/question-memory-alias-regression-2026-10-19/report.json": "6e70f0764db3c3fe3c81849853b6fbe0bf94f797d094a565a47cf3465f4a6959"
+    "target/benchmarks/question-memory-alias-regression-2026-10-19/report.json": "6e70f0764db3c3fe3c81849853b6fbe0bf94f797d094a565a47cf3465f4a6959",
+    "target/benchmarks/scoped-memory-japanese-replay-2026-10-19/report.json": "d213cbf6490070cf7418d164b12e7f6d0e90fc49f861222b95bb0f0bf8f89f27",
+    "target/benchmarks/question-memory-japanese-regression-2026-10-19/report.json": "547440ecb4e190f935b1140c33acbfe632e2d5ffcf4e2b3cc6e045dbbd838d9e"
   },
   "evaluation_selections": {
     "previous_hybrid_calibrated": {
@@ -2414,6 +2416,18 @@
     "fix": "Unicode-aware name boundaries reject accented-letter, number, combining-mark and format-control continuations while preserving Japanese context."
   },
   "final_validation": {
+    "source_revision": {
+      "commit": "ecf019d98639e28adbc18b83eab50f772342e0bf",
+      "dirty": false
+    },
+    "python_unit_tests": 426,
+    "scoped_summaries_calibration_and_selections_unchanged": true,
+    "legacy_selections_summaries_defaults_and_recoveries_unchanged": true,
+    "new_provider_calls": 0,
+    "legacy_provider_calls": 0,
+    "alias_matching": "Longest boundary-valid alias with Unicode and same-script Japanese continuation guards; conservative explicit grammatical suffixes."
+  },
+  "alias_matching_validation": {
     "source_revision": {
       "commit": "8ff6c8b75d7939509a483ac376cd2fbc9b285c57",
       "dirty": false
