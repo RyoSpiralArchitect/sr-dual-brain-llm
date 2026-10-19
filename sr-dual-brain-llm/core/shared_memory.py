@@ -171,7 +171,7 @@ class MemoryTrace:
 
 class SharedMemory:
     def __init__(self, *, max_items: int = 1024, max_dialogue_flows: int = 64, semantic_index=None,
-                 answerability_gate=None):
+                 answerability_gate=None, answerability_scope_expansion=True):
         self.max_items = max_items
         self.max_dialogue_flows = max(1, int(max_dialogue_flows))
         self.past_qas: List[MemoryTrace] = []
@@ -179,6 +179,7 @@ class SharedMemory:
         self.dialogue_flows: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self.semantic_index = semantic_index
         self.answerability_gate = answerability_gate
+        self.answerability_scope_expansion = answerability_scope_expansion
         self._scope_signature = None
         self._scope_resolver = MemoryScopeResolver()
 
@@ -222,6 +223,26 @@ class SharedMemory:
 
     def answerability_candidates(self, question):
         limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
+        resolver = self.scope_resolver()
+        query = resolver.query(question)
+        if self.answerability_gate is not None and self.answerability_scope_expansion and query.scopes and not query.ambiguous:
+            # A low relative score is not evidence against a separate requested fact.
+            # Widen only within declared compatible scopes, and let the checker decide.
+            candidates = []
+            now = time.time()
+            for position, trace in enumerate(self.past_qas):
+                if (not self._available(trace, now) or not resolver.allows_trace(query, trace)
+                        or not self.answerability_gate.eligible(self._answerability_source(trace))):
+                    continue
+                content = resolver.source(trace.question, trace.retrieval_scope).content
+                score = self._score_trace(trace, _tokenize(query.content), _derive_tags(query.content),
+                                          (position + 1) / len(self.past_qas), trace_question=content)
+                similarity = (self.semantic_index.similarity(question, trace.question, source_scope=trace.retrieval_scope)
+                              if self.semantic_index is not None else None)
+                if similarity is not None:
+                    score = max(score, .65 * similarity + .35 * score)
+                candidates.append((score, trace))
+            return [t for _, t in sorted(candidates, key=lambda item: item[0], reverse=True)[:limit]]
         return self._retrieve_related_traces(question, limit)
 
     def evidence_for_seeds(self, seed_ids: Sequence[str], *, question: str | None = None) -> List[Dict[str, Any]]:

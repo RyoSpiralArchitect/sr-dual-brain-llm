@@ -116,15 +116,17 @@ def selected_row(query, selected, method):
             "set_f1": 2 * overlap / (len(gold) + len(ids)) if gold or ids else 1}
 
 
-async def run(fixture, index, checks, *, phase, save=None):
+async def run(fixture, index, checks, *, phase, candidate_mode="scope", save=None):
     validate_fixture(fixture)
     split = "calibration" if phase == "development" else "evaluation"
-    memory = SharedMemory(semantic_index=index, answerability_gate=AnswerabilityGate(checks))
+    memory = SharedMemory(semantic_index=index, answerability_gate=AnswerabilityGate(checks),
+                          answerability_scope_expansion=candidate_mode == "scope")
     for item in fixture["memories"]:
         memory.store(MemoryTrace(**item))
     rows = retrieval_rows(fixture, index, method="scoped_025", split=split)
     report = {"schema_version": 1, "source_revision": _source_revision(), "fixture_sha256": digest(fixture),
-              "policy_sha256": digest(POLICY), "phase": phase, "complete": False, "rows": rows,
+              "policy_sha256": digest(POLICY), "phase": phase, "candidate_mode": candidate_mode,
+              "complete": False, "rows": rows,
               "answer_quality_evaluated": False, "checks": [], "summaries": {}}
     for query in fixture["queries"]:
         if query["split"] != split:
@@ -157,6 +159,7 @@ def main():
     p.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
     p.add_argument("--output-dir", type=Path, required=True)
     p.add_argument("--phase", choices=("development", "evaluation"), required=True)
+    p.add_argument("--candidate-mode", choices=("shortlist", "scope"), default="scope")
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument("--support-model", help="Explicitly authorizes bounded chat checks")
     mode.add_argument("--support-cache", type=Path, help="Complete frozen responses; zero chat calls")
@@ -179,7 +182,7 @@ def main():
         checks = RecordedChecks(backend, {"fixture_sha256": digest(fixture), "phase": args.phase},
                     frozen=read_json(args.support_cache) if args.support_cache else None,
                     save=lambda d: checkpoint(args.output_dir / "support.partial.json", d))
-        report = asyncio.run(run(fixture, index, checks, phase=args.phase,
+        report = asyncio.run(run(fixture, index, checks, phase=args.phase, candidate_mode=args.candidate_mode,
                                  save=lambda d: checkpoint(args.output_dir / "report.partial.json", d)))
         report["embedding_usage"] = {"provider_calls": getattr(embedding, "calls", 0),
                                       "input_tokens": getattr(embedding, "input_tokens", 0),

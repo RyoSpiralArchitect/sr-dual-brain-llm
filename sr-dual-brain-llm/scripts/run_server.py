@@ -36,6 +36,7 @@ from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
 from core.memory_evidence import request_memory_context
+from core.memory_answerability import answerability_gate_from_environment
 
 async def right_worker(callosum, mem, right_model):
     if hasattr(callosum, "recv_request"):
@@ -107,7 +108,7 @@ async def right_worker(callosum, mem, right_model):
 
 async def main():
     callosum = Callosum()
-    mem = SharedMemory()
+    mem = SharedMemory(answerability_gate=answerability_gate_from_environment())
     left = LeftBrainModel()
     right = RightBrainModel()
     policy = RightBrainPolicy()

@@ -44,7 +44,7 @@ def test_preparation_is_required_and_cache_binds_question_source_status_and_mode
     assert not memory.retrieve_related_traces(q)
     asyncio.run(memory.prepare_retrieval(q))
     assert backend.calls == 2
-    memory.past_qas[0] = replace(memory.past_qas[0], evidence_status="unverified")
+    memory.past_qas[0] = replace(memory.past_qas[0], evidence_status="verified")
     assert not memory.retrieve_related_traces(q)
     backend.identity = "different-model"
     assert not memory.retrieve_related_traces(q)
@@ -114,3 +114,42 @@ def test_gate_is_opt_in_and_uses_an_explicit_model(monkeypatch):
     monkeypatch.setenv("DUALBRAIN_MEMORY_ANSWERABILITY_MODEL", "support-model")
     gate = answerability_gate_from_environment(LLMConfig("openai", "chat-model", "NOT_A_KEY"))
     assert gate.backend.config.model == "support-model"
+
+
+def test_widening_recovers_independent_fact_pruned_by_relative_similarity():
+    from core.memory_retrieval import QuestionSemanticIndex
+    semantic = Checks()
+    index = QuestionSemanticIndex(semantic, scope_min_similarity=.25)
+    memory = SharedMemory(semantic_index=index, answerability_gate=AnswerabilityGate(Checks()))
+    first = replace(source("duration", "14 days"), question="Project Alpha duration")
+    second = replace(source("currency", "EUR"), question="Project Alpha currency")
+    memory.store(first)
+    memory.store(second)
+    query = "Project Alpha duration and currency"
+    resolver = memory.scope_resolver()
+    index.vectors.update({resolver.query(query).content: (1., 0.),
+                          resolver.source(first.question).content: (1., 0.),
+                          resolver.source(second.question).content: (.3, .9539392014169457)})
+    assert [t.qid for t in memory._retrieve_related_traces(query)] == ["duration"]
+    asyncio.run(memory.prepare_retrieval(query))
+    assert {t.qid for t in memory.retrieve_related_traces(query)} == {"duration", "currency"}
+    assert len(memory.evidence_for_seeds(["seed-duration", "seed-currency"], question=query)) == 2
+
+
+def test_unannotated_seed_route_also_requires_support_and_query():
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(Checks()))
+    memory.store(MemoryTrace("minimum input length", "DENY unrelated value", qid="x", seed_id="sx"))
+    asyncio.run(memory.prepare_retrieval("minimum input length"))
+    assert not memory.evidence_for_seeds(["sx"], question="minimum input length")
+    assert not memory.evidence_for_seeds(["sx"])
+
+
+def test_support_allowlist_blocks_identical_hash_seed_and_is_in_field_snapshot():
+    from test_memory_retrieval import seed_field
+    field, question, _ = seed_field()
+    field.recall_evidence_allowlist = frozenset()
+    summary = field.summary(field.analyse(question=question, draft=""))
+    assert not summary.emergent_ideas
+    assert "evidence_support_not_approved" in summary.harvest_attempts[0].failure_reasons
+    assert field.memory_state()["recall_evidence_allowlist"] == []
+    assert field.fork().memory_state() == field.memory_state()

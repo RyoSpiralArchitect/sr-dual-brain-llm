@@ -4223,6 +4223,33 @@ def test_embedding_outage_keeps_lexical_answer_path_and_hides_provider_error_tex
     assert "PRIVATE-PROVIDER-ERROR" not in json.dumps(controller.telemetry.events)
 
 
+@pytest.mark.parametrize("supported", [True, False])
+def test_controller_prepares_support_without_embeddings_and_fences_seed_and_qa_routes(supported):
+    from core.memory_answerability import AnswerabilityGate
+    from core.shared_memory import MemoryTrace
+    from test_memory_answerability import Checks
+    question = "Explain a heroic journey through difficult constraints and a guarded gate."
+    field = UnconsciousField()
+    mapping = field.analyse(question=question, draft="UNRESOLVED DRAFT")
+    outcome = field.integrate_outcome(mapping=mapping, question=question, draft="UNRESOLVED DRAFT",
+        final_answer="Resolved QA", success=False, decision_state={"source_qid": "original", "novelty": .8})
+    field.analyse(question="Independent warmup", draft="")
+    checks = Checks()
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(checks))
+    memory.store(MemoryTrace(question, "Supported final QA" if supported else "DENY wrong facet",
+                             qid="original", seed_id=outcome["seed_id"]))
+    controller = make_stage_controller(memory=memory, unconscious_field=field,
+                                       left_model=CaptureLeftModel(draft="Current draft", confidence=.3))
+    controller.policy = AlwaysConsultPolicy()
+    asyncio.run(controller.process(question, qid="support-revisit", system2_mode="off"))
+    request = controller.callosum.payloads[0]["payload"]
+    assert bool(request.get("memory_evidence")) is supported
+    assert ("Supported final QA" in request["context"]) is supported
+    assert "DENY wrong facet" not in request["context"]
+    assert checks.calls == 1
+    assert ((outcome["seed_id"], "original") in field.recall_evidence_allowlist) is supported
+
+
 @pytest.mark.parametrize("probe,expected", [
     ("Explain Project Helix's heroic journey through difficult constraints and a guarded gate.", True),
     ("Explain Project Cedar's heroic journey through difficult constraints and a guarded gate.", False),

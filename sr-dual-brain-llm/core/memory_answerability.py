@@ -5,6 +5,7 @@ from collections import OrderedDict
 from dataclasses import replace
 import hashlib
 import json
+import math
 import os
 
 from .llm_client import LLMClient, load_llm_config
@@ -102,10 +103,12 @@ class AnswerabilityGate:
                 and isinstance(source.get("question"), str) and bool(source["question"].strip())
                 and len(source["question"]) <= 240 and isinstance(source.get("answer"), str)
                 and bool(source["answer"].strip()) and len(source["answer"]) <= 640
-                and source.get("status") in {"verified", "unverified"})
+                and source.get("status") in {"verified", "unverified"}
+                and isinstance(source.get("recorded_at"), (int, float)) and math.isfinite(source["recorded_at"]))
 
     def allows(self, question, source):
-        if str(self.backend.identity) != self.identity or not self.eligible(source):
+        if (not isinstance(question, str) or len(question.encode()) > 6000
+                or str(self.backend.identity) != self.identity or not self.eligible(source)):
             return False
         return self.cache.get(self._key(question, source)) is True
 
