@@ -22,7 +22,9 @@ automatically scoped or translated. No project-specific dictionary is built into
 the selector. Existing records with no scope annotations keep their original
 retrieval behavior when used without declared scopes.
 
-Names use Unicode NFKC and case folding. Latin aliases have word boundaries;
+Names use Unicode NFKC and case folding. Alias boundaries recognize Unicode
+letters, numbers and combining marks, including accented Latin names;
+Japanese particles/wrappers can directly adjoin a name (such as `Caféの記録`).
 Katakana aliases cannot match inside a longer Katakana name. Declared aliases
 and generic project wrappers are removed from the content cue. Answers, drafts,
 source IDs and verification labels do not enter embeddings.

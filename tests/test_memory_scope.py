@@ -80,6 +80,29 @@ def test_aliases_normalize_width_case_and_do_not_match_neighboring_names():
     assert not resolver.query("スーパーヘリックスの監査記録").scopes
 
 
+@pytest.mark.parametrize("alias,query,expected", [
+    ("Café", "Project Caféine audit logs", False),
+    ("Élan", "Project PréÉlan audit logs", False),
+    ("Café", "このCafe\u0301の監査記録", True),
+    ("Café", "Project Café audit logs", True),
+    ("Café", "Ｐｒｏｊｅｃｔ ＣＡＦÉ audit logs", True),
+    ("Мир", "Project Мирный audit logs", False),
+    ("١٢", "Project ١٢٣ audit logs", False),
+    ("Café", "Project Café\u0301 audit logs", False),
+    ("Café", "Project Café\u3099 audit logs", False),
+    ("Helix", "Project Helix\u200dation audit logs", False),
+    ("ヘリックス", "1ヘリックスの監査記録", False),
+    ("Helix", "Project ΩHelix audit logs", False),
+])
+def test_unicode_name_boundaries_prevent_wrong_scope_assignment(alias, query, expected):
+    memory = SharedMemory()
+    memory.store(trace("scope", (alias,), question=f"How long does Project {alias} retain audit logs?"))
+    cue = memory.scope_resolver().query(query)
+    assert bool(cue.scopes) is expected
+    if not expected:
+        assert not memory.retrieve_related_traces(query)
+
+
 def test_ambiguous_alias_cannot_choose_a_scope_and_registry_tracks_lifecycle():
     memory = SharedMemory()
     first = trace(aliases=("Helix", "North"), qid="one")

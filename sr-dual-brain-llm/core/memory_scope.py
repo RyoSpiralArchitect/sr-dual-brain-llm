@@ -13,6 +13,21 @@ def normalize_name(text: str) -> str:
     return unicodedata.normalize("NFKC", text).casefold()
 
 
+def _continues_name(character: str, alias_edge: str) -> bool:
+    if not character:
+        return False
+    category = unicodedata.category(character)
+    if category[0] == "M" or category == "Cf":
+        return True
+    # Japanese particles/wrappers can adjoin a Latin name (e.g. Caféの記録).
+    # Other Unicode letters, numbers, marks and underscores extend the name.
+    japanese = bool(re.fullmatch(r"[\u3040-\u30ff\u4e00-\u9fff]", character))
+    word = character == "_" or category[0] in "LN"
+    katakana_extension = (bool(re.fullmatch(r"[\u30a0-\u30ff]", alias_edge))
+                          and bool(re.fullmatch(r"[\u30a0-\u30ff]", character)))
+    return (word and not japanese) or katakana_extension
+
+
 @dataclass(frozen=True)
 class ScopeCue:
     scopes: frozenset[str]
@@ -42,27 +57,25 @@ class MemoryScopeResolver:
                 aliases.setdefault(normalize_name(alias), set()).add(trace.retrieval_scope)
         self.aliases = {alias: frozenset(scopes) for alias, scopes in aliases.items()}
         self.sources = {question: frozenset(scopes) for question, scopes in sources.items()}
-        parts = []
-        for alias in sorted(aliases, key=lambda value: (-len(value), value)):
-            left = r"(?<![a-z0-9_])" if re.match(r"[a-z0-9_]", alias) else ""
-            right = r"(?![a-z0-9_])" if re.search(r"[a-z0-9_]$", alias) else ""
-            if re.match(r"[\u30a0-\u30ff]", alias):
-                left = r"(?<![\u30a0-\u30ff])"
-            if re.search(r"[\u30a0-\u30ff]$", alias):
-                right = r"(?![\u30a0-\u30ff])"
-            parts.append(left + re.escape(alias) + right)
+        parts = [re.escape(alias) for alias in sorted(aliases, key=lambda value: (-len(value), value))]
         self.pattern = re.compile("|".join(parts)) if parts else None
 
     def query(self, question: str) -> ScopeCue:
         if self.pattern is None:
             return ScopeCue(frozenset(), False, question)
         text = normalize_name(question)
-        matches = list(self.pattern.finditer(text))
+        matches = [match for match in self.pattern.finditer(text)
+                   if not _continues_name(text[match.start() - 1] if match.start() else "", match.group()[0])
+                   and not _continues_name(text[match.end()] if match.end() < len(text) else "", match.group()[-1])]
         if not matches:
             return ScopeCue(frozenset(), False, question)
         groups = [self.aliases[match.group()] for match in matches]
         scopes = frozenset().union(*groups)
-        content = self.pattern.sub(" ", text)
+        parts, end = [], 0
+        for match in matches:
+            parts.extend((text[end:match.start()], " "))
+            end = match.end()
+        content = "".join([*parts, text[end:]])
         content = re.sub(r"\bproject\b|プロジェクト|案件|[’']s\b", " ", content)
         content = " ".join(content.split()).strip(" ?？:：,、。")
         return ScopeCue(scopes, any(len(group) != 1 for group in groups), content)
