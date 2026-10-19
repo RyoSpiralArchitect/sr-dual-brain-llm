@@ -28,16 +28,17 @@ def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(wor
     model = RightBrainModel(LLMConfig("openai", "fixture", "NOT_A_KEY"))
     model._llm_client = CaptureClient()
     memory = SharedMemory()
-    memory.store(MemoryTrace("Earlier question", "The recorded retention is 48 hours.", qid="original-qa", seed_id="seed"))
+    memory.store(MemoryTrace("Earlier Project Helix question", "The recorded retention is 48 hours.",
+                             qid="original-qa", seed_id="seed", retrieval_scope="helix", scope_aliases=("Helix",)))
 
     async def run():
         callosum = Callosum(slot_ms=0)
         task = asyncio.create_task(worker_fn(callosum, memory, model))
         try:
             return await callosum.ask_detail({
-                "qid": "new-question", "type": request_type, "question": "What did the earlier record say?",
+                "qid": "new-question", "type": request_type, "question": "What did the earlier Helix record say?",
                 "draft": "Unknown", "draft_sum": "Unknown", "context": "Base context",
-                "memory_evidence": memory.evidence_for_seeds(["seed"]),
+                "memory_evidence": memory.evidence_for_seeds(["seed"], question="What did the earlier Helix record say?"),
             }, timeout_ms=1000)
         finally:
             task.cancel()
@@ -49,6 +50,7 @@ def test_both_workers_deliver_final_qa_and_provenance_to_actual_model_prompt(wor
     prompt, system = prompts[0]
     assert "48 hours" in system and '"source_qid": "original-qa"' in system
     assert '"status": "unverified"' in system and "not confirmed facts" in system
+    assert '"retrieval_scope": "helix"' in system
     assert "Base context" in system and "NOT_A_KEY" not in prompt + system
 
 
@@ -90,7 +92,8 @@ def test_postgres_metadata_write_load_and_legacy_defaults_without_database(monke
     store = PostgresStateStore("NOT_A_REAL_DSN")
     monkeypatch.setattr(store, "_connect", Connection)
     traces = [MemoryTrace("Q", "Final answer", qid="original", seed_id="seed",
-                           evidence_status="superseded", valid_until=50)]
+                           evidence_status="superseded", valid_until=50,
+                           retrieval_scope="fixture", scope_aliases=("Fixture", "フィクスチャ"))]
     store._append_memory_traces_sync("session", traces, None)
     loaded, episodes = store._load_session_sync("session", None, None)
     assert loaded == traces and not episodes
@@ -99,6 +102,7 @@ def test_postgres_metadata_write_load_and_legacy_defaults_without_database(monke
     cursor.rows = [("old", "Q", "A", 10, '[]', '[]', '{}')]
     loaded, _ = store._load_session_sync("session", None, None)
     assert loaded[0].seed_id is None and loaded[0].evidence_status == "unverified"
+    assert loaded[0].retrieval_scope is None and not loaded[0].scope_aliases
 
 
 @pytest.mark.parametrize("worker_fn", [_right_worker, right_worker])

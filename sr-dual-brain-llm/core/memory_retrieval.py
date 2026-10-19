@@ -77,13 +77,17 @@ class QuestionSemanticIndex:
     belong to one session, and do not contain clients with conversational state.
     """
 
-    def __init__(self, backend, *, min_similarity: float = 0.70, max_items: int = 512, relative_cutoff: float = 0.8):
-        if not 0 <= min_similarity <= 1 or max_items < 2 or not 0 <= relative_cutoff <= 1:
+    def __init__(self, backend, *, min_similarity: float = 0.70, max_items: int = 512,
+                 relative_cutoff: float = 0.8, scope_min_similarity: float = 0.50):
+        if (not 0 <= min_similarity <= 1 or max_items < 2 or not 0 <= relative_cutoff <= 1
+                or not 0 <= scope_min_similarity <= 1):
             raise ValueError("Invalid semantic index limits")
         self.backend = backend
         self.min_similarity = min_similarity
         self.max_items = max_items
         self.relative_cutoff = relative_cutoff
+        self.scope_min_similarity = scope_min_similarity
+        self.scope_resolver = None
         self.identity = str(backend.identity)
         self.vectors: OrderedDict[str, tuple[float, ...]] = OrderedDict()
         self.dimension: int | None = None
@@ -126,9 +130,29 @@ class QuestionSemanticIndex:
                 "requested_questions": len(eligible), "embedding_id": self.identity,
                 "unprepared_questions": sum(q not in self.vectors for q in eligible)}
 
-    def similarity(self, left: str, right: str) -> float | None:
-        if str(self.backend.identity) != self.identity:
+    def embedding_questions(self, questions: Sequence[str]) -> list[str]:
+        """Bound the original input before deriving content-only question views."""
+        return list(dict.fromkeys(
+            self.scope_resolver.query(q).content if self.scope_resolver is not None else q
+            for q in questions if isinstance(q, str) and q.strip() and len(q.encode()) <= 6000
+        ))
+
+    def threshold_for(self, left: str, right: str, *, source_scope: str | None = None) -> float:
+        if self.scope_resolver is not None:
+            query, source = self.scope_resolver.query(left), self.scope_resolver.source(right, source_scope)
+            if query.scopes and source.scopes:
+                return self.scope_min_similarity
+        return self.min_similarity
+
+    def similarity(self, left: str, right: str, *, source_scope: str | None = None) -> float | None:
+        if (str(self.backend.identity) != self.identity
+                or len(left.encode()) > 6000 or len(right.encode()) > 6000):
             return None
+        if self.scope_resolver is not None:
+            query, source = self.scope_resolver.query(left), self.scope_resolver.source(right, source_scope)
+            if not self.scope_resolver.compatible(query, source):
+                return -1.0
+            left, right = query.content, source.content
         a, b = self.vectors.get(left), self.vectors.get(right)
         if a is None or b is None or len(a) != len(b):
             return None
@@ -138,6 +162,8 @@ class QuestionSemanticIndex:
         return {"embedding_id": self.identity, "dimension": self.dimension,
                 "min_similarity": self.min_similarity,
                 "relative_cutoff": self.relative_cutoff,
+                "scope_min_similarity": self.scope_min_similarity,
+                "scope_registry": self.scope_resolver.snapshot() if self.scope_resolver is not None else None,
                 "cache_sha256": hashlib.sha256(json.dumps(
                     dict(self.vectors), sort_keys=True, separators=(",", ":")
                 ).encode()).hexdigest()}
@@ -151,4 +177,6 @@ def semantic_index_from_environment(fallback_config: LLMConfig | None = None) ->
     if config is None:
         raise ValueError("Configured memory embedding model requires provider credentials")
     threshold = float(os.environ.get("DUALBRAIN_MEMORY_MIN_SIMILARITY", "0.70"))
-    return QuestionSemanticIndex(OpenAIQuestionEmbeddings(config, model), min_similarity=threshold)
+    scope_threshold = float(os.environ.get("DUALBRAIN_MEMORY_SCOPE_MIN_SIMILARITY", "0.50"))
+    return QuestionSemanticIndex(OpenAIQuestionEmbeddings(config, model), min_similarity=threshold,
+                                 scope_min_similarity=scope_threshold)

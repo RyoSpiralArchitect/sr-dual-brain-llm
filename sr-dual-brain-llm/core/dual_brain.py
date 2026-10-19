@@ -2737,7 +2737,7 @@ class DualBrainController:
                 resolver = getattr(self.memory, "evidence_for_seeds", None)
                 if allow_memory_recall and callable(resolver):
                     ordered = sorted(ideas, key=lambda idea: idea.trigger_similarity, reverse=True)
-                    evidence = resolver([idea.seed_id for idea in ordered if idea.seed_id])
+                    evidence = resolver([idea.seed_id for idea in ordered if idea.seed_id], question=question)
                     identities = {(idea.seed_id, idea.source_qid) for idea in ideas if idea.source_qid}
                     evidence = [item for item in evidence if (item["seed_id"], item["source_qid"]) in identities]
                     if evidence:
@@ -4769,6 +4769,9 @@ class DualBrainController:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
         qid_value = str(qid) if qid else str(uuid.uuid4())
+        scope_resolver = getattr(self.memory, "scope_resolver", None)
+        if callable(scope_resolver) and hasattr(self.unconscious_field, "recall_scope_resolver"):
+            self.unconscious_field.recall_scope_resolver = scope_resolver()
         prepare_retrieval = getattr(self.memory, "prepare_retrieval", None)
         if (callable(prepare_retrieval) and getattr(self.memory, "semantic_index", None) is not None
                 and self._allow_recalled_evidence(question, None, None)):

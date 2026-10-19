@@ -215,6 +215,10 @@ Question-centered recall, optional semantic retrieval, and source-bearing QA
 delivery are described in the [memory recall guide](docs/benchmarks/question-memory-recall.md).
 See the [2026-10-16 retrieval pilot](docs/benchmarks/question-memory-2026-10-16.md)
 for held-out results, the threshold tradeoff, and live worker-path validation.
+Declared project identities, Japanese aliases, and content-only comparison are
+covered in the [scope-aware recall guide](docs/benchmarks/scoped-memory-recall.md).
+The [2026-10-19 scope/content pilot](docs/benchmarks/scoped-memory-2026-10-19.md)
+records the default/calibrated comparisons, remaining Japanese misses, and limits.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.

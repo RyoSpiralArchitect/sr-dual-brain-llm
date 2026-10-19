@@ -1,0 +1,915 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_competing_memory_questions",
+  "description": "Scope IDs/aliases are trusted fixture annotations, not learned verification. Four calibration and four evaluation scopes are disjoint; query variants are correlated. Frozen before evaluation.",
+  "memories": [
+    {
+      "qid": "helix-logs",
+      "question": "How long does Project Helix retain audit logs?",
+      "answer": "Keep audit records for 72 hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-helix-logs",
+      "evidence_status": "verified",
+      "retrieval_scope": "helix",
+      "scope_aliases": [
+        "Helix",
+        "ヘリックス"
+      ]
+    },
+    {
+      "qid": "helix-access",
+      "question": "Who approves access requests in Project Helix?",
+      "answer": "The on-call security owner approves access.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-helix-access",
+      "evidence_status": "verified",
+      "retrieval_scope": "helix",
+      "scope_aliases": [
+        "Helix",
+        "ヘリックス"
+      ]
+    },
+    {
+      "qid": "cedar-backup",
+      "question": "How often does Project Cedar create database backups?",
+      "answer": "Create a database snapshot every four hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-cedar-backup",
+      "evidence_status": "verified",
+      "retrieval_scope": "cedar",
+      "scope_aliases": [
+        "Cedar",
+        "シダー"
+      ]
+    },
+    {
+      "qid": "cedar-keys",
+      "question": "How often does Project Cedar rotate encryption keys?",
+      "answer": "Rotate encryption keys every 30 days.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-cedar-keys",
+      "evidence_status": "verified",
+      "retrieval_scope": "cedar",
+      "scope_aliases": [
+        "Cedar",
+        "シダー"
+      ]
+    },
+    {
+      "qid": "quartz-cache",
+      "question": "How does Project Quartz prevent stale cache writes?",
+      "answer": "Publish only when the request generation still matches.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-quartz-cache",
+      "evidence_status": "verified",
+      "retrieval_scope": "quartz",
+      "scope_aliases": [
+        "Quartz",
+        "クォーツ"
+      ]
+    },
+    {
+      "qid": "quartz-limits",
+      "question": "What is the API request limit in Project Quartz?",
+      "answer": "Allow 120 requests per minute per tenant.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-quartz-limits",
+      "evidence_status": "verified",
+      "retrieval_scope": "quartz",
+      "scope_aliases": [
+        "Quartz",
+        "クォーツ"
+      ]
+    },
+    {
+      "qid": "willow-rollback",
+      "question": "How does Project Willow roll back a feature release?",
+      "answer": "Disable the feature flag for the affected user cohort.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-willow-rollback",
+      "evidence_status": "verified",
+      "retrieval_scope": "willow",
+      "scope_aliases": [
+        "Willow",
+        "ウィロー"
+      ]
+    },
+    {
+      "qid": "willow-window",
+      "question": "When is the maintenance window for Project Willow?",
+      "answer": "The maintenance window is Sunday 02:00–03:00 UTC.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-willow-window",
+      "evidence_status": "verified",
+      "retrieval_scope": "willow",
+      "scope_aliases": [
+        "Willow",
+        "ウィロー"
+      ]
+    },
+    {
+      "qid": "juniper-logs",
+      "question": "How long does Project Juniper retain audit logs?",
+      "answer": "Keep audit records for 36 hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-juniper-logs",
+      "evidence_status": "verified",
+      "retrieval_scope": "juniper",
+      "scope_aliases": [
+        "Juniper",
+        "ジュニパー",
+        "North",
+        "ノース"
+      ]
+    },
+    {
+      "qid": "juniper-access",
+      "question": "Who approves access requests in Project Juniper?",
+      "answer": "The service owner approves access.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-juniper-access",
+      "evidence_status": "verified",
+      "retrieval_scope": "juniper",
+      "scope_aliases": [
+        "Juniper",
+        "ジュニパー",
+        "North",
+        "ノース"
+      ]
+    },
+    {
+      "qid": "beacon-backup",
+      "question": "How often does Project Beacon create database backups?",
+      "answer": "Create a snapshot every eight hours.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-beacon-backup",
+      "evidence_status": "verified",
+      "retrieval_scope": "beacon",
+      "scope_aliases": [
+        "Beacon",
+        "ビーコン",
+        "North",
+        "ノース"
+      ]
+    },
+    {
+      "qid": "beacon-keys",
+      "question": "How often does Project Beacon rotate encryption keys?",
+      "answer": "Rotate encryption keys every 14 days.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-beacon-keys",
+      "evidence_status": "verified",
+      "retrieval_scope": "beacon",
+      "scope_aliases": [
+        "Beacon",
+        "ビーコン",
+        "North",
+        "ノース"
+      ]
+    },
+    {
+      "qid": "tidal-cache",
+      "question": "How does Project Tidal prevent stale cache writes?",
+      "answer": "A matching generation is required before publishing.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-tidal-cache",
+      "evidence_status": "verified",
+      "retrieval_scope": "tidal",
+      "scope_aliases": [
+        "Tidal",
+        "タイダル"
+      ]
+    },
+    {
+      "qid": "tidal-limits",
+      "question": "What is the API request limit in Project Tidal?",
+      "answer": "Allow 80 requests per minute per tenant.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-tidal-limits",
+      "evidence_status": "verified",
+      "retrieval_scope": "tidal",
+      "scope_aliases": [
+        "Tidal",
+        "タイダル"
+      ]
+    },
+    {
+      "qid": "tidal-limits-conflict",
+      "question": "What is the API request limit in Project Tidal?",
+      "answer": "A second active record states 100 requests per minute per tenant.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-tidal-limits-conflict",
+      "evidence_status": "verified",
+      "retrieval_scope": "tidal",
+      "scope_aliases": [
+        "Tidal",
+        "タイダル"
+      ]
+    },
+    {
+      "qid": "kestrel-rollback",
+      "question": "How does Project Kestrel roll back a feature release?",
+      "answer": "Turn off the release flag for the affected cohort.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-kestrel-rollback",
+      "evidence_status": "verified",
+      "retrieval_scope": "kestrel",
+      "scope_aliases": [
+        "Kestrel",
+        "ケストレル"
+      ]
+    },
+    {
+      "qid": "kestrel-window",
+      "question": "When is the maintenance window for Project Kestrel?",
+      "answer": "The maintenance window is Saturday 01:00–02:00 UTC.",
+      "timestamp": 1790000000,
+      "seed_id": "seed-kestrel-window",
+      "evidence_status": "verified",
+      "retrieval_scope": "kestrel",
+      "scope_aliases": [
+        "Kestrel",
+        "ケストレル"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "helix-logs-echo",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How long does Project Helix retain audit logs?",
+      "relevant_qids": [
+        "helix-logs"
+      ]
+    },
+    {
+      "id": "helix-logs-paraphrase",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "When should Helix delete stored audit records?",
+      "relevant_qids": [
+        "helix-logs"
+      ]
+    },
+    {
+      "id": "helix-logs-japanese",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ヘリックスの監査記録はいつまで保存する？",
+      "relevant_qids": [
+        "helix-logs"
+      ]
+    },
+    {
+      "id": "helix-access-echo",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "Who approves access requests in Project Helix?",
+      "relevant_qids": [
+        "helix-access"
+      ]
+    },
+    {
+      "id": "helix-access-paraphrase",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "Whose permission is needed for Helix account access?",
+      "relevant_qids": [
+        "helix-access"
+      ]
+    },
+    {
+      "id": "helix-access-japanese",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ヘリックスへのアクセス申請は誰が承認する？",
+      "relevant_qids": [
+        "helix-access"
+      ]
+    },
+    {
+      "id": "helix-unsupported_same_project",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Helix’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "helix-unsupported_japanese",
+      "scene": "helix",
+      "split": "calibration",
+      "kind": "unsupported_japanese",
+      "question": "ヘリックスの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "cedar-backup-echo",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How often does Project Cedar create database backups?",
+      "relevant_qids": [
+        "cedar-backup"
+      ]
+    },
+    {
+      "id": "cedar-backup-paraphrase",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "What is Cedar’s interval between database snapshots?",
+      "relevant_qids": [
+        "cedar-backup"
+      ]
+    },
+    {
+      "id": "cedar-backup-japanese",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "シダー案件のデータベースのバックアップ間隔は？",
+      "relevant_qids": [
+        "cedar-backup"
+      ]
+    },
+    {
+      "id": "cedar-keys-echo",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How often does Project Cedar rotate encryption keys?",
+      "relevant_qids": [
+        "cedar-keys"
+      ]
+    },
+    {
+      "id": "cedar-keys-paraphrase",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "When should Cedar replace its encryption key material?",
+      "relevant_qids": [
+        "cedar-keys"
+      ]
+    },
+    {
+      "id": "cedar-keys-japanese",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "シダーの暗号鍵はどのくらいの頻度で交換する？",
+      "relevant_qids": [
+        "cedar-keys"
+      ]
+    },
+    {
+      "id": "cedar-unsupported_same_project",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Cedar’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "cedar-unsupported_japanese",
+      "scene": "cedar",
+      "split": "calibration",
+      "kind": "unsupported_japanese",
+      "question": "シダーの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "quartz-cache-echo",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How does Project Quartz prevent stale cache writes?",
+      "relevant_qids": [
+        "quartz-cache"
+      ]
+    },
+    {
+      "id": "quartz-cache-paraphrase",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "How can Quartz stop delayed fetches from overwriting newer cache entries?",
+      "relevant_qids": [
+        "quartz-cache"
+      ]
+    },
+    {
+      "id": "quartz-cache-japanese",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "クォーツで遅れて返った取得結果が新しいキャッシュを上書きするのをどう防ぐ？",
+      "relevant_qids": [
+        "quartz-cache"
+      ]
+    },
+    {
+      "id": "quartz-limits-echo",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "What is the API request limit in Project Quartz?",
+      "relevant_qids": [
+        "quartz-limits"
+      ]
+    },
+    {
+      "id": "quartz-limits-paraphrase",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "How many API calls may Quartz accept each minute?",
+      "relevant_qids": [
+        "quartz-limits"
+      ]
+    },
+    {
+      "id": "quartz-limits-japanese",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "クォーツのAPIは毎分何回まで呼び出せる？",
+      "relevant_qids": [
+        "quartz-limits"
+      ]
+    },
+    {
+      "id": "quartz-unsupported_same_project",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Quartz’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "quartz-unsupported_japanese",
+      "scene": "quartz",
+      "split": "calibration",
+      "kind": "unsupported_japanese",
+      "question": "クォーツの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "willow-rollback-echo",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "How does Project Willow roll back a feature release?",
+      "relevant_qids": [
+        "willow-rollback"
+      ]
+    },
+    {
+      "id": "willow-rollback-paraphrase",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "How can Willow undo a rollout for affected users?",
+      "relevant_qids": [
+        "willow-rollback"
+      ]
+    },
+    {
+      "id": "willow-rollback-japanese",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ウィローの機能公開を対象ユーザーだけ元に戻す方法は？",
+      "relevant_qids": [
+        "willow-rollback"
+      ]
+    },
+    {
+      "id": "willow-window-echo",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "When is the maintenance window for Project Willow?",
+      "relevant_qids": [
+        "willow-window"
+      ]
+    },
+    {
+      "id": "willow-window-paraphrase",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "At what time may Willow undergo scheduled maintenance?",
+      "relevant_qids": [
+        "willow-window"
+      ]
+    },
+    {
+      "id": "willow-window-japanese",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "ウィローの定期メンテナンスはいつ実施する？",
+      "relevant_qids": [
+        "willow-window"
+      ]
+    },
+    {
+      "id": "willow-unsupported_same_project",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Willow’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "willow-unsupported_japanese",
+      "scene": "willow",
+      "split": "calibration",
+      "kind": "unsupported_japanese",
+      "question": "ウィローの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "juniper-logs-echo",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How long does Project Juniper retain audit logs?",
+      "relevant_qids": [
+        "juniper-logs"
+      ]
+    },
+    {
+      "id": "juniper-logs-paraphrase",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "When must Juniper discard stored audit records?",
+      "relevant_qids": [
+        "juniper-logs"
+      ]
+    },
+    {
+      "id": "juniper-logs-japanese",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ジュニパーの監査記録は何時間残す決まり？",
+      "relevant_qids": [
+        "juniper-logs"
+      ]
+    },
+    {
+      "id": "juniper-access-echo",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "Who approves access requests in Project Juniper?",
+      "relevant_qids": [
+        "juniper-access"
+      ]
+    },
+    {
+      "id": "juniper-access-paraphrase",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "Whose permission is needed for Juniper account access?",
+      "relevant_qids": [
+        "juniper-access"
+      ]
+    },
+    {
+      "id": "juniper-access-japanese",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ジュニパーへのアクセス申請は誰の許可が必要？",
+      "relevant_qids": [
+        "juniper-access"
+      ]
+    },
+    {
+      "id": "juniper-unsupported_same_project",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Juniper’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "juniper-unsupported_japanese",
+      "scene": "juniper",
+      "split": "evaluation",
+      "kind": "unsupported_japanese",
+      "question": "ジュニパーの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "beacon-backup-echo",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How often does Project Beacon create database backups?",
+      "relevant_qids": [
+        "beacon-backup"
+      ]
+    },
+    {
+      "id": "beacon-backup-paraphrase",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "What is Beacon’s interval between persistent database snapshots?",
+      "relevant_qids": [
+        "beacon-backup"
+      ]
+    },
+    {
+      "id": "beacon-backup-japanese",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ビーコン案件のデータベースのバックアップ間隔は？",
+      "relevant_qids": [
+        "beacon-backup"
+      ]
+    },
+    {
+      "id": "beacon-keys-echo",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How often does Project Beacon rotate encryption keys?",
+      "relevant_qids": [
+        "beacon-keys"
+      ]
+    },
+    {
+      "id": "beacon-keys-paraphrase",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "When should Beacon replace its encryption key material?",
+      "relevant_qids": [
+        "beacon-keys"
+      ]
+    },
+    {
+      "id": "beacon-keys-japanese",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ビーコンの暗号鍵はどのくらいの頻度で交換する？",
+      "relevant_qids": [
+        "beacon-keys"
+      ]
+    },
+    {
+      "id": "beacon-unsupported_same_project",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Beacon’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "beacon-unsupported_japanese",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "unsupported_japanese",
+      "question": "ビーコンの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "tidal-cache-echo",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How does Project Tidal prevent stale cache writes?",
+      "relevant_qids": [
+        "tidal-cache"
+      ]
+    },
+    {
+      "id": "tidal-cache-paraphrase",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "How can Tidal stop a late fetch from replacing a newer cache entry?",
+      "relevant_qids": [
+        "tidal-cache"
+      ]
+    },
+    {
+      "id": "tidal-cache-japanese",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "タイダルのキャッシュで遅れて返った取得結果による上書きをどう防ぐ？",
+      "relevant_qids": [
+        "tidal-cache"
+      ]
+    },
+    {
+      "id": "tidal-limits-echo",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "What is the API request limit in Project Tidal?",
+      "relevant_qids": [
+        "tidal-limits",
+        "tidal-limits-conflict"
+      ]
+    },
+    {
+      "id": "tidal-limits-paraphrase",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "How many API calls may Tidal accept each minute?",
+      "relevant_qids": [
+        "tidal-limits",
+        "tidal-limits-conflict"
+      ]
+    },
+    {
+      "id": "tidal-limits-japanese",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "タイダルのAPIは毎分何回まで呼び出せる？",
+      "relevant_qids": [
+        "tidal-limits",
+        "tidal-limits-conflict"
+      ]
+    },
+    {
+      "id": "tidal-unsupported_same_project",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Tidal’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "tidal-unsupported_japanese",
+      "scene": "tidal",
+      "split": "evaluation",
+      "kind": "unsupported_japanese",
+      "question": "タイダルの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "kestrel-rollback-echo",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "How does Project Kestrel roll back a feature release?",
+      "relevant_qids": [
+        "kestrel-rollback"
+      ]
+    },
+    {
+      "id": "kestrel-rollback-paraphrase",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "How can Kestrel undo a rollout for only the users it affected?",
+      "relevant_qids": [
+        "kestrel-rollback"
+      ]
+    },
+    {
+      "id": "kestrel-rollback-japanese",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ケストレルの機能公開を対象ユーザーだけ元に戻す方法は？",
+      "relevant_qids": [
+        "kestrel-rollback"
+      ]
+    },
+    {
+      "id": "kestrel-window-echo",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "When is the maintenance window for Project Kestrel?",
+      "relevant_qids": [
+        "kestrel-window"
+      ]
+    },
+    {
+      "id": "kestrel-window-paraphrase",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "At what time may Kestrel undergo scheduled maintenance?",
+      "relevant_qids": [
+        "kestrel-window"
+      ]
+    },
+    {
+      "id": "kestrel-window-japanese",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ケストレルの定期メンテナンスはいつ実施する？",
+      "relevant_qids": [
+        "kestrel-window"
+      ]
+    },
+    {
+      "id": "kestrel-unsupported_same_project",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "unsupported_same_project",
+      "question": "What is Project Kestrel’s cafeteria lunch menu?",
+      "relevant_qids": []
+    },
+    {
+      "id": "kestrel-unsupported_japanese",
+      "scene": "kestrel",
+      "split": "evaluation",
+      "kind": "unsupported_japanese",
+      "question": "ケストレルの社員食堂の昼食メニューは？",
+      "relevant_qids": []
+    },
+    {
+      "id": "calibration-unknown_scope",
+      "scene": "calibration-unknown_scope",
+      "split": "calibration",
+      "kind": "unknown_scope",
+      "question": "How long does Project Glacier retain audit logs?",
+      "relevant_qids": []
+    },
+    {
+      "id": "calibration-unrelated",
+      "scene": "calibration-unrelated",
+      "split": "calibration",
+      "kind": "unrelated",
+      "question": "How do volcanoes form?",
+      "relevant_qids": []
+    },
+    {
+      "id": "evaluation-unknown_scope",
+      "scene": "evaluation-unknown_scope",
+      "split": "evaluation",
+      "kind": "unknown_scope",
+      "question": "How long does Project Harbor retain audit logs?",
+      "relevant_qids": []
+    },
+    {
+      "id": "evaluation-unrelated",
+      "scene": "evaluation-unrelated",
+      "split": "evaluation",
+      "kind": "unrelated",
+      "question": "How does photosynthesis work?",
+      "relevant_qids": []
+    },
+    {
+      "id": "evaluation-ambiguous_alias",
+      "scene": "evaluation-ambiguous_alias",
+      "split": "evaluation",
+      "kind": "ambiguous_alias",
+      "question": "How often does Project North create database backups?",
+      "relevant_qids": []
+    },
+    {
+      "id": "evaluation-ambiguous_alias_japanese",
+      "scene": "evaluation-ambiguous_alias_japanese",
+      "split": "evaluation",
+      "kind": "ambiguous_alias_japanese",
+      "question": "ノースの監査ログは何時間保存する？",
+      "relevant_qids": []
+    },
+    {
+      "id": "evaluation-no_scope",
+      "scene": "evaluation-no_scope",
+      "split": "evaluation",
+      "kind": "no_scope",
+      "question": "How long are audit logs retained?",
+      "relevant_qids": []
+    },
+    {
+      "id": "beacon-width",
+      "scene": "beacon",
+      "split": "evaluation",
+      "kind": "unicode_width",
+      "question": "Ｐｒｏｊｅｃｔ　ＢｅＡｃＯｎ のデータベースのバックアップ間隔は？",
+      "relevant_qids": [
+        "beacon-backup"
+      ]
+    }
+  ]
+}

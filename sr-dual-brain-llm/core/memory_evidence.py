@@ -31,6 +31,9 @@ def bounded_evidence(items: Any) -> list[dict]:
         entry = {"seed_id": seed_id, "source_qid": source_qid, "status": item["status"],
                  "recorded_at": recorded_at, "question": question[:240], "answer": answer[:640],
                  "truncated": item.get("truncated") is True or len(question) > 240 or len(answer) > 640}
+        scope = item.get("retrieval_scope")
+        if isinstance(scope, str) and scope.strip() and len(scope) <= 128:
+            entry["retrieval_scope"] = scope
         if len(json.dumps(result + [entry], ensure_ascii=False)) > EVIDENCE_CHARS:
             continue
         result.append(entry)
