@@ -1,0 +1,810 @@
+{
+  "schema_version": 1,
+  "origin": "synthetic_competing_memory_questions",
+  "study": "question_evidence_support_v1",
+  "notes": "Authored synthetic evidence support labels; not final-answer correctness or independent human evaluation. A record is relevant if it directly supports at least one explicitly requested fact. Explicitly stating absence can answer an existence question; no fact may be inferred from silence. Multiple active conflicts remain relevant.",
+  "memories": [
+    {
+      "qid": "cobalt-width",
+      "seed_id": "seed-cobalt-width",
+      "question": "In Project Cobalt, what is the maximum width of a resized image?",
+      "answer": "Resized images have a maximum width of 1920 pixels.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "cobalt",
+      "scope_aliases": [
+        "Cobalt",
+        "コバルト"
+      ]
+    },
+    {
+      "qid": "cobalt-metadata",
+      "seed_id": "seed-cobalt-metadata",
+      "question": "In Project Cobalt, what happens to EXIF metadata when an image is resized?",
+      "answer": "EXIF metadata is removed during resizing.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "cobalt",
+      "scope_aliases": [
+        "Cobalt",
+        "コバルト"
+      ]
+    },
+    {
+      "qid": "indigo-due",
+      "seed_id": "seed-indigo-due",
+      "question": "In Project Indigo, how many days after issue is an invoice due?",
+      "answer": "Invoices are due 14 days after issue.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "indigo",
+      "scope_aliases": [
+        "Indigo",
+        "インディゴ"
+      ]
+    },
+    {
+      "qid": "indigo-currency",
+      "seed_id": "seed-indigo-currency",
+      "question": "In Project Indigo, which currencies are accepted for invoice payment?",
+      "answer": "Invoices can be paid in USD or EUR.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "indigo",
+      "scope_aliases": [
+        "Indigo",
+        "インディゴ"
+      ]
+    },
+    {
+      "qid": "vega-units",
+      "seed_id": "seed-vega-units",
+      "question": "In Project Vega, which length unit is used for stored position coordinates?",
+      "answer": "Stored position coordinates use meters.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "vega",
+      "scope_aliases": [
+        "Vega",
+        "ベガ"
+      ]
+    },
+    {
+      "qid": "vega-missing",
+      "seed_id": "seed-vega-missing",
+      "question": "In Project Vega, which numeric marker represents a missing sensor reading?",
+      "answer": "A missing sensor reading is represented by -9999.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "vega",
+      "scope_aliases": [
+        "Vega",
+        "ベガ"
+      ]
+    },
+    {
+      "qid": "onyx-weight",
+      "seed_id": "seed-onyx-weight",
+      "question": "In Project Onyx, what is the maximum permitted parcel weight?",
+      "answer": "A parcel may weigh at most 5 kg.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "onyx",
+      "scope_aliases": [
+        "Onyx",
+        "オニキス"
+      ]
+    },
+    {
+      "qid": "onyx-prefix",
+      "seed_id": "seed-onyx-prefix",
+      "question": "In Project Onyx, which prefix begins a parcel tracking identifier?",
+      "answer": "Parcel tracking identifiers start with OX-.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "onyx",
+      "scope_aliases": [
+        "Onyx",
+        "オニキス"
+      ]
+    },
+    {
+      "qid": "maple-format",
+      "seed_id": "seed-maple-format",
+      "question": "In Project Maple, which file format is used for meeting audio recordings?",
+      "answer": "Meeting audio recordings are saved in OGG format.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "maple",
+      "scope_aliases": [
+        "Maple",
+        "メープル"
+      ]
+    },
+    {
+      "qid": "maple-format-conflict",
+      "seed_id": "seed-maple-format-conflict",
+      "question": "In Project Maple, which file format is used for meeting audio recordings?",
+      "answer": "Meeting audio recordings are saved in FLAC format.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "maple",
+      "scope_aliases": [
+        "Maple",
+        "メープル"
+      ]
+    },
+    {
+      "qid": "maple-speakers",
+      "seed_id": "seed-maple-speakers",
+      "question": "In Project Maple, does the meeting transcript distinguish different speakers?",
+      "answer": "Meeting transcripts separate turns by speaker without storing speaker names.",
+      "timestamp": 1790000000,
+      "evidence_status": "verified",
+      "retrieval_scope": "maple",
+      "scope_aliases": [
+        "Maple",
+        "メープル"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "cobalt-width-echo",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Cobalt, what is the maximum width of a resized image?",
+      "relevant_qids": [
+        "cobalt-width"
+      ]
+    },
+    {
+      "id": "cobalt-width-paraphrase",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Cobalt, how wide may a resized image be?",
+      "relevant_qids": [
+        "cobalt-width"
+      ]
+    },
+    {
+      "id": "cobalt-width-japanese",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "コバルトの縮小後の画像は、横幅が最大何ピクセルになる？",
+      "relevant_qids": [
+        "cobalt-width"
+      ]
+    },
+    {
+      "id": "cobalt-width-near_miss",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Cobalt, what is the maximum height of a resized image?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "cobalt-width-near_miss_japanese",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "コバルトの縮小後の画像は、高さが最大何ピクセルになる？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "cobalt-metadata-echo",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Cobalt, what happens to EXIF metadata when an image is resized?",
+      "relevant_qids": [
+        "cobalt-metadata"
+      ]
+    },
+    {
+      "id": "cobalt-metadata-paraphrase",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Cobalt, does resizing keep or discard the EXIF metadata?",
+      "relevant_qids": [
+        "cobalt-metadata"
+      ]
+    },
+    {
+      "id": "cobalt-metadata-japanese",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "コバルトで画像を縮小すると、EXIFの付加情報は残る？",
+      "relevant_qids": [
+        "cobalt-metadata"
+      ]
+    },
+    {
+      "id": "cobalt-metadata-near_miss",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Cobalt, what happens to embedded ICC color profiles when an image is resized?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "cobalt-metadata-near_miss_japanese",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "コバルトで画像を縮小すると、埋め込まれたICCカラープロファイルは残る？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "cobalt-compound",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "compound",
+      "question": "In Project Cobalt, what is the maximum resized image width, and what happens to its EXIF metadata?",
+      "relevant_qids": [
+        "cobalt-width",
+        "cobalt-metadata"
+      ]
+    },
+    {
+      "id": "cobalt-compound_japanese",
+      "scene": "cobalt",
+      "topic_group": "image_processing",
+      "split": "calibration",
+      "kind": "compound_japanese",
+      "question": "コバルトで縮小した画像の横幅の上限と、EXIFの付加情報の扱いを教えて。",
+      "relevant_qids": [
+        "cobalt-width",
+        "cobalt-metadata"
+      ]
+    },
+    {
+      "id": "indigo-due-echo",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Indigo, how many days after issue is an invoice due?",
+      "relevant_qids": [
+        "indigo-due"
+      ]
+    },
+    {
+      "id": "indigo-due-paraphrase",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Indigo, how long after issuance does a customer have to pay an invoice?",
+      "relevant_qids": [
+        "indigo-due"
+      ]
+    },
+    {
+      "id": "indigo-due-japanese",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "インディゴの請求書は、発行日から何日以内に支払う？",
+      "relevant_qids": [
+        "indigo-due"
+      ]
+    },
+    {
+      "id": "indigo-due-near_miss",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Indigo, how many days after issue is an overdue invoice sent to collections?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "indigo-due-near_miss_japanese",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "インディゴの請求書は、発行日から何日過ぎると債権回収に回される？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "indigo-currency-echo",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "echo",
+      "question": "In Project Indigo, which currencies are accepted for invoice payment?",
+      "relevant_qids": [
+        "indigo-currency"
+      ]
+    },
+    {
+      "id": "indigo-currency-paraphrase",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "paraphrase",
+      "question": "In Project Indigo, what currencies may customers use to settle invoices?",
+      "relevant_qids": [
+        "indigo-currency"
+      ]
+    },
+    {
+      "id": "indigo-currency-japanese",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "japanese",
+      "question": "インディゴの請求書の支払いでは、どの通貨が使える？",
+      "relevant_qids": [
+        "indigo-currency"
+      ]
+    },
+    {
+      "id": "indigo-currency-near_miss",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "near_miss",
+      "question": "In Project Indigo, which exchange rate is used to convert invoice payments?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "indigo-currency-near_miss_japanese",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "near_miss_japanese",
+      "question": "インディゴの請求書を支払うとき、換算にどの為替レートを使う？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "indigo-compound",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "compound",
+      "question": "In Project Indigo, when is an invoice due, and which payment currencies are accepted?",
+      "relevant_qids": [
+        "indigo-due",
+        "indigo-currency"
+      ]
+    },
+    {
+      "id": "indigo-compound_japanese",
+      "scene": "indigo",
+      "topic_group": "invoice_settlement",
+      "split": "calibration",
+      "kind": "compound_japanese",
+      "question": "インディゴの請求書の支払期限と、支払える通貨を教えて。",
+      "relevant_qids": [
+        "indigo-due",
+        "indigo-currency"
+      ]
+    },
+    {
+      "id": "vega-units-echo",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Vega, which length unit is used for stored position coordinates?",
+      "relevant_qids": [
+        "vega-units"
+      ]
+    },
+    {
+      "id": "vega-units-paraphrase",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Vega, in what distance units are positions recorded?",
+      "relevant_qids": [
+        "vega-units"
+      ]
+    },
+    {
+      "id": "vega-units-japanese",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ベガで記録する位置座標の長さの単位は何？",
+      "relevant_qids": [
+        "vega-units"
+      ]
+    },
+    {
+      "id": "vega-units-near_miss",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Vega, which coordinate reference system is used for stored positions?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "vega-units-near_miss_japanese",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ベガで記録する位置座標の座標参照系は何？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "vega-missing-echo",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Vega, which numeric marker represents a missing sensor reading?",
+      "relevant_qids": [
+        "vega-missing"
+      ]
+    },
+    {
+      "id": "vega-missing-paraphrase",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Vega, what sentinel number stands for an absent sensor measurement?",
+      "relevant_qids": [
+        "vega-missing"
+      ]
+    },
+    {
+      "id": "vega-missing-japanese",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "ベガでセンサーの測定値が欠けている場合、どの数値を入れる？",
+      "relevant_qids": [
+        "vega-missing"
+      ]
+    },
+    {
+      "id": "vega-missing-near_miss",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Vega, what is the minimum valid sensor reading?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "vega-missing-near_miss_japanese",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "ベガでセンサーの測定値として有効な値の下限はいくつ？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "vega-compound",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "compound",
+      "question": "In Project Vega, what length unit do stored positions use, and what numeric marker represents a missing sensor reading?",
+      "relevant_qids": [
+        "vega-units",
+        "vega-missing"
+      ]
+    },
+    {
+      "id": "vega-compound_japanese",
+      "scene": "vega",
+      "topic_group": "scientific_coordinates",
+      "split": "evaluation",
+      "kind": "compound_japanese",
+      "question": "ベガの位置座標の単位と、センサーの測定値がないときに入れる数値を教えて。",
+      "relevant_qids": [
+        "vega-units",
+        "vega-missing"
+      ]
+    },
+    {
+      "id": "onyx-weight-echo",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Onyx, what is the maximum permitted parcel weight?",
+      "relevant_qids": [
+        "onyx-weight"
+      ]
+    },
+    {
+      "id": "onyx-weight-paraphrase",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Onyx, how heavy can one parcel be?",
+      "relevant_qids": [
+        "onyx-weight"
+      ]
+    },
+    {
+      "id": "onyx-weight-japanese",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "オニキスで送れる荷物は、最大何キロまで？",
+      "relevant_qids": [
+        "onyx-weight"
+      ]
+    },
+    {
+      "id": "onyx-weight-near_miss",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Onyx, what are the maximum permitted parcel dimensions?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "onyx-weight-near_miss_japanese",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "オニキスで送れる荷物の縦・横・高さの上限はいくつ？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "onyx-prefix-echo",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Onyx, which prefix begins a parcel tracking identifier?",
+      "relevant_qids": [
+        "onyx-prefix"
+      ]
+    },
+    {
+      "id": "onyx-prefix-paraphrase",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Onyx, what characters appear at the beginning of a parcel tracking code?",
+      "relevant_qids": [
+        "onyx-prefix"
+      ]
+    },
+    {
+      "id": "onyx-prefix-japanese",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "オニキスの荷物の追跡番号は、どんな文字列で始まる？",
+      "relevant_qids": [
+        "onyx-prefix"
+      ]
+    },
+    {
+      "id": "onyx-prefix-near_miss",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Onyx, which checksum algorithm validates a parcel tracking identifier?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "onyx-prefix-near_miss_japanese",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "オニキスの荷物の追跡番号は、どのチェックサムの計算方法で検証する？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "onyx-compound",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "compound",
+      "question": "In Project Onyx, what is the maximum parcel weight, and which prefix begins a tracking identifier?",
+      "relevant_qids": [
+        "onyx-weight",
+        "onyx-prefix"
+      ]
+    },
+    {
+      "id": "onyx-compound_japanese",
+      "scene": "onyx",
+      "topic_group": "parcel_tracking",
+      "split": "evaluation",
+      "kind": "compound_japanese",
+      "question": "オニキスの荷物の重さの上限と、追跡番号の先頭の文字列を教えて。",
+      "relevant_qids": [
+        "onyx-weight",
+        "onyx-prefix"
+      ]
+    },
+    {
+      "id": "maple-format-echo",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Maple, which file format is used for meeting audio recordings?",
+      "relevant_qids": [
+        "maple-format",
+        "maple-format-conflict"
+      ]
+    },
+    {
+      "id": "maple-format-paraphrase",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Maple, what type of audio file is produced when a meeting is recorded?",
+      "relevant_qids": [
+        "maple-format",
+        "maple-format-conflict"
+      ]
+    },
+    {
+      "id": "maple-format-japanese",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "メープルで会議の音声を録音すると、どのファイル形式で保存される？",
+      "relevant_qids": [
+        "maple-format",
+        "maple-format-conflict"
+      ]
+    },
+    {
+      "id": "maple-format-near_miss",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "near_miss",
+      "question": "In Project Maple, which audio bitrate is used for meeting recordings?",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "maple-format-near_miss_japanese",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "near_miss_japanese",
+      "question": "メープルで会議の音声を録音するときのビットレートはいくつ？",
+      "relevant_qids": [],
+      "no_answer_reason": "The recorded answer states a different facet and does not supply the requested fact."
+    },
+    {
+      "id": "maple-speakers-echo",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "echo",
+      "question": "In Project Maple, does the meeting transcript distinguish different speakers?",
+      "relevant_qids": [
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-speakers-paraphrase",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "paraphrase",
+      "question": "In Project Maple, are separate speakers identified in the meeting transcript, and are their names retained?",
+      "relevant_qids": [
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-speakers-japanese",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "japanese",
+      "question": "メープルの会議の文字起こしでは、話した人を区別する？名前も記録する？",
+      "relevant_qids": [
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-speakers-near_miss",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "explicit_absence",
+      "question": "In Project Maple, how many days are speaker names retained with meeting transcripts?",
+      "relevant_qids": [
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-speakers-near_miss_japanese",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "explicit_absence_japanese",
+      "question": "メープルの会議の文字起こしでは、話した人の名前を何日間保管する？",
+      "relevant_qids": [
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-compound",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "compound",
+      "question": "In Project Maple, which audio file format is recorded, and does the transcript distinguish speakers?",
+      "relevant_qids": [
+        "maple-format",
+        "maple-format-conflict",
+        "maple-speakers"
+      ]
+    },
+    {
+      "id": "maple-compound_japanese",
+      "scene": "maple",
+      "topic_group": "meeting_recordings",
+      "split": "evaluation",
+      "kind": "compound_japanese",
+      "question": "メープルの会議の録音形式と、文字起こしで話者を区別するかを教えて。",
+      "relevant_qids": [
+        "maple-format",
+        "maple-format-conflict",
+        "maple-speakers"
+      ]
+    }
+  ]
+}
