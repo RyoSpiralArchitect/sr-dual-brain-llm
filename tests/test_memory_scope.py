@@ -1,4 +1,5 @@
 import asyncio
+from copy import deepcopy
 from dataclasses import replace
 import json
 
@@ -126,3 +127,36 @@ def test_scope_guard_also_blocks_a_latent_seed_even_with_an_identical_question_h
     clone = field.fork()
     assert clone.memory_state() == field.memory_state()
     assert "PRIVATE FINAL ANSWER" not in json.dumps(field.memory_state())
+
+
+@pytest.mark.parametrize("name,expected", [("Helix", "source"), ("Cedar", "cedar-source")])
+def test_latent_recall_resolves_identical_source_questions_by_seed_and_qa_identity(name, expected):
+    field, question, _ = seed_field()
+    other = deepcopy(field._seed_cache[0])
+    other.seed_id = "cedar-seed"
+    other.source_qid = "cedar-source"
+    field._seed_cache.append(other)
+    memory = SharedMemory(semantic_index=QuestionSemanticIndex(TopicBackend()))
+    memory.store(trace(question=question, qid="source", seed_id=field._seed_cache[0].seed_id))
+    memory.store(trace("cedar", ("Cedar",), question=question, qid="cedar-source", seed_id="cedar-seed"))
+    resolver = memory.scope_resolver()
+    assert resolver.source(question).ambiguous  # Text alone cannot distinguish them.
+    query = f"Project {name}: {question}"
+    asyncio.run(memory.prepare_retrieval(query, seed_questions=[question]))
+    field.recall_scope_resolver = resolver
+    field.semantic_index = memory.semantic_index
+    mapping = field.analyse(question=query, draft="New draft")
+    ideas = field.summary(mapping).emergent_ideas
+    assert [idea.source_qid for idea in ideas] == [expected]
+    assert memory.retrieve_related_traces(query)[0].qid == expected
+    evidence = memory.evidence_for_seeds([idea.seed_id for idea in ideas], question=query)
+    assert [item["source_qid"] for item in evidence] == [expected]
+
+
+def test_ambiguous_identity_bindings_cannot_assign_a_latent_scope():
+    memory = SharedMemory()
+    memory.store(trace(question="Same question", qid="duplicate", seed_id="one"))
+    memory.store(trace("cedar", ("Cedar",), question="Same question", qid="duplicate", seed_id="two"))
+    resolver = memory.scope_resolver()
+    assert resolver.source_for_seed("Same question", "one", "duplicate").ambiguous
+    assert resolver.source_for_seed("Changed question", "one", "duplicate").ambiguous

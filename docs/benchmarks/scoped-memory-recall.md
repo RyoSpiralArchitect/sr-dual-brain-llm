@@ -55,7 +55,11 @@ embedding budget by removing aliases. Registry digests and the content threshold
 are included in semantic/field state snapshots.
 
 The controller shares the active registry before perception. Latent seed recall
-checks scope even when its question hash would pass. Hash-based latent triggers
+checks scope even when its question hash would pass. Exact seed/source-QA IDs
+identify the stored scope when question text is shared across projects; duplicate
+identity bindings are rejected. Legacy seeds without a binding retain conservative
+question-text resolution, which cannot choose between multiple possible scopes.
+Hash-based latent triggers
 still use the full question; they are not a complete topic-relevance gate. When
 source IDs resolve to QA evidence, SharedMemory rechecks scope and content using
 the retrieval selector. Both actual worker prompts receive the accepted scope ID

@@ -1135,12 +1135,15 @@ class UnconsciousField:
             incubation = seed.exposures + 1
             threshold = 0.68 + 0.12 * min(1.0, seed.novelty)
             scope_allowed = True
+            source_scope = None
             if self.recall_mode == "question" and self.recall_scope_resolver is not None:
                 resolver = self.recall_scope_resolver
-                scope_allowed = resolver.compatible(resolver.query(question), resolver.source(seed.question))
+                source = resolver.source_for_seed(seed.question, seed.seed_id, seed.source_qid)
+                scope_allowed = resolver.compatible(resolver.query(question), source)
+                source_scope = next(iter(source.scopes)) if len(source.scopes) == 1 else None
             if self.recall_mode == "question" and self.semantic_index is not None:
-                semantic = self.semantic_index.similarity(question, seed.question)
-                semantic_threshold = self.semantic_index.threshold_for(question, seed.question)
+                semantic = self.semantic_index.similarity(question, seed.question, source_scope=source_scope)
+                semantic_threshold = self.semantic_index.threshold_for(question, seed.question, source_scope=source_scope)
                 if (semantic is not None and semantic >= semantic_threshold
                         and similarity < threshold):
                     similarity = semantic
