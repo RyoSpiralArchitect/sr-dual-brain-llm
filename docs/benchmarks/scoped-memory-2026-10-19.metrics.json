@@ -1782,7 +1782,9 @@
     "target/benchmarks/scoped-memory-replay-2026-10-19/report.json": "f5a99f043da6cda1d980c242287bbbe2e1310186f12071921f79eacd9cd3f65c",
     "target/benchmarks/scoped-memory-semantic-2026-10-19/raw-at-050-diagnostic.json": "312280ae22ce5498f22f14aa8d42cf44335b7d956e20cee9effa21f1dee50755",
     "target/benchmarks/question-memory-regression-2026-10-19/report.json": "091fab5323ed2d69b3481c34dd114c58c595e336d9545abae7465a850b49b04e",
-    "target/benchmarks/question-memory-replay-2026-10-16/report.json": "21eac55983a8145737bcbbc6cb36df41b906c1e959b7fdb81ad3b3b5ea76eb59"
+    "target/benchmarks/question-memory-replay-2026-10-16/report.json": "21eac55983a8145737bcbbc6cb36df41b906c1e959b7fdb81ad3b3b5ea76eb59",
+    "target/benchmarks/scoped-memory-reviewed-replay-2026-10-19/report.json": "6d04c7b9dc01166345c468957afee97de4b00d166d5564d048baec88dc70a084",
+    "target/benchmarks/question-memory-reviewed-regression-2026-10-19/report.json": "61caf7a6b61c95d17265bae9e840bdf0153e1dfff1e0db129635308ffe8446f0"
   },
   "evaluation_selections": {
     "previous_hybrid_calibrated": {
@@ -2382,5 +2384,17 @@
       "evaluation-no_scope": [],
       "beacon-width": []
     }
+  },
+  "post_review_validation": {
+    "source_revision": {
+      "commit": "241955ad3d8556a11ab304596a24ddf9b416426b",
+      "dirty": false
+    },
+    "python_unit_tests": 387,
+    "scoped_summaries_and_calibration_unchanged": true,
+    "legacy_selections_summaries_defaults_and_recoveries_unchanged": true,
+    "new_provider_calls": 0,
+    "legacy_provider_calls": 0,
+    "fix": "Resolve latent scope by exact unique seed/source-QA identity, including shared question text across scopes."
   }
 }
