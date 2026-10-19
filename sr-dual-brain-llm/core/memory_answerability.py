@@ -116,6 +116,7 @@ class AnswerabilityGate:
                 and len(source["question"]) <= 240 and isinstance(source.get("answer"), str)
                 and bool(source["answer"].strip()) and len(source["answer"]) <= 640
                 and source.get("status") in {"verified", "unverified"}
+                and not source.get("truncated", False)
                 and isinstance(source.get("recorded_at"), (int, float)) and math.isfinite(source["recorded_at"]))
 
     def allows(self, question, source):

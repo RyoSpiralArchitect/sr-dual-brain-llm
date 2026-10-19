@@ -216,8 +216,10 @@ class SharedMemory:
 
     @staticmethod
     def _answerability_source(trace):
-        return {"qid": trace.qid, "seed_id": trace.seed_id, "question": _sanitize_memory_text(trace.question),
-                "answer": _sanitize_memory_text(trace.answer), "status": trace.evidence_status,
+        question, answer = _sanitize_memory_text(trace.question), _sanitize_memory_text(trace.answer)
+        return {"qid": trace.qid, "seed_id": trace.seed_id, "question": question,
+                "answer": answer, "status": trace.evidence_status,
+                "truncated": question != trace.question or answer != trace.answer,
                 "recorded_at": trace.timestamp, "valid_until": trace.valid_until,
                 "retrieval_scope": trace.retrieval_scope}
 

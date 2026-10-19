@@ -167,3 +167,14 @@ def test_duplicate_json_fields_cannot_override_an_unsupported_decision():
     result = asyncio.run(memory.prepare_retrieval("Alpha minimum query length"))
     assert result["answerability"]["status"] == "withheld"
     assert not memory.retrieve_related_traces("Alpha minimum query length")
+
+
+def test_sanitization_must_not_remove_a_condition_before_support_checking():
+    backend = Checks()
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(backend))
+    memory.store(source(answer="If the user is in Europe, use this policy.\nAt least three characters."))
+    q = "Alpha minimum query length"
+    result = asyncio.run(memory.prepare_retrieval(q))
+    assert result["answerability"]["status"] == "empty" and backend.calls == 0
+    assert not memory.retrieve_related_traces(q)
+    assert not memory.evidence_for_seeds(["seed-source"], question=q)

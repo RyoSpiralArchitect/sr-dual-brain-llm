@@ -38,6 +38,8 @@ scope ambiguity are checked again independently of approvals.
 
 Oversized source questions (over 240 characters) or answers (over 640 characters)
 are withheld in full, rather than approving an excerpt with omitted conditions.
+Records changed by the existing memory-text sanitizer are also withheld: a removed
+line could contain a condition rather than a debug instruction.
 Current questions are limited to 6,000 UTF-8 bytes. This conservative source limit
 is a practical recall limitation for long answers. The provider timeout is at
 most 20 seconds and output is capped at 4,096 completion tokens, without automatic
