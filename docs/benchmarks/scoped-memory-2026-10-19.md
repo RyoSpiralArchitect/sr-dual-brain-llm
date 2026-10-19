@@ -70,7 +70,7 @@ metrics, runtime-default summaries and field-ablation recovery decisions match
 the earlier report. Thus these checks establish preservation of the unannotated
 path, not an improvement to its previous Japanese misses without annotations.
 
-Local checks passed: 399 Python unit tests, five gateway contracts and 13 Node
+Local checks passed: 407 Python unit tests, five gateway contracts and 13 Node
 tests. Tests cover scoped controller data flow, both detail/critic routes in both
 actual worker/model prompt builders, ambiguous names, Unicode boundaries, original
 UTF-8 budgets, expiry/supersession, conflict preservation and PostgreSQL metadata
@@ -100,18 +100,12 @@ stay under ignored `target/benchmarks/`; hashes identify them but do not by
 themselves provide an independent audit of execution. No historical answer,
 fixture label or human rating was revised.
 
-Review found that shared question text could make a latent seed's scope ambiguous
-even though its stored source was uniquely identified. Commit
-`241955a` resolves that scope by exact unique seed/source-QA identity, with tests
-for both project directions and duplicate binding rejection. Zero-call new/old
-replays on that clean revision preserve the reported summaries, calibration,
-older source selections/defaults and field recovery decisions. These follow-up
-revisions and hashes are recorded separately in the metrics; they do not change
-the provenance of the original paid run or retune the selector.
-
-A second review correction, `426887c`, makes name boundaries Unicode-aware:
-`Café` cannot select `Caféine`, and letter/number/mark/format continuations cannot
-turn a different name into a known scope. Japanese adjoining context remains
-supported. Twelve boundary cases pass. New and old zero-call replays on this
-clean revision again preserve every selection, summary, calibration choice and
-older field recovery decision; their hashes are retained separately.
+Final correctness checks use clean revision `8ff6c8b`: latent scope resolves by
+unique seed/source-QA identity even when question text is shared, and name matching
+uses Unicode-aware boundaries plus the longest valid alias. Rejected longer names
+retry shorter aliases; valid ambiguous longer names cannot choose a shorter one.
+Complete zero-call new/old replays on this revision preserve every selection,
+summary, calibration choice, runtime default and older field recovery decision.
+Final and intermediate revision/artifact hashes are retained separately in the
+metrics. These correctness fixes do not change the original paid run's provenance,
+its question views, or the selected thresholds.

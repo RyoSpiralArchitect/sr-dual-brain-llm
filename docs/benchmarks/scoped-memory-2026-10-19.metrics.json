@@ -1786,7 +1786,9 @@
     "target/benchmarks/scoped-memory-reviewed-replay-2026-10-19/report.json": "6d04c7b9dc01166345c468957afee97de4b00d166d5564d048baec88dc70a084",
     "target/benchmarks/question-memory-reviewed-regression-2026-10-19/report.json": "61caf7a6b61c95d17265bae9e840bdf0153e1dfff1e0db129635308ffe8446f0",
     "target/benchmarks/scoped-memory-unicode-replay-2026-10-19/report.json": "884a0d8451be4cd61b719281b8300c5cbd099894d2f9754b27fd027c74237cc7",
-    "target/benchmarks/question-memory-unicode-regression-2026-10-19/report.json": "386a5bf14c9487bc2df3d062077bfa9d90e977d7c2bfc67f3cea5b34a0203837"
+    "target/benchmarks/question-memory-unicode-regression-2026-10-19/report.json": "386a5bf14c9487bc2df3d062077bfa9d90e977d7c2bfc67f3cea5b34a0203837",
+    "target/benchmarks/scoped-memory-alias-replay-2026-10-19/report.json": "f8c24d9c6c895022edd4b23e94ae0d9bf6167382dd345a08bfa02cc234ae05e0",
+    "target/benchmarks/question-memory-alias-regression-2026-10-19/report.json": "6e70f0764db3c3fe3c81849853b6fbe0bf94f797d094a565a47cf3465f4a6959"
   },
   "evaluation_selections": {
     "previous_hybrid_calibrated": {
@@ -2410,5 +2412,17 @@
     "new_provider_calls": 0,
     "legacy_provider_calls": 0,
     "fix": "Unicode-aware name boundaries reject accented-letter, number, combining-mark and format-control continuations while preserving Japanese context."
+  },
+  "final_validation": {
+    "source_revision": {
+      "commit": "8ff6c8b75d7939509a483ac376cd2fbc9b285c57",
+      "dirty": false
+    },
+    "python_unit_tests": 407,
+    "scoped_summaries_calibration_and_selections_unchanged": true,
+    "legacy_selections_summaries_defaults_and_recoveries_unchanged": true,
+    "new_provider_calls": 0,
+    "legacy_provider_calls": 0,
+    "alias_matching": "Leftmost, longest boundary-valid alias; rejected longer candidates retry shorter ones, valid ambiguous longer aliases remain ambiguous."
   }
 }
