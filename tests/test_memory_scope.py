@@ -103,6 +103,49 @@ def test_unicode_name_boundaries_prevent_wrong_scope_assignment(alias, query, ex
         assert not memory.retrieve_related_traces(query)
 
 
+@pytest.mark.parametrize("query,expected", [
+    ("Foo Bars audit logs", {"short"}),
+    ("Foo Bar audit logs", {"long"}),
+    ("XFoo Bars audit logs", set()),
+    ("FooBar audit logs", set()),
+])
+def test_longest_valid_alias_retries_shorter_candidate_after_boundary_rejection(query, expected):
+    memory = SharedMemory()
+    memory.store(trace("short", ("Foo",), question="How long does Project Foo retain audit logs?", qid="short"))
+    memory.store(trace("long", ("Foo Bar",), question="How long does Project Foo Bar retain audit logs?", qid="long"))
+    assert memory.scope_resolver().query(query).scopes == expected
+    assert {t.qid for t in memory.retrieve_related_traces(query)} == expected
+
+
+def test_ambiguous_longest_valid_alias_cannot_fall_back_to_unique_shorter_name():
+    memory = SharedMemory()
+    memory.store(trace("short", ("Foo",)))
+    memory.store(trace("long", ("Foo Bar",)))
+    memory.store(trace("other", ("Foo Bar",)))
+    cue = memory.scope_resolver().query("Foo Bar audit logs")
+    assert cue.ambiguous and cue.scopes == {"long", "other"}
+    assert not memory.retrieve_related_traces("Foo Bar audit logs")
+
+
+@pytest.mark.parametrize("short,long,query", [
+    ("Café", "Café Lab", "Café Labs audit logs"),
+    ("ヘリックス", "ヘリックス ラボ", "ヘリックス ラボズの監査記録"),
+])
+def test_overlapping_unicode_aliases_use_the_longest_boundary_valid_match(short, long, query):
+    memory = SharedMemory()
+    memory.store(trace("short", (short,)))
+    memory.store(trace("long", (long,)))
+    assert memory.scope_resolver().query(query).scopes == {"short"}
+
+
+def test_rejected_name_fragments_remain_in_content_when_a_later_alias_matches():
+    memory = SharedMemory()
+    memory.store(trace("cafe", ("Café",)))
+    cue = memory.scope_resolver().query("Caféine and Café audit logs")
+    assert cue.scopes == {"cafe"} and "caféine" in cue.content
+    assert "and café " not in cue.content
+
+
 def test_ambiguous_alias_cannot_choose_a_scope_and_registry_tracks_lifecycle():
     memory = SharedMemory()
     first = trace(aliases=("Helix", "North"), qid="one")

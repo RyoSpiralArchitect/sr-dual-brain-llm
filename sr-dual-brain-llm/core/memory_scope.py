@@ -57,24 +57,47 @@ class MemoryScopeResolver:
                 aliases.setdefault(normalize_name(alias), set()).add(trace.retrieval_scope)
         self.aliases = {alias: frozenset(scopes) for alias, scopes in aliases.items()}
         self.sources = {question: frozenset(scopes) for question, scopes in sources.items()}
-        parts = [re.escape(alias) for alias in sorted(aliases, key=lambda value: (-len(value), value))]
-        self.pattern = re.compile("|".join(parts)) if parts else None
+        self.trie = {}
+        for alias in aliases:
+            node = self.trie
+            for character in alias:
+                node = node.setdefault(character, {})
+            node[""] = alias
+
+    def _matches(self, text: str) -> list[tuple[int, int, str]]:
+        """Leftmost, longest *valid* alias; a rejected prefix consumes no text."""
+        matches = []
+        start = 0
+        while start < len(text):
+            node, end, best = self.trie, start, None
+            while end < len(text) and text[end] in node:
+                node = node[text[end]]
+                end += 1
+                alias = node.get("")
+                if (alias is not None
+                        and not _continues_name(text[start - 1] if start else "", alias[0])
+                        and not _continues_name(text[end] if end < len(text) else "", alias[-1])):
+                    best = (start, end, alias)
+            if best is None:
+                start += 1
+            else:
+                matches.append(best)
+                start = best[1]
+        return matches
 
     def query(self, question: str) -> ScopeCue:
-        if self.pattern is None:
+        if not self.trie:
             return ScopeCue(frozenset(), False, question)
         text = normalize_name(question)
-        matches = [match for match in self.pattern.finditer(text)
-                   if not _continues_name(text[match.start() - 1] if match.start() else "", match.group()[0])
-                   and not _continues_name(text[match.end()] if match.end() < len(text) else "", match.group()[-1])]
+        matches = self._matches(text)
         if not matches:
             return ScopeCue(frozenset(), False, question)
-        groups = [self.aliases[match.group()] for match in matches]
+        groups = [self.aliases[alias] for _, _, alias in matches]
         scopes = frozenset().union(*groups)
         parts, end = [], 0
-        for match in matches:
-            parts.extend((text[end:match.start()], " "))
-            end = match.end()
+        for start, stop, _ in matches:
+            parts.extend((text[end:start], " "))
+            end = stop
         content = "".join([*parts, text[end:]])
         content = re.sub(r"\bproject\b|プロジェクト|案件|[’']s\b", " ", content)
         content = " ".join(content.split()).strip(" ?？:：,、。")

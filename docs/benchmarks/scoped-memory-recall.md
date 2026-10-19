@@ -25,7 +25,11 @@ retrieval behavior when used without declared scopes.
 Names use Unicode NFKC and case folding. Alias boundaries recognize Unicode
 letters, numbers and combining marks, including accented Latin names;
 Japanese particles/wrappers can directly adjoin a name (such as `Caféの記録`).
-Katakana aliases cannot match inside a longer Katakana name. Declared aliases
+Katakana aliases cannot match inside a longer Katakana name. Matching selects
+the longest boundary-valid alias; a rejected longer name does not hide a
+valid shorter alias, and an ambiguous valid longer name cannot fall back to a
+unique shorter one. Rejected name fragments remain part of the content cue.
+Declared aliases
 and generic project wrappers are removed from the content cue. Answers, drafts,
 source IDs and verification labels do not enter embeddings.
 
