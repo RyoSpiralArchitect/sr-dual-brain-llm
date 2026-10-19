@@ -44,6 +44,7 @@ class RecordedChecks:
                 raise ValueError("Incomplete frozen support coverage")
             row = self.frozen["responses"][key]
             if row["request"] != request:
+                self.missing.add(key)
                 raise ValueError("Frozen support input mismatch")
             if row.get("error_type"):
                 kind = getattr(builtins, row["error_type"], RuntimeError)

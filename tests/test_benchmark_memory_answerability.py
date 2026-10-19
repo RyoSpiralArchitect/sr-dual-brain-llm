@@ -30,6 +30,10 @@ def test_response_replay_preserves_decisions_and_rejects_missing_or_mismatched_i
     incomplete["responses"].pop(next(iter(incomplete["responses"])))
     with pytest.raises(ValueError, match="coverage"):
         asyncio.run(bench.run(fixture, index, bench.RecordedChecks(None, metadata, frozen=incomplete), phase="development"))
+    corrupt = deepcopy(frozen)
+    next(iter(corrupt["responses"].values()))["request"]["question"] = "Changed request"
+    with pytest.raises(ValueError, match="coverage"):
+        asyncio.run(bench.run(fixture, index, bench.RecordedChecks(None, metadata, frozen=corrupt), phase="development"))
     with pytest.raises(ValueError, match="differs"):
         bench.RecordedChecks(None, dict(metadata, phase="evaluation"), frozen=frozen)
     incomplete["complete"] = False

@@ -106,6 +106,9 @@ def test_actual_openai_payload_is_bounded_and_usage_is_recorded():
     assert payload["max_completion_tokens"] == 4096 and "temperature" not in payload
     assert payload["response_format"] == {"type": "json_object"}
     assert kwargs["timeout_seconds"] <= 20 and not backend.config.auto_continue
+    identity = backend.identity
+    backend.config.model = "different-model"
+    assert backend.identity != identity
 
 
 def test_gate_is_opt_in_and_uses_an_explicit_model(monkeypatch):
@@ -153,3 +156,14 @@ def test_support_allowlist_blocks_identical_hash_seed_and_is_in_field_snapshot()
     assert "evidence_support_not_approved" in summary.harvest_attempts[0].failure_reasons
     assert field.memory_state()["recall_evidence_allowlist"] == []
     assert field.fork().memory_state() == field.memory_state()
+
+
+def test_duplicate_json_fields_cannot_override_an_unsupported_decision():
+    class Duplicate(Checks):
+        async def evaluate(self, request):
+            return '{"decisions":[{"id":"m0","supported":false,"supported":true,"quote":"At least three characters."}]}'
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(Duplicate()))
+    memory.store(source())
+    result = asyncio.run(memory.prepare_retrieval("Alpha minimum query length"))
+    assert result["answerability"]["status"] == "withheld"
+    assert not memory.retrieve_related_traces("Alpha minimum query length")

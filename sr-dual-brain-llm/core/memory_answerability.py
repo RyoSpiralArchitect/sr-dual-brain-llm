@@ -39,6 +39,15 @@ def request_identity(backend_identity, request):
     return digest({"backend": str(backend_identity), "policy": POLICY, "request": request})
 
 
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate evidence support JSON field")
+        result[key] = value
+    return result
+
+
 class OpenAIAnswerability:
     def __init__(self, config, model):
         if config.provider != "openai" or not model.strip():
@@ -47,10 +56,13 @@ class OpenAIAnswerability:
                               timeout_seconds=max(1., min(20., float(config.timeout_seconds))))
         self.client = LLMClient(self.config)
         self.url = (config.api_base or self.client._default_base()).rstrip("/") + "/chat/completions"
-        self.identity = hashlib.sha256((self.url + "\n" + model).encode()).hexdigest()
         self.calls = 0
         self.input_tokens = self.output_tokens = 0
         self.served_model = None
+
+    @property
+    def identity(self):
+        return hashlib.sha256((self.url + "\n" + self.config.model).encode()).hexdigest()
 
     async def evaluate(self, request):
         payload = self.client._openai_style_payload(
@@ -132,7 +144,7 @@ class AnswerabilityGate:
                 raise ValueError("Identity changed during support check")
             if not isinstance(raw, str) or len(raw.encode()) > 16000:
                 raise ValueError("Invalid evidence support response")
-            parsed = json.loads(raw)
+            parsed = json.loads(raw, object_pairs_hook=_unique_object)
             decisions = parsed["decisions"]
             expected = {r["id"]: r for r in request["records"]}
             if (not isinstance(decisions, list) or len(decisions) != len(expected)
