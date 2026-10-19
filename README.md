@@ -219,6 +219,9 @@ Declared project identities, Japanese aliases, and content-only comparison are
 covered in the [scope-aware recall guide](docs/benchmarks/scoped-memory-recall.md).
 The [2026-10-19 scope/content pilot](docs/benchmarks/scoped-memory-2026-10-19.md)
 records the default/calibrated comparisons, remaining Japanese misses, and limits.
+The [same-topic precision study](docs/benchmarks/memory-precision-2026-10-19.md)
+tests nearby unanswered facets, exposes the lower-threshold false-retrieval cost,
+and adds calibration that explicitly reports when its abstention constraint is infeasible.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.
