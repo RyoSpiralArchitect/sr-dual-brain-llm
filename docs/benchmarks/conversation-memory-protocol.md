@@ -57,3 +57,11 @@ evidence. Supersession requires explicit caller IDs within the selected scope,
 not an assumption that any newer answer is true. Validate normal/stream RPC,
 metadata persistence and both worker evidence paths. No live PostgreSQL or
 adversarial robustness claim follows from simulated storage tests.
+
+Development amendment before evaluation: the first rubric grader incorrectly
+treated missing recall as unsupported factual assertion, and rejected one valid
+unknown-fee admission. Retain that initial grading journal as a diagnostic. Clarify
+that omissions can fail task while passing grounding, and equivalent uncertainty
+phrases pass unknown-fact tasks. Regrade the same saved development answers once
+with `--grade-only`; do not regenerate favorable answers. Freeze this rubric before
+any evaluation responses. Include both grading costs in the 256-call budget.

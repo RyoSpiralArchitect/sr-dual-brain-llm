@@ -41,6 +41,14 @@ JUDGE = ("Grade each labeled answer independently against every supplied criteri
          "use unavailable. Pass/fail MUST quote a nonempty exact substring of that answer. Do not paraphrase "
          "quotes. A correct admission of missing data passes an unknown-fact task, but does not satisfy "
          "a task requiring a recorded value. Unsupported current values or crossed project facts fail grounding.")
+JUDGE += (" Grade task and grounding independently. Grounding assesses only project facts actually asserted: "
+          "an answer saying it cannot verify a value, lacks information, or asking for clarification PASSES "
+          "grounding, even when it fails task because the reference contains the requested value. Do NOT fail "
+          "grounding for omission, lack of recall, or a statement about the answerer's limited access. "
+          "For an unknown fee, '記録がありません', '情報がありません', '確認できません' and requests for a "
+          "source are equivalent acceptable uncertainty statements: task=pass and grounding=pass unless an "
+          "unsupported value is also asserted. Example with recorded deadline 7 days: '確認できません' means "
+          "task=fail, grounding=pass; '14日です' means task=fail, grounding=fail; '7日です' means both pass.")
 
 
 class Journal:
@@ -289,13 +297,18 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--fixture",type=Path,default=DEFAULT_FIXTURE);p.add_argument("--phase",choices=["development","evaluation"],required=True)
-    p.add_argument("--arms",nargs="+",choices=["off","checked","conversation"],required=True)
+    p.add_argument("--arms",nargs="+",choices=["off","checked","conversation"],default=[])
     p.add_argument("--output-dir",type=Path,required=True);p.add_argument("--model");p.add_argument("--journal",type=Path)
     p.add_argument("--seed-cache",type=Path);p.add_argument("--baseline-report",type=Path);p.add_argument("--grade",action="store_true")
+    p.add_argument("--grade-only", action="store_true", help="Regrade saved answers without regenerating any turn")
     args=p.parse_args();args.output_dir.mkdir(parents=True,exist_ok=False)
     try:
         if bool(args.model)==bool(args.journal):raise ValueError("Choose explicit live model or frozen journal")
         fixture=read_json(args.fixture);validate(fixture)
+        if args.grade_only and (not args.baseline_report or not args.grade):
+            raise ValueError("Grade-only requires a complete baseline report and --grade")
+        if not args.grade_only and not args.arms:
+            raise ValueError("Generation requires explicit arms")
         frozen=read_json(args.journal) if args.journal else None
         model=args.model or frozen["model"]
         config=load_llm_config(default_model=model)
@@ -307,7 +320,7 @@ def main():
         journal=Journal(config,{"fixture_sha256":digest(fixture),"phase":args.phase,"model":model},frozen=frozen,
             seeds=read_json(args.seed_cache) if args.seed_cache else None,
             save=lambda d:checkpoint(args.output_dir/"journal.partial.json",d))
-        report=asyncio.run(run(fixture,config,journal,phase=args.phase,arms=args.arms,
+        report=asyncio.run(run(fixture,config,journal,phase=args.phase,arms=[] if args.grade_only else args.arms,
             baseline=read_json(args.baseline_report) if args.baseline_report else None,grade=args.grade,
             save=lambda d:checkpoint(args.output_dir/"report.partial.json",d)))
         write_private(args.output_dir/"report.json",report)
