@@ -29,6 +29,8 @@ from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
+from .source_completion import record_completed_answer, source_completion_required
+
 PromptInput = str | list[dict[str, Any]]
 
 
@@ -175,6 +177,7 @@ class LLMClient:
         require_complete: bool = False,
     ) -> str:
         """Return text, optionally requiring a confirmed successful terminal status."""
+        require_complete = require_complete or source_completion_required()
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
             raise ValueError(
@@ -238,6 +241,7 @@ class LLMClient:
         unless the assembled answer has a successful terminal completion.
         """
 
+        require_complete = require_complete or source_completion_required()
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
             raise ValueError(
@@ -272,6 +276,7 @@ class LLMClient:
         self, text: str, finish_reason: Optional[str], *, require_complete: bool
     ) -> str:
         """Validate this request's final status without shared per-client state."""
+        require_complete = require_complete or source_completion_required()
         if require_complete:
             successful_reasons = {
                 "openai": {"stop"},
@@ -284,6 +289,7 @@ class LLMClient:
             allowed = successful_reasons.get(self.provider, set())
             if not text.strip() or str(finish_reason or "").lower() not in allowed:
                 raise RuntimeError("LLM response lacks a nonempty successful terminal completion")
+            record_completed_answer(text)
         return text.strip()
 
     @staticmethod
