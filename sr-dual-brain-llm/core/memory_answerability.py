@@ -143,11 +143,17 @@ class AnswerabilityGate:
         if not sources:
             return {"status": "empty", "candidates": 0}
         keys = [self._key(question, source) for source in sources]
-        if all(key in self.cache for key in keys):
+        # Decisions are independent per exact query/source. A changing candidate
+        # set must not force unchanged complete records back through the checker.
+        cached = {key: self.cache[key] for key in keys if key in self.cache}
+        pending = [(key, source) for key, source in zip(keys, sources) if key not in cached]
+        counts = {"candidates": len(keys), "cached_candidates": len(keys) - len(pending),
+                  "checked_candidates": len(pending)}
+        if not pending:
             for key in keys:
                 self.cache.move_to_end(key)
-            return {"status": "cached", "candidates": len(keys), "approved": sum(self.cache[k] for k in keys)}
-        request = request_for(question, sources)
+            return {"status": "cached", **counts, "approved": sum(cached[k] for k in keys)}
+        request = request_for(question, [source for _, source in pending])
         try:
             raw = await self.backend.evaluate(request)
             if str(self.backend.identity) != self.identity:
@@ -169,16 +175,21 @@ class AnswerabilityGate:
                 if supported and (not quote.strip() or quote not in expected[d["id"]]["answer"]):
                     raise ValueError("Evidence support quote is not grounded")
                 checked[d["id"]] = supported
-            # Atomic commit only after validating the complete response.
-            for i, key in enumerate(keys):
-                self.cache[key] = checked[f"m{i}"]
+            # Commit only after validating every pending decision. Keep a local
+            # snapshot of cache hits: another preparation may evict them while
+            # this request awaits the backend.
+            approved = dict(cached)
+            for i, (key, _) in enumerate(pending):
+                approved[key] = checked[f"m{i}"]
+            for key in keys:
+                self.cache[key] = approved[key]
                 self.cache.move_to_end(key)
             while len(self.cache) > self.max_items:
                 self.cache.popitem(last=False)
-            return {"status": "ready", "candidates": len(keys), "approved": sum(checked.values())}
+            return {"status": "ready", **counts, "approved": sum(approved[k] for k in keys)}
         except Exception as exc:
             # A provider can echo credentials or private source text in its exception.
-            return {"status": "withheld", "error_type": type(exc).__name__, "candidates": len(keys)}
+            return {"status": "withheld", "error_type": type(exc).__name__, **counts}
 
 
 def answerability_gate_from_environment(fallback_config=None):

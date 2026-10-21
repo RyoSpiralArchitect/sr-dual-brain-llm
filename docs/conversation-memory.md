@@ -97,6 +97,12 @@ of a record are retained. Arbitrary document segmentation is not implemented.
 Exact repeated query/source/model/policy combinations reuse the session support
 cache. Generated probe answers cannot create fresh primary candidates and force
 rechecking. Similar but different questions still require their own check.
+Adding or revising a source checks only missing exact decisions for that question;
+unchanged positive and negative decisions are reused. No approved source text is
+shortened to reduce transmission. Cached support never overrides source expiry,
+supersession, scope rules or pending replacement exclusions.
+The [model-free volume experiment](benchmarks/incremental-memory-support-2026-10-21.md)
+measures this reuse on growing and changing candidate sets.
 These controls do not prove the factual correctness of stored model answers or
 prevent every unsupported final answer.
 
