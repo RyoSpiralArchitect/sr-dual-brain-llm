@@ -5,6 +5,31 @@ on:
   pull_request:
 
 jobs:
+  memory-commit-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: memory_retry_test
+          POSTGRES_USER: memory_test
+          POSTGRES_PASSWORD: isolated-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U memory_test -d memory_retry_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt -r requirements-pg.txt
+      - name: Test atomic memory commits and acknowledgement loss
+        env:
+          DUALBRAIN_TEST_PG_DSN: postgresql://memory_test:isolated-test-only@127.0.0.1:5432/memory_retry_test
+        run: pytest -q tests/test_memory_commit_postgres.py
+
   unit-tests:
     runs-on: ubuntu-latest
 
