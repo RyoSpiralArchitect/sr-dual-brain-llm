@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 import sys
+import json
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "sr-dual-brain-llm/scripts"))
 import benchmark_incremental_support as bench
@@ -23,3 +24,24 @@ def test_changing_candidate_experiment_compares_resends_without_model_calls():
     assert stages["exact_repeat"]["checker_batches"] == 0
     assert stages["initial"]["approved_qids"] == ["deadline", "region"]
     assert stages["growth"]["approved_qids"] == ["extra", "deadline", "region"]
+
+
+def test_whole_batch_reference_retains_old_decisions_when_a_new_check_fails():
+    stages, supported = bench.fixture()
+    backend = bench.SimulatedChecks(supported)
+    gate = bench.WholeBatchReference(backend, max_question_chars=2048, max_answer_chars=2048)
+    _, question, original = stages[0]
+    _, _, grown = stages[1]
+    asyncio.run(gate.prepare(question, original))
+    async def fail(request):
+        assert len(request["records"]) == len(grown)
+        raise TimeoutError("private provider response")
+    backend.evaluate = fail
+    result = asyncio.run(gate.prepare(question, grown))
+    assert result["status"] == "withheld"
+    assert [s["qid"] for s in grown if gate.allows(question, s)] == ["deadline", "region"]
+    async def reject(request):
+        return json.dumps({"decisions":[{"id":r["id"],"supported":False,"quote":""} for r in request["records"]]})
+    backend.evaluate = reject
+    result = asyncio.run(gate.prepare(question, grown))
+    assert result["status"] == "ready" and not any(gate.allows(question, s) for s in grown)

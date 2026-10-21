@@ -1,0 +1,1254 @@
+{
+  "schema_version": 1,
+  "study": "live_memory_retest_and_candidate_growth",
+  "date": "2026-10-22",
+  "timezone": "Asia/Tokyo",
+  "prepaid_protocol_commit": "d673d33d7ad6a890d5b3174d3be1853a64124031",
+  "runtime_main_commit": "99f5f06c4c8c9d55e2902d9913edd7399614a07e",
+  "requested_model": "gpt-6-luna",
+  "call_budget": 256,
+  "answer_quality_evaluated": true,
+  "independent_human_grading": false,
+  "full_default_multibrain_quality_evaluated": false,
+  "runs": {
+    "historical": {
+      "source_revision": {
+        "commit": "d673d33d7ad6a890d5b3174d3be1853a64124031",
+        "dirty": false
+      },
+      "fixture_sha256": "14733893444ba0cf39de9d4a38c7e66e27928ce8cbaaf0f43836918661c574d1",
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_calls": 122,
+      "input_tokens": 75692,
+      "output_tokens": 15358,
+      "call_limit": 144,
+      "usage_by_role": {
+        "answer": {
+          "calls": 64,
+          "input_tokens": 34903,
+          "output_tokens": 4417,
+          "records_sent": 0
+        },
+        "judge": {
+          "calls": 16,
+          "input_tokens": 10062,
+          "output_tokens": 4555,
+          "records_sent": 0
+        },
+        "seed": {
+          "calls": 6,
+          "input_tokens": 2903,
+          "output_tokens": 1451,
+          "records_sent": 0
+        },
+        "support": {
+          "calls": 36,
+          "input_tokens": 27824,
+          "output_tokens": 4935,
+          "records_sent": 84
+        }
+      },
+      "grader_failures": 1,
+      "provider_failures": [],
+      "unavailable_rows": 0,
+      "shared_source_answer_hashes": {
+        "lyra-obsidian:remember-a": "b7a011dbe63d6ad2bd5307b068ee8112d126479e2ead88c105c48ab779a0ac6e",
+        "lyra-obsidian:remember-b": "0143a4e453ea243e5be28336976900dbadc513b5818f24f57001370d4731284a",
+        "lyra-obsidian:correct-a": "c1abf6376179a2679506b4654b1e8834996bf8bf626cd5a2095806a5f3097605",
+        "petal-solstice:remember-a": "4af52d863958710bbbe1810bd6a5939625919979790a9e21f2fb426d0771bf73",
+        "petal-solstice:remember-b": "492ae25c4738660ef52c6f7b233f24c13d03b138a06d0e64bda3c6c9568332c6",
+        "petal-solstice:correct-a": "e6d7e8b42d360a962f8729e420813543caca74e14fee32e41807e61b019265aa"
+      },
+      "source_answers_match_across_arms": true,
+      "arms": {
+        "checked": {
+          "probes": 16,
+          "available": 16,
+          "graded": 15,
+          "task_pass": 5,
+          "grounding_fail": 7,
+          "both_pass": 5,
+          "support_calls": 16,
+          "support_usage": {
+            "calls": 16,
+            "input_tokens": 7426,
+            "output_tokens": 3315,
+            "records_sent": 60
+          },
+          "preparation_status_counts": {
+            "ready": 16
+          },
+          "cached_candidate_decisions": 12,
+          "checked_candidate_decisions": 60,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 3543.7270555412397,
+            "p95_nearest_rank": 6199.498208006844
+          },
+          "support_preparation_latency_ms": {
+            "n": 16,
+            "median": 1860.7638769899495,
+            "p95_nearest_rank": 3811.683189996984
+          },
+          "ungraded": 1
+        },
+        "conversation": {
+          "probes": 16,
+          "available": 16,
+          "graded": 15,
+          "task_pass": 15,
+          "grounding_fail": 0,
+          "both_pass": 15,
+          "support_calls": 10,
+          "support_usage": {
+            "calls": 10,
+            "input_tokens": 10199,
+            "output_tokens": 803,
+            "records_sent": 12
+          },
+          "preparation_status_counts": {
+            "cached": 4,
+            "empty": 2,
+            "ready": 10
+          },
+          "cached_candidate_decisions": 4,
+          "checked_candidate_decisions": 12,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 2173.634166974807,
+            "p95_nearest_rank": 3095.8026309963316
+          },
+          "support_preparation_latency_ms": {
+            "n": 10,
+            "median": 1191.6381729824934,
+            "p95_nearest_rank": 1811.4452130394056
+          },
+          "ungraded": 1
+        },
+        "conversation_whole_batch": {
+          "probes": 16,
+          "available": 16,
+          "graded": 15,
+          "task_pass": 15,
+          "grounding_fail": 0,
+          "both_pass": 15,
+          "support_calls": 10,
+          "support_usage": {
+            "calls": 10,
+            "input_tokens": 10199,
+            "output_tokens": 817,
+            "records_sent": 12
+          },
+          "preparation_status_counts": {
+            "cached": 4,
+            "empty": 2,
+            "ready": 10
+          },
+          "cached_candidate_decisions": 4,
+          "checked_candidate_decisions": 12,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 2160.3240039839875,
+            "p95_nearest_rank": 3011.2460300442763
+          },
+          "support_preparation_latency_ms": {
+            "n": 10,
+            "median": 1287.9723215301055,
+            "p95_nearest_rank": 1478.9113950100727
+          },
+          "ungraded": 1
+        },
+        "off": {
+          "probes": 16,
+          "available": 16,
+          "graded": 15,
+          "task_pass": 4,
+          "grounding_fail": 0,
+          "both_pass": 4,
+          "support_calls": 0,
+          "support_usage": {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "records_sent": 0
+          },
+          "preparation_status_counts": {},
+          "cached_candidate_decisions": 0,
+          "checked_candidate_decisions": 0,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 1477.4628585146274,
+            "p95_nearest_rank": 2128.8042460219003
+          },
+          "support_preparation_latency_ms": {
+            "n": 0
+          },
+          "ungraded": 1
+        }
+      },
+      "decisions": [
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-current",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-current",
+          "arm": "checked",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-current",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-current",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-followup",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-followup",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-followup",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-followup",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-repeat",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-repeat",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-repeat",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "a-repeat",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-exception",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-exception",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-exception",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-exception",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-repeat",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-repeat",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-repeat",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "b-repeat",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "unknown",
+          "arm": "off",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "unknown",
+          "arm": "checked",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "unknown",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "unknown",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "compare",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "compare",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "compare",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "compare",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "ambiguous",
+          "arm": "off",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "ambiguous",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "ambiguous",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "lyra-obsidian",
+          "id": "ambiguous",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-current",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-current",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-current",
+          "arm": "checked",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-current",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-followup",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-followup",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-followup",
+          "arm": "checked",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-followup",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-repeat",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-repeat",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-repeat",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "a-repeat",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "b-exception",
+          "arm": null,
+          "error_type": "ValueError"
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "b-repeat",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "b-repeat",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "b-repeat",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "b-repeat",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "unknown",
+          "arm": "checked",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "unknown",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "unknown",
+          "arm": "off",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "unknown",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "compare",
+          "arm": "off",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "compare",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "compare",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "compare",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "ambiguous",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "ambiguous",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "ambiguous",
+          "arm": "checked",
+          "verdicts": {
+            "task": "fail",
+            "grounding": "fail"
+          }
+        },
+        {
+          "episode": "petal-solstice",
+          "id": "ambiguous",
+          "arm": "off",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        }
+      ],
+      "artifacts": {
+        "report": {
+          "path": "target/benchmarks/live-memory-historical-2026-10-22/report.json",
+          "sha256": "53f2e62787cff818797d92339341f5929cf61c22b410b1b0687edf1311a9c5c3"
+        },
+        "journal": {
+          "path": "target/benchmarks/live-memory-historical-2026-10-22/journal.partial.json",
+          "sha256": "cb2ab5b220a18af0c09b233c634fc5a75489b432987c5699a0e28043b666676e"
+        }
+      }
+    },
+    "growth": {
+      "source_revision": {
+        "commit": "d673d33d7ad6a890d5b3174d3be1853a64124031",
+        "dirty": false
+      },
+      "fixture_sha256": "f40c6da9cd074db7605ca0bd3be6bbf2d738dc8d601b0136023269c171f6ce9f",
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_calls": 86,
+      "input_tokens": 57223,
+      "output_tokens": 9324,
+      "call_limit": 112,
+      "usage_by_role": {
+        "answer": {
+          "calls": 32,
+          "input_tokens": 14630,
+          "output_tokens": 1535,
+          "records_sent": 0
+        },
+        "judge": {
+          "calls": 16,
+          "input_tokens": 9605,
+          "output_tokens": 2408,
+          "records_sent": 0
+        },
+        "seed": {
+          "calls": 10,
+          "input_tokens": 3848,
+          "output_tokens": 1959,
+          "records_sent": 0
+        },
+        "support": {
+          "calls": 28,
+          "input_tokens": 29140,
+          "output_tokens": 3422,
+          "records_sent": 66
+        }
+      },
+      "grader_failures": 0,
+      "provider_failures": [],
+      "unavailable_rows": 0,
+      "shared_source_answer_hashes": {
+        "atlas-beryl-growth:initial": "818f82ab0230e75f73433fe8f8c195d843cc519921ac26a058b9e75c1ba986e7",
+        "atlas-beryl-growth:policy": "85ff6950cf8f8f3898607eac9abb2fc386845893c7fb8a7915c412682471fed4",
+        "atlas-beryl-growth:distractor": "9d1a57876cda8a1e833230502e82a4ecb1da70ccf784c22abc0a69415515e143",
+        "atlas-beryl-growth:correction": "1aac8ee90f426ecf436f1de9ac9cb62ace9bb348331c49dee3e3943c1ead9b74",
+        "atlas-beryl-growth:other-project": "3bf60ca977c5425bf07814825c7db74b89d404161df68f552272d574594b3ed3",
+        "quill-rook-growth:initial": "9a457d21ca1a705c6ed049e378b58f0f75243f5f2c76c3dc87a23abb84d2a2b0",
+        "quill-rook-growth:policy": "3dd9b38edcb44dbac27bb71a8a1c5b4c0f8be84ee3cb7b61e3b13de6d14180a1",
+        "quill-rook-growth:distractor": "5b7825a529f302b245d5166cf35d0473b00931ec492f16f679da29f7437455bd",
+        "quill-rook-growth:correction": "f1cbc82a048c7c674ad8956d1244283ec911c324f2cfd7a25982ad7b0911b027",
+        "quill-rook-growth:other-project": "4266f4ffa092abbde39e0558381c1c244cc20a32ac357548830eac6915cd4dee"
+      },
+      "source_answers_match_across_arms": true,
+      "arms": {
+        "conversation": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 16,
+          "grounding_fail": 0,
+          "both_pass": 16,
+          "support_calls": 14,
+          "support_usage": {
+            "calls": 14,
+            "input_tokens": 12546,
+            "output_tokens": 1621,
+            "records_sent": 28
+          },
+          "preparation_status_counts": {
+            "empty": 2,
+            "ready": 14
+          },
+          "cached_candidate_decisions": 10,
+          "checked_candidate_decisions": 28,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 2718.2276355160866,
+            "p95_nearest_rank": 3497.3033600253984
+          },
+          "support_preparation_latency_ms": {
+            "n": 14,
+            "median": 1451.7787910008337,
+            "p95_nearest_rank": 2071.0099340067245
+          },
+          "ungraded": 0
+        },
+        "conversation_whole_batch": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 16,
+          "grounding_fail": 0,
+          "both_pass": 16,
+          "support_calls": 14,
+          "support_usage": {
+            "calls": 14,
+            "input_tokens": 16594,
+            "output_tokens": 1801,
+            "records_sent": 38
+          },
+          "preparation_status_counts": {
+            "empty": 2,
+            "ready": 14
+          },
+          "cached_candidate_decisions": 0,
+          "checked_candidate_decisions": 38,
+          "probe_latency_ms": {
+            "n": 16,
+            "median": 2768.5623335128184,
+            "p95_nearest_rank": 4473.529318987858
+          },
+          "support_preparation_latency_ms": {
+            "n": 14,
+            "median": 1577.2018204734195,
+            "p95_nearest_rank": 2451.5914660296403
+          },
+          "ungraded": 0
+        }
+      },
+      "decisions": [
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "initial-probe",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "initial-probe",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-policy",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-policy",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-distractor",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-distractor",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "compound",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "compound",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-correction",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "after-correction",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "unknown",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "unknown",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "comparison",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "comparison",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "ambiguous",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "atlas-beryl-growth",
+          "id": "ambiguous",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "initial-probe",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "initial-probe",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-policy",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-policy",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-distractor",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-distractor",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "compound",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "compound",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-correction",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "after-correction",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "unknown",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "unknown",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "comparison",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "comparison",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "ambiguous",
+          "arm": "conversation_whole_batch",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        },
+        {
+          "episode": "quill-rook-growth",
+          "id": "ambiguous",
+          "arm": "conversation",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass"
+          }
+        }
+      ],
+      "artifacts": {
+        "report": {
+          "path": "target/benchmarks/live-memory-growth-2026-10-22/report.json",
+          "sha256": "78115a49d20a85cb0a3f5a19778b65a10ad96a90248b4726c9db64285d65185f"
+        },
+        "journal": {
+          "path": "target/benchmarks/live-memory-growth-2026-10-22/journal.partial.json",
+          "sha256": "4b0f50d13fa2e440bade0cc59a573d2ec5bcee0175c93d05ca8972d3a23f439c"
+        }
+      }
+    }
+  },
+  "total_live_usage": {
+    "provider_calls": 208,
+    "input_tokens": 132915,
+    "output_tokens": 24682
+  },
+  "frozen_replay": {
+    "historical": {
+      "path": "target/benchmarks/live-memory-historical-replay-2026-10-22/report.json",
+      "sha256": "8af6e14248a9ebb99fb01bb8224bd92fcf3bc492320fe711c732ca6432068431",
+      "provider_calls": 0,
+      "answers_status_stored_metadata_grades_and_summary_unchanged": true,
+      "source_revision": {
+        "commit": "d673d33d7ad6a890d5b3174d3be1853a64124031",
+        "dirty": false
+      }
+    },
+    "growth": {
+      "path": "target/benchmarks/live-memory-growth-replay-2026-10-22/report.json",
+      "sha256": "400ef17e661f26c4b607cbe2f7d776c5f1fe801dbc917c5c0ba9b382c48bd12d",
+      "provider_calls": 0,
+      "answers_status_stored_metadata_grades_and_summary_unchanged": true,
+      "source_revision": {
+        "commit": "d673d33d7ad6a890d5b3174d3be1853a64124031",
+        "dirty": false
+      }
+    }
+  },
+  "protocol_sha256": "b1c56a3891c4b0b9e26797d22a9f3834091a9b7a1f647b7ca5b783332faa3f71",
+  "grader_failure_diagnostic": {
+    "episode": "petal-solstice",
+    "id": "b-exception",
+    "error_type": "ValueError",
+    "expected_labels": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "returned_labels": [
+      "A",
+      "B"
+    ],
+    "criteria_fields_by_label": {
+      "A": [
+        "grounding",
+        "task"
+      ],
+      "B": [
+        "C",
+        "D",
+        "grounding",
+        "task"
+      ]
+    },
+    "response_sha256": "764f9b04a977d1db7f5becaa6c30c72d72dd6b8d227adf1b021cda1da998baec",
+    "disposition": "All four labels remain ungraded; no recursive repair or paid regrading.",
+    "artifact_sha256": "2fa87c3b446f34ce6bd62100a0510305c9e928a764072ebc420c71657294e058"
+  },
+  "limitations": [
+    "Two authored episodes per suite; correlated repeats and same-family model grading.",
+    "Fixed left-only controlled configuration; full default multi-brain quality and PostgreSQL persistence are unmeasured.",
+    "Historical four-label grader returned one structurally invalid packet; all four answers for that question remain ungraded. No regrading or favorable reruns.",
+    "No statistically established quality increase; new growth suite preserves 16/16 while reducing support input tokens.",
+    "Reference is the prior batching rule on the current runtime, not an archived historical binary.",
+    "Fixed arm order and concurrent independent suites do not support controlled latency claims.",
+    "Token counts are actual provider usage; currency savings are not calculated."
+  ],
+  "growth_support_change": {
+    "input_tokens_before": 16594,
+    "input_tokens_after": 12546,
+    "input_tokens_saved": 4048,
+    "input_tokens_reduction_fraction": 0.24394359407014587,
+    "records_before": 38,
+    "records_after": 28,
+    "calls_before": 14,
+    "calls_after": 14
+  },
+  "local_tests": {
+    "python_unit_passed": 643,
+    "isolated_postgres_skipped": 10
+  }
+}

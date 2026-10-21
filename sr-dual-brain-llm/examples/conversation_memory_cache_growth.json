@@ -1,0 +1,432 @@
+{
+  "schema_version": 1,
+  "origin": "authored_controlled_multiturn_memory",
+  "evaluation_only": true,
+  "description": "Prospectively fixed changing-candidate evaluation; per-turn references prevent future correction leakage into grading.",
+  "episodes": [
+    {
+      "id": "atlas-beryl-growth",
+      "split": "evaluation",
+      "scopes": [
+        {
+          "id": "atlas",
+          "aliases": [
+            "Atlas"
+          ]
+        },
+        {
+          "id": "beryl",
+          "aliases": [
+            "Beryl"
+          ]
+        }
+      ],
+      "reference": "AtlasのAPIキーの有効期間は9時間へ明示的に訂正済み。旧値18時間は失効。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。更新手数料は記録されていない。BerylのAPIキーの有効期間は72時間。",
+      "events": [
+        {
+          "id": "initial",
+          "kind": "write",
+          "question": "Project Atlas のAPIキーの有効期間は18時間です。省略せず復唱して覚えてください。",
+          "memory_context": {
+            "id": "atlas",
+            "aliases": [
+              "Atlas"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "initial-probe",
+          "kind": "probe",
+          "question": "Project Atlas の現在のAPIキーの有効期間は？",
+          "reference": "AtlasのAPIキーの有効期間は18時間。他の条件・料金は未記載。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "AtlasのAPIキーの有効期間として、この時点で有効な18時間を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "policy",
+          "kind": "write",
+          "question": "次のメモを省略せず、そのまま復唱して覚えてください。\nProject Atlas の監査ログ保管規約\n通常の監査ログ保管期間は45日です。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n運用記録は受付担当と監査担当が分類し、規約に記された適用条件と一緒に管理します。\n末尾の例外：欧州かつ個人契約の場合だけ、監査ログ保管期間は6日です。欧州でも法人契約には45日を適用します。",
+          "memory_context": {
+            "id": "atlas",
+            "aliases": [
+              "Atlas"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "after-policy",
+          "kind": "probe",
+          "question": "Project Atlas の現在のAPIキーの有効期間は？",
+          "reference": "AtlasのAPIキーの有効期間は18時間。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。他のプロジェクトや料金の記録はまだない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "同じ質問に18時間を答える。追加された別の関係の値を混入しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "distractor",
+          "kind": "write",
+          "question": "Project Atlas の追加メモです。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。 省略せず復唱して覚えてください。",
+          "memory_context": {
+            "id": "atlas",
+            "aliases": [
+              "Atlas"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "after-distractor",
+          "kind": "probe",
+          "question": "Project Atlas の現在のAPIキーの有効期間は？",
+          "reference": "AtlasのAPIキーの有効期間は18時間。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。他のプロジェクトや料金の記録はまだない。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "AtlasのAPIキーの有効期間は18時間のまま。追加メモの別の値を採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "compound",
+          "kind": "probe",
+          "question": "Project Atlas のAPIキーの有効期間と、欧州の個人契約・法人契約それぞれの監査ログ保管期間を教えて。",
+          "reference": "AtlasのAPIキーの有効期間は18時間。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。他のプロジェクトや料金の記録はまだない。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "AtlasのAPIキーの有効期間は18時間と答え、加えて欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "correction",
+          "kind": "write",
+          "question": "Project Atlas のAPIキーの有効期間を18時間から9時間へ訂正します。新しい9時間を復唱して覚えてください。",
+          "memory_context": {
+            "id": "atlas",
+            "aliases": [
+              "Atlas"
+            ],
+            "remember": true,
+            "supersedes": [
+              "atlas-beryl-growth:initial"
+            ]
+          }
+        },
+        {
+          "id": "after-correction",
+          "kind": "probe",
+          "question": "Project Atlas の現在のAPIキーの有効期間は？",
+          "reference": "AtlasのAPIキーの有効期間は9時間へ明示的に訂正済み。旧値18時間は失効。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。更新手数料は記録されていない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "訂正後の9時間を答え、18時間を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Atlas の更新手数料はいくら？",
+          "reference": "AtlasのAPIキーの有効期間は9時間へ明示的に訂正済み。旧値18時間は失効。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。更新手数料は記録されていない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "手数料の記録がないと明示する。無料、相場や架空の金額を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "other-project",
+          "kind": "write",
+          "question": "Project Beryl のAPIキーの有効期間は72時間です。この条件を復唱して覚えてください。",
+          "memory_context": {
+            "id": "beryl",
+            "aliases": [
+              "Beryl"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "comparison",
+          "kind": "probe",
+          "question": "Project Atlas と Project Beryl の現在のAPIキーの有効期間をそれぞれ教えて。",
+          "reference": "AtlasのAPIキーの有効期間は9時間へ明示的に訂正済み。旧値18時間は失効。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。更新手数料は記録されていない。BerylのAPIキーの有効期間は72時間。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Atlasは9時間、Berylは72時間と、両者を区別して答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "そのAPIキーの有効期間だけもう一度教えて。",
+          "reference": "AtlasのAPIキーの有効期間は9時間へ明示的に訂正済み。旧値18時間は失効。欧州かつ個人契約は保管6日、欧州の法人契約は通常の45日と区別する。受付処理のタイムアウトは60秒です。この60秒はAPIキーの有効期間ではありません。更新手数料は記録されていない。BerylのAPIキーの有効期間は72時間。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に2つのプロジェクトを比較したため、どちらのプロジェクトか確認する。どちらかの値を断定しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quill-rook-growth",
+      "split": "evaluation",
+      "scopes": [
+        {
+          "id": "quill",
+          "aliases": [
+            "Quill"
+          ]
+        },
+        {
+          "id": "rook",
+          "aliases": [
+            "Rook"
+          ]
+        }
+      ],
+      "reference": "Quillの並列数上限は4件へ明示的に訂正済み。旧値13件は失効。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。バッチ件数は40件です。この40件は同時実行する並列数ではありません。更新手数料は記録されていない。Rookの並列数上限は29件。",
+      "events": [
+        {
+          "id": "initial",
+          "kind": "write",
+          "question": "Project Quill の並列数上限は13件です。省略せず復唱して覚えてください。",
+          "memory_context": {
+            "id": "quill",
+            "aliases": [
+              "Quill"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "initial-probe",
+          "kind": "probe",
+          "question": "Project Quill の現在の並列数上限は？",
+          "reference": "Quillの並列数上限は13件。他の条件・料金は未記載。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Quillの並列数上限として、この時点で有効な13件を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "policy",
+          "kind": "write",
+          "question": "次のメモを省略せず、そのまま復唱して覚えてください。\nProject Quill transfer policy\nThe normal transfer limit is 12 MB.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nThe operations ledger retains the request category, routing decision and applicable policy conditions.\nFinal exception: urgent transfers in Asia ONLY have a 3 MB limit. Non-urgent transfers in Asia retain the normal 12 MB limit. Urgent transfers outside Asia also retain 12 MB.",
+          "memory_context": {
+            "id": "quill",
+            "aliases": [
+              "Quill"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "after-policy",
+          "kind": "probe",
+          "question": "Project Quill の現在の並列数上限は？",
+          "reference": "Quillの並列数上限は13件。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。他のプロジェクトや料金の記録はまだない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "同じ質問に13件を答える。追加された別の関係の値を混入しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "distractor",
+          "kind": "write",
+          "question": "Project Quill の追加メモです。バッチ件数は40件です。この40件は同時実行する並列数ではありません。 省略せず復唱して覚えてください。",
+          "memory_context": {
+            "id": "quill",
+            "aliases": [
+              "Quill"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "after-distractor",
+          "kind": "probe",
+          "question": "Project Quill の現在の並列数上限は？",
+          "reference": "Quillの並列数上限は13件。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。他のプロジェクトや料金の記録はまだない。バッチ件数は40件です。この40件は同時実行する並列数ではありません。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Quillの並列数上限は13件のまま。追加メモの別の値を採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "compound",
+          "kind": "probe",
+          "question": "Project Quill の並列数上限、アジアへの緊急転送上限、アジアへの通常転送上限を教えて。",
+          "reference": "Quillの並列数上限は13件。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。他のプロジェクトや料金の記録はまだない。バッチ件数は40件です。この40件は同時実行する並列数ではありません。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Quillの並列数上限は13件と答え、加えてアジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "correction",
+          "kind": "write",
+          "question": "Project Quill の並列数上限を13件から4件へ訂正します。新しい4件を復唱して覚えてください。",
+          "memory_context": {
+            "id": "quill",
+            "aliases": [
+              "Quill"
+            ],
+            "remember": true,
+            "supersedes": [
+              "quill-rook-growth:initial"
+            ]
+          }
+        },
+        {
+          "id": "after-correction",
+          "kind": "probe",
+          "question": "Project Quill の現在の並列数上限は？",
+          "reference": "Quillの並列数上限は4件へ明示的に訂正済み。旧値13件は失効。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。バッチ件数は40件です。この40件は同時実行する並列数ではありません。更新手数料は記録されていない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "訂正後の4件を答え、13件を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Quill の更新手数料はいくら？",
+          "reference": "Quillの並列数上限は4件へ明示的に訂正済み。旧値13件は失効。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。バッチ件数は40件です。この40件は同時実行する並列数ではありません。更新手数料は記録されていない。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "手数料の記録がないと明示する。無料、相場や架空の金額を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "other-project",
+          "kind": "write",
+          "question": "Project Rook の並列数上限は29件です。この条件を復唱して覚えてください。",
+          "memory_context": {
+            "id": "rook",
+            "aliases": [
+              "Rook"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "comparison",
+          "kind": "probe",
+          "question": "Project Quill と Project Rook の現在の並列数上限をそれぞれ教えて。",
+          "reference": "Quillの並列数上限は4件へ明示的に訂正済み。旧値13件は失効。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。バッチ件数は40件です。この40件は同時実行する並列数ではありません。更新手数料は記録されていない。Rookの並列数上限は29件。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Quillは4件、Rookは29件と、両者を区別して答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "その並列数上限だけもう一度教えて。",
+          "reference": "Quillの並列数上限は4件へ明示的に訂正済み。旧値13件は失効。アジアかつ緊急の場合のみ3MB、アジアでも通常転送は12MBと区別する。バッチ件数は40件です。この40件は同時実行する並列数ではありません。更新手数料は記録されていない。Rookの並列数上限は29件。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に2つのプロジェクトを比較したため、どちらのプロジェクトか確認する。どちらかの値を断定しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "このターンまでに提示された記録だけで固有の数値と条件を支持できる。別プロジェクト、訂正前の旧値、まだ書かれていない事実や料金を混入しない。値を答えられないだけでは根拠性を失敗にしない。"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
