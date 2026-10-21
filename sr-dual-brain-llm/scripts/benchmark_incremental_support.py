@@ -11,24 +11,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from core.memory_answerability import AnswerabilityGate, POLICY, digest
+from benchmark_support_reference import WholeBatchReference
 from benchmark_system2_ab import _source_revision
-
-
-class WholeBatchReference(AnswerabilityGate):
-    """Reproduce the pre-incremental resend rule on this fault-free fixture.
-
-    Previously, any miss sent every candidate, while an all-hit batch sent none.
-    Removing candidate hits only for mixed batches reproduces those requests with
-    the production parser/limits. This adapter is not a failure-policy reference.
-    """
-
-    async def prepare(self, question, sources):
-        eligible = [s for s in sources[:self.candidate_limit] if self.eligible(s)]
-        keys = [self._key(question, source) for source in eligible]
-        if any(key not in self.cache for key in keys):
-            for key in keys:
-                self.cache.pop(key, None)
-        return await super().prepare(question, sources)
 
 
 def fixture():

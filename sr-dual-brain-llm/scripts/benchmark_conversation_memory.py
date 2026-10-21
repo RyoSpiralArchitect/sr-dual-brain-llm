@@ -26,6 +26,7 @@ from core.shared_memory import SharedMemory
 from benchmark_controlled_memory import checkpoint
 from benchmark_frozen_drafts import digest, read_json, write_private
 from benchmark_system2_ab import _source_revision
+from benchmark_support_reference import WholeBatchReference
 
 DEFAULT_FIXTURE = PROJECT / "examples/conversation_memory_benchmark.json"
 TASK = ("Answer in Japanese. Use recorded evidence for project-specific facts, never guess missing values. "
@@ -52,7 +53,10 @@ JUDGE += (" Grade task and grounding independently. Grounding assesses only proj
 
 
 class Journal:
-    def __init__(self, config, metadata, *, frozen=None, seeds=None, save=None):
+    def __init__(self, config, metadata, *, frozen=None, seeds=None, save=None, max_calls=256):
+        if type(max_calls) is not int or not 1 <= max_calls <= 256:
+            raise ValueError("Call limit must be between 1 and 256")
+        self.max_calls = max_calls
         self.config, self.frozen, self.save = config, frozen, save
         self.transport = LLMClient(config) if config else None
         self.seeds = seeds or {}
@@ -82,11 +86,11 @@ class Journal:
                 raise ValueError("Incomplete or corrupt HTTP journal") from None
             if self.frozen is None:
                 self.data["responses"].setdefault(key, [row])
-            self.events.append({"role": role, "reused": True, "key": key, "error_type": row.get("error_type")})
+            self.events.append(self._event(role, True, key, row))
             if row.get("error_type"):
                 raise RuntimeError("Recorded provider failure")
             return row["response"]
-        if self.transport is None or self.calls >= 256:
+        if self.transport is None or self.calls >= self.max_calls:
             raise ValueError("Live transport unavailable or call budget exceeded")
         self.calls += 1
         started = time.perf_counter()
@@ -113,9 +117,21 @@ class Journal:
         finally:
             row["latency_ms"] = (time.perf_counter() - started) * 1000
             self.data["responses"].setdefault(key, []).append(row)
-            self.events.append({"role": role, "reused": False, "key": key, "error_type": row.get("error_type")})
+            self.events.append(self._event(role, False, key, row))
             if self.save:
                 self.save(self.data)
+
+    @staticmethod
+    def _event(role, reused, key, row):
+        usage = (row.get("response") or {}).get("usage") or {}
+        tokens = lambda field: usage.get(field) if type(usage.get(field)) is int and usage[field] >= 0 else None
+        records = 0
+        if role == "support":
+            records = len(json.loads(row["request"]["payload"]["messages"][-1]["content"])["records"])
+        return {"role": role, "reused": reused, "key": key, "error_type": row.get("error_type"),
+                "input_tokens": tokens("prompt_tokens"), "output_tokens": tokens("completion_tokens"),
+                "records": records, "latency_ms": row.get("latency_ms"),
+                "served_model": (row.get("response") or {}).get("model")}
 
     def finish(self):
         if self.frozen is not None:
@@ -205,12 +221,26 @@ def validate(fixture):
         scopes[ep["split"]].update(s["id"] for s in ep["scopes"])
         if len({e["id"] for e in ep["events"]}) != len(ep["events"]):
             raise ValueError("Unique turn IDs required")
-    if not all(scopes.values()) or scopes["development"] & scopes["evaluation"]:
+    if (not scopes["evaluation"] or (not scopes["development"] and fixture.get("evaluation_only") is not True)
+            or scopes["development"] & scopes["evaluation"]):
         raise ValueError("Disjoint scopes and both splits required")
+
+
+def usage_for(events):
+    events = [e for e in events if not e["reused"]]
+    def total(field):
+        values = [e[field] for e in events]
+        return sum(values) if all(type(v) is int and v >= 0 for v in values) else None
+    return {"calls": len(events), "input_tokens": total("input_tokens"),
+            "output_tokens": total("output_tokens"), "records_sent": sum(e["records"] for e in events)}
 
 
 async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=False, save=None):
     validate(fixture)
+    if not any(ep["split"] == phase for ep in fixture["episodes"]):
+        raise ValueError("Fixture has no episodes for the requested phase")
+    if len(set(arms)) != len(arms) or any(a not in {"off", "checked", "conversation", "conversation_whole_batch"} for a in arms):
+        raise ValueError("Unknown or duplicate experimental arms")
     revision = _source_revision()
     rows = list(baseline["rows"]) if baseline else []
     if baseline and (baseline["fixture_sha256"] != digest(fixture) or baseline["phase"] != phase or not baseline["complete"]):
@@ -228,8 +258,9 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                 async def post(url,payload,headers,**kwargs):
                     return await journal.post("support",url,payload,headers,**kwargs)
                 backend.client._post_json=post
-                gate=AnswerabilityGate(backend)
-            memory=Memory(arm,answerability_gate=gate, **({"conversation_context":True} if arm=="conversation" else {}))
+                gate=(WholeBatchReference if arm=="conversation_whole_batch" else AnswerabilityGate)(backend)
+            conversation = arm in {"conversation", "conversation_whole_batch"}
+            memory=Memory(arm,answerability_gate=gate, **({"conversation_context":True} if conversation else {}))
             chat=Chat(config,journal)
             left=LeftBrainModel(config);left._llm_client=chat
             right=RightBrainModel(config);right._llm_client=None;right.uses_external_llm=False
@@ -244,7 +275,7 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                 qid=ep["id"]+":"+event["id"]
                 try:
                     result=await controller.process(event["question"],qid=qid,leading_brain="left",system2_mode="off",
-                        **({"memory_context":event.get("memory_context")} if arm=="conversation" else {}))
+                        **({"memory_context":event.get("memory_context")} if conversation else {}))
                 except Exception:
                     if not chat.failed:
                         raise
@@ -261,6 +292,7 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                     "source_revision":revision,"latency_ms":(time.perf_counter()-started)*1000,
                     "provider_calls":sum(not c["reused"] for c in calls),
                     "support_calls":sum(c["role"]=="support" and not c["reused"] for c in calls),
+                    "support_usage":usage_for([c for c in calls if c["role"]=="support"]),
                     "preparation":next((p for e,p in reversed(telemetry.events) if e=="memory_semantic_preparation"),{}),
                     "stored":[{"qid":t.qid,"status":t.evidence_status,"scope":t.retrieval_scope,
                                "recalled":getattr(t,"recalled_answer",False),"answer_sha256":digest(t.answer)} for t in memory.past_qas]}
@@ -279,7 +311,7 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                 candidates=[r for r in rows if r["episode"]==ep["id"] and r["id"]==event["id"]]
                 random.Random(17+int(digest([ep["id"],event["id"]])[:8],16)).shuffle(candidates)
                 labels={chr(65+i):r for i,r in enumerate(candidates)}
-                packet={"question":event["question"],"reference":ep["reference"],"criteria":event["criteria"],
+                packet={"question":event["question"],"reference":event.get("reference", ep["reference"]),"criteria":event["criteria"],
                         "answers":{k:r["answer"] for k,r in labels.items()}}
                 try:
                     raw=await judge.call(json.dumps(packet,ensure_ascii=False),system=JUDGE,role="judge")
@@ -309,16 +341,21 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
             "support_calls":sum(r["support_calls"] for r in probes)}
     report.update(complete=True,provider_calls=journal.calls,input_tokens=journal.input_tokens,output_tokens=journal.output_tokens,
                   frozen_replay=journal.frozen is not None,grader_failures=sum("error_type" in r for r in report["grades"]))
+    report["usage_by_role"] = {role: usage_for([e for e in journal.events if e["role"] == role])
+                               for role in sorted({e["role"] for e in journal.events})}
+    report["served_models"] = sorted({e["served_model"] for e in journal.events if e["served_model"]})
+    report["call_limit"] = journal.max_calls
     return report
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--fixture",type=Path,default=DEFAULT_FIXTURE);p.add_argument("--phase",choices=["development","evaluation"],required=True)
-    p.add_argument("--arms",nargs="+",choices=["off","checked","conversation"],default=[])
+    p.add_argument("--arms",nargs="+",choices=["off","checked","conversation","conversation_whole_batch"],default=[])
     p.add_argument("--output-dir",type=Path,required=True);p.add_argument("--model");p.add_argument("--journal",type=Path)
     p.add_argument("--seed-cache",type=Path);p.add_argument("--baseline-report",type=Path);p.add_argument("--grade",action="store_true")
     p.add_argument("--grade-only", action="store_true", help="Regrade saved answers without regenerating any turn")
+    p.add_argument("--max-calls", type=int, default=256, help="Hard live-call ceiling, at most 256")
     args=p.parse_args();args.output_dir.mkdir(parents=True,exist_ok=False)
     try:
         if bool(args.model)==bool(args.journal):raise ValueError("Choose explicit live model or frozen journal")
@@ -337,6 +374,7 @@ def main():
         config=replace(config,model=model,auto_continue=False,max_continuations=0,max_output_tokens=4096)
         journal=Journal(config,{"fixture_sha256":digest(fixture),"phase":args.phase,"model":model},frozen=frozen,
             seeds=read_json(args.seed_cache) if args.seed_cache else None,
+            max_calls=args.max_calls,
             save=lambda d:checkpoint(args.output_dir/"journal.partial.json",d))
         report=asyncio.run(run(fixture,config,journal,phase=args.phase,arms=[] if args.grade_only else args.arms,
             baseline=read_json(args.baseline_report) if args.baseline_report else None,grade=args.grade,
