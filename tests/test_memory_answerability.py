@@ -199,3 +199,172 @@ def test_served_model_drift_permanently_invalidates_previous_approvals():
     assert not memory.retrieve_related_traces(q)
     assert asyncio.run(memory.prepare_retrieval(q))["answerability"]["error_type"] == "IdentityChanged"
     assert backend.calls == 2
+
+
+class RecordingChecks(Checks):
+    def __init__(self):
+        self.requests = []
+
+    async def evaluate(self, request):
+        self.requests.append(request)
+        return await super().evaluate(request)
+
+
+def visible(trace):
+    return SharedMemory._answerability_source(trace)
+
+
+def test_growing_candidates_reuses_positive_and_negative_checks_without_cutting_conditions():
+    backend = RecordingChecks()
+    gate = AnswerabilityGate(backend)
+    memory = SharedMemory(answerability_gate=gate, conversation_context=True)
+    memory.store(source("minimum"))
+    memory.store(source("fee", answer="DENY: fees have not been supplied."))
+    question = "Alpha minimum query length and regional policy"
+    asyncio.run(memory.prepare_retrieval(question))
+    long_answer = "The normal policy applies. " * 40 + "Except in Europe, use seven days."
+    memory.store(source("region", answer=long_answer))
+    result = asyncio.run(memory.prepare_retrieval(question))["answerability"]
+    assert len(backend.requests) == 2
+    assert backend.requests[-1]["records"] == [
+        {"id": "m0", "question": source().question, "answer": long_answer}]
+    assert result == {"status": "ready", "candidates": 3, "cached_candidates": 2,
+                      "checked_candidates": 1, "approved": 2}
+    assert {t.qid for t in memory.retrieve_related_traces(question)} == {"minimum", "region"}
+    assert {r["source_qid"] for r in memory.evidence_for_seeds(
+        ["seed-minimum", "seed-fee", "seed-region"], question=question)} == {"minimum", "region"}
+    cached = asyncio.run(memory.prepare_retrieval(question))["answerability"]
+    assert cached["status"] == "cached" and cached["checked_candidates"] == 0
+    assert len(backend.requests) == 2
+
+
+@pytest.mark.parametrize("change", [
+    {"answer": "At least seven characters."}, {"question": "Alpha maximum query length?"},
+    {"status": "verified"}, {"recorded_at": 1.}, {"valid_until": 9999999999.},
+    {"retrieval_scope": "beta"}, {"qid": "new-id"}, {"seed_id": "new-seed"},
+])
+def test_changed_source_identity_rechecks_only_that_source(change):
+    backend = RecordingChecks()
+    gate = AnswerabilityGate(backend)
+    stable, changed = visible(source("stable")), visible(source("changing"))
+    asyncio.run(gate.prepare("Alpha minimum", [stable, changed]))
+    revised = dict(changed, **change)
+    result = asyncio.run(gate.prepare("Alpha minimum", [revised, stable]))
+    assert result["cached_candidates"] == result["checked_candidates"] == 1
+    assert backend.requests[-1]["records"] == [
+        {"id": "m0", "question": revised["question"], "answer": revised["answer"]}]
+    assert gate.allows("Alpha minimum", revised) and gate.allows("Alpha minimum", stable)
+    assert not gate.allows("Alpha minimum, but is it a maximum?", stable)
+
+
+@pytest.mark.parametrize("failure", ["transport", "quote", "coverage"])
+def test_failed_incremental_batch_preserves_hits_but_approves_no_new_records(failure):
+    backend = RecordingChecks()
+    gate = AnswerabilityGate(backend)
+    yes, no = visible(source("yes")), visible(source("no", answer="DENY unrelated"))
+    fresh = [visible(source("fresh-1")), visible(source("fresh-2"))]
+    asyncio.run(gate.prepare("Alpha minimum", [yes, no]))
+
+    async def broken(request):
+        assert len(request["records"]) == 2
+        if failure == "transport":
+            raise TimeoutError("SECRET private text")
+        decisions = [{"id": "m0", "supported": True, "quote": fresh[0]["answer"]}]
+        if failure == "quote":
+            decisions.append({"id": "m1", "supported": True, "quote": "invented quote"})
+        return json.dumps({"decisions": decisions})
+
+    backend.evaluate = broken
+    result = asyncio.run(gate.prepare("Alpha minimum", [yes, fresh[0], no, fresh[1]]))
+    assert result["status"] == "withheld" and result["cached_candidates"] == 2
+    assert "SECRET" not in str(result)
+    assert gate.allows("Alpha minimum", yes) and not gate.allows("Alpha minimum", no)
+    assert all(not gate.allows("Alpha minimum", s) for s in fresh)
+    backend.evaluate = RecordingChecks.evaluate.__get__(backend)
+    retried = asyncio.run(gate.prepare("Alpha minimum", [yes, fresh[0], no, fresh[1]]))
+    assert retried["checked_candidates"] == 2 and retried["approved"] == 3
+
+
+def test_model_change_during_incremental_check_invalidates_cache_hits_too():
+    backend = RecordingChecks()
+    gate = AnswerabilityGate(backend)
+    old, fresh = visible(source("old")), visible(source("fresh"))
+    asyncio.run(gate.prepare("Alpha minimum", [old]))
+
+    async def changed(request):
+        result = await RecordingChecks.evaluate(backend, request)
+        backend.identity = "changed-model"
+        return result
+
+    backend.evaluate = changed
+    result = asyncio.run(gate.prepare("Alpha minimum", [old, fresh]))
+    assert result["status"] == "withheld"
+    assert not gate.allows("Alpha minimum", old) and not gate.allows("Alpha minimum", fresh)
+
+
+def test_incremental_check_survives_concurrent_lru_eviction_and_keeps_the_bound():
+    async def scenario():
+        backend = RecordingChecks()
+        gate = AnswerabilityGate(backend, max_items=6)
+        yes, no = visible(source("yes")), visible(source("no", answer="DENY unrelated"))
+        fresh = visible(source("fresh"))
+        await gate.prepare("Alpha minimum", [yes, no])
+        started, release = asyncio.Event(), asyncio.Event()
+
+        async def blocked(request):
+            if request["question"] == "Alpha minimum":
+                started.set()
+                await release.wait()
+            return await RecordingChecks.evaluate(backend, request)
+
+        backend.evaluate = blocked
+        task = asyncio.create_task(gate.prepare("Alpha minimum", [yes, fresh, no]))
+        await started.wait()
+        await gate.prepare("Other question", [visible(source(str(i))) for i in range(6)])
+        assert not gate.allows("Alpha minimum", yes)
+        release.set()
+        result = await task
+        assert result["status"] == "ready" and result["approved"] == 2
+        assert gate.allows("Alpha minimum", yes) and gate.allows("Alpha minimum", fresh)
+        assert not gate.allows("Alpha minimum", no) and len(gate.cache) == 6
+
+    asyncio.run(scenario())
+
+
+def test_cancelled_incremental_check_does_not_publish_pending_decisions():
+    async def scenario():
+        backend = RecordingChecks()
+        gate = AnswerabilityGate(backend)
+        old, fresh = visible(source("old")), visible(source("fresh"))
+        await gate.prepare("Alpha minimum", [old])
+        started = asyncio.Event()
+
+        async def blocked(request):
+            started.set()
+            await asyncio.Event().wait()
+
+        backend.evaluate = blocked
+        task = asyncio.create_task(gate.prepare("Alpha minimum", [old, fresh]))
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert gate.allows("Alpha minimum", old) and not gate.allows("Alpha minimum", fresh)
+
+    asyncio.run(scenario())
+
+
+def test_cached_support_cannot_revive_expired_or_superseded_memory(monkeypatch):
+    backend = RecordingChecks()
+    memory = SharedMemory(answerability_gate=AnswerabilityGate(backend))
+    monkeypatch.setattr("core.shared_memory.time.time", lambda: 100.)
+    memory.store(source("expires", valid_until=101.))
+    memory.store(source("replaced"))
+    question = "Alpha minimum query length"
+    asyncio.run(memory.prepare_retrieval(question))
+    assert {t.qid for t in memory.retrieve_related_traces(question)} == {"expires", "replaced"}
+    monkeypatch.setattr("core.shared_memory.time.time", lambda: 102.)
+    memory.past_qas[1] = replace(memory.past_qas[1], evidence_status="superseded")
+    assert not memory.retrieve_related_traces(question)
+    assert asyncio.run(memory.prepare_retrieval(question))["answerability"]["status"] == "empty"
+    assert len(backend.requests) == 1

@@ -35,6 +35,14 @@ timestamp, expiry, scope, backend endpoint/model identity and policy bind each
 approval. The session-local LRU holds at most 512 decisions; it is not persisted.
 Changed sources/models/policies require new approval. Expiry, supersession and
 scope ambiguity are checked again independently of approvals.
+When a candidate set grows or changes, only missing exact decisions are sent to
+the checker. Both supported and unsupported decisions are reused; candidate order
+does not affect their identity. The request assigns compact IDs to the unchecked
+records and preserves each complete Q&A. Every new decision must validate before
+any of that batch enters the cache. A failed batch leaves previous decisions
+available and unchecked records withheld. Nonempty preparation results expose
+`cached_candidates` and `checked_candidates` alongside the total `candidates`;
+these count record decisions, not tokens or provider calls.
 Missing or changed served-model metadata permanently invalidates that backend's
 identity and previous approvals; a new backend is required to resume checking.
 
