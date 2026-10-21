@@ -230,6 +230,9 @@ Optional [caller-assisted conversation memory](docs/conversation-memory.md) adds
 explicit source updates, conservative follow-up binding and complete bounded policy
 records. The [2026-10-21 final-answer pilot](docs/benchmarks/conversation-memory-2026-10-21.md)
 reports corrected-value/exception coverage, repeated-check cost and grading limits.
+The [2026-10-22 live retest](docs/benchmarks/live-memory-2026-10-22.md) measures
+support input tokens during source growth and corrections, and retains incomplete
+grading alongside confirmed results.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.
