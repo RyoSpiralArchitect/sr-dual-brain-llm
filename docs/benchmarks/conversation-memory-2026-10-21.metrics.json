@@ -616,7 +616,7 @@
     }
   },
   "final_local_tests": {
-    "python_unit": 493,
+    "python_unit": 502,
     "gateway_contract": 5,
     "node": 13
   },
@@ -694,6 +694,44 @@
       "source_selections_summary_unchanged": true,
       "source_revision": {
         "commit": "ccd9b9310aaba1860c11493df82466476f3b3316",
+        "dirty": false
+      }
+    }
+  },
+  "benchmark_failure_guard_verification": {
+    "baseline": {
+      "report_sha256": "4d39a0f699380493a47a7e2c936e705dc0cda79120de4ce719c5580f68a0c6c6",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "82c858ec138581bbcd0e4b3802eee375c196ceae",
+        "dirty": false
+      }
+    },
+    "development": {
+      "report_sha256": "d20544b84b7e1d52688eef766b6472f47c35e78f74fbc0c0dfaa5b629d514d66",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "82c858ec138581bbcd0e4b3802eee375c196ceae",
+        "dirty": false
+      }
+    },
+    "development-regraded": {
+      "report_sha256": "788356db21e9fa01fa2a4a18f40dc652615ac25ab37eeffa7481ea2fef70b07b",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "82c858ec138581bbcd0e4b3802eee375c196ceae",
+        "dirty": false
+      }
+    },
+    "evaluation": {
+      "report_sha256": "cddc5b9f41f2edfe786cb084e8da5a199523977e124f5815bc5de3fa82eeff5b",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "82c858ec138581bbcd0e4b3802eee375c196ceae",
         "dirty": false
       }
     }
