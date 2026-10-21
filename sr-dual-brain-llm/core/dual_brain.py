@@ -2742,6 +2742,8 @@ class DualBrainController:
                     evidence = [item for item in evidence if (item["seed_id"], item["source_qid"]) in identities]
                     if evidence:
                         payload["memory_evidence"] = evidence
+                        if getattr(self.memory, "conversation_context", False):
+                            payload["memory_evidence_format"] = "complete_v1"
                 payload["unconscious_cache_depth"] = unconscious_summary.cache_depth
                 payload["unconscious_stress_released"] = unconscious_summary.stress_released
         if psychoid_signal:
@@ -4761,6 +4763,7 @@ class DualBrainController:
         on_reset: Optional[Callable[[], Any]] = None,
         executive_mode: str = "off",
         executive_observer_mode: str = "off",
+        memory_context: Optional[Dict[str, Any]] = None,
     ) -> str:
         turn_started = time.perf_counter()
         mode = str(answer_mode or "plain").strip().lower()
@@ -4769,6 +4772,11 @@ class DualBrainController:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
         qid_value = str(qid) if qid else str(uuid.uuid4())
+        begin_turn = getattr(self.memory, "begin_turn", None)
+        if callable(begin_turn):
+            begin_turn(question, qid_value, memory_context)
+        if hasattr(self.unconscious_field, "recall_query"):
+            self.unconscious_field.recall_query = self.memory.retrieval_question(question)
         scope_resolver = getattr(self.memory, "scope_resolver", None)
         if callable(scope_resolver) and hasattr(self.unconscious_field, "recall_scope_resolver"):
             self.unconscious_field.recall_scope_resolver = scope_resolver()
@@ -4973,12 +4981,12 @@ class DualBrainController:
                 self.callosum.slot_ms = original_slot
 
         delta_cb = _emit_delta if on_delta else None
-        memory_context = context_parts.get("memory", "")
+        memory_block = context_parts.get("memory", "")
         selector = getattr(self.memory, "retrieve_related_traces", None)
-        if memory_context and memory_context in context and callable(selector):
+        if memory_block and memory_block in context and callable(selector):
             # Context can be rebuilt/filtered before drafting. Attribute IDs only
             # when the currently selected traces still reproduce the exact block.
-            if self.memory.retrieve_related(question) == memory_context:
+            if self.memory.retrieve_related(question) == memory_block:
                 traces = selector(question)
                 seed_ids = [trace.seed_id for trace in traces if getattr(trace, "seed_id", None)]
                 if seed_ids:

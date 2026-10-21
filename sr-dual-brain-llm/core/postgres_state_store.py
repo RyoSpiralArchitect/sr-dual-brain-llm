@@ -87,6 +87,11 @@ class PostgresStateStore:
             return
         await asyncio.to_thread(self._upsert_episodes_sync, session_id, episodes)
 
+    async def commit_memory_changes(self, session_id, traces, updates):
+        """Atomically persist new answers and explicit historical status changes."""
+        if traces or updates:
+            await asyncio.to_thread(self._append_memory_traces_sync, session_id, traces, None, updates)
+
     async def reset_session(self, session_id: str) -> None:
         await asyncio.to_thread(self._reset_session_sync, session_id)
 
@@ -395,6 +400,7 @@ class PostgresStateStore:
                             valid_until=evidence.get("valid_until"),
                             retrieval_scope=evidence.get("retrieval_scope"),
                             scope_aliases=tuple(evidence.get("scope_aliases", [])),
+                            recalled_answer=evidence.get("recalled_answer", False),
                         )
                     )
 
@@ -549,12 +555,20 @@ class PostgresStateStore:
                 )
 
     def _append_memory_traces_sync(
-        self, session_id: str, traces: Sequence[MemoryTrace], qid: Optional[str]
+        self, session_id: str, traces: Sequence[MemoryTrace], qid: Optional[str], updates=()
     ) -> None:
         table = self._table("shared_memory")
         with self._connect() as conn:
             with conn.cursor() as cur:
                 self._touch_session(cur, session_id)
+                for trace in updates:
+                    cur.execute(
+                        f"UPDATE {table} SET evidence_metadata = %s::jsonb "
+                        "WHERE session_id = %s AND qid = %s AND ts = %s AND question = %s AND answer = %s;",
+                        (self._memory_metadata(trace), session_id, trace.qid, trace.timestamp, trace.question, trace.answer),
+                    )
+                    if cur.rowcount != 1:
+                        raise ValueError("Historical memory update must match exactly one stored source")
                 for trace in traces:
                     trace_qid = trace.qid or qid
                     cur.execute(
@@ -572,12 +586,16 @@ class PostgresStateStore:
                             float(trace.timestamp),
                             _json_dumps(list(trace.tags)),
                             _json_dumps(list(trace.question_tokens)),
-                            _json_dumps({"seed_id": trace.seed_id, "evidence_status": trace.evidence_status,
-                                         "valid_until": trace.valid_until, "retrieval_scope": trace.retrieval_scope,
-                                         "scope_aliases": list(trace.scope_aliases)}),
+                            self._memory_metadata(trace),
                         ),
                     )
             conn.commit()
+
+    @staticmethod
+    def _memory_metadata(trace):
+        return _json_dumps({"seed_id": trace.seed_id, "evidence_status": trace.evidence_status,
+                            "valid_until": trace.valid_until, "retrieval_scope": trace.retrieval_scope,
+                            "scope_aliases": list(trace.scope_aliases), "recalled_answer": trace.recalled_answer})
 
     def _upsert_episodes_sync(self, session_id: str, episodes: Sequence[EpisodicTrace]) -> None:
         table = self._table("hippocampal_episodes")

@@ -108,7 +108,8 @@ async def right_worker(callosum, mem, right_model):
 
 async def main():
     callosum = Callosum()
-    mem = SharedMemory(answerability_gate=answerability_gate_from_environment())
+    mem = SharedMemory(answerability_gate=answerability_gate_from_environment(),
+                       conversation_context=os.environ.get("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT") == "1")
     left = LeftBrainModel()
     right = RightBrainModel()
     policy = RightBrainPolicy()
