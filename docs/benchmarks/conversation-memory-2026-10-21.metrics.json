@@ -536,5 +536,88 @@
     "provider_calls": 208,
     "input_tokens": 113180,
     "output_tokens": 30885
+  },
+  "post_review_verification": {
+    "baseline": {
+      "report_sha256": "19b4680d48ac770e8b655cd12261c5c55656adafdc081fc7e61715472811108f",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "development": {
+      "report_sha256": "e8749b808c280588c36a281bd6cb367716012eb47bce2a83ab2d02f7791ff0f9",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "development-regraded": {
+      "report_sha256": "07a5cc4da23246795107924962cf35d07270d097ce9a0a117ffe528f0578eb78",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "evaluation": {
+      "report_sha256": "12e0a4c5cada589cf65290d4a8156804855542056148c805bc704309837ac6ee",
+      "provider_calls": 0,
+      "answers_state_grades_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "previous_shortlist": {
+      "report_sha256": "f37e0be0467d5845aef6137b79877ceaf8d999f57dfb2f2b4b005226bedd150f",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "source_selections_summary_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "previous_expanded": {
+      "report_sha256": "1526e7e2f561c563b4c0944058a61e9e49b519c12de972b4ac0300cbd9f1076a",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "source_selections_summary_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "previous_evaluation": {
+      "report_sha256": "d265442bb1b60472b09aef35865987afd8f9147ad2b6fea975281eec513cad13",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "source_selections_summary_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    },
+    "previous_precision": {
+      "report_sha256": "a1a6a367f44e6ef9d6445c51761cc2315a326bc731b699143a56b9b4075c4854",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "source_selections_summary_unchanged": true,
+      "source_revision": {
+        "commit": "2f399badc6c66b2e110ac14d1c243bbe61abab15",
+        "dirty": false
+      }
+    }
+  },
+  "final_local_tests": {
+    "python_unit": 490,
+    "gateway_contract": 5,
+    "node": 13
   }
 }
