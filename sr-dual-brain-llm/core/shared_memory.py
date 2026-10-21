@@ -191,6 +191,7 @@ class SharedMemory:
         self._turn_question = self._turn_query = None
         self._turn_qid = None
         self._turn_metadata = None
+        self._pending_supersedes = frozenset()
         self._focus_scope = None
         self.pending_memory_updates = OrderedDict()
         self.pending_memory_writes = OrderedDict()
@@ -199,12 +200,14 @@ class SharedMemory:
 
     def _available(self, trace: MemoryTrace, now: float) -> bool:
         return (not (self.conversation_context and trace.recalled_answer)
+                and not (self.conversation_context and trace.qid in self._pending_supersedes)
                 and trace.evidence_status != "superseded" and (trace.valid_until is None or trace.valid_until > now))
 
     def begin_turn(self, question, qid, metadata=None):
         """Caller-declared scope/write intent; never infer a correction from recency."""
         self._turn_question = self._turn_query = None
         self._turn_qid = self._turn_metadata = None
+        self._pending_supersedes = frozenset()
         if not self.conversation_context:
             if metadata is not None:
                 raise ValueError("Conversation memory metadata requires the opt-in flag")
@@ -260,6 +263,7 @@ class SharedMemory:
         self._focus_scope = focus
         self._turn_question, self._turn_query, self._turn_qid = question, query, qid
         self._turn_metadata = (declaration, tuple(metadata.get("supersedes", ())), metadata.get("remember", False)) if declaration else None
+        self._pending_supersedes = frozenset(metadata.get("supersedes", ())) if declaration else frozenset()
 
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question

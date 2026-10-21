@@ -777,16 +777,19 @@ class DualBrainController:
         """Blend working-memory recall with hippocampal episodic cues."""
 
         cortex = self.prefrontal_cortex
-        is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(question))
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
+        recall_question = self.memory.retrieval_question(question) if guarded_memory else question
+        is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(recall_question))
         include_working_memory = bool(
             cortex is not None
+            and not guarded_memory
             and cortex.should_include_working_memory(question)
         )
         include_long_term = bool(
             not is_trivial
             and (
                 cortex is None
-                or cortex.should_include_long_term_memory(question)
+                or cortex.should_include_long_term_memory(recall_question)
             )
         )
 
@@ -796,13 +799,13 @@ class DualBrainController:
 
         memory_context = self.memory.retrieve_related(question) if include_long_term else ""
         schema_context = ""
-        if include_long_term:
+        if include_long_term and not guarded_memory:
             try:
                 schema_context = self.memory.retrieve_schema_related(question)
             except Exception:  # pragma: no cover - optional feature
                 schema_context = ""
         pitfall_context = ""
-        if include_long_term:
+        if include_long_term and not guarded_memory:
             try:
                 counts = self.memory.get_kv("system2_pitfall_counts")  # type: ignore[attr-defined]
                 examples = self.memory.get_kv("system2_pitfall_examples")  # type: ignore[attr-defined]
@@ -830,7 +833,7 @@ class DualBrainController:
                 pitfall_context = ""
         hippocampal_context = ""
         replay_context = ""
-        if include_long_term and self.hippocampus is not None:
+        if include_long_term and not guarded_memory and self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(
                 question, include_meta=False
             )
@@ -873,7 +876,8 @@ class DualBrainController:
                 memory_context=focus_memory_context,
                 hippocampal_context=hippocampal_context,
             )
-            combined = self.prefrontal_cortex.gate_context(combined, focus)
+            if not guarded_memory:
+                combined = self.prefrontal_cortex.gate_context(combined, focus)
         return combined, focus, parts
 
     def _sense_affect(self, question: str, draft: str) -> Dict[str, float]:
@@ -893,6 +897,13 @@ class DualBrainController:
         context_parts: Dict[str, str],
     ) -> tuple[str, FocusSummary | None]:
         rebuilt: List[str] = []
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
+        if guarded_memory:
+            # These summaries lack exact source identity/lifecycle approvals and
+            # may be truncated. Only the checked complete QA route may deliver
+            # historical facts, including after director "keep" directives.
+            for key in ("working_memory", "schema", "pitfalls", "hippocampal", "replay"):
+                context_parts[key] = ""
         wm_ctx = str(context_parts.get("working_memory") or "")
         mem_ctx = str(context_parts.get("memory") or "")
         schema_ctx = str(context_parts.get("schema") or "")
@@ -922,7 +933,8 @@ class DualBrainController:
                 memory_context=focus_memory_context,
                 hippocampal_context=hip_ctx,
             )
-            context = self.prefrontal_cortex.gate_context(context, focus)
+            if not guarded_memory:
+                context = self.prefrontal_cortex.gate_context(context, focus)
         return context, focus
 
     @staticmethod
@@ -1953,9 +1965,10 @@ class DualBrainController:
         lt = str(mem_obj.get("long_term") or "auto").strip().lower()
 
         cortex = self.prefrontal_cortex
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
         if wm == "drop":
             context_parts["working_memory"] = ""
-        elif wm == "keep" and not context_parts.get("working_memory") and cortex is not None:
+        elif wm == "keep" and not guarded_memory and not context_parts.get("working_memory") and cortex is not None:
             context_parts["working_memory"] = cortex.working_memory_context(turns=2)
 
         if lt == "drop":
@@ -1967,16 +1980,16 @@ class DualBrainController:
         elif lt == "keep":
             if not context_parts.get("memory"):
                 context_parts["memory"] = self.memory.retrieve_related(question)
-            if not context_parts.get("schema"):
+            if not guarded_memory and not context_parts.get("schema"):
                 try:
                     context_parts["schema"] = self.memory.retrieve_schema_related(question)
                 except Exception:  # pragma: no cover - optional feature
                     context_parts["schema"] = ""
-            if not context_parts.get("hippocampal") and self.hippocampus is not None:
+            if not guarded_memory and not context_parts.get("hippocampal") and self.hippocampus is not None:
                 context_parts["hippocampal"] = self.hippocampus.retrieve_summary(
                     question, include_meta=False
                 )
-            if not context_parts.get("replay") and self.hippocampus is not None:
+            if not guarded_memory and not context_parts.get("replay") and self.hippocampus is not None:
                 context_parts["replay"] = self.hippocampus.replay_summary(
                     question,
                     topk=1,
@@ -2665,6 +2678,8 @@ class DualBrainController:
         )
 
     def _allow_recalled_evidence(self, question: str, relay, control) -> bool:
+        if getattr(self.memory, "conversation_context", False):
+            question = self.memory.retrieval_question(question)
         memory_control = control.get("memory") if isinstance(control, dict) else None
         long_term = str(memory_control.get("long_term") or "auto").strip().lower() if isinstance(memory_control, dict) else "auto"
         if long_term == "drop":

@@ -33,13 +33,25 @@ Scope metadata is trusted application input, not model output. `remember: true`
 declares a primary source write; ordinary answers remain in QA history but are
 excluded from factual retrieval in this mode. Source answers remain unverified.
 Only explicit, unique source IDs in the same scope can be superseded. No records
-are superseded until the new answer is stored. PostgreSQL persists the new source
+are persisted as superseded until the new answer is stored. Pending correction
+targets are already hidden from every SharedMemory lookup during that turn; a
+failed/cancelled write leaves their stored status unchanged. PostgreSQL persists the new source
 and old status changes in one transaction; legacy rows default to primary,
 unverified records. The in-session focus is deliberately not restored on restart.
 Tests simulate PostgreSQL transactions; this change has no live database result.
 Existing rows without origin metadata retain their legacy primary-source default.
 Use a fresh session or explicitly curate historical records when enabling this
 mode; it cannot identify previously saved answers that were derived from recall.
+
+In this mode historical factual text is delivered only through the SharedMemory
+source route. Raw working-memory, hippocampal/replay, schema and pitfall summaries
+lack exact source/lifecycle approvals and are suppressed in model contexts, even
+under director `keep` directives. Those components still index history and compute
+control signals. Cortical line filtering is bypassed for complete approved Q&A so
+it cannot remove late qualifications. This deliberately limits other conversation
+history hints; the controlled quality pilot does not measure the full engine's
+answer quality. Offline engine regressions capture actual model prompts with all
+components instantiated and verify that old/answer-only records do not enter them.
 
 An explicit project mention sets a single focus. Conservative follow-ups starting
 with phrases such as `その`, `前の件`, `that` or `the previous` inherit that focus

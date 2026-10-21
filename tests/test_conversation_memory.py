@@ -84,6 +84,83 @@ def test_begin_turn_does_not_supersede_until_answer_is_stored():
     assert m.retrieval_question("unrelated question") == "unrelated question"
 
 
+def test_pending_correction_hides_old_approvals_without_mutating_persisted_status():
+    m = memory()
+    write(m, "Alpha", "old", "OBSOLETE_14")
+    m.bind_seed("old", "old-seed")
+    question = "Project Alpha deadline?"
+    assert retrieve(m, question)[0].qid == "old"
+    m.begin_turn("Project Alpha deadline is now seven days", "new", {
+        "id":"Alpha", "aliases":["Alpha"], "remember":True, "supersedes":["old"]})
+    assert m.past_qas[0].evidence_status == "unverified"
+    assert not m.answerability_candidates(question) and not m.retrieve_related(question)
+    assert not m.evidence_for_seeds(["old-seed"], question=question)
+    m.begin_turn(question, "after-cancelled-correction")
+    assert m.retrieve_related_traces(question)[0].qid == "old"
+
+
+def test_engine_components_cannot_reintroduce_old_or_answer_only_memory(monkeypatch):
+    from engine_stdio import EngineSession
+    monkeypatch.setenv("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT", "1")
+    prompts = []
+
+    class Capture:
+        async def complete(self, prompt, **kwargs):
+            prompts.append(prompt + "\n" + str(kwargs.get("system", "")))
+            return "CURRENT_7" if len(prompts) == 1 else "DERIVED_SENTINEL"
+
+    async def run():
+        session = await EngineSession.create("channel-regression")
+        try:
+            m, c = session.memory, session.controller
+            m.answerability_gate = AnswerabilityGate(Checks(), max_question_chars=2048, max_answer_chars=2048)
+            write(m, "Alpha", "old", "OBSOLETE_14")
+            c.prefrontal_cortex.remember_working_memory(question="Project Alpha deadline", answer="OBSOLETE_14", qid="old")
+            c.hippocampus.index_episode("old", "Project Alpha deadline", "OBSOLETE_14")
+            c.left_model._llm_client = Capture()
+            original_routing = c._run_routing_stage
+            async def route(**kwargs):
+                result = await original_routing(**kwargs)
+                result.decision.action = 0
+                return result
+            c._run_routing_stage = route
+            await c.process("Project Alpha deadline is now seven days", qid="new", leading_brain="left", system2_mode="off",
+                memory_context={"id":"Alpha", "aliases":["Alpha"], "remember":True, "supersedes":["old"]})
+            await c.process("Project Alpha deadline?", qid="probe", leading_brain="left", system2_mode="off")
+            await c.process("Project Alpha deadline?", qid="repeat", leading_brain="left", system2_mode="off")
+            await c.process("その締切をもう一度教えて。", qid="followup", leading_brain="left", system2_mode="off")
+            assert len(prompts) == 4
+            assert all("OBSOLETE_14" not in p for p in prompts)
+            assert "CURRENT_7" in prompts[1] and "CURRENT_7" in prompts[2]
+            assert "CURRENT_7" in prompts[3]
+            assert all("DERIVED_SENTINEL" not in p for p in prompts[1:])
+            unsafe_parts = {k:"UNAPPROVED" for k in ("working_memory", "hippocampal", "replay", "schema", "pitfalls")}
+            frame = c._apply_director_memory_control(question="Project Alpha deadline?", context_parts=unsafe_parts,
+                control={"memory":{"working_memory":"keep", "long_term":"keep"}})
+            assert "CURRENT_7" in frame.context and "OBSOLETE_14" not in frame.context
+            assert "DERIVED_SENTINEL" not in frame.context
+            assert all(not unsafe_parts[k] for k in ("working_memory", "hippocampal", "replay", "schema", "pitfalls"))
+        finally:
+            await session.close()
+
+    asyncio.run(run())
+
+
+def test_cortical_line_gating_keeps_complete_checked_conditions():
+    from test_dual_brain import make_stage_controller
+    from core.prefrontal_cortex import PrefrontalCortex
+    m = memory()
+    answer = "Project Alpha standard limit: 5kg.\n" + "Other policy.\n" * 60 + "Europe exception: 2kg."
+    write(m, "Alpha", "a", answer)
+    q = "Project Alpha limit?"
+    retrieve(m, q)
+    c = make_stage_controller(memory=m, prefrontal_cortex=PrefrontalCortex())
+    context, _, parts = c._compose_context(q)
+    assert answer in context
+    rebuilt, _ = c._rebuild_context_from_parts(question=q, context_parts=dict(parts, working_memory="UNAPPROVED"))
+    assert answer in rebuilt and "UNAPPROVED" not in rebuilt
+
+
 def test_long_complete_source_keeps_late_exception_and_rejects_oversized_units():
     m = memory()
     answer = "Standard: 5kg. " + "Memo. " * 120 + "Europe exception: 2kg."

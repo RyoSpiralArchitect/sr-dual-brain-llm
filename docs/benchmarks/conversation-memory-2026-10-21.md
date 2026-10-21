@@ -109,10 +109,23 @@ chat or embedding calls.
 The fixture/protocol were committed before paid generation (`fac969d`), the baseline
 runner at `64a6007`, conversation generation at `7d5e1d7`, and frozen evaluation
 implementation/rubric at `4a2954d`. The later focus/grade validation changes were
-confirmed by exact development replay. Final local validation: **487 Python unit
+confirmed by exact development replay. Final local validation: **490 Python unit
 tests, 5 gateway contract tests and 13 Node tests passed**. Coverage includes normal
 and streaming RPC metadata, failed persistence, atomic historical status changes,
 rolling-buffer writes, legacy origin defaults and actual prompts in both workers.
+
+PR review found two production-path gaps beyond the controlled benchmark: pending
+correction targets could still enter a source-write draft, and working/hippocampal
+summaries could reintroduce excluded QA. Pending targets are now hidden before
+drafting without changing persisted status early. Conversation mode delivers
+historical facts only through the SharedMemory source route; raw working-memory,
+hippocampal/replay, schema and pitfall text is suppressed, including director `keep`
+overrides. Components retain indexing/control roles. Cortical line filtering also
+preserves full approved QA units. Three additional regressions include real
+EngineSession components with a simulated model endpoint, pending/cancelled writes,
+and late-condition preservation. Frozen answer/grading journals are replayed after
+these review repairs without more paid evaluation or rubric changes. Full engine
+answer quality remains unmeasured; the engine regression tests prompt delivery.
 
 Paid generation commands (run from repository root, each output directory new):
 
