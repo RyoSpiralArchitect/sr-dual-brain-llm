@@ -36,9 +36,15 @@ keyword), together with a unique `qid` for each turn:
 Scope metadata is trusted application input, not model output. `remember: true`
 declares a primary source write; ordinary answers remain in QA history but are
 excluded from factual retrieval in this mode. Source answers remain unverified.
-Primary source drafts require a configured left model and propagate generation
-errors or empty output instead of saving a local fallback. No new source or
-supersession is stored on failure; concurrent preview/observer tasks are cancelled.
+Primary source drafts require a configured left model, nonempty text and a confirmed
+successful terminal completion. Provider errors, empty output, exhausted token-limit
+continuations and missing or unsuccessful finish reasons fail the write. No new source
+or supersession is stored on failure; concurrent preview/observer tasks are cancelled.
+Streamed partial text may already have reached the caller, but it is not promoted.
+The built-in left model requests `require_complete=True` from its LLM client;
+custom client adapters must enforce that contract, including after continuations.
+Hugging Face source writes request generation details and require a successful
+`details.finish_reason`; responses without this metadata cannot become sources.
 Custom left models must implement `generate_source_answer(...)` with this success
 contract. Ordinary answer turns retain their existing fallback behavior. Successful
 generation does not certify factual truth or semantic completeness.

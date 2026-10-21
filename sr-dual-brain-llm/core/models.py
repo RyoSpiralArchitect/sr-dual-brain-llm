@@ -173,7 +173,7 @@ class LeftBrainModel:
         self.uses_external_llm = bool(self._llm_client)
 
     async def generate_source_answer(self, input_text, context, **kwargs):
-        """Primary source writes must never promote a local failure fallback."""
+        """Primary source writes require a nonempty, terminally complete answer."""
         return await self.generate_answer(input_text, context, require_success=True, **kwargs)
 
     async def generate_answer(
@@ -200,18 +200,21 @@ class LeftBrainModel:
                             f"Vision inputs are only supported for openai-style providers; got '{provider}'."
                         )
                     prompt = _openai_vision_prompt(input_text, vision_images)
+                completion_kwargs = {"require_complete": True} if require_success else {}
                 if hasattr(self._llm_client, "complete_stream"):
                     completion = await self._llm_client.complete_stream(
                         prompt,
                         system=system,
                         temperature=0.4,
                         on_delta=on_delta,
+                        **completion_kwargs,
                     )
                 else:
                     completion = await self._llm_client.complete(
                         prompt,
                         system=system,
                         temperature=0.4,
+                        **completion_kwargs,
                     )
                     if on_delta:
                         maybe = on_delta(completion)

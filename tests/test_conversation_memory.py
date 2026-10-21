@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -247,6 +248,80 @@ def test_failed_production_source_generation_keeps_previous_fact(failure):
     assert len(m.past_qas) == 1 and m.past_qas[0].evidence_status == "unverified"
     assert not m.pending_memory_writes and not m.pending_memory_updates
     assert [t.qid for t in retrieve(m, "Project Alpha deadline?")] == ["old"]
+
+
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("reasons", [
+    ("length", "length", "length"),
+    (None,),
+    ("length", None),
+    ("content_filter",),
+    ("stop",),
+    ("length", "stop"),
+])
+def test_source_promotion_requires_terminal_completion(monkeypatch, stream, reasons):
+    from core.llm_client import LLMConfig
+    from core.models import LeftBrainModel
+    from test_dual_brain import make_stage_controller
+
+    m = memory()
+    m.track_persistence = True
+    write(m, "Alpha", "old", "14 days")
+    m.pending_memory_writes.clear()
+    original = list(m.past_qas)
+    model = LeftBrainModel(LLMConfig("openai", "fake", "NOT_A_KEY", max_continuations=2))
+    client = model._llm_client
+    calls, deltas = [], []
+
+    def response():
+        reason = reasons[len(calls)]
+        calls.append(reason)
+        return "7 days" if len(calls) == 1 else " including weekends", reason
+
+    async def post_json(*args, **kwargs):
+        text, reason = response()
+        return {"choices": [{"message": {"content": text}, "finish_reason": reason}]}
+
+    async def stream_call(messages, *, on_delta, **kwargs):
+        text, reason = response()
+
+        async def events():
+            yield json.dumps({"choices": [{"delta": {"content": text}, "finish_reason": reason}]})
+            yield "[DONE]"
+
+        return await client._consume_openai_style_stream(events(), on_delta=on_delta)
+
+    monkeypatch.setattr(client, "_post_json", post_json)
+    monkeypatch.setattr(client, "_openai_style_stream_call", stream_call)
+    if not stream:
+        # Exercise the model's nonstreaming client adapter as well.
+        model._llm_client = SimpleNamespace(complete=client.complete)
+    controller = make_stage_controller(memory=m, left_model=model)
+
+    async def correct():
+        return await controller.process(
+            "Project Alpha deadline is now seven days", qid="new", leading_brain="left",
+            system2_mode="off", on_delta=deltas.append,
+            memory_context={"id": "Alpha", "aliases": ["Alpha"], "remember": True, "supersedes": ["old"]},
+        )
+
+    if reasons[-1] == "stop":
+        asyncio.run(correct())
+        assert m.past_qas[0].evidence_status == "superseded"
+        assert m.pending_memory_updates and m.pending_memory_writes
+        sources = retrieve(m, "Project Alpha deadline?")
+        assert [t.qid for t in sources] == ["new"]
+        assert sources[0].answer == "7 days" + (" including weekends" if len(reasons) > 1 else "")
+    else:
+        with pytest.raises(RuntimeError, match="Primary source generation failed"):
+            asyncio.run(correct())
+        assert m.past_qas == original
+        assert not m.pending_memory_writes and not m.pending_memory_updates
+        assert [t.qid for t in retrieve(m, "Project Alpha deadline?")] == ["old"]
+        assert m.past_qas[0].answer == "14 days"
+    assert calls == list(reasons)
+    if stream:
+        assert deltas  # Partial output can reach the caller without becoming a source.
 
 
 def test_failed_primary_generation_cancels_preview_and_observer_tasks():
