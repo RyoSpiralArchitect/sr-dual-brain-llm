@@ -1,0 +1,363 @@
+{
+  "schema_version": 1,
+  "experiment": "model_free_incremental_support",
+  "provider_calls": 0,
+  "answer_quality_evaluated": false,
+  "source_revision": {
+    "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+    "dirty": false
+  },
+  "fixture_sha256": "8e4c25641a16d1c93e38b0b108578a199a2b99777c502c9137b73284d792a60b",
+  "policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+  "approvals_identical": true,
+  "arms": {
+    "whole_batch_reference": {
+      "checker_batches": 5,
+      "records_sent": 22,
+      "serialized_policy_and_request_utf8_bytes": 22809,
+      "rows": [
+        {
+          "stage": "initial",
+          "status": "ready",
+          "candidates": 4,
+          "cached_candidates": 0,
+          "checked_candidates": 4,
+          "approved": 2,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "growth",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 0,
+          "checked_candidates": 5,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "extra",
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "reorder",
+          "status": "cached",
+          "candidates": 5,
+          "cached_candidates": 5,
+          "checked_candidates": 0,
+          "approved": 3,
+          "checker_batches": 0,
+          "approved_qids": [
+            "region",
+            "deadline",
+            "extra"
+          ]
+        },
+        {
+          "stage": "correction",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 0,
+          "checked_candidates": 5,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "extra",
+            "region"
+          ]
+        },
+        {
+          "stage": "status_change",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 0,
+          "checked_candidates": 5,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "extra",
+            "region"
+          ]
+        },
+        {
+          "stage": "removal",
+          "status": "cached",
+          "candidates": 3,
+          "cached_candidates": 3,
+          "checked_candidates": 0,
+          "approved": 2,
+          "checker_batches": 0,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "different_question",
+          "status": "ready",
+          "candidates": 3,
+          "cached_candidates": 0,
+          "checked_candidates": 3,
+          "approved": 2,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "exact_repeat",
+          "status": "cached",
+          "candidates": 3,
+          "cached_candidates": 3,
+          "checked_candidates": 0,
+          "approved": 2,
+          "checker_batches": 0,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        }
+      ]
+    },
+    "incremental": {
+      "checker_batches": 5,
+      "records_sent": 10,
+      "serialized_policy_and_request_utf8_bytes": 13223,
+      "rows": [
+        {
+          "stage": "initial",
+          "status": "ready",
+          "candidates": 4,
+          "cached_candidates": 0,
+          "checked_candidates": 4,
+          "approved": 2,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "growth",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 4,
+          "checked_candidates": 1,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "extra",
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "reorder",
+          "status": "cached",
+          "candidates": 5,
+          "cached_candidates": 5,
+          "checked_candidates": 0,
+          "approved": 3,
+          "checker_batches": 0,
+          "approved_qids": [
+            "region",
+            "deadline",
+            "extra"
+          ]
+        },
+        {
+          "stage": "correction",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 4,
+          "checked_candidates": 1,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "extra",
+            "region"
+          ]
+        },
+        {
+          "stage": "status_change",
+          "status": "ready",
+          "candidates": 5,
+          "cached_candidates": 4,
+          "checked_candidates": 1,
+          "approved": 3,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "extra",
+            "region"
+          ]
+        },
+        {
+          "stage": "removal",
+          "status": "cached",
+          "candidates": 3,
+          "cached_candidates": 3,
+          "checked_candidates": 0,
+          "approved": 2,
+          "checker_batches": 0,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "different_question",
+          "status": "ready",
+          "candidates": 3,
+          "cached_candidates": 0,
+          "checked_candidates": 3,
+          "approved": 2,
+          "checker_batches": 1,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        },
+        {
+          "stage": "exact_repeat",
+          "status": "cached",
+          "candidates": 3,
+          "cached_candidates": 3,
+          "checked_candidates": 0,
+          "approved": 2,
+          "checker_batches": 0,
+          "approved_qids": [
+            "deadline",
+            "region"
+          ]
+        }
+      ]
+    }
+  },
+  "measurement_date_utc": "2026-10-21",
+  "integrated_main_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+  "mechanism_report": {
+    "path": "target/benchmarks/incremental-support-mechanism-2026-10-21/report.json",
+    "sha256": "10da728a245a45a065127ab3102a015040c4a0b4f915c635054738584e28d77a"
+  },
+  "frozen_verification": {
+    "reference_validation": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/reference-validation.json",
+      "sha256": "18e5c38ad2a503be48045ee8f1af3444e916e3b2f1972e86c16ced3f33a3a947",
+      "reference_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+      "actual_previous_gate_matches_adapter": true,
+      "provider_calls": 0
+    },
+    "conversation_baseline": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/conversation-baseline.json",
+      "sha256": "67d6aebbb1c7a8f77d01d66907637ce06850feaa930ebd0f2e7beb04529097a9",
+      "provider_calls": 0,
+      "answers_stored_metadata_grades_and_quality_unchanged": true,
+      "reference_checked_gate_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+      "conversation_gate": "current_proposed_implementation",
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "conversation_development": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/conversation-development.json",
+      "sha256": "7f28529a4819c7a42c1e16f0b549fade4a407b7f3446628d434c48a5c97f4459",
+      "provider_calls": 0,
+      "answers_stored_metadata_grades_and_quality_unchanged": true,
+      "reference_checked_gate_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+      "conversation_gate": "current_proposed_implementation",
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "conversation_development-regraded": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/conversation-development-regraded.json",
+      "sha256": "4d05f741c173e7cd52fee19d4ae0f658400cacf162e253d93e14cb6eb066fea3",
+      "provider_calls": 0,
+      "answers_stored_metadata_grades_and_quality_unchanged": true,
+      "reference_checked_gate_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+      "conversation_gate": "current_proposed_implementation",
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "conversation_evaluation": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/conversation-evaluation.json",
+      "sha256": "3cfd87205ef1bd970b64675dd7b1305b2aade03d31263bde2a91c7b81f7566f9",
+      "provider_calls": 0,
+      "answers_stored_metadata_grades_and_quality_unchanged": true,
+      "reference_checked_gate_commit": "74d552b02fea8421ddb7e2284e03adf2af93fba9",
+      "conversation_gate": "current_proposed_implementation",
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "previous_shortlist": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/previous-shortlist.json",
+      "sha256": "29dfc47701f414d8edf70e3f77dc3d644adaa4916af1233cc0882b56cd0a2419",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "selections_and_summaries_unchanged": true,
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "previous_expanded": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/previous-expanded.json",
+      "sha256": "388a7eb7916f7fe90a861cf58df7aa88d372913c083630c02c3685dd39ba66d1",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "selections_and_summaries_unchanged": true,
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "previous_evaluation": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/previous-evaluation.json",
+      "sha256": "fb88577a7b801ec2e7ee15731b0c8a52d3bff7fcceb5724565c7ee43dbcdecc0",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "selections_and_summaries_unchanged": true,
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    },
+    "previous_precision": {
+      "path": "target/benchmarks/incremental-support-verification-fixed-reference-2026-10-21/previous-precision.json",
+      "sha256": "d765a686680e29fa5a0ed50298a15f210e4e8b12f03b5f386bb52cba9bc301f9",
+      "provider_calls": 0,
+      "embedding_provider_calls": 0,
+      "selections_and_summaries_unchanged": true,
+      "source_revision": {
+        "commit": "2d6eea8150ddcffb4a3a76676f96380970f5c993",
+        "dirty": false
+      }
+    }
+  },
+  "local_tests": {
+    "python_unit_passed": 640,
+    "gateway_passed": 5,
+    "node_passed": 13,
+    "isolated_postgres_skipped": 10
+  },
+  "limitations": [
+    "Authored independent simulated decisions; no new model or final-answer measurement.",
+    "UTF-8 policy/request bytes are not billable model tokens or HTTP wire bytes.",
+    "Historical checked comparison arm uses the integrated main gate; conversation and prior retrieval use the new gate."
+  ]
+}
