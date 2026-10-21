@@ -108,6 +108,7 @@ async def right_worker(callosum, mem, right_model):
 
 async def main():
     callosum = Callosum()
+    # Interactive input has no trusted write/supersession metadata channel.
     mem = SharedMemory(answerability_gate=answerability_gate_from_environment())
     left = LeftBrainModel()
     right = RightBrainModel()

@@ -1,4 +1,5 @@
 import asyncio
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -269,3 +270,97 @@ def test_openai_style_complete_stream_auto_continue(monkeypatch):
     assert streamed == ["Hello", " world"]
     assert len(calls) == 2
     assert any(msg.get("role") == "assistant" for msg in calls[1])
+
+
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("reason", [None, "length", "max_tokens", "content_filter", "tool_calls", "unknown", "stop"])
+@pytest.mark.parametrize("auto_continue,max_continuations", [(False, 2), (True, 0)])
+def test_terminal_completion_requirement_is_opt_in(monkeypatch, stream, reason, auto_continue, max_continuations):
+    client = LLMClient(LLMConfig("openai", "fake", "NOT_A_KEY",
+                               auto_continue=auto_continue, max_continuations=max_continuations))
+    calls = []
+
+    async def post_json(*args, **kwargs):
+        calls.append("json")
+        return {"choices": [{"message": {"content": "partial"}, "finish_reason": reason}]}
+
+    async def stream_call(messages, *, on_delta, **kwargs):
+        calls.append("stream")
+
+        async def events():
+            yield json.dumps({"choices": [{"delta": {"content": "partial"}, "finish_reason": reason}]})
+            # EOF without [DONE] must not imply a successful finish reason.
+
+        return await client._consume_openai_style_stream(events(), on_delta=on_delta)
+
+    monkeypatch.setattr(client, "_post_json", post_json)
+    monkeypatch.setattr(client, "_openai_style_stream_call", stream_call)
+    complete = client.complete_stream if stream else client.complete
+    assert asyncio.run(complete("question")) == "partial"
+    if reason == "stop":
+        assert asyncio.run(complete("question", require_complete=True)) == "partial"
+    else:
+        with pytest.raises(RuntimeError, match="terminal completion"):
+            asyncio.run(complete("question", require_complete=True))
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("provider,reason,complete", [
+    ("mistral", "stop", True), ("mistral", "length", False),
+    ("xai", "stop", True), ("xai", None, False),
+    ("anthropic", "end_turn", True), ("anthropic", "stop_sequence", True),
+    ("anthropic", "max_tokens", False), ("anthropic", "tool_use", False), ("anthropic", None, False),
+    ("google", "STOP", True), ("google", "MAX_TOKENS", False), ("google", "SAFETY", False), ("google", None, False),
+    ("huggingface", "eos_token", True), ("huggingface", "stop_sequence", True),
+    ("huggingface", "length", False), ("huggingface", None, False),
+])
+def test_provider_terminal_status_is_checked(monkeypatch, stream, provider, reason, complete):
+    client = LLMClient(LLMConfig(provider, "fake", "NOT_A_KEY", auto_continue=False))
+    requests = []
+
+    async def post_json(url, payload, headers):
+        requests.append(payload)
+        if provider == "anthropic":
+            return {"content": [{"type": "text", "text": "answer"}], "stop_reason": reason}
+        if provider == "google":
+            return {"candidates": [{"content": {"parts": [{"text": "answer"}]}, "finishReason": reason}]}
+        if provider == "huggingface":
+            return [{"generated_text": "answer", "details": {"finish_reason": reason}}]
+        return {"choices": [{"message": {"content": "answer"}, "finish_reason": reason}]}
+
+    async def stream_call(messages, **kwargs):
+        return "answer", reason
+
+    monkeypatch.setattr(client, "_post_json", post_json)
+    monkeypatch.setattr(client, "_openai_style_stream_call", stream_call)
+    method = client.complete_stream if stream else client.complete
+    assert asyncio.run(method("question")) == "answer"
+    if complete:
+        assert asyncio.run(method("question", require_complete=True)) == "answer"
+    else:
+        with pytest.raises(RuntimeError, match="terminal completion"):
+            asyncio.run(method("question", require_complete=True))
+    if provider == "huggingface":
+        assert "details" not in requests[0]["parameters"]
+        assert requests[1]["parameters"]["details"] is True
+
+
+@pytest.mark.parametrize("provider,response", [
+    ("openai", {"choices": []}),
+    ("openai", {"choices": [{"message": {"content": None}, "finish_reason": "stop"}]}),
+    ("anthropic", {"content": [], "stop_reason": "end_turn"}),
+    ("google", {"candidates": [{"content": {"parts": []}, "finishReason": "STOP"}]}),
+    ("huggingface", {"generated_text": None, "details": {"finish_reason": "eos_token"}}),
+    ("huggingface", {"generated_text": "answer"}),
+    ("huggingface", {"generated_text": "answer", "details": {"finish_reason": "length"}}),
+])
+def test_source_completion_rejects_empty_or_unconfirmed_responses(monkeypatch, provider, response):
+    client = LLMClient(LLMConfig(provider, "fake", "NOT_A_KEY"))
+
+    async def post_json(*args, **kwargs):
+        return response
+
+    monkeypatch.setattr(client, "_post_json", post_json)
+    with pytest.raises(RuntimeError, match="terminal completion"):
+        asyncio.run(client.complete("question", require_complete=True))

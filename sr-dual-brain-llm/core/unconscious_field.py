@@ -1071,6 +1071,7 @@ class UnconsciousField:
         self.recall_mode = recall_mode
         self.semantic_index = semantic_index
         self.recall_scope_resolver = None
+        self.recall_query = None
         self.recall_evidence_allowlist = None
         self._question_embedder = HashEmbedder(dim=self.config.dim, seed=self.config.seed)
         self._seed_cache: List[LatentSeed] = []
@@ -1124,6 +1125,7 @@ class UnconsciousField:
         self._seed_cache = self._seed_cache[-self._max_cache :]
 
     def _harvest_emergent(self, vector: List[float], *, question: str) -> List[EmergentIdeaModel]:
+        question = self.recall_query if self.recall_query is not None else question
         ideas: List[EmergentIdeaModel] = []
         attempts: List[HarvestAttemptModel] = []
         survivors: List[LatentSeed] = []

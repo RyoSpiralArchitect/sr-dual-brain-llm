@@ -43,7 +43,10 @@ are withheld in full, rather than approving an excerpt with omitted conditions.
 Records changed by the existing memory-text sanitizer are also withheld: a removed
 line could contain a condition rather than a debug instruction.
 Current questions are limited to 6,000 UTF-8 bytes. This conservative source limit
-is a practical recall limitation for long answers. The provider timeout is at
+is a practical recall limitation for long answers. Optional
+[caller-assisted conversation memory](../conversation-memory.md) raises both
+complete-source bounds to 2,048 characters without enabling prefix truncation.
+The provider timeout is at
 most 20 seconds and output is capped at 4,096 completion tokens, without automatic
 continuations or retries. Missing/duplicate/malformed decisions, nonboolean flags
 and ungrounded quotes create no approvals. Provider failures expose only their

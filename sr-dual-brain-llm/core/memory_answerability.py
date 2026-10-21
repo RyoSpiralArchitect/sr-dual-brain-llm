@@ -102,7 +102,8 @@ class OpenAIAnswerability:
 
 class AnswerabilityGate:
     """Session-local approvals bind the exact query, visible source and model/policy."""
-    def __init__(self, backend, *, candidate_limit=6, max_items=512):
+    def __init__(self, backend, *, candidate_limit=6, max_items=512,
+                 max_question_chars=240, max_answer_chars=640):
         if not 1 <= candidate_limit <= 6 or max_items < candidate_limit:
             raise ValueError("Invalid evidence support limits")
         self.backend = backend
@@ -110,16 +111,19 @@ class AnswerabilityGate:
         self.candidate_limit = candidate_limit
         self.max_items = max_items
         self.cache = OrderedDict()
+        if not 1 <= max_question_chars <= 2048 or not 1 <= max_answer_chars <= 2048:
+            raise ValueError("Invalid complete source limits")
+        self.max_question_chars = max_question_chars
+        self.max_answer_chars = max_answer_chars
 
     def _key(self, question, source):
         return digest({"backend": self.identity, "policy": POLICY, "question": question, "source": source})
 
-    @staticmethod
-    def eligible(source):
+    def eligible(self, source):
         return (isinstance(source.get("qid"), str) and 0 < len(source["qid"]) <= 256
                 and isinstance(source.get("question"), str) and bool(source["question"].strip())
-                and len(source["question"]) <= 240 and isinstance(source.get("answer"), str)
-                and bool(source["answer"].strip()) and len(source["answer"]) <= 640
+                and len(source["question"]) <= self.max_question_chars and isinstance(source.get("answer"), str)
+                and bool(source["answer"].strip()) and len(source["answer"]) <= self.max_answer_chars
                 and source.get("status") in {"verified", "unverified"}
                 and not source.get("truncated", False)
                 and isinstance(source.get("recorded_at"), (int, float)) and math.isfinite(source["recorded_at"]))

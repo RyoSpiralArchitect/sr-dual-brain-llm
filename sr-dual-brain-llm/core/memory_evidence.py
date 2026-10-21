@@ -10,9 +10,10 @@ EVIDENCE_CHARS = 2800
 EVIDENCE_STATUSES = {"unverified", "verified", "superseded"}
 
 
-def bounded_evidence(items: Any) -> list[dict]:
+def bounded_evidence(items: Any, *, complete=False) -> list[dict]:
     result = []
     seen = set()
+    question_limit, answer_limit, packet_limit = (2048, 2048, 16000) if complete else (240, 640, EVIDENCE_CHARS)
     if not isinstance(items, (list, tuple)):
         return result
     for item in items:
@@ -28,13 +29,15 @@ def bounded_evidence(items: Any) -> list[dict]:
         if (not isinstance(question, str) or not question.strip() or not isinstance(answer, str) or not answer.strip()
                 or not isinstance(recorded_at, (int, float)) or not math.isfinite(recorded_at)):
             continue
+        if complete and (len(question) > question_limit or len(answer) > answer_limit or item.get("truncated")):
+            continue
         entry = {"seed_id": seed_id, "source_qid": source_qid, "status": item["status"],
-                 "recorded_at": recorded_at, "question": question[:240], "answer": answer[:640],
-                 "truncated": item.get("truncated") is True or len(question) > 240 or len(answer) > 640}
+                 "recorded_at": recorded_at, "question": question[:question_limit], "answer": answer[:answer_limit],
+                 "truncated": item.get("truncated") is True or len(question) > question_limit or len(answer) > answer_limit}
         scope = item.get("retrieval_scope")
         if isinstance(scope, str) and scope.strip() and len(scope) <= 128:
             entry["retrieval_scope"] = scope
-        if len(json.dumps(result + [entry], ensure_ascii=False)) > EVIDENCE_CHARS:
+        if len(json.dumps(result + [entry], ensure_ascii=False)) > packet_limit:
             continue
         result.append(entry)
         seen.add(seed_id)
@@ -48,7 +51,7 @@ def request_memory_context(request: dict) -> str | None:
     # empty context is a deliberate gate and must remain distinct from None.
     original = request.get("context")
     context = str(original) if original is not None else None
-    evidence = bounded_evidence(request.get("memory_evidence"))
+    evidence = bounded_evidence(request.get("memory_evidence"), complete=request.get("memory_evidence_format") == "complete_v1")
     if not evidence:
         return context
     block = (

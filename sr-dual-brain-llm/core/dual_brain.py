@@ -18,6 +18,7 @@ from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
+from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -777,16 +778,19 @@ class DualBrainController:
         """Blend working-memory recall with hippocampal episodic cues."""
 
         cortex = self.prefrontal_cortex
-        is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(question))
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
+        recall_question = self.memory.retrieval_question(question) if guarded_memory else question
+        is_trivial = bool(cortex is not None and cortex.is_trivial_chat_turn(recall_question))
         include_working_memory = bool(
             cortex is not None
+            and not guarded_memory
             and cortex.should_include_working_memory(question)
         )
         include_long_term = bool(
             not is_trivial
             and (
                 cortex is None
-                or cortex.should_include_long_term_memory(question)
+                or cortex.should_include_long_term_memory(recall_question)
             )
         )
 
@@ -796,13 +800,13 @@ class DualBrainController:
 
         memory_context = self.memory.retrieve_related(question) if include_long_term else ""
         schema_context = ""
-        if include_long_term:
+        if include_long_term and not guarded_memory:
             try:
                 schema_context = self.memory.retrieve_schema_related(question)
             except Exception:  # pragma: no cover - optional feature
                 schema_context = ""
         pitfall_context = ""
-        if include_long_term:
+        if include_long_term and not guarded_memory:
             try:
                 counts = self.memory.get_kv("system2_pitfall_counts")  # type: ignore[attr-defined]
                 examples = self.memory.get_kv("system2_pitfall_examples")  # type: ignore[attr-defined]
@@ -830,7 +834,7 @@ class DualBrainController:
                 pitfall_context = ""
         hippocampal_context = ""
         replay_context = ""
-        if include_long_term and self.hippocampus is not None:
+        if include_long_term and not guarded_memory and self.hippocampus is not None:
             hippocampal_context = self.hippocampus.retrieve_summary(
                 question, include_meta=False
             )
@@ -873,7 +877,8 @@ class DualBrainController:
                 memory_context=focus_memory_context,
                 hippocampal_context=hippocampal_context,
             )
-            combined = self.prefrontal_cortex.gate_context(combined, focus)
+            if not guarded_memory:
+                combined = self.prefrontal_cortex.gate_context(combined, focus)
         return combined, focus, parts
 
     def _sense_affect(self, question: str, draft: str) -> Dict[str, float]:
@@ -893,6 +898,13 @@ class DualBrainController:
         context_parts: Dict[str, str],
     ) -> tuple[str, FocusSummary | None]:
         rebuilt: List[str] = []
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
+        if guarded_memory:
+            # These summaries lack exact source identity/lifecycle approvals and
+            # may be truncated. Only the checked complete QA route may deliver
+            # historical facts, including after director "keep" directives.
+            for key in ("working_memory", "schema", "pitfalls", "hippocampal", "replay"):
+                context_parts[key] = ""
         wm_ctx = str(context_parts.get("working_memory") or "")
         mem_ctx = str(context_parts.get("memory") or "")
         schema_ctx = str(context_parts.get("schema") or "")
@@ -922,7 +934,8 @@ class DualBrainController:
                 memory_context=focus_memory_context,
                 hippocampal_context=hip_ctx,
             )
-            context = self.prefrontal_cortex.gate_context(context, focus)
+            if not guarded_memory:
+                context = self.prefrontal_cortex.gate_context(context, focus)
         return context, focus
 
     @staticmethod
@@ -1953,9 +1966,10 @@ class DualBrainController:
         lt = str(mem_obj.get("long_term") or "auto").strip().lower()
 
         cortex = self.prefrontal_cortex
+        guarded_memory = bool(getattr(self.memory, "conversation_context", False))
         if wm == "drop":
             context_parts["working_memory"] = ""
-        elif wm == "keep" and not context_parts.get("working_memory") and cortex is not None:
+        elif wm == "keep" and not guarded_memory and not context_parts.get("working_memory") and cortex is not None:
             context_parts["working_memory"] = cortex.working_memory_context(turns=2)
 
         if lt == "drop":
@@ -1967,16 +1981,16 @@ class DualBrainController:
         elif lt == "keep":
             if not context_parts.get("memory"):
                 context_parts["memory"] = self.memory.retrieve_related(question)
-            if not context_parts.get("schema"):
+            if not guarded_memory and not context_parts.get("schema"):
                 try:
                     context_parts["schema"] = self.memory.retrieve_schema_related(question)
                 except Exception:  # pragma: no cover - optional feature
                     context_parts["schema"] = ""
-            if not context_parts.get("hippocampal") and self.hippocampus is not None:
+            if not guarded_memory and not context_parts.get("hippocampal") and self.hippocampus is not None:
                 context_parts["hippocampal"] = self.hippocampus.retrieve_summary(
                     question, include_meta=False
                 )
-            if not context_parts.get("replay") and self.hippocampus is not None:
+            if not guarded_memory and not context_parts.get("replay") and self.hippocampus is not None:
                 context_parts["replay"] = self.hippocampus.replay_summary(
                     question,
                     topk=1,
@@ -2189,6 +2203,11 @@ class DualBrainController:
         phase_add: Callable[[str, float], None],
     ) -> DraftStageResult:
         steps: List[InnerDialogueStep] = []
+        generator = self.left_model.generate_answer
+        if getattr(self.memory, "primary_write_pending", False):
+            generator = getattr(self.left_model, "generate_source_answer", None)
+            if not callable(generator):
+                raise RuntimeError("Primary source writes require success-aware generation")
         right_lead_notes: Optional[str] = None
         right_preview_task: asyncio.Task[str] | None = None
         if (leading == "right" or collaborative_lead) and not system2_active:
@@ -2211,17 +2230,27 @@ class DualBrainController:
             left_context = (f"{context}\n\n{system2_hint}".strip() if context else system2_hint)
 
         left_draft_started = time.perf_counter()
-        draft = await self.left_model.generate_answer(
-            question,
-            left_context,
-            vision_images=vision_images,
-            on_delta=(
-                delta_cb
-                if delta_cb and not stream_final_only and not emitted_any
-                else None
-            ),
-        )
+        try:
+            draft = await generator(
+                question,
+                left_context,
+                vision_images=vision_images,
+                on_delta=(
+                    delta_cb
+                    if delta_cb and not stream_final_only and not emitted_any
+                    else None
+                ),
+            )
+        except BaseException:
+            if right_preview_task is not None:
+                right_preview_task.cancel()
+                await asyncio.gather(right_preview_task, return_exceptions=True)
+            raise
         phase_add("left_draft", left_draft_started)
+
+        if getattr(self.memory, "primary_write_pending", False):
+            # Custom source generators explicitly promise this contract too.
+            record_completed_answer(draft)
 
         if right_preview_task is not None:
             if right_preview_task.done():
@@ -2665,6 +2694,8 @@ class DualBrainController:
         )
 
     def _allow_recalled_evidence(self, question: str, relay, control) -> bool:
+        if getattr(self.memory, "conversation_context", False):
+            question = self.memory.retrieval_question(question)
         memory_control = control.get("memory") if isinstance(control, dict) else None
         long_term = str(memory_control.get("long_term") or "auto").strip().lower() if isinstance(memory_control, dict) else "auto"
         if long_term == "drop":
@@ -2742,6 +2773,8 @@ class DualBrainController:
                     evidence = [item for item in evidence if (item["seed_id"], item["source_qid"]) in identities]
                     if evidence:
                         payload["memory_evidence"] = evidence
+                        if getattr(self.memory, "conversation_context", False):
+                            payload["memory_evidence_format"] = "complete_v1"
                 payload["unconscious_cache_depth"] = unconscious_summary.cache_depth
                 payload["unconscious_stress_released"] = unconscious_summary.stress_released
         if psychoid_signal:
@@ -4352,6 +4385,10 @@ class DualBrainController:
         # Always store "clean" memory, even when the user requested debug/meta output.
         memory_question = _sanitize_user_answer(question) or str(question or "").strip()
         memory_answer = _sanitize_user_answer(user_answer) or str(user_answer or "").strip()
+        if getattr(self.memory, "primary_write_pending", False):
+            # Later integration, preview selection and output constraints can
+            # replace the draft. Validate the exact stored answer before any write.
+            require_completed_answer(memory_answer)
         episodic_total = 0
         hippocampal_rollup: Dict[str, float] | None = None
         hippocampal_lifecycle: Dict[str, float] | None = None
@@ -4748,6 +4785,7 @@ class DualBrainController:
                 total_ms=round(float(latency_ms), 3),
             )
 
+    @guard_source_completions
     async def process(
         self,
         question: str,
@@ -4761,6 +4799,7 @@ class DualBrainController:
         on_reset: Optional[Callable[[], Any]] = None,
         executive_mode: str = "off",
         executive_observer_mode: str = "off",
+        memory_context: Optional[Dict[str, Any]] = None,
     ) -> str:
         turn_started = time.perf_counter()
         mode = str(answer_mode or "plain").strip().lower()
@@ -4769,6 +4808,11 @@ class DualBrainController:
             self.coherence_resonator.reset()
         requested_leading = (leading_brain or "").strip().lower()
         qid_value = str(qid) if qid else str(uuid.uuid4())
+        begin_turn = getattr(self.memory, "begin_turn", None)
+        if callable(begin_turn):
+            begin_turn(question, qid_value, memory_context)
+        if hasattr(self.unconscious_field, "recall_query"):
+            self.unconscious_field.recall_query = self.memory.retrieval_question(question)
         scope_resolver = getattr(self.memory, "scope_resolver", None)
         if callable(scope_resolver) and hasattr(self.unconscious_field, "recall_scope_resolver"):
             self.unconscious_field.recall_scope_resolver = scope_resolver()
@@ -4973,12 +5017,12 @@ class DualBrainController:
                 self.callosum.slot_ms = original_slot
 
         delta_cb = _emit_delta if on_delta else None
-        memory_context = context_parts.get("memory", "")
+        memory_block = context_parts.get("memory", "")
         selector = getattr(self.memory, "retrieve_related_traces", None)
-        if memory_context and memory_context in context and callable(selector):
+        if memory_block and memory_block in context and callable(selector):
             # Context can be rebuilt/filtered before drafting. Attribute IDs only
             # when the currently selected traces still reproduce the exact block.
-            if self.memory.retrieve_related(question) == memory_context:
+            if self.memory.retrieve_related(question) == memory_block:
                 traces = selector(question)
                 seed_ids = [trace.seed_id for trace in traces if getattr(trace, "seed_id", None)]
                 if seed_ids:
@@ -4987,23 +5031,31 @@ class DualBrainController:
                         source_qids=[trace.qid for trace in traces if getattr(trace, "seed_id", None)],
                         destination="draft_context", status="provided_to_stage",
                     )
-        draft_stage = await self._run_left_draft_stage(
-            question=question,
-            context=context,
-            focus=focus,
-            leading=leading,
-            collaborative_lead=collaborative_lead,
-            system2_active=system2_active,
-            vision_images=vision_images,
-            delta_cb=delta_cb,
-            stream_final_only=stream_final_only,
-            emitted_any=emitted_any,
-            focus_keywords=focus_keywords,
-            focus_metric=focus_metric,
-            hemisphere_mode=hemisphere_mode,
-            hemisphere_bias=hemisphere_bias,
-            phase_add=_phase_add,
-        )
+        try:
+            draft_stage = await self._run_left_draft_stage(
+                question=question,
+                context=context,
+                focus=focus,
+                leading=leading,
+                collaborative_lead=collaborative_lead,
+                system2_active=system2_active,
+                vision_images=vision_images,
+                delta_cb=delta_cb,
+                stream_final_only=stream_final_only,
+                emitted_any=emitted_any,
+                focus_keywords=focus_keywords,
+                focus_metric=focus_metric,
+                hemisphere_mode=hemisphere_mode,
+                hemisphere_bias=hemisphere_bias,
+                phase_add=_phase_add,
+            )
+        except BaseException:
+            pending = [task for task in (executive_task, director_task) if task is not None]
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+            raise
         draft = draft_stage.draft
         right_lead_notes = draft_stage.right_lead_notes
         left_lead_preview = draft_stage.left_lead_preview

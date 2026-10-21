@@ -29,6 +29,8 @@ from typing import Any, Callable, Dict, Optional
 
 import aiohttp
 
+from .source_completion import record_completed_answer, source_completion_required
+
 PromptInput = str | list[dict[str, Any]]
 
 
@@ -172,7 +174,10 @@ class LLMClient:
         temperature: float = 0.7,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
+        """Return text, optionally requiring a confirmed successful terminal status."""
+        require_complete = require_complete or source_completion_required()
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
             raise ValueError(
@@ -185,6 +190,7 @@ class LLMClient:
                 temperature=temperature,
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
+                require_complete=require_complete,
             )
         if provider == "anthropic":
             return await self._anthropic(
@@ -193,6 +199,7 @@ class LLMClient:
                 temperature=temperature,
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
+                require_complete=require_complete,
             )
         if provider == "google":
             return await self._google(
@@ -201,6 +208,7 @@ class LLMClient:
                 temperature=temperature,
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
+                require_complete=require_complete,
             )
         if provider == "huggingface":
             return await self._huggingface(
@@ -209,6 +217,7 @@ class LLMClient:
                 temperature=temperature,
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
+                require_complete=require_complete,
             )
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -221,14 +230,18 @@ class LLMClient:
         on_delta: Optional[Callable[[str], Any]] = None,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         """Stream output tokens as they arrive (when supported).
 
         Returns the final assembled completion. When streaming is not supported for
         the configured provider, the method falls back to `complete()` and emits
         the full response once via `on_delta` (when provided).
+        With `require_complete`, partial deltas may be emitted, but the call raises
+        unless the assembled answer has a successful terminal completion.
         """
 
+        require_complete = require_complete or source_completion_required()
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
             raise ValueError(
@@ -242,6 +255,7 @@ class LLMClient:
                 on_delta=on_delta,
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
+                require_complete=require_complete,
             )
 
         text = await self.complete(
@@ -250,12 +264,33 @@ class LLMClient:
             temperature=temperature,
             max_output_tokens=max_output_tokens,
             timeout_seconds=timeout_seconds,
+            require_complete=require_complete,
         )
         if on_delta:
             maybe = on_delta(text)
             if asyncio.iscoroutine(maybe):
                 await maybe
         return text
+
+    def _completion_text(
+        self, text: str, finish_reason: Optional[str], *, require_complete: bool
+    ) -> str:
+        """Validate this request's final status without shared per-client state."""
+        require_complete = require_complete or source_completion_required()
+        if require_complete:
+            successful_reasons = {
+                "openai": {"stop"},
+                "mistral": {"stop"},
+                "xai": {"stop"},
+                "anthropic": {"end_turn", "stop_sequence"},
+                "google": {"stop"},
+                "huggingface": {"eos_token", "stop_sequence"},
+            }
+            allowed = successful_reasons.get(self.provider, set())
+            if not text.strip() or str(finish_reason or "").lower() not in allowed:
+                raise RuntimeError("LLM response lacks a nonempty successful terminal completion")
+            record_completed_answer(text)
+        return text.strip()
 
     @staticmethod
     def _merge_continuation(prefix: str, continuation: str) -> str:
@@ -438,6 +473,7 @@ class LLMClient:
         on_delta: Optional[Callable[[str], Any]],
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         base_messages = []
         if system:
@@ -458,9 +494,9 @@ class LLMClient:
         full_text = chunk
 
         if not self.config.auto_continue or not finish:
-            return full_text.strip()
+            return self._completion_text(full_text, finish, require_complete=require_complete)
         if str(finish).lower() not in {"length", "max_tokens"}:
-            return full_text.strip()
+            return self._completion_text(full_text, finish, require_complete=require_complete)
 
         continuation_prompt = (
             "Continue from where you left off. Do not repeat any text. Output only the continuation."
@@ -483,7 +519,7 @@ class LLMClient:
             if not finish or str(finish).lower() not in {"length", "max_tokens"}:
                 break
 
-        return full_text.strip()
+        return self._completion_text(full_text, finish, require_complete=require_complete)
 
     async def _openai_style(
         self,
@@ -493,6 +529,7 @@ class LLMClient:
         temperature: float,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
@@ -536,10 +573,10 @@ class LLMClient:
         full_text = text
 
         if not self.config.auto_continue or not finish:
-            return full_text.strip()
+            return self._completion_text(full_text, finish, require_complete=require_complete)
 
         if finish.lower() not in {"length", "max_tokens"}:
-            return full_text.strip()
+            return self._completion_text(full_text, finish, require_complete=require_complete)
 
         continuation_prompt = (
             "Continue from where you left off. Do not repeat any text. Output only the continuation."
@@ -557,7 +594,7 @@ class LLMClient:
             if not finish or finish.lower() not in {"length", "max_tokens"}:
                 break
 
-        return full_text.strip()
+        return self._completion_text(full_text, finish, require_complete=require_complete)
 
     async def _anthropic(
         self,
@@ -567,6 +604,7 @@ class LLMClient:
         temperature: float,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/v1/messages"
@@ -601,15 +639,17 @@ class LLMClient:
                 return "\n".join([part for part in text_parts if part]).strip(), (
                     str(stop_reason) if stop_reason is not None else None
                 )
-            return str(data).strip(), str(stop_reason) if stop_reason is not None else None
+            return ("" if require_complete else str(data).strip()), (
+                str(stop_reason) if stop_reason is not None else None
+            )
 
         text, stop_reason = await _call(base_messages)
         full_text = text
 
         if not self.config.auto_continue or not stop_reason:
-            return full_text.strip()
+            return self._completion_text(full_text, stop_reason, require_complete=require_complete)
         if str(stop_reason).lower() not in {"max_tokens"}:
-            return full_text.strip()
+            return self._completion_text(full_text, stop_reason, require_complete=require_complete)
 
         continuation_prompt = (
             "Continue from where you left off. Do not repeat any text. Output only the continuation."
@@ -627,7 +667,7 @@ class LLMClient:
             if not stop_reason or str(stop_reason).lower() not in {"max_tokens"}:
                 break
 
-        return full_text.strip()
+        return self._completion_text(full_text, stop_reason, require_complete=require_complete)
 
     async def _google(
         self,
@@ -637,6 +677,7 @@ class LLMClient:
         temperature: float,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/models/{self.config.model}:generateContent?key={self.config.api_key}"
@@ -663,8 +704,11 @@ class LLMClient:
             parts = (candidates[0].get("content") or {}).get("parts", [])
             texts = [p.get("text", "") for p in parts if isinstance(p, dict)]
             if texts:
-                return "\n".join([t for t in texts if t]).strip()
-        return str(data)
+                return self._completion_text(
+                    "\n".join([t for t in texts if t]), candidates[0].get("finishReason"),
+                    require_complete=require_complete,
+                )
+        return self._completion_text(str(data), None, require_complete=require_complete)
 
     async def _huggingface(
         self,
@@ -674,6 +718,7 @@ class LLMClient:
         temperature: float,
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
+        require_complete: bool = False,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/{self.config.model}"
@@ -690,6 +735,8 @@ class LLMClient:
                 "return_full_text": False,
             },
         }
+        if require_complete:
+            payload["parameters"]["details"] = True
         if timeout_seconds is not None:
             data = await self._post_json(url, payload, headers, timeout_seconds=timeout_seconds)
         else:
@@ -699,8 +746,15 @@ class LLMClient:
             if isinstance(first, dict):
                 text = first.get("generated_text") or first.get("translation_text")
                 if text:
-                    return str(text).strip()
+                    finish = (first.get("details") or {}).get("finish_reason") if require_complete else None
+                    return self._completion_text(
+                        str(text), finish, require_complete=require_complete,
+                    )
         if isinstance(data, dict):
             if "generated_text" in data:
-                return str(data["generated_text"]).strip()
-        return str(data)
+                text = data["generated_text"]
+                finish = (data.get("details") or {}).get("finish_reason") if require_complete and text else None
+                return self._completion_text(
+                    str(text), finish, require_complete=require_complete,
+                )
+        return self._completion_text(str(data), None, require_complete=require_complete)

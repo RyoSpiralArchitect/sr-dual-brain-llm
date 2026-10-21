@@ -759,7 +759,9 @@ class EngineSession:
         trace_cache_limit = max(4, min(512, trace_cache_limit))
         semantic_index = semantic_index_from_environment(left_llm_config)
         memory = SharedMemory(max_dialogue_flows=trace_cache_limit, semantic_index=semantic_index,
-                              answerability_gate=answerability_gate_from_environment(left_llm_config))
+                              answerability_gate=answerability_gate_from_environment(left_llm_config),
+                              conversation_context=os.environ.get("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT") == "1",
+                              track_persistence=state_store is not None)
         hippocampus = TemporalHippocampalIndexing()
         persisted_memory = 0
         persisted_episodes = 0
@@ -861,6 +863,27 @@ class EngineSession:
             pass
 
 
+async def _persist_session_memory(session, qid):
+    store, memory = session.state_store, session.memory
+    if store is None:
+        # Transient sessions need no persistence backlog.
+        memory.pending_memory_writes.clear()
+        memory.pending_memory_updates.clear()
+        return
+    if memory.conversation_context:
+        await store.commit_memory_changes(session.session_id, list(memory.pending_memory_writes.values()),
+                                          list(memory.pending_memory_updates.values()))
+        memory.pending_memory_writes.clear()
+        memory.pending_memory_updates.clear()
+        session.persisted_memory = len(memory.past_qas)
+    elif len(memory.past_qas) > session.persisted_memory:
+        await store.append_memory_traces(session.session_id, memory.past_qas[session.persisted_memory:], qid=qid)
+        session.persisted_memory = len(memory.past_qas)
+    if len(session.hippocampus.episodes) > session.persisted_episodes:
+        await store.upsert_episodes(session.session_id, session.hippocampus.episodes[session.persisted_episodes:])
+        session.persisted_episodes = len(session.hippocampus.episodes)
+
+
 async def _handle_process(
     session: EngineSession,
     params: Dict[str, Any],
@@ -922,18 +945,10 @@ async def _handle_process(
         executive_mode=executive_mode,
         executive_observer_mode=executive_observer_mode,
         vision_images=vision_images or None,
+        memory_context=params.get("memory_context"),
     )
-    after_memory = len(session.memory.past_qas)
-    after_episodes = len(session.hippocampus.episodes)
-
     state_store = session.state_store
-    if state_store is not None and (after_memory > session.persisted_memory or after_episodes > session.persisted_episodes):
-        new_traces = session.memory.past_qas[session.persisted_memory:]
-        new_episodes = session.hippocampus.episodes[session.persisted_episodes:]
-        await state_store.append_memory_traces(session.session_id, new_traces, qid=qid)
-        await state_store.upsert_episodes(session.session_id, new_episodes)
-        session.persisted_memory = len(session.memory.past_qas)
-        session.persisted_episodes = len(session.hippocampus.episodes)
+    await _persist_session_memory(session, qid)
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
         if persist_telemetry not in {"0", "false", "no", "off"}:
@@ -1049,19 +1064,10 @@ async def _handle_process_stream(
         executive_mode=executive_mode,
         executive_observer_mode=executive_observer_mode,
         vision_images=vision_images or None,
+        memory_context=params.get("memory_context"),
     )
-
-    after_memory = len(session.memory.past_qas)
-    after_episodes = len(session.hippocampus.episodes)
-
     state_store = session.state_store
-    if state_store is not None and (after_memory > session.persisted_memory or after_episodes > session.persisted_episodes):
-        new_traces = session.memory.past_qas[session.persisted_memory:]
-        new_episodes = session.hippocampus.episodes[session.persisted_episodes:]
-        await state_store.append_memory_traces(session.session_id, new_traces, qid=qid)
-        await state_store.upsert_episodes(session.session_id, new_episodes)
-        session.persisted_memory = len(session.memory.past_qas)
-        session.persisted_episodes = len(session.hippocampus.episodes)
+    await _persist_session_memory(session, qid)
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
         if persist_telemetry not in {"0", "false", "no", "off"}:

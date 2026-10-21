@@ -172,6 +172,10 @@ class LeftBrainModel:
         self._llm_client = LLMClient(self.llm_config) if self.llm_config else None
         self.uses_external_llm = bool(self._llm_client)
 
+    async def generate_source_answer(self, input_text, context, **kwargs):
+        """Primary source writes require a nonempty, terminally complete answer."""
+        return await self.generate_answer(input_text, context, require_success=True, **kwargs)
+
     async def generate_answer(
         self,
         input_text: str,
@@ -179,6 +183,7 @@ class LeftBrainModel:
         *,
         vision_images: Optional[Sequence[Dict[str, Any]]] = None,
         on_delta: Optional[Callable[[str], Any]] = None,
+        require_success: bool = False,
     ) -> str:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
         if self._llm_client:
@@ -195,25 +200,36 @@ class LeftBrainModel:
                             f"Vision inputs are only supported for openai-style providers; got '{provider}'."
                         )
                     prompt = _openai_vision_prompt(input_text, vision_images)
+                completion_kwargs = {"require_complete": True} if require_success else {}
                 if hasattr(self._llm_client, "complete_stream"):
-                    return await self._llm_client.complete_stream(
+                    completion = await self._llm_client.complete_stream(
                         prompt,
                         system=system,
                         temperature=0.4,
                         on_delta=on_delta,
+                        **completion_kwargs,
                     )
-                completion = await self._llm_client.complete(
-                    prompt,
-                    system=system,
-                    temperature=0.4,
-                )
-                if on_delta:
-                    maybe = on_delta(completion)
-                    if asyncio.iscoroutine(maybe):
-                        await maybe
+                else:
+                    completion = await self._llm_client.complete(
+                        prompt,
+                        system=system,
+                        temperature=0.4,
+                        **completion_kwargs,
+                    )
+                    if on_delta:
+                        maybe = on_delta(completion)
+                        if asyncio.iscoroutine(maybe):
+                            await maybe
+                if require_success and (not isinstance(completion, str) or not completion.strip()):
+                    raise ValueError("Source generation returned no text")
                 return completion
             except Exception:
+                if require_success:
+                    raise RuntimeError("Primary source generation failed") from None
                 pass
+
+        if require_success:
+            raise RuntimeError("Primary source generation unavailable")
 
         base = f"Draft answer for: {input_text[:80]}"
         if context:

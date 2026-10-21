@@ -1,0 +1,746 @@
+{
+  "schema_version": 1,
+  "origin": "authored_controlled_multiturn_memory",
+  "episodes": [
+    {
+      "id": "aurora-marble",
+      "split": "development",
+      "scopes": [
+        {
+          "id": "aurora",
+          "aliases": [
+            "Aurora",
+            "オーロラ"
+          ]
+        },
+        {
+          "id": "marble",
+          "aliases": [
+            "Marble",
+            "マーブル"
+          ]
+        }
+      ],
+      "reference": "Auroraの締切は明示的な訂正で14日から7日へ変更。Marbleの締切は29日。Marbleの通常地域の配送重量上限5kg、欧州例外2kg。保険料は不明。",
+      "events": [
+        {
+          "id": "remember-a",
+          "kind": "write",
+          "question": "Project Aurora の締切は14日です。この条件を確認のため復唱して覚えてください。",
+          "memory_context": {
+            "id": "aurora",
+            "aliases": [
+              "Aurora",
+              "オーロラ"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "remember-b",
+          "kind": "write",
+          "question": "以下のメモを省略せずそのまま復唱して覚えてください。\nProject Marble の運用メモ\n締切は29日です。通常地域の配送重量上限は5kgです。\n補足事項A：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項B：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項C：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項D：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項E：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項F：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項G：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項H：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項I：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項J：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項K：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項L：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n重要な地域例外：欧州地域の配送重量上限は2kgです。通常地域の5kgは欧州地域には適用しません。",
+          "memory_context": {
+            "id": "marble",
+            "aliases": [
+              "Marble",
+              "マーブル"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "correct-a",
+          "kind": "write",
+          "question": "Project Aurora の締切を14日から7日へ訂正します。新しい7日を復唱して覚えてください。",
+          "memory_context": {
+            "id": "aurora",
+            "aliases": [
+              "Aurora",
+              "オーロラ"
+            ],
+            "remember": true,
+            "supersedes": [
+              "aurora-marble:remember-a"
+            ]
+          }
+        },
+        {
+          "id": "a-current",
+          "kind": "probe",
+          "question": "Project Aurora の現在の締切は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Aurora の訂正後の7日を答え、旧値14日やMarbleの29日を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-followup",
+          "kind": "probe",
+          "question": "その締切をもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に明示したAuroraを参照して7日と答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-repeat",
+          "kind": "probe",
+          "question": "Project Aurora の現在の締切は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Aurora の訂正後の7日を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-exception",
+          "kind": "probe",
+          "question": "Project Marble の欧州地域の配送重量上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外2kgを答える。通常地域の5kgを欧州の値として使わない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-repeat",
+          "kind": "probe",
+          "question": "Project Marble の欧州地域の配送重量上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外2kgを答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Marble の保険料はいくら？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "保険料は記録されていないと明示し、数値や無料という条件を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "kind": "probe",
+          "question": "Project Aurora の現在の締切と、Project Marble の欧州地域の配送重量上限をそれぞれ教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Auroraは7日、Marbleの欧州は2kgと区別して両方答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "その締切だけもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前にAuroraとMarbleの両方を扱ったため、どちらのプロジェクトか確認する。7日か29日の一方を無条件に選ばない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "copper-fern",
+      "split": "development",
+      "scopes": [
+        {
+          "id": "copper",
+          "aliases": [
+            "Copper",
+            "コッパー"
+          ]
+        },
+        {
+          "id": "fern",
+          "aliases": [
+            "Fern",
+            "ファーン"
+          ]
+        }
+      ],
+      "reference": "Copperの締切は明示的な訂正で18日から9日へ変更。Fernの締切は33日。Fernの通常地域の配送重量上限6kg、欧州例外1kg。保険料は不明。",
+      "events": [
+        {
+          "id": "remember-a",
+          "kind": "write",
+          "question": "Project Copper の締切は18日です。この条件を確認のため復唱して覚えてください。",
+          "memory_context": {
+            "id": "copper",
+            "aliases": [
+              "Copper",
+              "コッパー"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "remember-b",
+          "kind": "write",
+          "question": "以下のメモを省略せずそのまま復唱して覚えてください。\nProject Fern の運用メモ\n締切は33日です。通常地域の配送重量上限は6kgです。\n補足事項A：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項B：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項C：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項D：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項E：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項F：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項G：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項H：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項I：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項J：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項K：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項L：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n重要な地域例外：欧州地域の配送重量上限は1kgです。通常地域の6kgは欧州地域には適用しません。",
+          "memory_context": {
+            "id": "fern",
+            "aliases": [
+              "Fern",
+              "ファーン"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "correct-a",
+          "kind": "write",
+          "question": "Project Copper の締切を18日から9日へ訂正します。新しい9日を復唱して覚えてください。",
+          "memory_context": {
+            "id": "copper",
+            "aliases": [
+              "Copper",
+              "コッパー"
+            ],
+            "remember": true,
+            "supersedes": [
+              "copper-fern:remember-a"
+            ]
+          }
+        },
+        {
+          "id": "a-current",
+          "kind": "probe",
+          "question": "Project Copper の現在の締切は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Copper の訂正後の9日を答え、旧値18日やFernの33日を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-followup",
+          "kind": "probe",
+          "question": "その締切をもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に明示したCopperを参照して9日と答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-repeat",
+          "kind": "probe",
+          "question": "Project Copper の現在の締切は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Copper の訂正後の9日を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-exception",
+          "kind": "probe",
+          "question": "Project Fern の欧州地域の配送重量上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外1kgを答える。通常地域の6kgを欧州の値として使わない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-repeat",
+          "kind": "probe",
+          "question": "Project Fern の欧州地域の配送重量上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外1kgを答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Fern の保険料はいくら？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "保険料は記録されていないと明示し、数値や無料という条件を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "kind": "probe",
+          "question": "Project Copper の現在の締切と、Project Fern の欧州地域の配送重量上限をそれぞれ教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Copperは9日、Fernの欧州は1kgと区別して両方答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "その締切だけもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前にCopperとFernの両方を扱ったため、どちらのプロジェクトか確認する。9日か33日の一方を無条件に選ばない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lyra-obsidian",
+      "split": "evaluation",
+      "scopes": [
+        {
+          "id": "lyra",
+          "aliases": [
+            "Lyra",
+            "ライラ"
+          ]
+        },
+        {
+          "id": "obsidian",
+          "aliases": [
+            "Obsidian",
+            "オブシディアン"
+          ]
+        }
+      ],
+      "reference": "Lyraの保存期間は明示的な訂正で48時間から12時間へ変更。Obsidianの保存期間は96時間。Obsidianの通常地域の同時実行数上限8件、欧州例外3件。保険料は不明。",
+      "events": [
+        {
+          "id": "remember-a",
+          "kind": "write",
+          "question": "Project Lyra の保存期間は48時間です。この条件を確認のため復唱して覚えてください。",
+          "memory_context": {
+            "id": "lyra",
+            "aliases": [
+              "Lyra",
+              "ライラ"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "remember-b",
+          "kind": "write",
+          "question": "以下のメモを省略せずそのまま復唱して覚えてください。\nProject Obsidian の運用メモ\n保存期間は96時間です。通常地域の同時実行数上限は8件です。\n補足事項A：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項B：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項C：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項D：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項E：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項F：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項G：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項H：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項I：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項J：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項K：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項L：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n重要な地域例外：欧州地域の同時実行数上限は3件です。通常地域の8件は欧州地域には適用しません。",
+          "memory_context": {
+            "id": "obsidian",
+            "aliases": [
+              "Obsidian",
+              "オブシディアン"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "correct-a",
+          "kind": "write",
+          "question": "Project Lyra の保存期間を48時間から12時間へ訂正します。新しい12時間を復唱して覚えてください。",
+          "memory_context": {
+            "id": "lyra",
+            "aliases": [
+              "Lyra",
+              "ライラ"
+            ],
+            "remember": true,
+            "supersedes": [
+              "lyra-obsidian:remember-a"
+            ]
+          }
+        },
+        {
+          "id": "a-current",
+          "kind": "probe",
+          "question": "Project Lyra の現在の保存期間は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Lyra の訂正後の12時間を答え、旧値48時間やObsidianの96時間を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-followup",
+          "kind": "probe",
+          "question": "その保存期間をもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に明示したLyraを参照して12時間と答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-repeat",
+          "kind": "probe",
+          "question": "Project Lyra の現在の保存期間は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Lyra の訂正後の12時間を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-exception",
+          "kind": "probe",
+          "question": "Project Obsidian の欧州地域の同時実行数上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外3件を答える。通常地域の8件を欧州の値として使わない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-repeat",
+          "kind": "probe",
+          "question": "Project Obsidian の欧州地域の同時実行数上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外3件を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Obsidian の保険料はいくら？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "保険料は記録されていないと明示し、数値や無料という条件を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "kind": "probe",
+          "question": "Project Lyra の現在の保存期間と、Project Obsidian の欧州地域の同時実行数上限をそれぞれ教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Lyraは12時間、Obsidianの欧州は3件と区別して両方答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "その保存期間だけもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前にLyraとObsidianの両方を扱ったため、どちらのプロジェクトか確認する。12時間か96時間の一方を無条件に選ばない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "petal-solstice",
+      "split": "evaluation",
+      "scopes": [
+        {
+          "id": "petal",
+          "aliases": [
+            "Petal",
+            "ペタル"
+          ]
+        },
+        {
+          "id": "solstice",
+          "aliases": [
+            "Solstice",
+            "ソルスティス"
+          ]
+        }
+      ],
+      "reference": "Petalの保存期間は明示的な訂正で72時間から24時間へ変更。Solsticeの保存期間は120時間。Solsticeの通常地域の同時実行数上限9件、欧州例外4件。保険料は不明。",
+      "events": [
+        {
+          "id": "remember-a",
+          "kind": "write",
+          "question": "Project Petal の保存期間は72時間です。この条件を確認のため復唱して覚えてください。",
+          "memory_context": {
+            "id": "petal",
+            "aliases": [
+              "Petal",
+              "ペタル"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "remember-b",
+          "kind": "write",
+          "question": "以下のメモを省略せずそのまま復唱して覚えてください。\nProject Solstice の運用メモ\n保存期間は120時間です。通常地域の同時実行数上限は9件です。\n補足事項A：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項B：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項C：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項D：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項E：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項F：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項G：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項H：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項I：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n補足事項J：受付記録には依頼の分類と担当窓口が記されています。変更の理由は元の文書と対応づけて保管されています。\n補足事項K：連絡手順の説明には受付担当と審査担当の役割が記されています。問い合わせの経緯は記録として残されています。\n補足事項L：運用文書には通常の流れと例外の扱いが別々に記されています。適用する条件の説明は該当する項目と一緒に残されています。\n重要な地域例外：欧州地域の同時実行数上限は4件です。通常地域の9件は欧州地域には適用しません。",
+          "memory_context": {
+            "id": "solstice",
+            "aliases": [
+              "Solstice",
+              "ソルスティス"
+            ],
+            "remember": true
+          }
+        },
+        {
+          "id": "correct-a",
+          "kind": "write",
+          "question": "Project Petal の保存期間を72時間から24時間へ訂正します。新しい24時間を復唱して覚えてください。",
+          "memory_context": {
+            "id": "petal",
+            "aliases": [
+              "Petal",
+              "ペタル"
+            ],
+            "remember": true,
+            "supersedes": [
+              "petal-solstice:remember-a"
+            ]
+          }
+        },
+        {
+          "id": "a-current",
+          "kind": "probe",
+          "question": "Project Petal の現在の保存期間は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Petal の訂正後の24時間を答え、旧値72時間やSolsticeの120時間を現在値として採用しない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-followup",
+          "kind": "probe",
+          "question": "その保存期間をもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前に明示したPetalを参照して24時間と答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "a-repeat",
+          "kind": "probe",
+          "question": "Project Petal の現在の保存期間は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Petal の訂正後の24時間を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-exception",
+          "kind": "probe",
+          "question": "Project Solstice の欧州地域の同時実行数上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外4件を答える。通常地域の9件を欧州の値として使わない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "b-repeat",
+          "kind": "probe",
+          "question": "Project Solstice の欧州地域の同時実行数上限は？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "欧州地域の例外4件を答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "unknown",
+          "kind": "probe",
+          "question": "Project Solstice の保険料はいくら？",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "保険料は記録されていないと明示し、数値や無料という条件を作らない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "kind": "probe",
+          "question": "Project Petal の現在の保存期間と、Project Solstice の欧州地域の同時実行数上限をそれぞれ教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "Petalは24時間、Solsticeの欧州は4件と区別して両方答える。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        },
+        {
+          "id": "ambiguous",
+          "kind": "probe",
+          "question": "その保存期間だけもう一度教えて。",
+          "criteria": [
+            {
+              "id": "task",
+              "requirement": "直前にPetalとSolsticeの両方を扱ったため、どちらのプロジェクトか確認する。24時間か120時間の一方を無条件に選ばない。"
+            },
+            {
+              "id": "grounding",
+              "requirement": "プロジェクト固有の数値・条件を記録から支持できる範囲に限定し、別プロジェクトの条件、旧値、未記載の料金を現在の事実として混入させない。"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
