@@ -44,7 +44,8 @@ def test_correction_followup_and_repeat_keep_primary_sources_and_cache():
     assert all(t.evidence_status == "unverified" for t in m.past_qas[1:])
 
 
-@pytest.mark.parametrize("interruption", ["Project Alpha and Beta deadlines?", "What is the weather?", "Project Unknown deadline?"])
+@pytest.mark.parametrize("interruption", ["Project Alpha and Beta deadlines?", "What is the weather?",
+    "Project Unknown deadline?", "Project Alpha and Project Unknown deadlines?"])
 def test_ambiguous_or_unrelated_turn_clears_focus(interruption):
     m = memory()
     write(m, "Alpha", "a", "7 days")

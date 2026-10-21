@@ -238,7 +238,13 @@ class SharedMemory:
         if declaration and (cue.ambiguous or cue.scopes and cue.scopes != {declaration.retrieval_scope}):
             raise ValueError("Question and declared scope disagree")
         query = question
-        if not cue.ambiguous and len(cue.scopes) == 1:
+        # A known project plus an explicit unknown project must not leave a
+        # deceptively unique focus for the next pronoun-only turn.
+        project_mentions = re.findall(r"\bproject\s+([^\s:：?？,、。]+)", question, re.I)
+        unknown_project = any(not resolver.query(f"Project {name}").scopes for name in project_mentions)
+        if unknown_project:
+            focus = None
+        elif not cue.ambiguous and len(cue.scopes) == 1:
             focus = next(iter(cue.scopes))
         elif declaration:
             focus = declaration.retrieval_scope

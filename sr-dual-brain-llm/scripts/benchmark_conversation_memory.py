@@ -18,7 +18,7 @@ from core.auditor import Auditor
 from core.dual_brain import DualBrainController
 from core.hypothalamus import Hypothalamus
 from core.llm_client import LLMClient, load_llm_config
-from core.memory_answerability import AnswerabilityGate, OpenAIAnswerability
+from core.memory_answerability import AnswerabilityGate, OpenAIAnswerability, _unique_object
 from core.models import LeftBrainModel, RightBrainModel
 from core.orchestrator import Orchestrator
 from core.policy_modes import ReasoningDial
@@ -257,7 +257,7 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                         "answers":{k:r["answer"] for k,r in labels.items()}}
                 try:
                     raw=await judge.call(json.dumps(packet,ensure_ascii=False),system=JUDGE,role="judge")
-                    scores=json.loads(raw)["scores"]
+                    scores=json.loads(raw, object_pairs_hook=_unique_object)["scores"]
                     if set(scores)!=set(labels):raise ValueError("Grade labels differ")
                     checked_grades = []
                     for label,row in labels.items():
@@ -265,6 +265,7 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                         for score in scores[label].values():
                             v,q=score["verdict"],score["quote"]
                             if v not in {"pass","fail","uncertain","unavailable"} or not isinstance(q,str):raise ValueError("Invalid grade")
+                            if (row["answer"] is None) != (v == "unavailable"):raise ValueError("Grade availability differs")
                             if v in {"pass","fail"} and (not q.strip() or not row["answer"] or q not in row["answer"]):raise ValueError("Grade quote not literal")
                         checked_grades.append({"episode":ep["id"],"id":event["id"],"arm":row["arm"],"scores":scores[label]})
                     report["grades"].extend(checked_grades)
