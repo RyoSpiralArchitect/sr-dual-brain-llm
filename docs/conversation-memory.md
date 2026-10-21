@@ -46,8 +46,16 @@ custom client adapters must enforce that contract, including after continuations
 Hugging Face source writes request generation details and require a successful
 `details.finish_reason`; responses without this metadata cannot become sources.
 Custom left models must implement `generate_source_answer(...)` with this success
-contract. Ordinary answer turns retain their existing fallback behavior. Successful
-generation does not certify factual truth or semantic completeness.
+contract. The controller keeps a request-local record of confirmed answer text,
+and checks the exact final stored answer before any memory writes. Completion
+requirements also apply to later LLM integration and right previews within a
+primary write. A fallback is eligible only when it retains an already confirmed
+answer unchanged; an assembled local fallback or a director-truncated answer is
+rejected. Complete polishing and complete right previews remain eligible. Custom
+later-stage adapters must call `core.source_completion.record_completed_answer`
+only after validating their own terminal success, or retain the verified draft.
+Ordinary answer turns retain their existing fallback behavior. Successful generation
+does not certify factual truth or semantic completeness.
 Only explicit, unique, still-current source IDs in the same scope can be superseded;
 stale/already superseded and expired targets are rejected. No records
 are persisted as superseded until the new answer is stored. Pending correction

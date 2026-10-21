@@ -18,6 +18,7 @@ from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
+from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -2247,6 +2248,10 @@ class DualBrainController:
             raise
         phase_add("left_draft", left_draft_started)
 
+        if getattr(self.memory, "primary_write_pending", False):
+            # Custom source generators explicitly promise this contract too.
+            record_completed_answer(draft)
+
         if right_preview_task is not None:
             if right_preview_task.done():
                 try:
@@ -4380,6 +4385,10 @@ class DualBrainController:
         # Always store "clean" memory, even when the user requested debug/meta output.
         memory_question = _sanitize_user_answer(question) or str(question or "").strip()
         memory_answer = _sanitize_user_answer(user_answer) or str(user_answer or "").strip()
+        if getattr(self.memory, "primary_write_pending", False):
+            # Later integration, preview selection and output constraints can
+            # replace the draft. Validate the exact stored answer before any write.
+            require_completed_answer(memory_answer)
         episodic_total = 0
         hippocampal_rollup: Dict[str, float] | None = None
         hippocampal_lifecycle: Dict[str, float] | None = None
@@ -4776,6 +4785,7 @@ class DualBrainController:
                 total_ms=round(float(latency_ms), 3),
             )
 
+    @guard_source_completions
     async def process(
         self,
         question: str,
