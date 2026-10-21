@@ -385,31 +385,28 @@ def test_long_complete_source_keeps_late_exception_and_rejects_oversized_units()
     assert not legacy.retrieve_related_traces(q)
 
 
-def test_persistence_queue_keeps_evicted_writes_and_acknowledges_only_success():
+def test_persistence_queue_keeps_evicted_writes_and_acknowledges_only_success(tmp_path):
     from engine_stdio import _persist_session_memory
+    from core.memory_commits import MemoryOutbox
+    from test_memory_commits import FaultStore
     m = memory()
     m.track_persistence = True
     m.max_items = 1
     write(m, "Alpha", "a", "7 days")
     write(m, "Beta", "b", "29 days")
-    seen = []
-
-    class Store:
-        fail = True
-        async def commit_memory_changes(self, sid, traces, updates):
-            if self.fail:
-                raise RuntimeError("simulated storage failure")
-            seen.extend(t.qid for t in traces)
-
-    store = Store()
+    store = FaultStore()
+    store.fault = "before"
     session = SimpleNamespace(state_store=store, memory=m, session_id="s", persisted_memory=0,
-                              hippocampus=SimpleNamespace(episodes=[]), persisted_episodes=0)
+                              hippocampus=SimpleNamespace(episodes=[]), persisted_episodes=0,
+                              memory_outbox=MemoryOutbox(tmp_path / "outbox.sqlite3", store.memory_namespace))
     with pytest.raises(RuntimeError):
         asyncio.run(_persist_session_memory(session, "b"))
-    assert len(m.pending_memory_writes) == 2
-    store.fail = False
+    pending = session.memory_outbox.entries("s", pending_only=True)
+    assert len(pending) == 1 and len(pending[0]["payload"]["traces"]) == 2
+    store.fault = None
     asyncio.run(_persist_session_memory(session, "b"))
-    assert seen == ["a", "b"] and not m.pending_memory_writes
+    assert [t.qid for t in store.traces] == ["a", "b"] and not m.pending_memory_writes
+    assert not session.memory_outbox.entries("s", pending_only=True)
 
 
 def test_loaded_recalled_answers_cannot_become_primary_sources():

@@ -55,7 +55,10 @@ targets are already hidden from every SharedMemory lookup during that turn; a
 failed/cancelled write leaves their stored status unchanged. PostgreSQL persists the new source
 and old status changes in one transaction; legacy rows default to primary,
 unverified records. The in-session focus is deliberately not restored on restart.
-Tests simulate PostgreSQL transactions; this change has no live database result.
+Persistent stdio sessions use a durable local outbox and PostgreSQL receipts so
+an uncertain commit can be retried without duplicating or reapplying a correction.
+See [memory commit recovery](memory-commit-recovery.md) for operation IDs, restart
+requirements, compatibility boundaries and isolated database validation.
 Existing rows without origin metadata retain their legacy primary-source default.
 Use a fresh session or explicitly curate historical records when enabling this
 mode; it cannot identify previously saved answers that were derived from recall.

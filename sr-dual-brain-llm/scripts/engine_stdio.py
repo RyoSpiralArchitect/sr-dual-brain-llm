@@ -54,6 +54,9 @@ from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from core.memory_evidence import request_memory_context
 from core.memory_retrieval import semantic_index_from_environment
 from core.memory_answerability import answerability_gate_from_environment
+from core.memory_commits import (
+    MemoryCommitConflict, MemoryOutbox, memory_payload, reconcile_memory, validate_operation_id,
+)
 from core.unconscious_field import UnconsciousField
 
 
@@ -720,6 +723,8 @@ class EngineSession:
     persisted_episodes: int = 0
     trace_cache: "OrderedDict[str, Dict[str, Any]]" = dataclasses.field(default_factory=OrderedDict)
     trace_cache_limit: int = 64
+    memory_outbox: MemoryOutbox | None = None
+    memory_needs_reload: bool = False
 
     def remember_trace(
         self,
@@ -754,6 +759,7 @@ class EngineSession:
         left_llm_config: Optional[LLMConfig] = None,
         right_llm_config: Optional[LLMConfig] = None,
         executive_llm_config: Optional[LLMConfig] = None,
+        memory_request: Optional[Dict[str, Any]] = None,
     ) -> "EngineSession":
         trace_cache_limit = int(os.environ.get("DUALBRAIN_TRACE_CACHE_SIZE", "64") or 64)
         trace_cache_limit = max(4, min(512, trace_cache_limit))
@@ -765,7 +771,14 @@ class EngineSession:
         hippocampus = TemporalHippocampalIndexing()
         persisted_memory = 0
         persisted_episodes = 0
+        memory_outbox = None
         if state_store is not None:
+            if memory.conversation_context:
+                memory_outbox = _outbox_for_store(state_store)
+                if memory_request is not None:
+                    await _check_memory_request(memory_outbox, state_store, session_id, memory_request)
+                # Recover the exact prepared generation before loading active memory.
+                await reconcile_memory(memory_outbox, state_store, session_id)
             loaded_memory, loaded_episodes = await state_store.load_session(
                 session_id,
                 memory_limit=memory.max_items,
@@ -853,6 +866,7 @@ class EngineSession:
             persisted_memory=persisted_memory,
             persisted_episodes=persisted_episodes,
             trace_cache_limit=trace_cache_limit,
+            memory_outbox=memory_outbox,
         )
 
     async def close(self) -> None:
@@ -863,7 +877,66 @@ class EngineSession:
             pass
 
 
-async def _persist_session_memory(session, qid):
+def _outbox_for_store(store):
+    path = os.environ.get("DUALBRAIN_MEMORY_OUTBOX_PATH")
+    if not path:
+        path = Path.home() / ".local" / "state" / "sr-dual-brain" / "memory-outbox.sqlite3"
+    return MemoryOutbox(path, store.memory_namespace)
+
+
+async def _reload_committed_memory(session):
+    traces, _ = await session.state_store.load_session(
+        session.session_id, memory_limit=session.memory.max_items, episode_limit=0)
+    session.memory.restore_committed_traces(traces)
+    session.persisted_memory = len(traces)
+    session.memory_needs_reload = False
+
+
+def _memory_request(params):
+    # Only generation-affecting inputs; never journal provider credentials.
+    return {key: params.get(key) for key in (
+        "question", "qid", "memory_context", "attachments", "leading_brain", "answer_mode",
+        "system2_mode", "reasoning_mode", "executive_mode", "executive_observer_mode")}
+
+
+async def _prepare_memory_request(session, params):
+    op_id = params.get("memory_operation_id")
+    durable = session.state_store is not None and session.memory.conversation_context
+    if op_id is not None:
+        validate_operation_id(op_id)
+        if not durable:
+            raise ValueError("memory_operation_id requires persistent conversation memory")
+    if not durable:
+        return None
+    outbox = session.memory_outbox
+    entry = await _check_memory_request(outbox, session.state_store, session.session_id, params)
+    receipts = await reconcile_memory(outbox, session.state_store, session.session_id)
+    if receipts or getattr(session, "memory_needs_reload", False):
+        await _reload_committed_memory(session)
+    if op_id is not None:
+        if entry is not None:
+            receipt = (await reconcile_memory(outbox, session.state_store, session.session_id, operation_id=op_id))[0]
+            # Never reinsert the receipt's old trace into the live buffer.
+            await _reload_committed_memory(session)
+            return {**(entry["result"] or {}), "memory_commit": receipt, "replayed": True}
+    return None
+
+
+async def _check_memory_request(outbox, store, session_id, params):
+    # Check even before startup recovery, so conflicting redelivery cannot cause a write.
+    op_id = params.get("memory_operation_id")
+    if op_id is None:
+        return None
+    validate_operation_id(op_id)
+    entry = outbox.get(session_id, op_id)
+    if entry is not None and entry["request"] != _memory_request(params):
+        raise MemoryCommitConflict("Operation ID already has a different generation request")
+    if entry is None and await store.memory_commit_receipt(session_id, op_id):
+        raise MemoryCommitConflict("Durable receipt exists but the original outbox is unavailable; do not regenerate")
+    return entry
+
+
+async def _persist_session_memory(session, qid, *, operation_id=None, request=None, result=None):
     store, memory = session.state_store, session.memory
     if store is None:
         # Transient sessions need no persistence backlog.
@@ -871,10 +944,18 @@ async def _persist_session_memory(session, qid):
         memory.pending_memory_updates.clear()
         return
     if memory.conversation_context:
-        await store.commit_memory_changes(session.session_id, list(memory.pending_memory_writes.values()),
-                                          list(memory.pending_memory_updates.values()))
-        memory.pending_memory_writes.clear()
-        memory.pending_memory_updates.clear()
+        outbox = session.memory_outbox
+        if memory.pending_memory_writes:
+            op_id = operation_id or str(uuid.uuid4())
+            payload = memory_payload(list(memory.pending_memory_writes.values()), list(memory.pending_memory_updates.values()))
+            session.memory_needs_reload = True
+            outbox.prepare(session.session_id, op_id, payload, request=request, result=result)
+            # The fsynced outbox now owns retries, independently of the rolling buffer.
+            memory.pending_memory_writes.clear()
+            memory.pending_memory_updates.clear()
+        receipts = await reconcile_memory(outbox, store, session.session_id)
+        if getattr(session, "memory_needs_reload", False):
+            await _reload_committed_memory(session)
         session.persisted_memory = len(memory.past_qas)
     elif len(memory.past_qas) > session.persisted_memory:
         await store.append_memory_traces(session.session_id, memory.past_qas[session.persisted_memory:], qid=qid)
@@ -882,6 +963,7 @@ async def _persist_session_memory(session, qid):
     if len(session.hippocampus.episodes) > session.persisted_episodes:
         await store.upsert_episodes(session.session_id, session.hippocampus.episodes[session.persisted_episodes:])
         session.persisted_episodes = len(session.hippocampus.episodes)
+    return receipts[-1] if memory.conversation_context and receipts else None
 
 
 async def _handle_process(
@@ -926,6 +1008,10 @@ async def _handle_process(
 
     qid = str(params.get("qid") or uuid.uuid4())
 
+    replay = await _prepare_memory_request(session, params)
+    if replay is not None:
+        return replay
+
     session.telemetry.clear()
 
     vision_images = await _resolve_vision_images(
@@ -948,7 +1034,10 @@ async def _handle_process(
         memory_context=params.get("memory_context"),
     )
     state_store = session.state_store
-    await _persist_session_memory(session, qid)
+    memory_receipt = await _persist_session_memory(
+        session, qid, operation_id=params.get("memory_operation_id"), request=_memory_request(params),
+        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}},
+    )
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
         if persist_telemetry not in {"0", "false", "no", "off"}:
@@ -964,6 +1053,8 @@ async def _handle_process(
         "session_id": session.session_id,
         "metrics": _extract_metrics(list(session.telemetry.events)),
     }
+    if memory_receipt is not None:
+        result["memory_commit"] = memory_receipt
 
     telemetry_events = list(session.telemetry.events)
     metrics = result["metrics"]
@@ -1035,6 +1126,10 @@ async def _handle_process_stream(
 
     qid = str(params.get("qid") or uuid.uuid4())
 
+    replay = await _prepare_memory_request(session, params)
+    if replay is not None:
+        return replay
+
     session.telemetry.clear()
 
     def on_delta(text: str) -> None:
@@ -1067,7 +1162,10 @@ async def _handle_process_stream(
         memory_context=params.get("memory_context"),
     )
     state_store = session.state_store
-    await _persist_session_memory(session, qid)
+    memory_receipt = await _persist_session_memory(
+        session, qid, operation_id=params.get("memory_operation_id"), request=_memory_request(params),
+        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}},
+    )
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
         if persist_telemetry not in {"0", "false", "no", "off"}:
@@ -1083,6 +1181,8 @@ async def _handle_process_stream(
         "session_id": session.session_id,
         "metrics": _extract_metrics(list(session.telemetry.events)),
     }
+    if memory_receipt is not None:
+        result["memory_commit"] = memory_receipt
 
     telemetry_events = list(session.telemetry.events)
     metrics = result["metrics"]
@@ -1393,6 +1493,10 @@ async def _handle_reset(
     state_store: Any | None,
 ) -> Dict[str, Any]:
     session_id = str(params.get("session_id", "default") or "default")
+    if state_store is not None and os.environ.get("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT") == "1":
+        outbox = _outbox_for_store(state_store)
+        if outbox.entries(session_id, pending_only=True):
+            raise MemoryCommitConflict("Reconcile pending memory operations before resetting the session")
     existing = sessions.pop(session_id, None)
     if existing is not None:
         await existing.close()
@@ -1400,6 +1504,17 @@ async def _handle_reset(
         await state_store.reset_session(session_id)
     # Do not eagerly recreate the session: the next /process call can choose the LLM config.
     return {"session_id": session_id, "reset": True, "session_created": False}
+
+
+async def _handle_reconcile_memory(sessions, params, *, state_store):
+    if state_store is None or os.environ.get("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT") != "1":
+        raise ValueError("reconcile_memory requires persistent conversation memory")
+    session_id = str(params.get("session_id", "default") or "default")
+    outbox = _outbox_for_store(state_store)
+    receipts = await reconcile_memory(outbox, state_store, session_id, operation_id=params.get("memory_operation_id"))
+    if session_id in sessions:
+        await _reload_committed_memory(sessions[session_id])
+    return {"session_id": session_id, "receipts": receipts}
 
 
 def _handle_health(sessions: Dict[str, EngineSession]) -> Dict[str, Any]:
@@ -1489,6 +1604,8 @@ async def main() -> None:
             await state_store.ensure_schema()
         except Exception as exc:  # pragma: no cover - best-effort optional backend
             pg_error = f"{exc.__class__.__name__}: {exc}"
+            if os.environ.get("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT") == "1":
+                raise RuntimeError("Persistent conversation memory unavailable; recovery requires PostgreSQL") from None
             state_store = None
             print(
                 f"[engine_stdio] Postgres disabled: {pg_error}",
@@ -1575,6 +1692,7 @@ async def main() -> None:
                             left_llm_config=left_cfg,
                             right_llm_config=right_cfg,
                             executive_llm_config=exec_cfg,
+                            memory_request=params,
                         )
                         sessions[session_id] = session
                     else:
@@ -1613,6 +1731,7 @@ async def main() -> None:
                             left_llm_config=left_cfg,
                             right_llm_config=right_cfg,
                             executive_llm_config=exec_cfg,
+                            memory_request=params,
                         )
                         sessions[session_id] = session
                     else:
@@ -1650,6 +1769,9 @@ async def main() -> None:
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "get_trace":
                     payload = await _handle_get_trace(sessions, params)
+                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                elif method == "reconcile_memory":
+                    payload = await _handle_reconcile_memory(sessions, params, state_store=state_store)
                     resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
                 elif method == "search_episodes":
                     payload = await _handle_search_episodes(

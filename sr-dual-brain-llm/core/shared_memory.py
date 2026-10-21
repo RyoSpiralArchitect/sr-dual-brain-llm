@@ -272,6 +272,15 @@ class SharedMemory:
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question
 
+    def restore_committed_traces(self, traces):
+        """Refresh durable memory without discarding this process's conversation focus."""
+        self.past_qas = list(traces)[-self.max_items:]
+        self.pending_memory_writes.clear()
+        self.pending_memory_updates.clear()
+        self._turn_question = self._turn_query = None
+        self._turn_qid = self._turn_metadata = None
+        self._pending_supersedes = frozenset()
+
     @property
     def primary_write_pending(self):
         return bool(self.conversation_context and self._turn_metadata and self._turn_metadata[2])

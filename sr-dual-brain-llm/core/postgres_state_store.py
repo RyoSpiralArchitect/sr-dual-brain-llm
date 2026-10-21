@@ -26,6 +26,7 @@ from typing import Any, List, Optional, Sequence, Tuple
 import numpy as np
 
 from .shared_memory import MemoryTrace
+from .memory_commits import MemoryCommitConflict, decode_payload, payload_fingerprint, validate_operation_id
 from .temporal_hippocampal_indexing import (
     EMBEDDING_VERSION,
     EpisodicTrace,
@@ -38,12 +39,13 @@ def _json_dumps(value: Any) -> str:
 
 
 class PostgresStateStore:
-    """Best-effort Postgres persistence for SharedMemory + Hippocampus.
+    """Postgres persistence for SharedMemory + Hippocampus.
 
     This store is intentionally simple and dependency-light:
     - No pgvector requirement (vectors are stored as JSON arrays for now)
     - Schema is auto-created
-    - Writes are idempotent for episodes (session_id + qid unique)
+    - Episodes are idempotent by session_id + qid; legacy QA appends are unchanged
+    - Opt-in conversation operations use immutable payloads and durable receipts
     """
 
     def __init__(self, dsn: str, *, table_prefix: str = "srdb") -> None:
@@ -91,6 +93,23 @@ class PostgresStateStore:
         """Atomically persist new answers and explicit historical status changes."""
         if traces or updates:
             await asyncio.to_thread(self._append_memory_traces_sync, session_id, traces, None, updates)
+
+    async def commit_memory_operation(self, session_id, operation_id, payload):
+        """Commit an immutable conversation-memory operation or return its receipt."""
+        validate_operation_id(operation_id)
+        return await asyncio.to_thread(self._commit_memory_operation_sync, session_id, operation_id, payload)
+
+    async def memory_commit_receipt(self, session_id, operation_id):
+        validate_operation_id(operation_id)
+        return await asyncio.to_thread(self._memory_commit_receipt_sync, session_id, operation_id)
+
+    @property
+    def memory_namespace(self):
+        # Do not store credentials in the local outbox or bind it to password rotation.
+        info = self._require_psycopg().conninfo.conninfo_to_dict(self.dsn)
+        identity = {key: info.get(key) for key in ("host", "hostaddr", "port", "dbname", "user", "service")}
+        identity["table_prefix"] = self.table_prefix
+        return payload_fingerprint(identity)
 
     async def reset_session(self, session_id: str) -> None:
         await asyncio.to_thread(self._reset_session_sync, session_id)
@@ -180,6 +199,16 @@ class PostgresStateStore:
                     f"CREATE INDEX IF NOT EXISTS {memory}_session_ts ON {memory}(session_id, ts DESC);"
                 )
                 cur.execute(
+                    f"""CREATE TABLE IF NOT EXISTS {self._table('memory_commits')} (
+                      session_id TEXT NOT NULL REFERENCES {sessions}(session_id) ON DELETE CASCADE,
+                      operation_id TEXT NOT NULL,
+                      payload_sha256 TEXT NOT NULL,
+                      receipt JSONB NOT NULL,
+                      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                      PRIMARY KEY (session_id, operation_id)
+                    );"""
+                )
+                cur.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {episodes} (
                       id BIGSERIAL PRIMARY KEY,
@@ -189,7 +218,7 @@ class PostgresStateStore:
                       answer TEXT NOT NULL,
                       ts DOUBLE PRECISION NOT NULL,
                       embedding_version TEXT NULL,
-                      leading TEXT NULL,
+                      "leading" TEXT NULL,
                       collaboration_strength DOUBLE PRECISION NULL,
                       selection_reason TEXT NULL,
                       tags JSONB NOT NULL,
@@ -414,7 +443,7 @@ class PostgresStateStore:
                           answer,
                           ts,
                           embedding_version,
-                          leading,
+                          "leading",
                           collaboration_strength,
                           selection_reason,
                           tags::text,
@@ -436,7 +465,7 @@ class PostgresStateStore:
                           answer,
                           ts,
                           embedding_version,
-                          leading,
+                          "leading",
                           collaboration_strength,
                           selection_reason,
                           tags::text,
@@ -450,7 +479,7 @@ class PostgresStateStore:
                             answer,
                             ts,
                             embedding_version,
-                            leading,
+                            "leading",
                             collaboration_strength,
                             selection_reason,
                             tags,
@@ -597,6 +626,78 @@ class PostgresStateStore:
                             "valid_until": trace.valid_until, "retrieval_scope": trace.retrieval_scope,
                             "scope_aliases": list(trace.scope_aliases), "recalled_answer": trace.recalled_answer})
 
+    def _memory_commit_receipt_sync(self, session_id, operation_id):
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT receipt::text FROM {self._table('memory_commits')} "
+                            "WHERE session_id = %s AND operation_id = %s;", (session_id, operation_id))
+                row = cur.fetchone()
+        return json.loads(row[0]) if row else None
+
+    def _commit_memory_operation_sync(self, session_id, operation_id, payload):
+        traces, updates = decode_payload(payload)
+        fingerprint = payload_fingerprint(payload)
+        table, receipts = self._table("shared_memory"), self._table("memory_commits")
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                # The session upsert takes a row lock. Serialize competing corrections,
+                # including two concurrent first attempts at the same operation ID.
+                self._touch_session(cur, session_id)
+                cur.execute(f"SELECT payload_sha256, receipt::text FROM {receipts} "
+                            "WHERE session_id = %s AND operation_id = %s;", (session_id, operation_id))
+                previous = cur.fetchone()
+                if previous:
+                    if previous[0] != fingerprint:
+                        raise MemoryCommitConflict("Operation ID already has a different memory payload")
+                    return json.loads(previous[1])
+                updated_ids = []
+                for trace in updates:
+                    if (trace.evidence_status != "superseded" or trace.recalled_answer
+                            or not trace.retrieval_scope
+                            or not any(t.retrieval_scope == trace.retrieval_scope and not t.recalled_answer
+                                       and t.evidence_status != "superseded" for t in traces)):
+                        raise MemoryCommitConflict("Supersession requires a new primary source in the same scope")
+                    cur.execute(
+                        f"SELECT id, evidence_metadata::text FROM {table} "
+                        "WHERE session_id = %s AND qid = %s AND ts = %s AND question = %s AND answer = %s "
+                        "FOR UPDATE;",
+                        (session_id, trace.qid, trace.timestamp, trace.question, trace.answer),
+                    )
+                    rows = cur.fetchall()
+                    if len(rows) != 1:
+                        raise MemoryCommitConflict("Correction must match exactly one stored source revision")
+                    row_id, metadata_json = rows[0]
+                    metadata = json.loads(metadata_json)
+                    if (metadata.get("evidence_status") == "superseded" or metadata.get("recalled_answer", False)
+                            or metadata.get("retrieval_scope") != trace.retrieval_scope):
+                        raise MemoryCommitConflict("Correction target is no longer a current source in the same scope")
+                    cur.execute(
+                        f"UPDATE {table} SET evidence_metadata = evidence_metadata || "
+                        "'{\"evidence_status\":\"superseded\"}'::jsonb WHERE id = %s "
+                        "AND (evidence_metadata->>'valid_until' IS NULL "
+                        "OR (evidence_metadata->>'valid_until')::double precision > extract(epoch from now()));",
+                        (row_id,),
+                    )
+                    if cur.rowcount != 1:
+                        raise MemoryCommitConflict("Correction target is expired")
+                    updated_ids.append(row_id)
+                inserted_ids = []
+                for trace in traces:
+                    cur.execute(
+                        f"INSERT INTO {table} (session_id, qid, question, answer, ts, tags, question_tokens, evidence_metadata) "
+                        "VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb) RETURNING id;",
+                        (session_id, trace.qid, trace.question, trace.answer, trace.timestamp,
+                         _json_dumps(list(trace.tags)), _json_dumps(list(trace.question_tokens)), self._memory_metadata(trace)),
+                    )
+                    inserted_ids.append(cur.fetchone()[0])
+                receipt = {"operation_id": operation_id, "payload_sha256": fingerprint, "state": "committed",
+                           "memory_ids": inserted_ids, "superseded_ids": updated_ids}
+                cur.execute(f"INSERT INTO {receipts} (session_id, operation_id, payload_sha256, receipt) "
+                            "VALUES (%s, %s, %s, %s::jsonb);",
+                            (session_id, operation_id, fingerprint, _json_dumps(receipt)))
+            conn.commit()
+        return receipt
+
     def _upsert_episodes_sync(self, session_id: str, episodes: Sequence[EpisodicTrace]) -> None:
         table = self._table("hippocampal_episodes")
         with self._connect() as conn:
@@ -624,7 +725,7 @@ class PostgresStateStore:
                                 answer,
                                 ts,
                                 embedding_version,
-                                leading,
+                                "leading",
                                 collaboration_strength,
                                 selection_reason,
                                 tags,
@@ -639,7 +740,7 @@ class PostgresStateStore:
                               answer = EXCLUDED.answer,
                               ts = EXCLUDED.ts,
                               embedding_version = EXCLUDED.embedding_version,
-                              leading = EXCLUDED.leading,
+                              "leading" = EXCLUDED."leading",
                               collaboration_strength = EXCLUDED.collaboration_strength,
                               selection_reason = EXCLUDED.selection_reason,
                               tags = EXCLUDED.tags,
@@ -674,7 +775,7 @@ class PostgresStateStore:
                                 answer,
                                 ts,
                                 embedding_version,
-                                leading,
+                                "leading",
                                 collaboration_strength,
                                 selection_reason,
                                 tags,
@@ -688,7 +789,7 @@ class PostgresStateStore:
                               answer = EXCLUDED.answer,
                               ts = EXCLUDED.ts,
                               embedding_version = EXCLUDED.embedding_version,
-                              leading = EXCLUDED.leading,
+                              "leading" = EXCLUDED."leading",
                               collaboration_strength = EXCLUDED.collaboration_strength,
                               selection_reason = EXCLUDED.selection_reason,
                               tags = EXCLUDED.tags,
@@ -737,7 +838,7 @@ class PostgresStateStore:
                           answer,
                           ts,
                           embedding_version,
-                          leading,
+                          "leading",
                           collaboration_strength,
                           selection_reason,
                           tags::text,
@@ -801,7 +902,7 @@ class PostgresStateStore:
                       answer,
                       ts,
                       embedding_version,
-                      leading,
+                      "leading",
                       collaboration_strength,
                       selection_reason,
                       tags::text,
@@ -1053,7 +1154,7 @@ class PostgresStateStore:
                       question,
                       answer,
                       ts,
-                      leading,
+                      "leading",
                       collaboration_strength,
                       selection_reason,
                       tags::text,
