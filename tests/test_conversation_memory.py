@@ -1,8 +1,11 @@
 import asyncio
-from dataclasses import replace
+from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "sr-dual-brain-llm/scripts"))
 
 from core.memory_answerability import AnswerabilityGate
 from core.memory_evidence import bounded_evidence, request_memory_context
