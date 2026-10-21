@@ -6,6 +6,8 @@ import asyncio
 from copy import deepcopy
 from dataclasses import replace
 import os
+import subprocess
+import sys
 import uuid
 
 import pytest
@@ -150,3 +152,68 @@ def test_existing_episode_sql_roundtrip_with_quoted_leading_column(pg_store):
     assert asyncio.run(pg_store.load_session("s", episode_limit=1))[1][0].leading == "right"
     assert asyncio.run(pg_store.search_episodes("s", np.ones(128)))[0][1].leading == "right"
     assert asyncio.run(pg_store.fetch_episodes_after_id("s", after_id=0, limit=5))[0]["leading"] == "right"
+
+
+def test_process_exit_after_commit_recovers_only_latest_revision(pg_store, tmp_path):
+    old, new, newest = source("14 days", 1), source("7 days", 2), source("3 days", 3)
+    asyncio.run(pg_store.append_memory_traces("s", [old]))
+    path = tmp_path / "outbox.sqlite3"
+    payload = memory_payload([new], [replace(old, evidence_status="superseded")])
+    MemoryOutbox(path, pg_store.memory_namespace).prepare("s", "first", payload)
+    script = """
+import asyncio, os, sys
+from core.memory_commits import MemoryOutbox
+from core.postgres_state_store import PostgresStateStore
+store = PostgresStateStore(sys.argv[1], table_prefix=sys.argv[2])
+entry = MemoryOutbox(sys.argv[3], store.memory_namespace).get('s', 'first')
+asyncio.run(store.commit_memory_operation('s', 'first', entry['payload']))
+os._exit(23)  # Commit is durable, but no outbox acknowledgement can be written.
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script, pg_store.dsn, pg_store.table_prefix, str(path)],
+        env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}, capture_output=True, text=True, timeout=20,
+    )
+    assert result.returncode == 23, result.stderr
+    receipt = asyncio.run(pg_store.memory_commit_receipt("s", "first"))
+    assert receipt and count_receipts(pg_store) == 1
+    asyncio.run(pg_store.commit_memory_operation(
+        "s", "newer", memory_payload([newest], [replace(new, evidence_status="superseded")]))
+    )
+    restarted_store = PostgresStateStore(pg_store.dsn, table_prefix=pg_store.table_prefix)
+    restarted_outbox = MemoryOutbox(path, restarted_store.memory_namespace)
+    assert restarted_outbox.get("s", "first")["receipt"] is None
+    assert asyncio.run(reconcile_memory(restarted_outbox, restarted_store, "s")) == [receipt]
+    assert len(load(restarted_store)) == 3 and count_receipts(restarted_store) == 2
+    m = memory()
+    m.past_qas = load(restarted_store)
+    assert [t.answer for t in retrieve(m, "Project Alpha deadline?")] == ["3 days"]
+
+
+def test_concurrent_different_operations_cannot_both_replace_one_source(pg_store):
+    old = source("14 days", 1)
+    asyncio.run(pg_store.append_memory_traces("s", [old]))
+
+    async def race():
+        return await asyncio.gather(*(
+            pg_store.commit_memory_operation("s", op, memory_payload(
+                [source(answer, ts)], [replace(old, evidence_status="superseded")]))
+            for op, answer, ts in (("one", "7 days", 2), ("two", "3 days", 3))
+        ), return_exceptions=True)
+
+    results = asyncio.run(race())
+    assert sum(isinstance(result, MemoryCommitConflict) for result in results) == 1
+    assert sum(isinstance(result, dict) for result in results) == 1
+    assert len(load(pg_store)) == 2 and count_receipts(pg_store) == 1
+    assert sum(t.evidence_status != "superseded" for t in load(pg_store)) == 1
+
+
+def test_invalid_later_target_rolls_back_earlier_supersession(pg_store):
+    old = source("14 days", 1)
+    asyncio.run(pg_store.append_memory_traces("s", [old]))
+    payload = memory_payload([source("7 days", 2)], [
+        replace(old, evidence_status="superseded"),
+        replace(old, qid="missing", evidence_status="superseded"),
+    ])
+    with pytest.raises(MemoryCommitConflict):
+        asyncio.run(pg_store.commit_memory_operation("s", "invalid", payload))
+    assert load(pg_store) == [old] and count_receipts(pg_store) == 0

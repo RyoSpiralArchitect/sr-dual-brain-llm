@@ -127,6 +127,10 @@ pytest -q tests/test_memory_commit_postgres.py
 The database tests cover rollback before commit, commit success followed by lost
 acknowledgement, outbox reopening, immutable payload conflicts, concurrent retries,
 legitimate corrections sharing qids, stale receipt replay and legacy episode SQL.
+Adversarial cases also exit a child process immediately after a real commit,
+recover that unacknowledged operation after a newer correction, race different
+operations against one source, and reject a later target after an earlier status
+update to verify transaction rollback.
 They passed locally on PostgreSQL 16.2 without pgvector, using a private Unix
 socket with TCP disabled. CI runs the same suite against an isolated PostgreSQL 16
 service. Fresh schema creation exposed an existing unquoted `leading` column;
