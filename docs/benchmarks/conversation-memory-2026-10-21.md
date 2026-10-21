@@ -109,7 +109,7 @@ chat or embedding calls.
 The fixture/protocol were committed before paid generation (`fac969d`), the baseline
 runner at `64a6007`, conversation generation at `7d5e1d7`, and frozen evaluation
 implementation/rubric at `4a2954d`. The later focus/grade validation changes were
-confirmed by exact development replay. Final local validation: **493 Python unit
+confirmed by exact development replay. Final local validation: **502 Python unit
 tests, 5 gateway contract tests and 13 Node tests passed**. Coverage includes normal
 and streaming RPC metadata, failed persistence, atomic historical status changes,
 rolling-buffer writes, legacy origin defaults and actual prompts in both workers.
@@ -129,6 +129,9 @@ answer quality remains unmeasured; the engine regression tests prompt delivery.
 Follow-up review also added rejection of stale/expired correction targets and
 scoped the flag to the metadata-capable stdio engine. The interactive server
 retains its existing memory policy. Regression tests cover both cases.
+Benchmark generation failures now preserve an unavailable row/checkpoint and abort
+before any subsequent turn can consume a locally stored fallback. Source/probe
+failure regressions cover this path. The live measurements had no such failures.
 
 Paid generation commands (run from repository root, each output directory new):
 

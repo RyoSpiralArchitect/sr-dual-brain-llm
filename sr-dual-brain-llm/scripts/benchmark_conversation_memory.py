@@ -101,6 +101,9 @@ class Journal:
             choices = response.get("choices") or []
             if len(choices) != 1 or choices[0].get("finish_reason") != "stop":
                 raise ValueError("Incomplete completion")
+            content = (choices[0].get("message") or {}).get("content")
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError("Missing completion text")
             return response
         except Exception as exc:
             row["error_type"] = type(exc).__name__
@@ -132,10 +135,15 @@ class Chat:
     def __init__(self, config, journal):
         self.config, self.journal, self.role = config, journal, "answer"
         self.client = LLMClient(config)
+        self.failed = False
 
     async def complete(self, prompt, *, system=None, temperature=.4, **kwargs):
         system = (system or "") + "\n\n" + TASK
-        return await self.call(prompt, system=system, role=self.role, temperature=temperature)
+        try:
+            return await self.call(prompt, system=system, role=self.role, temperature=temperature)
+        except Exception:
+            self.failed = True
+            raise
 
     async def call(self, prompt, *, system, role, temperature=0.):
         payload = self.client._openai_style_payload(
@@ -231,13 +239,14 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                 auditor=Auditor(),orchestrator=Orchestrator(3),telemetry=telemetry)
             for event in ep["events"]:
                 memory.writing=event["kind"]=="write"; chat.role="seed" if memory.writing else "answer"
+                chat.failed = False
                 telemetry.events.clear(); before=len(journal.events); started=time.perf_counter()
                 qid=ep["id"]+":"+event["id"]
                 result=await controller.process(event["question"],qid=qid,leading_brain="left",system2_mode="off",
                     **({"memory_context":event.get("memory_context")} if arm=="conversation" else {}))
                 calls=journal.events[before:]
-                failed=any(c.get("error_type") for c in calls if c["role"]==chat.role)
-                if memory.writing:
+                failed=chat.failed or any(c.get("error_type") for c in calls if c["role"]==chat.role)
+                if memory.writing and not failed:
                     key=(ep["id"],event["id"]); sha=digest(result)
                     if key in source_hashes and source_hashes[key] != sha:
                         raise ValueError("Source completions differ across arms")
@@ -252,6 +261,10 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                                "recalled":getattr(t,"recalled_answer",False),"answer_sha256":digest(t.answer)} for t in memory.past_qas]}
                 rows.append(record)
                 if save:save(report)
+                if failed:
+                    # The model wrapper can store a local fallback after a failed
+                    # provider call. Never let later probes consume that state.
+                    raise RuntimeError("Generation unavailable; episode aborted before the next turn")
     if grade:
         judge=Chat(config,journal)
         for ep in fixture["episodes"]:

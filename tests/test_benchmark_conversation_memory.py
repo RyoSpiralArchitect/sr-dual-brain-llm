@@ -48,3 +48,45 @@ def test_actual_answer_path_exact_replay_and_grade_coverage():
     with pytest.raises(ValueError, match="coverage"):
         asyncio.run(bench.run(fixture, config, incomplete, phase="development",
                              arms=["off", "checked", "conversation"], grade=True))
+
+
+@pytest.mark.parametrize("failure_at", [2, 4])
+@pytest.mark.parametrize("failure_mode", ["timeout", "length", "null", "empty"])
+def test_failed_source_or_probe_aborts_before_fallback_can_affect_later_turns(failure_at, failure_mode):
+    fixture = bench.read_json(bench.DEFAULT_FIXTURE)
+    config = LLMConfig("openai", "test-model", "NOT_A_KEY")
+    journal = bench.Journal(config, {})
+    saved = []
+    calls = []
+
+    async def post(url, payload, headers, **kwargs):
+        calls.append(payload)
+        fail = len(calls) == failure_at
+        if fail and failure_mode == "timeout":
+            raise TimeoutError("simulated provider failure")
+        reason = "length" if fail and failure_mode == "length" else "stop"
+        text = None if fail and failure_mode == "null" else "" if fail and failure_mode == "empty" else "Recorded source"
+        return {"model":"test-model", "choices":[{"finish_reason":reason, "message":{"content":text}}],
+                "usage":{"prompt_tokens":10, "completion_tokens":5}}
+
+    journal.transport._post_json = post
+    with pytest.raises(RuntimeError, match="episode aborted"):
+        asyncio.run(bench.run(fixture, config, journal, phase="development", arms=["off"],
+                             grade=True, save=lambda report: saved.append(deepcopy(report))))
+    assert len(calls) == len(saved[-1]["rows"]) == failure_at
+    assert saved[-1]["rows"][-1]["status"] == "unavailable"
+    assert saved[-1]["rows"][-1]["answer"] is None and not saved[-1]["complete"]
+    assert not saved[-1]["grades"] and not journal.data["complete"]
+
+
+def test_pretransport_failure_is_unavailable_and_aborts_without_later_turns():
+    fixture = bench.read_json(bench.DEFAULT_FIXTURE)
+    config = LLMConfig("openai", "test-model", "NOT_A_KEY")
+    journal = bench.Journal(config, {})
+    journal.transport = None
+    saved = []
+    with pytest.raises(RuntimeError, match="episode aborted"):
+        asyncio.run(bench.run(fixture, config, journal, phase="development", arms=["off"],
+                             save=lambda report: saved.append(deepcopy(report))))
+    assert journal.calls == 0 and not journal.events
+    assert len(saved[-1]["rows"]) == 1 and saved[-1]["rows"][0]["status"] == "unavailable"
