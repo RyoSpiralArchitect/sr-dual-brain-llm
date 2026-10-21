@@ -99,6 +99,23 @@ def test_pending_correction_hides_old_approvals_without_mutating_persisted_statu
     assert m.retrieve_related_traces(question)[0].qid == "old"
 
 
+@pytest.mark.parametrize("expired", [False, True])
+def test_corrections_reject_stale_or_expired_targets(expired):
+    from dataclasses import replace
+    m = memory()
+    write(m, "Alpha", "old", "14 days")
+    if expired:
+        m.past_qas[0] = replace(m.past_qas[0], valid_until=0)
+    else:
+        write(m, "Alpha", "current", "7 days", ["old"])
+    before = list(m.past_qas)
+    with pytest.raises(ValueError, match="current source"):
+        write(m, "Alpha", "stale-update", "3 days", ["old"])
+    assert m.past_qas == before
+    if not expired:
+        assert [t.qid for t in retrieve(m, "Project Alpha deadline?")] == ["current"]
+
+
 def test_engine_components_cannot_reintroduce_old_or_answer_only_memory(monkeypatch):
     from engine_stdio import EngineSession
     monkeypatch.setenv("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT", "1")
@@ -159,6 +176,38 @@ def test_cortical_line_gating_keeps_complete_checked_conditions():
     assert answer in context
     rebuilt, _ = c._rebuild_context_from_parts(question=q, context_parts=dict(parts, working_memory="UNAPPROVED"))
     assert answer in rebuilt and "UNAPPROVED" not in rebuilt
+
+
+def test_interactive_server_retains_legacy_memory_with_stdio_flag_exported(monkeypatch):
+    import run_server
+    monkeypatch.setenv("DUALBRAIN_MEMORY_CONVERSATION_CONTEXT", "1")
+    memories = []
+    questions = iter(["Project Alpha deadline?", "Project Alpha deadline?"])
+
+    def input_question(*_):
+        try:
+            return next(questions)
+        except StopIteration:
+            raise EOFError from None
+
+    class Controller:
+        def __init__(self, **kwargs):
+            self.memory = kwargs["memory"]
+            memories.append(self.memory)
+        async def process(self, question, **kwargs):
+            if self.memory.past_qas:
+                assert "SERVER_MEMORY" in self.memory.retrieve_related(question)
+            self.memory.store({"Q":question, "A":"SERVER_MEMORY"})
+            return "SERVER_MEMORY"
+
+    async def worker(*_): pass
+    monkeypatch.setattr("builtins.input", input_question)
+    monkeypatch.setattr(run_server, "DualBrainController", Controller)
+    monkeypatch.setattr(run_server, "right_worker", worker)
+    with pytest.raises(EOFError):
+        asyncio.run(run_server.main())
+    assert not memories[0].conversation_context and len(memories[0].past_qas) == 2
+    assert not any(t.recalled_answer for t in memories[0].past_qas)
 
 
 def test_long_complete_source_keeps_late_exception_and_rejects_oversized_units():

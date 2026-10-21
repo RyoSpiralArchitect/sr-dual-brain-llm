@@ -7,6 +7,10 @@ export DUALBRAIN_MEMORY_ANSWERABILITY_MODEL=gpt-6-luna
 export DUALBRAIN_MEMORY_CONVERSATION_CONTEXT=1
 ```
 
+The conversation flag applies to the metadata-capable stdio engine. Interactive
+`run_server.py` retains its existing memory policy because stdin supplies no
+trusted write/correction metadata.
+
 The support flag sends historical Q&A to the configured provider and incurs cost.
 The conversation flag changes which answers become retrievable primary records.
 Both are disabled by default. No automatic scope or correction extraction is
@@ -32,7 +36,8 @@ keyword), together with a unique `qid` for each turn:
 Scope metadata is trusted application input, not model output. `remember: true`
 declares a primary source write; ordinary answers remain in QA history but are
 excluded from factual retrieval in this mode. Source answers remain unverified.
-Only explicit, unique source IDs in the same scope can be superseded. No records
+Only explicit, unique, still-current source IDs in the same scope can be superseded;
+stale/already superseded and expired targets are rejected. No records
 are persisted as superseded until the new answer is stored. Pending correction
 targets are already hidden from every SharedMemory lookup during that turn; a
 failed/cancelled write leaves their stored status unchanged. PostgreSQL persists the new source

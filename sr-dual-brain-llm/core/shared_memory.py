@@ -233,8 +233,9 @@ class SharedMemory:
             for target in supersedes:
                 matches = [t for t in self.past_qas if t.qid == target]
                 if (len(matches) != 1 or matches[0].retrieval_scope != declaration.retrieval_scope
-                        or matches[0].recalled_answer or target == qid):
-                    raise ValueError("Correction target must uniquely identify a source in the same scope")
+                        or matches[0].recalled_answer or target == qid
+                        or not self._available(matches[0], time.time())):
+                    raise ValueError("Correction target must uniquely identify a current source in the same scope")
         traces = [t for t in self.past_qas if self._available(t, time.time())]
         resolver = MemoryScopeResolver([*traces, *([declaration] if declaration else [])])
         cue = resolver.query(question)
