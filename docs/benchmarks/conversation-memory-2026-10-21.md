@@ -109,7 +109,7 @@ chat or embedding calls.
 The fixture/protocol were committed before paid generation (`fac969d`), the baseline
 runner at `64a6007`, conversation generation at `7d5e1d7`, and frozen evaluation
 implementation/rubric at `4a2954d`. The later focus/grade validation changes were
-confirmed by exact development replay. Final local validation: **502 Python unit
+confirmed by exact development replay. Final local validation: **517 Python unit
 tests, 5 gateway contract tests and 13 Node tests passed**. Coverage includes normal
 and streaming RPC metadata, failed persistence, atomic historical status changes,
 rolling-buffer writes, legacy origin defaults and actual prompts in both workers.
@@ -132,6 +132,11 @@ retains its existing memory policy. Regression tests cover both cases.
 Benchmark generation failures now preserve an unavailable row/checkpoint and abort
 before any subsequent turn can consume a locally stored fallback. Source/probe
 failure regressions cover this path. The live measurements had no such failures.
+Production source writes also require success-aware left-model generation: provider
+errors, missing configuration or empty output raise before source promotion or
+supersession, leaving the previous record intact and cancelling pending preview/
+observer work. Ordinary answer fallbacks are unchanged. Further regressions cover
+these cases and Japanese unknown-project comparisons (with/without spaces).
 
 Paid generation commands (run from repository root, each output directory new):
 

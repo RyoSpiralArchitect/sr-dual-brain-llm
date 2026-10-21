@@ -36,6 +36,12 @@ keyword), together with a unique `qid` for each turn:
 Scope metadata is trusted application input, not model output. `remember: true`
 declares a primary source write; ordinary answers remain in QA history but are
 excluded from factual retrieval in this mode. Source answers remain unverified.
+Primary source drafts require a configured left model and propagate generation
+errors or empty output instead of saving a local fallback. No new source or
+supersession is stored on failure; concurrent preview/observer tasks are cancelled.
+Custom left models must implement `generate_source_answer(...)` with this success
+contract. Ordinary answer turns retain their existing fallback behavior. Successful
+generation does not certify factual truth or semantic completeness.
 Only explicit, unique, still-current source IDs in the same scope can be superseded;
 stale/already superseded and expired targets are rejected. No records
 are persisted as superseded until the new answer is stored. Pending correction

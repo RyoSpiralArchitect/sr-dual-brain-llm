@@ -48,7 +48,9 @@ def test_correction_followup_and_repeat_keep_primary_sources_and_cache():
 
 
 @pytest.mark.parametrize("interruption", ["Project Alpha and Beta deadlines?", "What is the weather?",
-    "Project Unknown deadline?", "Project Alpha and Project Unknown deadlines?"])
+    "Project Unknown deadline?", "Project Alpha and Project Unknown deadlines?",
+    "プロジェクト Alpha と プロジェクト Unknown の締切は？",
+    "プロジェクトAlphaとプロジェクトUnknownの締切は？"])
 def test_ambiguous_or_unrelated_turn_clears_focus(interruption):
     m = memory()
     write(m, "Alpha", "a", "7 days")
@@ -208,6 +210,86 @@ def test_interactive_server_retains_legacy_memory_with_stdio_flag_exported(monke
         asyncio.run(run_server.main())
     assert not memories[0].conversation_context and len(memories[0].past_qas) == 2
     assert not any(t.recalled_answer for t in memories[0].past_qas)
+
+
+@pytest.mark.parametrize("failure", ["timeout", "stream", "empty", "unconfigured"])
+def test_failed_production_source_generation_keeps_previous_fact(failure):
+    from core.llm_client import LLMConfig
+    from core.models import LeftBrainModel
+    from test_dual_brain import make_stage_controller
+    m = memory()
+    m.track_persistence = True
+    write(m, "Alpha", "old", "14 days")
+    m.pending_memory_writes.clear()
+
+    class Failure:
+        async def complete(self, *args, **kwargs):
+            if failure == "empty":
+                return ""
+            raise TimeoutError("PROVIDER_SECRET")
+
+    class StreamFailure:
+        async def complete_stream(self, *args, **kwargs):
+            if kwargs.get("on_delta"):
+                result = kwargs["on_delta"]("partial")
+                if asyncio.iscoroutine(result):
+                    await result
+            raise TimeoutError("PROVIDER_SECRET")
+
+    model = LeftBrainModel(LLMConfig("openai", "fake", "NOT_A_KEY"))
+    model._llm_client = None if failure == "unconfigured" else StreamFailure() if failure == "stream" else Failure()
+    controller = make_stage_controller(memory=m, left_model=model)
+    with pytest.raises(RuntimeError, match="Primary source generation") as error:
+        asyncio.run(controller.process("Project Alpha deadline is now seven days", qid="new", leading_brain="left",
+            system2_mode="off", on_delta=lambda text: None,
+            memory_context={"id":"Alpha", "aliases":["Alpha"], "remember":True, "supersedes":["old"]}))
+    assert "PROVIDER_SECRET" not in str(error.value)
+    assert len(m.past_qas) == 1 and m.past_qas[0].evidence_status == "unverified"
+    assert not m.pending_memory_writes and not m.pending_memory_updates
+    assert [t.qid for t in retrieve(m, "Project Alpha deadline?")] == ["old"]
+
+
+def test_failed_primary_generation_cancels_preview_and_observer_tasks():
+    from core.llm_client import LLMConfig
+    from core.models import LeftBrainModel
+    from test_dual_brain import make_stage_controller
+    m = memory()
+    write(m, "Alpha", "old", "14 days")
+    started, stopped = set(), set()
+
+    async def blocked(name):
+        started.add(name)
+        try:
+            await asyncio.Future()
+        finally:
+            stopped.add(name)
+
+    class Failure:
+        async def complete(self, *args, **kwargs):
+            await asyncio.sleep(0)
+            raise TimeoutError("simulated outage")
+
+    class Observer:
+        async def advise(self, **kwargs):
+            await blocked("observer")
+
+    async def preview(*args, **kwargs):
+        await blocked("preview")
+
+    model = LeftBrainModel(LLMConfig("openai", "fake", "NOT_A_KEY"))
+    model._llm_client = Failure()
+    controller = make_stage_controller(memory=m, left_model=model)
+    controller.executive_model = Observer()
+    controller.right_model.generate_lead = preview
+
+    async def run():
+        with pytest.raises(RuntimeError, match="Primary source generation"):
+            await controller.process("Project Alpha deadline is now seven days", qid="new", leading_brain="right",
+                system2_mode="off", executive_mode="observe",
+                memory_context={"id":"Alpha", "aliases":["Alpha"], "remember":True, "supersedes":["old"]})
+        assert started == stopped == {"preview", "observer"}
+
+    asyncio.run(run())
 
 
 def test_long_complete_source_keeps_late_exception_and_rejects_oversized_units():

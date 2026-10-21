@@ -52,7 +52,8 @@ def test_actual_answer_path_exact_replay_and_grade_coverage():
 
 @pytest.mark.parametrize("failure_at", [2, 4])
 @pytest.mark.parametrize("failure_mode", ["timeout", "length", "null", "empty"])
-def test_failed_source_or_probe_aborts_before_fallback_can_affect_later_turns(failure_at, failure_mode):
+@pytest.mark.parametrize("arm", ["off", "conversation"])
+def test_failed_source_or_probe_aborts_before_fallback_can_affect_later_turns(failure_at, failure_mode, arm):
     fixture = bench.read_json(bench.DEFAULT_FIXTURE)
     config = LLMConfig("openai", "test-model", "NOT_A_KEY")
     journal = bench.Journal(config, {})
@@ -60,6 +61,11 @@ def test_failed_source_or_probe_aborts_before_fallback_can_affect_later_turns(fa
     calls = []
 
     async def post(url, payload, headers, **kwargs):
+        if payload.get("response_format"):
+            packet = json.loads(payload["messages"][-1]["content"])
+            text = json.dumps({"decisions":[dict(id=r["id"], supported=False, quote="") for r in packet["records"]]})
+            return {"model":"test-model", "choices":[{"finish_reason":"stop", "message":{"content":text}}],
+                    "usage":{"prompt_tokens":10, "completion_tokens":5}}
         calls.append(payload)
         fail = len(calls) == failure_at
         if fail and failure_mode == "timeout":
@@ -71,7 +77,7 @@ def test_failed_source_or_probe_aborts_before_fallback_can_affect_later_turns(fa
 
     journal.transport._post_json = post
     with pytest.raises(RuntimeError, match="episode aborted"):
-        asyncio.run(bench.run(fixture, config, journal, phase="development", arms=["off"],
+        asyncio.run(bench.run(fixture, config, journal, phase="development", arms=[arm],
                              grade=True, save=lambda report: saved.append(deepcopy(report))))
     assert len(calls) == len(saved[-1]["rows"]) == failure_at
     assert saved[-1]["rows"][-1]["status"] == "unavailable"

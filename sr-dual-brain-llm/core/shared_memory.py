@@ -244,7 +244,10 @@ class SharedMemory:
         query = question
         # A known project plus an explicit unknown project must not leave a
         # deceptively unique focus for the next pronoun-only turn.
-        project_mentions = re.findall(r"\bproject\s+([^\s:：?？,、。]+)", question, re.I)
+        project_mentions = []
+        for marker in re.finditer(r"\bproject\s+|プロジェクト\s*", question, re.I):
+            name = re.match(r"[^\s:：?？,、。]+", question[marker.end():])
+            project_mentions.append(name.group() if name else "")
         unknown_project = any(not resolver.query(f"Project {name}").scopes for name in project_mentions)
         if unknown_project:
             focus = None
@@ -268,6 +271,10 @@ class SharedMemory:
 
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question
+
+    @property
+    def primary_write_pending(self):
+        return bool(self.conversation_context and self._turn_metadata and self._turn_metadata[2])
 
     def scope_resolver(self) -> MemoryScopeResolver:
         traces = [trace for trace in self.past_qas if self._available(trace, time.time())]

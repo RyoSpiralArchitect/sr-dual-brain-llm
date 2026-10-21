@@ -242,8 +242,13 @@ async def run(fixture, config, journal, *, phase, arms, baseline=None, grade=Fal
                 chat.failed = False
                 telemetry.events.clear(); before=len(journal.events); started=time.perf_counter()
                 qid=ep["id"]+":"+event["id"]
-                result=await controller.process(event["question"],qid=qid,leading_brain="left",system2_mode="off",
-                    **({"memory_context":event.get("memory_context")} if arm=="conversation" else {}))
+                try:
+                    result=await controller.process(event["question"],qid=qid,leading_brain="left",system2_mode="off",
+                        **({"memory_context":event.get("memory_context")} if arm=="conversation" else {}))
+                except Exception:
+                    if not chat.failed:
+                        raise
+                    result = None
                 calls=journal.events[before:]
                 failed=chat.failed or any(c.get("error_type") for c in calls if c["role"]==chat.role)
                 if memory.writing and not failed:

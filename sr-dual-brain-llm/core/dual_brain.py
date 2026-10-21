@@ -2202,6 +2202,11 @@ class DualBrainController:
         phase_add: Callable[[str, float], None],
     ) -> DraftStageResult:
         steps: List[InnerDialogueStep] = []
+        generator = self.left_model.generate_answer
+        if getattr(self.memory, "primary_write_pending", False):
+            generator = getattr(self.left_model, "generate_source_answer", None)
+            if not callable(generator):
+                raise RuntimeError("Primary source writes require success-aware generation")
         right_lead_notes: Optional[str] = None
         right_preview_task: asyncio.Task[str] | None = None
         if (leading == "right" or collaborative_lead) and not system2_active:
@@ -2224,16 +2229,22 @@ class DualBrainController:
             left_context = (f"{context}\n\n{system2_hint}".strip() if context else system2_hint)
 
         left_draft_started = time.perf_counter()
-        draft = await self.left_model.generate_answer(
-            question,
-            left_context,
-            vision_images=vision_images,
-            on_delta=(
-                delta_cb
-                if delta_cb and not stream_final_only and not emitted_any
-                else None
-            ),
-        )
+        try:
+            draft = await generator(
+                question,
+                left_context,
+                vision_images=vision_images,
+                on_delta=(
+                    delta_cb
+                    if delta_cb and not stream_final_only and not emitted_any
+                    else None
+                ),
+            )
+        except BaseException:
+            if right_preview_task is not None:
+                right_preview_task.cancel()
+                await asyncio.gather(right_preview_task, return_exceptions=True)
+            raise
         phase_add("left_draft", left_draft_started)
 
         if right_preview_task is not None:
@@ -5010,23 +5021,31 @@ class DualBrainController:
                         source_qids=[trace.qid for trace in traces if getattr(trace, "seed_id", None)],
                         destination="draft_context", status="provided_to_stage",
                     )
-        draft_stage = await self._run_left_draft_stage(
-            question=question,
-            context=context,
-            focus=focus,
-            leading=leading,
-            collaborative_lead=collaborative_lead,
-            system2_active=system2_active,
-            vision_images=vision_images,
-            delta_cb=delta_cb,
-            stream_final_only=stream_final_only,
-            emitted_any=emitted_any,
-            focus_keywords=focus_keywords,
-            focus_metric=focus_metric,
-            hemisphere_mode=hemisphere_mode,
-            hemisphere_bias=hemisphere_bias,
-            phase_add=_phase_add,
-        )
+        try:
+            draft_stage = await self._run_left_draft_stage(
+                question=question,
+                context=context,
+                focus=focus,
+                leading=leading,
+                collaborative_lead=collaborative_lead,
+                system2_active=system2_active,
+                vision_images=vision_images,
+                delta_cb=delta_cb,
+                stream_final_only=stream_final_only,
+                emitted_any=emitted_any,
+                focus_keywords=focus_keywords,
+                focus_metric=focus_metric,
+                hemisphere_mode=hemisphere_mode,
+                hemisphere_bias=hemisphere_bias,
+                phase_add=_phase_add,
+            )
+        except BaseException:
+            pending = [task for task in (executive_task, director_task) if task is not None]
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+            raise
         draft = draft_stage.draft
         right_lead_notes = draft_stage.right_lead_notes
         left_lead_preview = draft_stage.left_lead_preview
