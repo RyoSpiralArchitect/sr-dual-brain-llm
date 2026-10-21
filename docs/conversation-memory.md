@@ -37,6 +37,9 @@ are superseded until the new answer is stored. PostgreSQL persists the new sourc
 and old status changes in one transaction; legacy rows default to primary,
 unverified records. The in-session focus is deliberately not restored on restart.
 Tests simulate PostgreSQL transactions; this change has no live database result.
+Existing rows without origin metadata retain their legacy primary-source default.
+Use a fresh session or explicitly curate historical records when enabling this
+mode; it cannot identify previously saved answers that were derived from recall.
 
 An explicit project mention sets a single focus. Conservative follow-ups starting
 with phrases such as `その`, `前の件`, `that` or `the previous` inherit that focus
