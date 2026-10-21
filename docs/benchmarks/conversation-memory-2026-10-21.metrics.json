@@ -1,0 +1,540 @@
+{
+  "schema_version": 1,
+  "origin": "authored_controlled_multiturn_final_answers",
+  "fixture_file_sha256": "e4198c1ceef4596cd70f6743541f898210403b7af3bdb82a14438ebaa27b34ac",
+  "protocol_file_sha256": "fef543e6b59efd42b37b1a570f0bb4754f2b7990ba354dfbd2e9cc34fedcfb87",
+  "limitations": [
+    "Four authored Japanese episodes; shared dialogue templates and correlated probes",
+    "Caller-declared scopes, remember flags and exact correction IDs; no automatic extraction",
+    "Fixed left lead, no working memory, hippocampal facts, remote consultation or embeddings",
+    "Same-family model grader; development rubric amendment retained; no independent human grade",
+    "No live PostgreSQL measurement or adversarial robustness claim"
+  ],
+  "phases": {
+    "development": {
+      "summary": {
+        "checked": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 4,
+          "grounding_fail": 8,
+          "both_pass": 4,
+          "support_calls": 16
+        },
+        "conversation": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 16,
+          "grounding_fail": 0,
+          "both_pass": 16,
+          "support_calls": 10
+        },
+        "off": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 4,
+          "grounding_fail": 0,
+          "both_pass": 4,
+          "support_calls": 0
+        }
+      },
+      "grader_failures": 0,
+      "arms": {
+        "checked": {
+          "criteria": {
+            "task": {
+              "pass": 4,
+              "fail": 12
+            },
+            "grounding": {
+              "pass": 8,
+              "fail": 8
+            }
+          },
+          "both_pass_by_probe": {
+            "aurora-marble:a-current": true,
+            "aurora-marble:a-followup": false,
+            "aurora-marble:a-repeat": false,
+            "aurora-marble:b-exception": false,
+            "aurora-marble:b-repeat": false,
+            "aurora-marble:unknown": true,
+            "aurora-marble:compare": false,
+            "aurora-marble:ambiguous": false,
+            "copper-fern:a-current": true,
+            "copper-fern:a-followup": false,
+            "copper-fern:a-repeat": false,
+            "copper-fern:b-exception": false,
+            "copper-fern:b-repeat": false,
+            "copper-fern:unknown": true,
+            "copper-fern:compare": false,
+            "copper-fern:ambiguous": false
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 4289.750929514412,
+            "p95_nearest_rank_ms": 5146.91639400553,
+            "max_ms": 5146.91639400553
+          },
+          "support_preparation_called_latency": {
+            "n": 16,
+            "median_ms": 2559.079141530674,
+            "p95_nearest_rank_ms": 4029.688868962694,
+            "max_ms": 4029.688868962694
+          },
+          "support_preparation_cached_latency": {
+            "n": 0
+          },
+          "support_statuses": {
+            "ready": 16
+          },
+          "exact_repeat_support_calls": 4,
+          "support_input_tokens": 7925
+        },
+        "conversation": {
+          "criteria": {
+            "task": {
+              "pass": 16
+            },
+            "grounding": {
+              "pass": 16
+            }
+          },
+          "both_pass_by_probe": {
+            "aurora-marble:a-current": true,
+            "aurora-marble:a-followup": true,
+            "aurora-marble:a-repeat": true,
+            "aurora-marble:b-exception": true,
+            "aurora-marble:b-repeat": true,
+            "aurora-marble:unknown": true,
+            "aurora-marble:compare": true,
+            "aurora-marble:ambiguous": true,
+            "copper-fern:a-current": true,
+            "copper-fern:a-followup": true,
+            "copper-fern:a-repeat": true,
+            "copper-fern:b-exception": true,
+            "copper-fern:b-repeat": true,
+            "copper-fern:unknown": true,
+            "copper-fern:compare": true,
+            "copper-fern:ambiguous": true
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 2661.3451309967786,
+            "p95_nearest_rank_ms": 4368.917362997308,
+            "max_ms": 4368.917362997308
+          },
+          "support_preparation_called_latency": {
+            "n": 10,
+            "median_ms": 2047.8272114996798,
+            "p95_nearest_rank_ms": 3303.328590991441,
+            "max_ms": 3303.328590991441
+          },
+          "support_preparation_cached_latency": {
+            "n": 4,
+            "median_ms": 0.45173350372351706,
+            "p95_nearest_rank_ms": 0.7817829609848559,
+            "max_ms": 0.7817829609848559
+          },
+          "support_statuses": {
+            "ready": 10,
+            "cached": 4,
+            "empty": 2
+          },
+          "exact_repeat_support_calls": 0,
+          "support_input_tokens": 10122
+        },
+        "off": {
+          "criteria": {
+            "task": {
+              "fail": 12,
+              "pass": 4
+            },
+            "grounding": {
+              "pass": 16
+            }
+          },
+          "both_pass_by_probe": {
+            "aurora-marble:a-current": false,
+            "aurora-marble:a-followup": false,
+            "aurora-marble:a-repeat": false,
+            "aurora-marble:b-exception": false,
+            "aurora-marble:b-repeat": false,
+            "aurora-marble:unknown": true,
+            "aurora-marble:compare": false,
+            "aurora-marble:ambiguous": true,
+            "copper-fern:a-current": false,
+            "copper-fern:a-followup": false,
+            "copper-fern:a-repeat": false,
+            "copper-fern:b-exception": false,
+            "copper-fern:b-repeat": false,
+            "copper-fern:unknown": true,
+            "copper-fern:compare": false,
+            "copper-fern:ambiguous": true
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 1856.3309779856354,
+            "p95_nearest_rank_ms": 2412.233254988678,
+            "max_ms": 2412.233254988678
+          },
+          "support_preparation_called_latency": {
+            "n": 0
+          },
+          "support_preparation_cached_latency": {
+            "n": 0
+          },
+          "support_statuses": {
+            "disabled": 16
+          },
+          "exact_repeat_support_calls": 0,
+          "support_input_tokens": 0
+        }
+      }
+    },
+    "evaluation": {
+      "summary": {
+        "checked": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 5,
+          "grounding_fail": 7,
+          "both_pass": 5,
+          "support_calls": 16
+        },
+        "conversation": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 16,
+          "grounding_fail": 0,
+          "both_pass": 16,
+          "support_calls": 10
+        },
+        "off": {
+          "probes": 16,
+          "available": 16,
+          "graded": 16,
+          "task_pass": 4,
+          "grounding_fail": 0,
+          "both_pass": 4,
+          "support_calls": 0
+        }
+      },
+      "grader_failures": 0,
+      "arms": {
+        "checked": {
+          "criteria": {
+            "task": {
+              "pass": 5,
+              "fail": 11
+            },
+            "grounding": {
+              "pass": 9,
+              "fail": 7
+            }
+          },
+          "both_pass_by_probe": {
+            "lyra-obsidian:a-current": true,
+            "lyra-obsidian:a-followup": true,
+            "lyra-obsidian:a-repeat": false,
+            "lyra-obsidian:b-exception": false,
+            "lyra-obsidian:b-repeat": false,
+            "lyra-obsidian:unknown": true,
+            "lyra-obsidian:compare": false,
+            "lyra-obsidian:ambiguous": false,
+            "petal-solstice:a-current": true,
+            "petal-solstice:a-followup": false,
+            "petal-solstice:a-repeat": false,
+            "petal-solstice:b-exception": false,
+            "petal-solstice:b-repeat": false,
+            "petal-solstice:unknown": true,
+            "petal-solstice:compare": false,
+            "petal-solstice:ambiguous": false
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 4110.799593501724,
+            "p95_nearest_rank_ms": 13207.238181028515,
+            "max_ms": 13207.238181028515
+          },
+          "support_preparation_called_latency": {
+            "n": 16,
+            "median_ms": 2554.27430497366,
+            "p95_nearest_rank_ms": 7264.325292024296,
+            "max_ms": 7264.325292024296
+          },
+          "support_preparation_cached_latency": {
+            "n": 0
+          },
+          "support_statuses": {
+            "ready": 16
+          },
+          "exact_repeat_support_calls": 4,
+          "support_input_tokens": 8173
+        },
+        "conversation": {
+          "criteria": {
+            "task": {
+              "pass": 16
+            },
+            "grounding": {
+              "pass": 16
+            }
+          },
+          "both_pass_by_probe": {
+            "lyra-obsidian:a-current": true,
+            "lyra-obsidian:a-followup": true,
+            "lyra-obsidian:a-repeat": true,
+            "lyra-obsidian:b-exception": true,
+            "lyra-obsidian:b-repeat": true,
+            "lyra-obsidian:unknown": true,
+            "lyra-obsidian:compare": true,
+            "lyra-obsidian:ambiguous": true,
+            "petal-solstice:a-current": true,
+            "petal-solstice:a-followup": true,
+            "petal-solstice:a-repeat": true,
+            "petal-solstice:b-exception": true,
+            "petal-solstice:b-repeat": true,
+            "petal-solstice:unknown": true,
+            "petal-solstice:compare": true,
+            "petal-solstice:ambiguous": true
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 2519.581720494898,
+            "p95_nearest_rank_ms": 3682.9486609785818,
+            "max_ms": 3682.9486609785818
+          },
+          "support_preparation_called_latency": {
+            "n": 10,
+            "median_ms": 1589.7175925201736,
+            "p95_nearest_rank_ms": 2416.6417790111154,
+            "max_ms": 2416.6417790111154
+          },
+          "support_preparation_cached_latency": {
+            "n": 4,
+            "median_ms": 0.4413624992594123,
+            "p95_nearest_rank_ms": 0.7753639947623014,
+            "max_ms": 0.7753639947623014
+          },
+          "support_statuses": {
+            "ready": 10,
+            "cached": 4,
+            "empty": 2
+          },
+          "exact_repeat_support_calls": 0,
+          "support_input_tokens": 10229
+        },
+        "off": {
+          "criteria": {
+            "task": {
+              "fail": 12,
+              "pass": 4
+            },
+            "grounding": {
+              "pass": 16
+            }
+          },
+          "both_pass_by_probe": {
+            "lyra-obsidian:a-current": false,
+            "lyra-obsidian:a-followup": false,
+            "lyra-obsidian:a-repeat": false,
+            "lyra-obsidian:b-exception": false,
+            "lyra-obsidian:b-repeat": false,
+            "lyra-obsidian:unknown": true,
+            "lyra-obsidian:compare": false,
+            "lyra-obsidian:ambiguous": true,
+            "petal-solstice:a-current": false,
+            "petal-solstice:a-followup": false,
+            "petal-solstice:a-repeat": false,
+            "petal-solstice:b-exception": false,
+            "petal-solstice:b-repeat": false,
+            "petal-solstice:unknown": true,
+            "petal-solstice:compare": false,
+            "petal-solstice:ambiguous": true
+          },
+          "answer_latency": {
+            "n": 16,
+            "median_ms": 1638.762115035206,
+            "p95_nearest_rank_ms": 2088.0308449850418,
+            "max_ms": 2088.0308449850418
+          },
+          "support_preparation_called_latency": {
+            "n": 0
+          },
+          "support_preparation_cached_latency": {
+            "n": 0
+          },
+          "support_statuses": {
+            "disabled": 16
+          },
+          "exact_repeat_support_calls": 0,
+          "support_input_tokens": 0
+        }
+      }
+    }
+  },
+  "runs": {
+    "baseline": {
+      "provider_calls": 54,
+      "input_tokens": 21109,
+      "output_tokens": 7092,
+      "roles": {
+        "seed": 6,
+        "answer": 32,
+        "support": 16
+      },
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_errors": 0,
+      "source_revision": {
+        "commit": "64a6007f73b4934aaf54e974faf8a14c6639d42d",
+        "dirty": false
+      }
+    },
+    "development_initial": {
+      "provider_calls": 42,
+      "input_tokens": 29042,
+      "output_tokens": 6951,
+      "roles": {
+        "support": 10,
+        "answer": 16,
+        "judge": 16
+      },
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_errors": 0,
+      "source_revision": {
+        "commit": "7d5e1d7b9628ddd31fc11509d542193b7430e891",
+        "dirty": false
+      }
+    },
+    "development_regraded": {
+      "provider_calls": 16,
+      "input_tokens": 9349,
+      "output_tokens": 3300,
+      "roles": {
+        "judge": 16
+      },
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_errors": 0,
+      "source_revision": {
+        "commit": "4a2954dacc104402ab990262996bbcf1862bd8b7",
+        "dirty": false
+      }
+    },
+    "evaluation": {
+      "provider_calls": 96,
+      "input_tokens": 53680,
+      "output_tokens": 13542,
+      "roles": {
+        "seed": 6,
+        "answer": 48,
+        "support": 26,
+        "judge": 16
+      },
+      "served_models": [
+        "gpt-6-luna"
+      ],
+      "provider_errors": 0,
+      "source_revision": {
+        "commit": "4a2954dacc104402ab990262996bbcf1862bd8b7",
+        "dirty": false
+      }
+    }
+  },
+  "artifacts": {
+    "baseline": {
+      "report.json": "cc6e3cee3685a9f2f468f566ee4543c3bcfa8a9b49c502e9ebce6d28f1353e33",
+      "journal.partial.json": "4908941a7099126c5e1d8daf7bd7a5c05f8f2cae1e0dbdae88d814054559394e"
+    },
+    "development_initial": {
+      "report.json": "f9e77add4f2dcc9d98fc2005eaaac7a61ccd925e58ff3d066231ca6c11d39d0e",
+      "journal.partial.json": "59a40a055238f099c7fef3e80a54462a51aca57e210f54e46a7e4be0e7777fae"
+    },
+    "development_regraded": {
+      "report.json": "9b81f787404d7f7ea4ccc9fa0108816bc8861ab1ff3b17318a368cfeac751131",
+      "journal.partial.json": "f629c5036ea234ff35a8ac90fa945710dafd32027e9aa738a2fb785582131206"
+    },
+    "evaluation": {
+      "report.json": "0d3a23a9dc3b8337e327791f3e3dbab5b521951ba60f56d1f62a2644fb3f84d4",
+      "journal.partial.json": "f8daf8e9889fc670747930092833ddb21aa58c04159a48a00ca48d9aa246a39a"
+    },
+    "baseline_replay": {
+      "report.json": "b0824df29015ae6c14a05e214495febcead9201f5516d4e118657fbde970aa61",
+      "provider_calls": 0
+    },
+    "development_replay": {
+      "report.json": "7a1e7383f5de5d2b1e147aa7c5d5804eb924943eb8556175d8610486c7fcd77b",
+      "provider_calls": 0
+    },
+    "development-regraded_replay": {
+      "report.json": "a861b64b484cd01b33d9ee694bb5c8d9d3b899ac87f26eb753d95ad716374f56",
+      "provider_calls": 0
+    },
+    "evaluation_replay": {
+      "report.json": "83141601501dd30ef8c215d0178185ea07fcb2db8af49820222b29cd20cc6c61",
+      "provider_calls": 0
+    }
+  },
+  "previous_retrieval_replays": {
+    "shortlist": {
+      "summary_unchanged": true,
+      "report_sha256": "76229e6b353aab25c378d33e5b894d5454e38253bbff93b92b021735d1f16da9"
+    },
+    "expanded": {
+      "summary_unchanged": true,
+      "report_sha256": "b96228fbdf5cc391d7c9356de921e3694594709df5944d4ae1b7b867b965a17e"
+    },
+    "evaluation": {
+      "summary_unchanged": true,
+      "report_sha256": "0cbce0b7b069c22d0bda08b6c18cf420e4a5f3a5fd7e475f22a2ca160217d061"
+    },
+    "precision": {
+      "summary_unchanged": true,
+      "report_sha256": "de29d22ea0393a94689b318e197c6199ae34a82d4f9d25b0e3eb60e23608cecf"
+    }
+  },
+  "initial_grader_diagnostic": {
+    "checked": {
+      "probes": 16,
+      "available": 16,
+      "graded": 16,
+      "task_pass": 3,
+      "grounding_fail": 12,
+      "both_pass": 3,
+      "support_calls": 16
+    },
+    "conversation": {
+      "probes": 16,
+      "available": 16,
+      "graded": 16,
+      "task_pass": 15,
+      "grounding_fail": 0,
+      "both_pass": 15,
+      "support_calls": 10
+    },
+    "off": {
+      "probes": 16,
+      "available": 16,
+      "graded": 16,
+      "task_pass": 4,
+      "grounding_fail": 10,
+      "both_pass": 4,
+      "support_calls": 0
+    }
+  },
+  "total_usage": {
+    "provider_calls": 208,
+    "input_tokens": 113180,
+    "output_tokens": 30885
+  }
+}

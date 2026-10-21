@@ -226,6 +226,10 @@ An [optional question/evidence support check](docs/benchmarks/memory-answerabili
 verifies quoted support before QA delivery. Its
 [2026-10-19 experiment](docs/benchmarks/memory-answerability-2026-10-19.md)
 records the candidate-coverage repair, new multilingual evaluation, cost and limits.
+Optional [caller-assisted conversation memory](docs/conversation-memory.md) adds
+explicit source updates, conservative follow-up binding and complete bounded policy
+records. The [2026-10-21 final-answer pilot](docs/benchmarks/conversation-memory-2026-10-21.md)
+reports corrected-value/exception coverage, repeated-check cost and grading limits.
 For the creativity and multi-turn incubation suites, see
 [`docs/unconscious_benchmark_results.md`](docs/unconscious_benchmark_results.md)
 for run commands and metric interpretation.
