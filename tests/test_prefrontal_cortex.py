@@ -15,12 +15,13 @@ def test_focus_synthesis_and_gating_preserve_hippocampal_hint():
     assert 0.0 <= focus.relevance <= 1.0
     assert focus.hippocampal_overlap >= 0.0
 
-    gated = cortex.gate_context(
-        f"{memory_context}\n[Hippocampal recall] {hippocampal_context}",
-        focus,
-    )
-    assert "[Hippocampal recall]" in gated
-    assert "Discuss gravity" not in gated, "Irrelevant line should be gated out"
+    selected = cortex.gate_context_parts({
+        "memory": memory_context.splitlines()[0],
+        "schema": memory_context.splitlines()[1],
+        "hippocampal": hippocampal_context,
+    }, focus)
+    assert selected["hippocampal"] == hippocampal_context
+    assert not selected["schema"], "An unrelated complete stream should be gated out"
 
 
 def test_prefrontal_bias_and_tags():

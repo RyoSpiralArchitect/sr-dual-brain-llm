@@ -45,11 +45,15 @@ class ThalamicRelay:
 class Thalamus:
     """Gate memory streams according to the current salience regime."""
 
+    def __init__(self, *, working_relevance_threshold: float = 0.125):
+        self.working_relevance_threshold = _clamp01(working_relevance_threshold)
+
     def route(
         self,
         *,
         context_parts: Dict[str, str],
         salience: SalienceSignal,
+        context_relevance: Dict[str, float] | None = None,
     ) -> ThalamicRelay:
         memory_gate = str(salience.memory_gate or "balanced").strip().lower()
         has_working = bool(context_parts.get("working_memory"))
@@ -70,13 +74,17 @@ class Thalamus:
             keep_pitfalls = False
             keep_hippocampal = False
         elif memory_gate == "working_only":
-            if has_working:
+            relevant_working = has_working and (context_relevance is None or
+                context_relevance.get("working_memory", 0.0) >= self.working_relevance_threshold)
+            if relevant_working:
                 keep_long_term = False
                 keep_schema = False
                 keep_pitfalls = False
                 keep_hippocampal = False
             else:
                 notes = [f"memory_gate:{memory_gate}", f"target:{salience.dominant_network}", "fallback_long_term"]
+                if has_working:
+                    notes.append("working_memory_low_relevance")
                 return ThalamicRelay(
                     target_network=salience.dominant_network,
                     relay_gain=salience.level,

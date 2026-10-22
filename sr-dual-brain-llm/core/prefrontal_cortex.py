@@ -587,6 +587,7 @@ class WorkingMemoryTrace:
     answer: str
     qid: Optional[str] = None
     timestamp: float = field(default_factory=lambda: time.time())
+    truncated: bool = False
 
 
 class PrefrontalCortex:
@@ -639,11 +640,12 @@ class PrefrontalCortex:
         a = _sanitize_working_memory_text(answer or "").strip()
         if not q or not a:
             return
+        truncated = len(q) > self.working_memory_max_chars or len(a) > self.working_memory_max_chars
         if len(q) > self.working_memory_max_chars:
             q = q[: self.working_memory_max_chars] + "..."
         if len(a) > self.working_memory_max_chars:
             a = a[: self.working_memory_max_chars] + "..."
-        self._working_memory.append(WorkingMemoryTrace(question=q, answer=a, qid=qid))
+        self._working_memory.append(WorkingMemoryTrace(question=q, answer=a, qid=qid, truncated=truncated))
 
     def working_memory_context(self, *, turns: int = 2) -> str:
         if not self._working_memory:
@@ -651,6 +653,10 @@ class PrefrontalCortex:
         turns = max(1, min(int(turns), len(self._working_memory)))
         parts: List[str] = []
         for trace in list(self._working_memory)[-turns:]:
+            if trace.truncated:
+                # A prefix can retain a rule while losing its exception. Keep
+                # bounded bookkeeping, but never deliver that prefix as recall.
+                continue
             parts.append(f"Q:{trace.question}")
             parts.append(f"A:{trace.answer}")
         return "\n".join(parts)
@@ -794,26 +800,38 @@ class PrefrontalCortex:
         return False
 
     def gate_context(self, context: str, focus: FocusSummary) -> str:
-        if not context:
-            return context
-        if not focus.keywords or focus.relevance < self.gating_threshold:
-            return context
+        """Retain opaque text intact; stream boundaries are needed for selection.
 
-        lines = [ln for ln in context.split("\n") if ln.strip()]
-        if not lines:
-            return context
-
-        gated: List[str] = []
-        for line in lines:
-            if line.startswith("[Hippocampal"):
-                if focus.hippocampal_overlap >= self.gating_threshold / 2:
-                    gated.append(line)
-                continue
-            if _line_relevance(line, focus.keywords) >= self.gating_threshold / 2:
-                gated.append(line)
-        if gated:
-            return "\n".join(gated)
+        Call ``gate_context_parts`` when independently selectable streams are
+        available. Newlines alone cannot distinguish records from qualifications.
+        """
         return context
+
+    def context_relevance(self, parts: Dict[str, str], focus: FocusSummary) -> Dict[str, float]:
+        """Score whole streams by their strongest query anchor, without editing them."""
+        scores = {}
+        for kind, text in parts.items():
+            scores[kind] = max((_line_relevance(line, focus.keywords)
+                                for line in str(text or "").splitlines()), default=0.0)
+            if text and kind in {"hippocampal", "replay"}:
+                scores[kind] = max(scores[kind], focus.hippocampal_overlap)
+        return scores
+
+    def gate_context_parts(self, parts: Dict[str, str], focus: FocusSummary,
+                           *, protected: Iterable[str] = ()) -> Dict[str, str]:
+        """Select complete streams, preserving Q/A pairing and late conditions.
+
+        Upstream approved evidence can be protected from lexical reclassification.
+        Explicit controller/director drops still take precedence. With no useful
+        selection signal retain the original streams, as the legacy gate did.
+        """
+        if not focus.keywords or focus.relevance < self.gating_threshold:
+            return dict(parts)
+        protected = set(protected)
+        scores = self.context_relevance(parts, focus)
+        selected = {kind: text if kind in protected or scores[kind] >= self.gating_threshold / 2 else ""
+                    for kind, text in parts.items()}
+        return selected if any(selected.values()) else dict(parts)
 
     def adjust_consult_bias(self, current_bias: float, focus: FocusSummary) -> float:
         """Adjust the consult bias based on perceived focus quality."""
