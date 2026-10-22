@@ -845,20 +845,6 @@ class DualBrainController:
                 include_meta=False,
             )
 
-        segments = []
-        if working_memory_context:
-            segments.append(_format_section("Working memory", working_memory_context.splitlines()))
-        if memory_context:
-            segments.append(memory_context)
-        if schema_context:
-            segments.append(f"[Schema memory] {schema_context}")
-        if pitfall_context:
-            segments.append(pitfall_context)
-        if hippocampal_context:
-            segments.append(f"[Hippocampal recall] {hippocampal_context}")
-        if replay_context:
-            segments.append(f"[Hippocampal replay] {replay_context}")
-        combined = "\n".join(segments)
         parts = {
             "working_memory": working_memory_context,
             "memory": memory_context,
@@ -867,18 +853,7 @@ class DualBrainController:
             "hippocampal": hippocampal_context,
             "replay": replay_context,
         }
-        focus: FocusSummary | None = None
-        if self.prefrontal_cortex is not None:
-            focus_memory_context = "\n".join(
-                [part for part in (working_memory_context, memory_context) if part]
-            )
-            focus = self.prefrontal_cortex.synthesise_focus(
-                question=question,
-                memory_context=focus_memory_context,
-                hippocampal_context=hippocampal_context,
-            )
-            if not guarded_memory:
-                combined = self.prefrontal_cortex.gate_context(combined, focus)
+        combined, focus = self._rebuild_context_from_parts(question=question, context_parts=parts)
         return combined, focus, parts
 
     def _sense_affect(self, question: str, draft: str) -> Dict[str, float]:
@@ -905,6 +880,15 @@ class DualBrainController:
             # historical facts, including after director "keep" directives.
             for key in ("working_memory", "schema", "pitfalls", "hippocampal", "replay"):
                 context_parts[key] = ""
+        focus: FocusSummary | None = None
+        if self.prefrontal_cortex is not None:
+            focus = self.prefrontal_cortex.synthesise_focus(
+                question=self.memory.retrieval_question(question) if guarded_memory else question,
+                memory_context="\n".join(str(context_parts.get(key) or "") for key in ("working_memory", "memory")),
+                hippocampal_context=str(context_parts.get("hippocampal") or ""),
+            )
+            protected = {"memory"} if guarded_memory or getattr(self.memory, "answerability_gate", None) is not None else ()
+            context_parts.update(self.prefrontal_cortex.gate_context_parts(context_parts, focus, protected=protected))
         wm_ctx = str(context_parts.get("working_memory") or "")
         mem_ctx = str(context_parts.get("memory") or "")
         schema_ctx = str(context_parts.get("schema") or "")
@@ -926,16 +910,6 @@ class DualBrainController:
             rebuilt.append(f"[Hippocampal replay] {replay_ctx}")
 
         context = "\n".join(rebuilt)
-        focus: FocusSummary | None = None
-        if self.prefrontal_cortex is not None:
-            focus_memory_context = "\n".join([part for part in (wm_ctx, mem_ctx) if part])
-            focus = self.prefrontal_cortex.synthesise_focus(
-                question=question,
-                memory_context=focus_memory_context,
-                hippocampal_context=hip_ctx,
-            )
-            if not guarded_memory:
-                context = self.prefrontal_cortex.gate_context(context, focus)
         return context, focus
 
     @staticmethod
@@ -1596,9 +1570,19 @@ class DualBrainController:
                 ),
             )
         if self.thalamus is not None and salience_signal is not None:
+            relevance = (self.prefrontal_cortex.context_relevance(context_parts, focus)
+                         if self.prefrontal_cortex is not None and focus is not None else None)
+            if relevance is not None:
+                try:
+                    self.telemetry.log("prefrontal_context_attention", qid=qid,
+                                       stream_relevance=relevance,
+                                       retained_streams=[key for key, text in context_parts.items() if text])
+                except Exception:
+                    pass
             thalamic_relay = self.thalamus.route(
                 context_parts=context_parts,
                 salience=salience_signal,
+                context_relevance=relevance,
             )
             if not thalamic_relay.keep_working_memory:
                 context_parts["working_memory"] = ""

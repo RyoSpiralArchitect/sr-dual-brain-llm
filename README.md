@@ -362,13 +362,17 @@ Design intent:
 
 This repo intentionally separates “sticky memory” from “recent context”:
 
-- **Working memory (PrefrontalCortex)**: short-term, small, clipped summaries of the last few turns. Included only when the question structure suggests it’s needed (language-agnostic heuristics: punctuation, length, digits).  
+- **Working memory (PrefrontalCortex)**: small, bounded traces of recent turns. Entries clipped by the field limit are withheld from prompt recall. Included only when the question structure suggests it’s needed (language-agnostic heuristics: punctuation, length, digits).  
   Code: `sr-dual-brain-llm/core/prefrontal_cortex.py`
 - **Shared memory**: lightweight recall of prior Q/A traces.  
   Code: `sr-dual-brain-llm/core/shared_memory.py`
 - **Hippocampus (episodic memory)**: embedding-backed episodic recall (powerful, but can be noisy if overused).  
   Code: `sr-dual-brain-llm/core/temporal_hippocampal_indexing.py`
 - **Schema memory (optional, Postgres)**: consolidation output from a deterministic “sleep” job. Intended to be slower-changing and less chatty than raw episodic recall.
+
+[Prefrontal attention and thalamic relay](docs/cortical-attention.md) select complete
+context streams, preserve late conditions, and use working-memory relevance when
+deciding whether to suppress longer-term recall.
 
 Reset behavior:
 - `POST /v1/reset` resets in-process state for a `session_id` (and deletes persisted rows when Postgres is enabled).
