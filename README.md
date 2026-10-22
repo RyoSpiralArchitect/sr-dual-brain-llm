@@ -362,7 +362,7 @@ Design intent:
 
 This repo intentionally separates “sticky memory” from “recent context”:
 
-- **Working memory (PrefrontalCortex)**: small, bounded traces of recent turns. Entries clipped by the field limit are withheld from prompt recall. Included only when the question structure suggests it’s needed (language-agnostic heuristics: punctuation, length, digits).  
+- **Working memory (PrefrontalCortex)**: small, bounded traces of recent turns. Entries clipped by the field limit are withheld from prompt recall. Included only when the question structure suggests it’s needed (language-agnostic heuristics: punctuation, length, digits).
   Code: `sr-dual-brain-llm/core/prefrontal_cortex.py`
 - **Shared memory**: lightweight recall of prior Q/A traces.  
   Code: `sr-dual-brain-llm/core/shared_memory.py`
