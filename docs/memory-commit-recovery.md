@@ -104,7 +104,11 @@ This behavior is limited to persistent, opt-in conversation memory. Transient
 sessions and legacy append APIs retain their behavior. Existing rows require no
 new uniqueness rules or backfill. Custom persistence adapters for this path must
 implement `memory_namespace`, `commit_memory_operation`, `memory_commit_receipt`
-and `load_session` with the same contract. A configured PostgreSQL initialization
+and `load_session` with the same contract. Adapters may also implement
+`load_conversation_sources(session_id, limit=...)` to restore active primary
+sources before applying the working-set limit. PostgreSQL provides this indexed
+path; other adapters retain their previous history load. The ordinary history
+API and durable receipts still retain derived/inactive records. A configured PostgreSQL initialization
 failure stops this mode instead of silently creating transient memory.
 Episodes, telemetry and the rest of engine state remain outside the memory commit
 transaction. Their failure does not undo a committed memory receipt. Generation

@@ -648,6 +648,12 @@ Under the hood:
 - On macOS/Linux the gateway defaults to `DUALBRAIN_ENGINE_TRANSPORT=pipes`, so blob uploads use a dedicated named-pipe channel for higher throughput.
 
 ## Postgres-backed stateful memory (optional)
+
+Conversation mode restores active primary sources before applying its working-set
+cap, so derived QA traffic cannot bury an older source. The
+[PostgreSQL retention experiment](docs/benchmarks/persistent-memory-2026-10-26.md)
+reports restart recall, correction consistency and the measured latency/cost tradeoffs.
+
 To persist state across engine restarts, set:
 - `DUALBRAIN_PG_DSN` (e.g., `postgresql://user:pass@localhost:5432/dual_brain`)
 
