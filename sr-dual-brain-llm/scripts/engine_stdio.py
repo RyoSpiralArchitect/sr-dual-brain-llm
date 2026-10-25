@@ -716,10 +716,7 @@ class EngineSession:
                     await _check_memory_request(memory_outbox, state_store, session_id, memory_request)
                 # Recover the exact prepared generation before loading active memory.
                 await reconcile_memory(memory_outbox, state_store, session_id)
-            loaded_memory, loaded_episodes = await state_store.load_session(
-                session_id,
-                memory_limit=memory.max_items,
-            )
+            loaded_memory, loaded_episodes = await _load_session_memory(state_store, session_id, memory)
             memory.past_qas = list(loaded_memory)[-memory.max_items :]
             hippocampus.episodes = list(loaded_episodes)
             if hasattr(state_store, "load_schema_memories"):
@@ -823,9 +820,23 @@ def _outbox_for_store(store):
     return MemoryOutbox(path, store.memory_namespace)
 
 
+async def _load_session_memory(store, session_id, memory, *, episode_limit=None):
+    source_loader = getattr(store, 'load_conversation_sources', None)
+    if memory.conversation_context and callable(source_loader):
+        traces = await source_loader(session_id, limit=memory.max_items)
+        episodes = []
+        if episode_limit != 0:
+            _, episodes = await store.load_session(session_id, memory_limit=0)
+        return traces, episodes
+    # Compatibility for legacy mode and custom persistence adapters.
+    options = {"memory_limit": memory.max_items}
+    if episode_limit is not None:
+        options["episode_limit"] = episode_limit
+    return await store.load_session(session_id, **options)
+
+
 async def _reload_committed_memory(session):
-    traces, _ = await session.state_store.load_session(
-        session.session_id, memory_limit=session.memory.max_items, episode_limit=0)
+    traces, _ = await _load_session_memory(session.state_store, session.session_id, session.memory, episode_limit=0)
     session.memory.restore_committed_traces(traces)
     session.persisted_memory = len(traces)
     session.memory_needs_reload = False

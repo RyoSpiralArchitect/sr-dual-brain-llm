@@ -84,6 +84,18 @@ class PostgresStateStore:
             return
         await asyncio.to_thread(self._append_memory_traces_sync, session_id, traces, qid)
 
+    async def load_conversation_sources(self, session_id: str, *, limit: int = 1024) -> List[MemoryTrace]:
+        """Load active primary evidence before applying the resident source cap.
+
+        QA history remains durable through load_session; derived answers and
+        inactive revisions cannot consume the conversation evidence budget.
+        """
+        if type(limit) is not int or limit < 0:
+            raise ValueError("Source limit must be a nonnegative integer")
+        if limit == 0:
+            return []
+        return await asyncio.to_thread(self._load_conversation_sources_sync, session_id, limit)
+
     async def upsert_episodes(self, session_id: str, episodes: Sequence[EpisodicTrace]) -> None:
         if not episodes:
             return
@@ -197,6 +209,11 @@ class PostgresStateStore:
                 )
                 cur.execute(
                     f"CREATE INDEX IF NOT EXISTS {memory}_session_ts ON {memory}(session_id, ts DESC);"
+                )
+                cur.execute(
+                    f"CREATE INDEX IF NOT EXISTS {memory}_primary_ts ON {memory}(session_id, ts DESC, id DESC) "
+                    "WHERE (evidence_metadata->>'recalled_answer') IS DISTINCT FROM 'true' "
+                    "AND (evidence_metadata->>'evidence_status') IS DISTINCT FROM 'superseded';"
                 )
                 cur.execute(
                     f"""CREATE TABLE IF NOT EXISTS {self._table('memory_commits')} (
@@ -354,6 +371,31 @@ class PostgresStateStore:
             (session_id,),
         )
 
+    def _load_conversation_sources_sync(self, session_id, limit):
+        table = self._table('shared_memory')
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT qid, question, answer, ts, tags::text, question_tokens::text, evidence_metadata::text "
+                f"FROM {table} WHERE session_id = %s "
+                "AND (evidence_metadata->>'recalled_answer') IS DISTINCT FROM 'true' "
+                "AND (evidence_metadata->>'evidence_status') IS DISTINCT FROM 'superseded' "
+                "AND (evidence_metadata->>'valid_until' IS NULL "
+                "OR (evidence_metadata->>'valid_until')::double precision > extract(epoch from now())) "
+                "ORDER BY ts DESC, id DESC LIMIT %s;", (session_id, limit)).fetchall()
+        return [self._decode_memory_row(row) for row in reversed(rows)]
+
+    @staticmethod
+    def _decode_memory_row(row):
+        qid, question, answer, ts, tags_json, tokens_json, evidence_json = row
+        evidence = json.loads(evidence_json or '{}')
+        return MemoryTrace(
+            qid=qid, question=str(question), answer=str(answer), timestamp=float(ts),
+            tags=tuple(json.loads(tags_json or '[]')), question_tokens=tuple(json.loads(tokens_json or '[]')),
+            seed_id=evidence.get('seed_id'), evidence_status=evidence.get('evidence_status', 'unverified'),
+            valid_until=evidence.get('valid_until'), retrieval_scope=evidence.get('retrieval_scope'),
+            scope_aliases=tuple(evidence.get('scope_aliases', [])), recalled_answer=evidence.get('recalled_answer', False),
+        )
+
     def _load_session_sync(
         self, session_id: str, memory_limit: Optional[int], episode_limit: Optional[int]
     ) -> Tuple[List[MemoryTrace], List[EpisodicTrace]]:
@@ -412,26 +454,7 @@ class PostgresStateStore:
                         """,
                         (session_id, int(memory_limit)),
                     )
-                for qid, question, answer, ts, tags_json, tokens_json, evidence_json in cur.fetchall():
-                    tags = tuple(json.loads(tags_json or "[]"))
-                    question_tokens = tuple(json.loads(tokens_json or "[]"))
-                    evidence = json.loads(evidence_json or "{}")
-                    memory_traces.append(
-                        MemoryTrace(
-                            qid=qid,
-                            question=str(question),
-                            answer=str(answer),
-                            timestamp=float(ts),
-                            tags=tags,
-                            question_tokens=question_tokens,
-                            seed_id=evidence.get("seed_id"),
-                            evidence_status=evidence.get("evidence_status", "unverified"),
-                            valid_until=evidence.get("valid_until"),
-                            retrieval_scope=evidence.get("retrieval_scope"),
-                            scope_aliases=tuple(evidence.get("scope_aliases", [])),
-                            recalled_answer=evidence.get("recalled_answer", False),
-                        )
-                    )
+                memory_traces = [self._decode_memory_row(row) for row in cur.fetchall()]
 
                 if episode_limit is None:
                     cur.execute(

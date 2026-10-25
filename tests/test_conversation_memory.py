@@ -481,3 +481,52 @@ def test_persisted_correction_updates_metadata_in_same_transaction_as_new_source
     with pytest.raises(ValueError, match="exactly one"):
         asyncio.run(store.commit_memory_changes("s", [], list(m.pending_memory_updates.values())))
     assert len(commits) == 1
+
+
+def test_derived_traffic_cannot_evict_active_sources_or_drop_pending_writes():
+    m = SharedMemory(max_items=4, conversation_context=True, track_persistence=True)
+    write(m, 'Alpha', 'alpha', '14 days')
+    write(m, 'Beta', 'beta', '29 days')
+    for i in range(100):
+        m.begin_turn('Thanks', f'derived-{i}')
+        m.store({'Q': 'Thanks', 'A': 'derived answer'}, qid=f'derived-{i}')
+        assert len(m.past_qas) <= 4
+    assert [t.qid for t in retrieve(m, 'Project Alpha deadline?')] == ['alpha']
+    assert len(m.pending_memory_writes) == 102
+    write(m, 'Alpha', 'corrected', '7 days', ['alpha'])
+    assert [t.qid for t in retrieve(m, 'Project Alpha deadline?')] == ['corrected']
+    assert m.pending_memory_writes['alpha'].evidence_status == 'superseded'
+    assert m.pending_memory_writes['corrected'].answer == '7 days'
+    assert len(m.past_qas) <= 4
+
+
+def test_retention_prefers_active_sources_but_still_caps_primary_capacity():
+    m = SharedMemory(max_items=2, conversation_context=True)
+    write(m, 'Alpha', 'a', '14 days')
+    m.store(MemoryTrace('expired', 'expired', qid='expired', valid_until=0))
+    m.store(MemoryTrace('superseded', 'superseded', qid='superseded', evidence_status='superseded'))
+    assert m.past_qas[0].qid == 'a'
+    write(m, 'Beta', 'b', '29 days')
+    assert [t.qid for t in m.past_qas] == ['a', 'b']
+    write(m, 'Gamma', 'c', '5 days')
+    assert [t.qid for t in m.past_qas] == ['b', 'c']
+
+
+def test_restore_trims_sources_after_clearing_abandoned_correction_intent():
+    m = SharedMemory(max_items=2, conversation_context=True)
+    write(m, 'Alpha', 'a', '14 days')
+    original = m.past_qas[0]
+    m.begin_turn('Project Alpha correction', 'abandoned',
+                 {'id': 'Alpha', 'aliases': ['Alpha'], 'remember': True, 'supersedes': ['a']})
+    m.restore_committed_traces([original, *[MemoryTrace('Thanks', 'derived', recalled_answer=True) for _ in range(10)]])
+    assert len(m.past_qas) == 2 and m._focus_scope == 'Alpha'
+    assert not m._pending_supersedes
+    assert [t.qid for t in retrieve(m, 'Project Alpha deadline?')] == ['a']
+
+
+def test_legacy_retention_still_uses_recent_qa_history():
+    m = SharedMemory(max_items=2)
+    m.store(MemoryTrace('source', 'old', qid='source'))
+    m.store(MemoryTrace('answer', 'one', qid='one', recalled_answer=True))
+    m.store(MemoryTrace('answer', 'two', qid='two', recalled_answer=True))
+    assert [t.qid for t in m.past_qas] == ['one', 'two']
