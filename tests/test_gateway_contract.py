@@ -546,9 +546,10 @@ def test_aborted_binary_upload_does_not_hold_the_rpc_dispatcher(cancellation_gat
     while True:
         try:
             status, body = fresh_call()
-            if status == 200:
+            attempts = [m for m in _rpc_messages(rpc_log) if m.get("params", {}).get("qid") == fresh_qid]
+            if status == 200 and attempts and attempts[-1]["_pid"] != original["_pid"]:
                 break
-        except (error.URLError, OSError):
+        except (error.URLError, OSError, json.JSONDecodeError):
             pass
         assert time.monotonic() < deadline, "Interrupted blob left the engine stuck"
         time.sleep(.05)
