@@ -71,9 +71,11 @@ Notes (macOS):
 - .NET named pipes use Unix domain sockets under the hood and have a strict path length limit.
 - If you hit socket path length issues, set `TMPDIR=/tmp/` before running `dotnet run`.
 
-Optional gateway timeout override (useful for long generations / auto-continue):
+Optional whole-turn timeout override (useful for long generations / auto-continue):
 ```bash
 export DUALBRAIN_ENGINE_TIMEOUT_SECONDS=120
+# Bounded Python RPC admission (running + queued + draining):
+export DUALBRAIN_RPC_MAX_PENDING=64
 ```
 
 Optional engine-side corpus-callosum timeout (bounds right-brain waits):
@@ -351,6 +353,9 @@ Treat “brains” as **roles** with strict I/O contracts:
 The [consultation lifecycle contract](docs/consultation-lifecycle.md) separates
 turn IDs from transport attempts and covers queue limits, deadlines, worker
 cancellation and shutdown. Custom workers must echo `request_id` when replying.
+The [outer turn lifecycle](docs/turn-lifecycle.md) forwards HTTP disconnection and
+deadlines through generation, drains owned work before session reuse, and defers
+cancellation once factual memory writes begin.
 
 ### Executive “tri-layer” (speech + advice + reasoning)
 This is the “3-layer” structure:

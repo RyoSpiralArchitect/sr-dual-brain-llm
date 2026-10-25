@@ -156,6 +156,9 @@ class EnhancedCallosum:
     async def run_request(self, request, operation):
         return await self.base_callosum.run_request(request, operation)
 
+    async def wait_idle(self):
+        await self.base_callosum.wait_idle()
+
     async def close(self):
         await self.base_callosum.close()
 

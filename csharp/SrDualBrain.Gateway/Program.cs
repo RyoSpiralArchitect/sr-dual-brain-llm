@@ -148,9 +148,19 @@ app.MapPost("/v1/process", async (PythonEngineClient engine, JsonObject body, Ca
     body["return_dialogue_flow"] ??= true;
     body["qid"] ??= Guid.NewGuid().ToString();
 
-    var result = await engine.CallAsync("process", body, ct);
-
-    return Results.Json(result);
+    try
+    {
+        var result = await engine.CallAsync("process", body, ct);
+        return Results.Json(result);
+    }
+    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+    {
+        return Results.StatusCode(499);
+    }
+    catch (OperationCanceledException)
+    {
+        return Results.Json(new { error = "Engine turn deadline exceeded." }, statusCode: 504);
+    }
 });
 
 app.MapGet("/v1/trace/{qid}", async (PythonEngineClient engine, HttpRequest request, string qid, CancellationToken ct) =>
@@ -224,8 +234,13 @@ app.MapPost("/v1/process/stream", async (HttpContext ctx, PythonEngineClient eng
             }
         }
     }
+    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+    {
+        return;
+    }
     catch (OperationCanceledException)
     {
+        await WriteSseAsync(ctx.Response, "error", new JsonObject { ["message"] = "Engine turn deadline exceeded." }, ct);
         return;
     }
     catch (Exception ex)

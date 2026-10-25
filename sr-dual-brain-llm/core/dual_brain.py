@@ -18,6 +18,7 @@ from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
+from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -2016,7 +2017,7 @@ class DualBrainController:
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
         if self.executive_model is not None and executive_mode_norm != "off":
             try:
-                executive_task = asyncio.create_task(
+                executive_task = create_turn_task(
                     self.executive_model.advise(
                         question=question,
                         context=context,
@@ -2030,7 +2031,7 @@ class DualBrainController:
         if self.director_model is not None and use_director:
             try:
                 has_qmark = ("?" in (question or "")) or ("？" in (question or ""))
-                director_task = asyncio.create_task(
+                director_task = create_turn_task(
                     self.director_model.advise(
                         question=question,
                         context=context,
@@ -2108,7 +2109,7 @@ class DualBrainController:
                 latency_ms=0.0,
                 source="fast_path",
             )
-            director_task.cancel()
+            cancel_task(director_task)
             director_task = None
         else:
             try:
@@ -2125,7 +2126,7 @@ class DualBrainController:
             except Exception:  # pragma: no cover - defensive guard
                 advice = None
             if advice is None:
-                director_task.cancel()
+                cancel_task(director_task)
                 director_task = None
                 advice = DirectorAdvice(
                     memo=(
@@ -2196,7 +2197,7 @@ class DualBrainController:
         right_preview_task: asyncio.Task[str] | None = None
         if (leading == "right" or collaborative_lead) and not system2_active:
             try:
-                right_preview_task = asyncio.create_task(
+                right_preview_task = create_turn_task(
                     self.right_model.generate_lead(question, context, on_delta=None)
                 )
             except Exception:  # pragma: no cover - defensive guard
@@ -2227,7 +2228,7 @@ class DualBrainController:
             )
         except BaseException:
             if right_preview_task is not None:
-                right_preview_task.cancel()
+                cancel_task(right_preview_task)
                 await asyncio.gather(right_preview_task, return_exceptions=True)
             raise
         phase_add("left_draft", left_draft_started)
@@ -2245,7 +2246,7 @@ class DualBrainController:
                 except Exception:  # pragma: no cover - defensive guard
                     right_lead_notes = None
             else:
-                right_preview_task.cancel()
+                cancel_task(right_preview_task)
 
             preview_meta = {
                 "requested": True,
@@ -2609,7 +2610,7 @@ class DualBrainController:
                     control=director_control,
                 )
             else:
-                director_task.cancel()
+                cancel_task(director_task)
                 director_task = None
 
         director_max_chars: int | None = None
@@ -4373,6 +4374,7 @@ class DualBrainController:
             # Later integration, preview selection and output constraints can
             # replace the draft. Validate the exact stored answer before any write.
             require_completed_answer(memory_answer)
+        begin_turn_commit()
         episodic_total = 0
         hippocampal_rollup: Dict[str, float] | None = None
         hippocampal_lifecycle: Dict[str, float] | None = None
@@ -4582,7 +4584,7 @@ class DualBrainController:
         ).strip()
 
         try:
-            observer_task = asyncio.create_task(
+            observer_task = create_turn_task(
                 self.executive_model.advise(
                     question=question,
                     context=observer_context,
@@ -5036,7 +5038,7 @@ class DualBrainController:
         except BaseException:
             pending = [task for task in (executive_task, director_task) if task is not None]
             for task in pending:
-                task.cancel()
+                cancel_task(task)
             if pending:
                 await asyncio.gather(*pending, return_exceptions=True)
             raise

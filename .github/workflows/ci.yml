@@ -15,7 +15,7 @@ jobs:
       - run: pip install pytest pytest-asyncio
       - name: Test consultation lifetime on the minimum Python version
         # Full EngineSession dependencies/integration run in the 3.12 job.
-        run: pytest -q tests/test_callosum_lifecycle.py -k 'not engine_session'
+        run: pytest -q tests/test_callosum_lifecycle.py tests/test_turn_lifecycle.py -k 'not engine_session'
 
   memory-commit-postgres:
     runs-on: ubuntu-latest

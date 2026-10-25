@@ -346,3 +346,164 @@ def test_stream_endpoint_emits_final_event_and_reset_clears_trace(gateway_base_u
     assert missing_trace["found"] is False
     assert missing_trace["session_id"] == session_id
     assert missing_trace["qid"] == qid
+
+
+@pytest.fixture(scope="module", params=["stdio", "pipes"])
+def cancellation_gateway(request, tmp_path_factory):
+    """Real HTTP/.NET and real framed transport; no model/provider calls."""
+    if shutil.which("dotnet") is None:
+        pytest.skip("dotnet is required for gateway contract tests")
+    _build_gateway()
+    directory = tmp_path_factory.mktemp(f"gateway-cancel-{request.param}")
+    rpc_log, log_path, script = directory / "rpc.jsonl", directory / "gateway.log", directory / "engine.py"
+    script.write_text('''import asyncio, json, os, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(os.environ["DUALBRAIN_REPO_ROOT"]) / "sr-dual-brain-llm" / "scripts"))
+from engine_stdio import _StdioTransport, _PipeTransport, _BlobPipe
+
+async def main():
+    pipe_name = os.environ.get("DUALBRAIN_PIPE_NAME")
+    transport = await _PipeTransport.connect(pipe_name=pipe_name) if pipe_name else _StdioTransport()
+    blob = await _BlobPipe.connect(pipe_name=os.environ["DUALBRAIN_BLOB_PIPE_NAME"]) if pipe_name else None
+    try:
+        while True:
+            req = await transport.read()
+            if req is None:
+                break
+            with open(os.environ["CANCELLATION_RPC_LOG"], "a") as log:
+                log.write(json.dumps(req) + "\\n")
+            rid, method, params = req["id"], req["method"], req.get("params", {})
+            if method == "health":
+                result = {"status": "ok", "pid": os.getpid(), "postgres": {"enabled": False}}
+            elif method == "cancel":
+                await transport.write({"id": params["request_id"], "ok": False, "error": {"type": "Cancelled", "message": "abandoned"}})
+                result = {"accepted": True}
+            elif params.get("question") == "fast":
+                result = {"qid": params["qid"], "answer": "fresh", "session_id": params["session_id"], "metrics": {}}
+            else:
+                if method == "process_stream":
+                    await transport.write({"id": rid, "event": "delta", "text": "partial"})
+                continue
+            await transport.write({"id": rid, "ok": True, "result": result})
+    finally:
+        await transport.close()
+        if blob:
+            await blob.close()
+
+asyncio.run(main())
+''', encoding="utf-8")
+    env = os.environ.copy()
+    for key in _CLEARED_ENV_VARS:
+        env.pop(key, None)
+    env.update(DUALBRAIN_REPO_ROOT=str(REPO_ROOT), DUALBRAIN_PYTHON=sys.executable,
+               DUALBRAIN_ENGINE_PATH=str(script), DUALBRAIN_ENGINE_TRANSPORT=request.param,
+               DUALBRAIN_ENGINE_AUTOSTART="0", DUALBRAIN_ENGINE_TIMEOUT_SECONDS="5",
+               DUALBRAIN_ENGINE_HEALTH_TTL_MS="100", CANCELLATION_RPC_LOG=str(rpc_log))
+    with log_path.open("w", encoding="utf-8") as log_file:
+        proc = subprocess.Popen(
+            ["dotnet", "run", "--no-build", "--no-launch-profile", "--project", str(GATEWAY_PROJECT),
+             "--urls", GATEWAY_LISTEN_URL], cwd=REPO_ROOT, env=env, stdout=log_file, stderr=subprocess.STDOUT,
+        )
+        try:
+            yield _wait_for_gateway(log_path, proc), rpc_log
+        finally:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=10)
+
+
+def _rpc_messages(path):
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def _wait_rpc(path, predicate):
+    deadline = time.monotonic() + 8.
+    while time.monotonic() < deadline:
+        matches = [m for m in _rpc_messages(path) if predicate(m)]
+        if matches:
+            return matches[-1]
+        time.sleep(.01)
+    raise AssertionError("Expected RPC frame did not arrive")
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_http_disconnect_sends_attempt_scoped_cancel_and_next_request_succeeds(cancellation_gateway, stream):
+    import http.client
+    import socket
+
+    base_url, rpc_log = cancellation_gateway
+    parsed = parse.urlparse(base_url)
+    qid = f"disconnect-{uuid.uuid4().hex}"
+    connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=5.)
+    response = None
+    try:
+        connection.request("POST", "/v1/process/stream" if stream else "/v1/process",
+                           body=json.dumps({"session_id": "same-session", "qid": qid, "question": "block"}),
+                           headers={"content-type": "application/json"})
+        if stream:
+            response = connection.getresponse()
+            while True:
+                line = response.readline()
+                assert line, "Stream ended before its first delta"
+                if line.strip() == b"event: delta":
+                    break
+        original = _wait_rpc(rpc_log, lambda m: m.get("params", {}).get("qid") == qid)
+        assert original["deadline_unix_ms"] > time.time()*1000
+        connection.sock.shutdown(socket.SHUT_RDWR)
+    finally:
+        connection.close()
+        if response is not None:
+            response.close()
+    cancel = _wait_rpc(rpc_log, lambda m: m["method"] == "cancel" and m["params"]["request_id"] == original["id"])
+    assert cancel["id"] != original["id"] and original["id"] != qid
+
+    payload = {"session_id": "same-session", "qid": qid, "question": "fast"}
+    if stream:
+        events = _read_sse(f"{base_url}/v1/process/stream", payload)
+        assert events[-1][0] == "done" and events[-2][1]["answer"] == "fresh"
+    else:
+        status, body = _request_json("POST", f"{base_url}/v1/process", payload=payload)
+        assert status == 200 and body["answer"] == "fresh"
+    fresh = _wait_rpc(rpc_log, lambda m: m.get("params", {}).get("question") == "fast" and m["params"]["qid"] == qid)
+    assert fresh["id"] != original["id"]
+    assert not any(m["method"] == "cancel" and m["params"]["request_id"] == fresh["id"] for m in _rpc_messages(rpc_log))
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_gateway_deadline_sends_cancel_and_reports_timeout(cancellation_gateway, stream):
+    base_url, rpc_log = cancellation_gateway
+    qid = f"deadline-{uuid.uuid4().hex}"
+    payload = {"qid": qid, "question": "block", "session_id": "timeout-session"}
+    started = time.monotonic()
+    if stream:
+        events = _read_sse(f"{base_url}/v1/process/stream", payload, timeout=12.)
+        assert events[-1][0] == "error" and "deadline" in events[-1][1]["message"].lower()
+    else:
+        status, body = _request_json("POST", f"{base_url}/v1/process", payload=payload, timeout=12.)
+        assert status == 504 and "deadline" in body["error"].lower()
+    assert time.monotonic()-started < 10.
+    original = _wait_rpc(rpc_log, lambda m: m.get("params", {}).get("qid") == qid)
+    _wait_rpc(rpc_log, lambda m: m["method"] == "cancel" and m["params"]["request_id"] == original["id"])
+
+
+def test_restart_does_not_send_old_attempt_cancel_into_replacement_engine(cancellation_gateway):
+    import http.client
+    base_url, rpc_log = cancellation_gateway
+    parsed = parse.urlparse(base_url)
+    qid = f"restart-{uuid.uuid4().hex}"
+    connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=5.)
+    try:
+        connection.request("POST", "/v1/process", body=json.dumps({"qid": qid, "question": "block"}),
+                           headers={"content-type": "application/json"})
+        original = _wait_rpc(rpc_log, lambda m: m.get("params", {}).get("qid") == qid)
+        status, _ = _request_json("POST", f"{base_url}/v1/engine/restart", payload={})
+        assert status == 200
+    finally:
+        connection.close()
+    # Each replacement is warmed by a fresh call, with the same application qid.
+    status, body = _request_json("POST", f"{base_url}/v1/process", payload={"qid": qid, "question": "fast"})
+    assert status == 200 and body["answer"] == "fresh"
+    assert not any(m["method"] == "cancel" and m["params"]["request_id"] == original["id"] for m in _rpc_messages(rpc_log))

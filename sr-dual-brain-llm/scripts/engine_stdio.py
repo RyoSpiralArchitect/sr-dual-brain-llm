@@ -36,6 +36,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.auditor import Auditor
+from core.turn_lifecycle import (
+    TurnDispatcher, begin_turn_commit, cancellation_barrier, detached_turn,
+    turn_abandoned, turn_committing, drain_turn_tasks,
+)
 from core.callosum import Callosum
 from core.right_worker import right_worker as _right_worker
 from core.default_mode_network import DefaultModeNetwork
@@ -772,7 +776,8 @@ class EngineSession:
         )
 
         loop = asyncio.get_running_loop()
-        worker_task = loop.create_task(_right_worker(callosum, memory, right))
+        with detached_turn():
+            worker_task = loop.create_task(_right_worker(callosum, memory, right))
 
         return cls(
             session_id=session_id,
@@ -900,6 +905,20 @@ async def _persist_session_memory(session, qid, *, operation_id=None, request=No
     return receipts[-1] if memory.conversation_context and receipts else None
 
 
+async def _run_controller_turn(session, question, **kwargs):
+    previous_focus = getattr(session.memory, "_focus_scope", None)
+    try:
+        answer = await session.controller.process(question, **kwargs)
+        # Built-in controllers latch before their first factual write. This is
+        # also a persistence boundary for custom controllers without that hook.
+        begin_turn_commit()
+        return answer
+    except BaseException:
+        if not turn_committing():
+            session.memory.abort_turn(previous_focus)
+        raise
+
+
 async def _handle_process(
     session: EngineSession,
     params: Dict[str, Any],
@@ -942,7 +961,8 @@ async def _handle_process(
 
     qid = str(params.get("qid") or uuid.uuid4())
 
-    replay = await _prepare_memory_request(session, params)
+    async with cancellation_barrier(may_have_committed=session.state_store is not None):
+        replay = await _prepare_memory_request(session, params)
     if replay is not None:
         return replay
 
@@ -956,7 +976,7 @@ async def _handle_process(
         vision_cache=vision_cache,
         cache_limit=vision_cache_limit,
     )
-    answer = await session.controller.process(
+    answer = await _run_controller_turn(session,
         question,
         leading_brain=leading_brain,
         qid=qid,
@@ -1060,7 +1080,8 @@ async def _handle_process_stream(
 
     qid = str(params.get("qid") or uuid.uuid4())
 
-    replay = await _prepare_memory_request(session, params)
+    async with cancellation_barrier(may_have_committed=session.state_store is not None):
+        replay = await _prepare_memory_request(session, params)
     if replay is not None:
         return replay
 
@@ -1082,7 +1103,7 @@ async def _handle_process_stream(
         vision_cache=vision_cache,
         cache_limit=vision_cache_limit,
     )
-    answer = await session.controller.process(
+    answer = await _run_controller_turn(session,
         question,
         leading_brain=leading_brain,
         qid=qid,
@@ -1526,6 +1547,96 @@ async def _handle_blob_put(
     return payload
 
 
+async def _dispatch_request(req, *, sessions, state_store, blob_root, blob_index,
+                            vision_cache, vision_cache_limit, blob_pipe, send):
+    req_id, method = str(req["id"]), str(req.get("method") or "")
+    params = req.get("params") or {}
+    session = None
+    try:
+        if method in {"process", "process_stream"}:
+            session_id = str(params.get("session_id", "default") or "default")
+            left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
+            session = sessions.get(session_id)
+            if session is None:
+                async with cancellation_barrier(may_have_committed=state_store is not None):
+                    session = await EngineSession.create(
+                        session_id, state_store=state_store, left_llm_config=left_cfg,
+                        right_llm_config=right_cfg, executive_llm_config=exec_cfg,
+                        memory_request=params,
+                    )
+                    sessions[session_id] = session
+            elif any(cfg is not None for cfg in (left_cfg, right_cfg, exec_cfg)):
+                requested = tuple(_llm_identity(cfg) for cfg in (left_cfg, right_cfg, exec_cfg))
+                current = tuple(_llm_identity(model.llm_config) for model in
+                                (session.left, session.right, session.executive))
+                if requested != current:
+                    raise ValueError("Session already exists with different LLM config; use a new session_id or call reset.")
+
+            def emit_event(event, payload=None):
+                if not turn_abandoned():
+                    send({"id": req_id, "event": event, **_jsonable(payload or {})})
+
+            options = dict(blob_root=blob_root, blob_index=blob_index, vision_cache=vision_cache,
+                           vision_cache_limit=vision_cache_limit)
+            if method == "process_stream":
+                payload = await _handle_process_stream(session, params, emit_event=emit_event, **options)
+            else:
+                payload = await _handle_process(session, params, **options)
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "get_trace":
+            payload = await _handle_get_trace(sessions, params)
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "reconcile_memory":
+            async with cancellation_barrier():
+                payload = await _handle_reconcile_memory(sessions, params, state_store=state_store)
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "search_episodes":
+            payload = await _handle_search_episodes(
+                sessions, params, state_store=state_store
+            )
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "query_telemetry":
+            payload = await _handle_query_telemetry(params, state_store=state_store)
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "list_schema_memories":
+            payload = await _handle_list_schema_memories(
+                params, state_store=state_store
+            )
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "reset":
+            async with cancellation_barrier():
+                payload = await _handle_reset(sessions, params, state_store=state_store)
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        elif method == "blob_put":
+            async with cancellation_barrier(may_have_committed=False):
+                payload = await _handle_blob_put(
+                    params,
+                    blob_pipe=blob_pipe,
+                    blob_root=blob_root,
+                    blob_index=blob_index,
+                )
+            resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+        else:
+            raise ValueError(f"unknown method: {method}")
+    except Exception as exc:
+        resp = {
+            "id": req_id,
+            "ok": False,
+            "error": {
+                "type": exc.__class__.__name__,
+                "message": str(exc),
+            },
+        }
+
+    finally:
+        # The controller may have detached a timed-out consultation while its
+        # provider closes sockets. Keep the serial slot through that cleanup.
+        await drain_turn_tasks()
+        if session is not None:
+            await session.callosum.wait_idle()
+    return resp
+
+
 async def main() -> None:
     state_store = None
     pg_error: str | None = None
@@ -1599,162 +1710,52 @@ async def main() -> None:
     def _send(obj: Dict[str, Any]) -> None:
         out_queue.put_nowait(obj)
 
+    async def dispatch(req):
+        return await _dispatch_request(
+            req, sessions=sessions, state_store=state_store, blob_root=blob_root,
+            blob_index=blob_index, vision_cache=vision_cache, vision_cache_limit=vision_cache_limit,
+            blob_pipe=blob_pipe, send=_send,
+        )
+
+    dispatcher = TurnDispatcher(
+        dispatch, _send, capacity=int(os.environ.get("DUALBRAIN_RPC_MAX_PENDING", "64")),
+        timeout_seconds=float(os.environ.get("DUALBRAIN_RPC_TIMEOUT_SECONDS")
+                              or os.environ.get("DUALBRAIN_ENGINE_TIMEOUT_SECONDS", "120")),
+    )
     try:
         while True:
+            req_id = ""
             try:
                 req = await transport.read()
                 if req is None:
                     break
                 if not req:
                     continue
+                if not isinstance(req, dict):
+                    raise ValueError("request must be an object")
                 req_id = str(req.get("id") or "")
-                method = str(req.get("method") or "")
-                params = req.get("params") or {}
-                if not isinstance(params, dict):
-                    raise ValueError("params must be an object")
-            except Exception as exc:
-                # Cannot reliably respond without a request id; emit to stderr.
-                print(f"[engine_stdio] bad request: {exc}", file=sys.stderr, flush=True)
-                continue
-
-            try:
-                if method == "process":
-                    session_id = str(params.get("session_id", "default") or "default")
-                    left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
-                    session = sessions.get(session_id)
-                    if session is None:
-                        session = await EngineSession.create(
-                            session_id,
-                            state_store=state_store,
-                            left_llm_config=left_cfg,
-                            right_llm_config=right_cfg,
-                            executive_llm_config=exec_cfg,
-                            memory_request=params,
-                        )
-                        sessions[session_id] = session
-                    else:
-                        if left_cfg is not None or right_cfg is not None or exec_cfg is not None:
-                            requested = (
-                                _llm_identity(left_cfg),
-                                _llm_identity(right_cfg),
-                                _llm_identity(exec_cfg),
-                            )
-                            current = (
-                                _llm_identity(session.left.llm_config),
-                                _llm_identity(session.right.llm_config),
-                                _llm_identity(session.executive.llm_config),
-                            )
-                            if requested != current:
-                                raise ValueError(
-                                    "Session already exists with different LLM config; use a new session_id or call reset."
-                                )
-                    payload = await _handle_process(
-                        session,
-                        params,
-                        blob_root=blob_root,
-                        blob_index=blob_index,
-                        vision_cache=vision_cache,
-                        vision_cache_limit=vision_cache_limit,
-                    )
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "process_stream":
-                    session_id = str(params.get("session_id", "default") or "default")
-                    left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
-                    session = sessions.get(session_id)
-                    if session is None:
-                        session = await EngineSession.create(
-                            session_id,
-                            state_store=state_store,
-                            left_llm_config=left_cfg,
-                            right_llm_config=right_cfg,
-                            executive_llm_config=exec_cfg,
-                            memory_request=params,
-                        )
-                        sessions[session_id] = session
-                    else:
-                        if left_cfg is not None or right_cfg is not None or exec_cfg is not None:
-                            requested = (
-                                _llm_identity(left_cfg),
-                                _llm_identity(right_cfg),
-                                _llm_identity(exec_cfg),
-                            )
-                            current = (
-                                _llm_identity(session.left.llm_config),
-                                _llm_identity(session.right.llm_config),
-                                _llm_identity(session.executive.llm_config),
-                            )
-                            if requested != current:
-                                raise ValueError(
-                                    "Session already exists with different LLM config; use a new session_id or call reset."
-                                )
-
-                    def emit_event(event: str, payload: Dict[str, Any] | None = None) -> None:
-                        msg: Dict[str, Any] = {"id": req_id, "event": event}
-                        if payload:
-                            msg.update(_jsonable(payload))
-                        _send(msg)
-
-                    payload = await _handle_process_stream(
-                        session,
-                        params,
-                        emit_event=emit_event,
-                        blob_root=blob_root,
-                        blob_index=blob_index,
-                        vision_cache=vision_cache,
-                        vision_cache_limit=vision_cache_limit,
-                    )
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "get_trace":
-                    payload = await _handle_get_trace(sessions, params)
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "reconcile_memory":
-                    payload = await _handle_reconcile_memory(sessions, params, state_store=state_store)
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "search_episodes":
-                    payload = await _handle_search_episodes(
-                        sessions, params, state_store=state_store
-                    )
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "query_telemetry":
-                    payload = await _handle_query_telemetry(params, state_store=state_store)
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "list_schema_memories":
-                    payload = await _handle_list_schema_memories(
-                        params, state_store=state_store
-                    )
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "reset":
-                    payload = await _handle_reset(sessions, params, state_store=state_store)
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                if not req_id or not isinstance(req.get("params", {}), dict):
+                    raise ValueError("RPC id and object params required")
+                method, params = str(req.get("method") or ""), req.get("params", {})
+                if method == "cancel":
+                    payload = dispatcher.cancel(str(params.get("request_id") or ""))
+                    _send({"id": req_id, "ok": True, "result": payload})
                 elif method == "health":
                     payload = _handle_health(sessions)
-                    payload["postgres"] = {
-                        "enabled": state_store is not None,
-                        "error": pg_error,
-                    }
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
-                elif method == "blob_put":
-                    payload = await _handle_blob_put(
-                        params,
-                        blob_pipe=blob_pipe,
-                        blob_root=blob_root,
-                        blob_index=blob_index,
-                    )
-                    resp = {"id": req_id, "ok": True, "result": _jsonable(payload)}
+                    payload["postgres"] = {"enabled": state_store is not None, "error": pg_error}
+                    payload["rpc"] = dispatcher.snapshot()
+                    _send({"id": req_id, "ok": True, "result": payload})
                 else:
-                    raise ValueError(f"unknown method: {method}")
+                    dispatcher.submit(req)
             except Exception as exc:
-                resp = {
-                    "id": req_id,
-                    "ok": False,
-                    "error": {
-                        "type": exc.__class__.__name__,
-                        "message": str(exc),
-                    },
-                }
+                if req_id:
+                    _send({"id": req_id, "ok": False, "error": {
+                        "type": type(exc).__name__, "message": "Invalid RPC request"}})
+                else:
+                    print(f"[engine_stdio] bad request: {type(exc).__name__}", file=sys.stderr, flush=True)
 
-            _send(resp)
     finally:
+        await dispatcher.close()
         try:
             out_queue.put_nowait(None)
         except Exception:

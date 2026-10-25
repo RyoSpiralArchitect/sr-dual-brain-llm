@@ -269,6 +269,13 @@ class SharedMemory:
         self._turn_metadata = (declaration, tuple(metadata.get("supersedes", ())), metadata.get("remember", False)) if declaration else None
         self._pending_supersedes = frozenset(metadata.get("supersedes", ())) if declaration else frozenset()
 
+    def abort_turn(self, previous_focus):
+        """Discard an uncommitted turn's scope and correction intent."""
+        self._focus_scope = previous_focus
+        self._turn_question = self._turn_query = None
+        self._turn_qid = self._turn_metadata = None
+        self._pending_supersedes = frozenset()
+
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question
 

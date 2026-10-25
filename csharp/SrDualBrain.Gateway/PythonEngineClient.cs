@@ -63,13 +63,17 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
     public async Task<JsonObject> CallAsync(string method, JsonObject? @params, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        await EnsureStartedAsync(cancellationToken);
+        var deadline = DateTimeOffset.UtcNow.Add(timeout).ToUnixTimeMilliseconds();
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(timeout);
+        await EnsureStartedAsync(timeoutCts.Token);
 
         var id = Guid.NewGuid().ToString("N");
         var request = new JsonObject
         {
             ["id"] = id,
             ["method"] = method,
+            ["deadline_unix_ms"] = deadline,
             ["params"] = @params ?? new JsonObject(),
         };
 
@@ -79,18 +83,23 @@ public sealed class PythonEngineClient : IAsyncDisposable
             throw new InvalidOperationException("Failed to enqueue request.");
         }
 
+        Process? sentTo = null;
+        var completed = false;
         try
         {
             var line = JsonSerializer.Serialize(request, JsonOptions);
-            await WriteMessageAsync(line, cancellationToken);
+            sentTo = await WriteMessageAsync(line, timeoutCts.Token);
 
-            var response = await tcs.Task.WaitAsync(timeout, cancellationToken);
+            var response = await tcs.Task.WaitAsync(timeoutCts.Token);
+            completed = true;
             var ok = response["ok"]?.GetValue<bool>() ?? false;
             if (!ok)
             {
                 var err = response["error"] as JsonObject;
                 var errType = err?["type"]?.GetValue<string>() ?? "EngineError";
                 var errMsg = err?["message"]?.GetValue<string>() ?? "unknown error";
+                if (errType == "DeadlineExceeded")
+                    throw new OperationCanceledException("Engine turn deadline exceeded.");
                 throw new InvalidOperationException($"{errType}: {errMsg}");
             }
 
@@ -101,6 +110,10 @@ public sealed class PythonEngineClient : IAsyncDisposable
         finally
         {
             _pending.TryRemove(id, out _);
+            if (sentTo is not null && !completed && !tcs.Task.IsCompletedSuccessfully)
+            {
+                await CancelRequestAsync(id, sentTo);
+            }
         }
     }
 
@@ -109,34 +122,48 @@ public sealed class PythonEngineClient : IAsyncDisposable
         await _startLock.WaitAsync(cancellationToken);
         try
         {
+            await _writeLock.WaitAsync(cancellationToken);
             try
             {
-                if (_process is not null && !_process.HasExited)
-                {
-                    _process.Kill(entireProcessTree: true);
-                }
+                RestartProcess();
             }
-            catch
+            finally
             {
-                // ignore
+                _writeLock.Release();
             }
-
-            try
-            {
-                _process?.Dispose();
-            }
-            catch
-            {
-                // ignore
-            }
-
-            _process = null;
-            StartProcess();
         }
         finally
         {
             _startLock.Release();
         }
+    }
+
+    private void RestartProcess()
+    {
+        var previous = _process;
+        _process = null;
+        try
+        {
+            if (previous is not null && !previous.HasExited)
+            {
+                previous.Kill(entireProcessTree: true);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        try
+        {
+            previous?.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        StartProcess();
     }
 
     public async IAsyncEnumerable<JsonObject> CallStreamAsync(
@@ -145,13 +172,17 @@ public sealed class PythonEngineClient : IAsyncDisposable
         TimeSpan timeout,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await EnsureStartedAsync(cancellationToken);
+        var deadline = DateTimeOffset.UtcNow.Add(timeout).ToUnixTimeMilliseconds();
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(timeout);
+        await EnsureStartedAsync(timeoutCts.Token);
 
         var id = Guid.NewGuid().ToString("N");
         var request = new JsonObject
         {
             ["id"] = id,
             ["method"] = method,
+            ["deadline_unix_ms"] = deadline,
             ["params"] = @params ?? new JsonObject(),
         };
 
@@ -172,19 +203,20 @@ public sealed class PythonEngineClient : IAsyncDisposable
             throw new InvalidOperationException("Failed to register stream.");
         }
 
+        Process? sentTo = null;
+        var completed = false;
         try
         {
             var line = JsonSerializer.Serialize(request, JsonOptions);
-            await WriteMessageAsync(line, cancellationToken);
-
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(timeout);
+            sentTo = await WriteMessageAsync(line, timeoutCts.Token);
 
             while (true)
             {
                 if (tcs.Task.IsCompleted)
                 {
-                    yield return await tcs.Task;
+                    var terminal = await tcs.Task;
+                    completed = true;
+                    yield return terminal;
                     yield break;
                 }
 
@@ -192,12 +224,15 @@ public sealed class PythonEngineClient : IAsyncDisposable
                 if (!canRead)
                 {
                     // Stream finished; ensure final response is observed.
-                    yield return await tcs.Task.WaitAsync(timeoutCts.Token);
+                    var terminal = await tcs.Task.WaitAsync(timeoutCts.Token);
+                    completed = true;
+                    yield return terminal;
                     yield break;
                 }
 
                 while (channel.Reader.TryRead(out var message))
                 {
+                    timeoutCts.Token.ThrowIfCancellationRequested();
                     yield return message;
                 }
             }
@@ -206,6 +241,10 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             _streams.TryRemove(id, out _);
             _pending.TryRemove(id, out _);
+            if (sentTo is not null && !completed && !tcs.Task.IsCompletedSuccessfully)
+            {
+                await CancelRequestAsync(id, sentTo);
+            }
             try
             {
                 channel.Writer.TryComplete();
@@ -293,25 +332,6 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
-    private async Task WriteLineAsync(string line, CancellationToken cancellationToken)
-    {
-        var proc = _process;
-        if (proc is null || proc.HasExited)
-        {
-            throw new InvalidOperationException("Python engine is not running.");
-        }
-
-        await _writeLock.WaitAsync(cancellationToken);
-        try
-        {
-            await proc.StandardInput.WriteLineAsync(line.AsMemory(), cancellationToken);
-        }
-        finally
-        {
-            _writeLock.Release();
-        }
-    }
-
     private static async Task WriteBlobFrameAsync(
         NamedPipeServerStream blobPipe,
         byte[] headerBytes,
@@ -362,33 +382,55 @@ public sealed class PythonEngineClient : IAsyncDisposable
         await blobPipe.FlushAsync(cancellationToken);
     }
 
-    private async Task WritePipeFrameAsync(string json, CancellationToken cancellationToken)
+    private async Task<Process> WriteMessageAsync(
+        string json, CancellationToken cancellationToken, Process? expectedProcess = null)
     {
-        var pipe = _pipe;
-        if (pipe is null || !pipe.IsConnected)
-        {
-            throw new InvalidOperationException("Python engine pipe is not connected.");
-        }
-
         var payload = Encoding.UTF8.GetBytes(json);
-        if (payload.Length <= 0)
-        {
-            return;
-        }
         if (payload.Length > 64 * 1024 * 1024)
         {
-            throw new InvalidOperationException($"Engine message too large: {payload.Length} bytes");
+            throw new InvalidOperationException("Engine message exceeds 64 MiB.");
         }
 
-        var header = new byte[4];
-        BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
-
         await _writeLock.WaitAsync(cancellationToken);
+        Process? proc = null;
         try
         {
-            await pipe.WriteAsync(header, cancellationToken);
-            await pipe.WriteAsync(payload, cancellationToken);
-            await pipe.FlushAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            proc = _process;
+            if (proc is null || proc.HasExited || (expectedProcess is not null && proc != expectedProcess))
+            {
+                throw new InvalidOperationException("Python engine generation unavailable.");
+            }
+            // Once writing starts, finish the frame despite an HTTP disconnect.
+            // A separate bounded grace period prevents an indefinitely stuck pipe.
+            using var frameCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+            frameCts.CancelAfter(TimeSpan.FromSeconds(5));
+            try
+            {
+                if (IsPipeTransport())
+                {
+                    var pipe = _pipe ?? throw new IOException("Engine pipe unavailable.");
+                    var header = new byte[4];
+                    BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
+                    await pipe.WriteAsync(header, frameCts.Token);
+                    await pipe.WriteAsync(payload, frameCts.Token);
+                    await pipe.FlushAsync(frameCts.Token);
+                }
+                else
+                {
+                    await proc.StandardInput.WriteLineAsync(json.AsMemory(), frameCts.Token);
+                }
+            }
+            catch
+            {
+                // A partial frame cannot be followed by another RPC safely.
+                // Kill only its process generation; never poison a replacement.
+                try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+                if (ReferenceEquals(proc, _process))
+                    FailAllPending(new IOException("Engine transport write failed."));
+                throw;
+            }
+            return proc;
         }
         finally
         {
@@ -396,14 +438,25 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
     }
 
-    private async Task WriteMessageAsync(string line, CancellationToken cancellationToken)
+    private async Task CancelRequestAsync(string requestId, Process sentTo)
     {
-        if (IsPipeTransport())
+        // Do not use the abandoned HTTP token, and do not restart the engine.
+        using var controlCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+        controlCts.CancelAfter(TimeSpan.FromSeconds(2));
+        var control = new JsonObject
         {
-            await WritePipeFrameAsync(line, cancellationToken);
-            return;
+            ["id"] = Guid.NewGuid().ToString("N"),
+            ["method"] = "cancel",
+            ["params"] = new JsonObject { ["request_id"] = requestId },
+        };
+        try
+        {
+            await WriteMessageAsync(JsonSerializer.Serialize(control, JsonOptions), controlCts.Token, sentTo);
         }
-        await WriteLineAsync(line, cancellationToken);
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Cancellation signal could not be sent ({ErrorType}).", ex.GetType().Name);
+        }
     }
 
     private static async Task ReadExactAsync(Stream stream, Memory<byte> buffer, CancellationToken cancellationToken)
@@ -491,7 +544,8 @@ public sealed class PythonEngineClient : IAsyncDisposable
         catch (EndOfStreamException)
         {
             // Pipe closed during shutdown or engine restart.
-            if (cancellationToken.IsCancellationRequested || _process is null || _process.HasExited)
+            if (cancellationToken.IsCancellationRequested || !ReferenceEquals(pipe, _pipe)
+                || _process is null || _process.HasExited)
             {
                 return;
             }
@@ -499,8 +553,11 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Engine pipe pump failed.");
-            FailAllPending(ex);
+            if (ReferenceEquals(pipe, _pipe))
+            {
+                _logger.LogError(ex, "Engine pipe pump failed.");
+                FailAllPending(ex);
+            }
         }
     }
 
@@ -553,7 +610,9 @@ public sealed class PythonEngineClient : IAsyncDisposable
             }
             else
             {
-                StartProcess();
+                await _writeLock.WaitAsync(cancellationToken);
+                try { StartProcess(); }
+                finally { _writeLock.Release(); }
             }
 
             if (!IsPipeTransport())
@@ -669,22 +728,26 @@ public sealed class PythonEngineClient : IAsyncDisposable
             startInfo.EnvironmentVariables["DUALBRAIN_BLOB_PIPE_CONNECT_TIMEOUT_MS"] = "5000";
         }
 
-        _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        _process.Exited += (_, _) =>
+        var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        _process = process;
+        process.Exited += (_, _) =>
         {
-            _logger.LogError("Python engine exited with code {ExitCode}", _process.ExitCode);
-            FailAllPending(new InvalidOperationException("Python engine exited."));
+            if (ReferenceEquals(process, _process))
+            {
+                _logger.LogError("Python engine exited with code {ExitCode}", process.ExitCode);
+                FailAllPending(new InvalidOperationException("Python engine exited."));
+            }
         };
 
-        if (!_process.Start())
+        if (!process.Start())
         {
             throw new InvalidOperationException("Failed to start python engine.");
         }
         _process.StandardInput.AutoFlush = true;
         _process.StandardInput.NewLine = "\n";
 
-        _stdoutPump = Task.Run(() => PumpStdoutAsync(_process, _cts.Token));
-        _stderrPump = Task.Run(() => PumpStderrAsync(_process, _cts.Token));
+        _stdoutPump = Task.Run(() => PumpStdoutAsync(process, _cts.Token));
+        _stderrPump = Task.Run(() => PumpStderrAsync(process, _cts.Token));
 
         _logger.LogInformation("Python engine started (pid={Pid})", _process.Id);
     }
@@ -755,8 +818,11 @@ public sealed class PythonEngineClient : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Engine stdout pump failed.");
-            FailAllPending(ex);
+            if (ReferenceEquals(process, _process))
+            {
+                _logger.LogError(ex, "Engine stdout pump failed.");
+                FailAllPending(ex);
+            }
         }
     }
 
