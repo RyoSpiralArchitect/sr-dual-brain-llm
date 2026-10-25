@@ -25,6 +25,8 @@ import math
 import uuid
 from typing import Any, Awaitable, Callable, Dict
 
+from .turn_lifecycle import cancel_task
+
 
 class CallosumClosed(RuntimeError):
     """The session's consultation channel has shut down."""
@@ -140,8 +142,7 @@ class Callosum:
         # A second cancellation can interrupt a client's asynchronous cleanup.
         if not task.done() and task not in self._cancellation_requested:
             self._cancellation_requested.add(task)
-            if not getattr(task, "cancelling", lambda: 0)():
-                task.cancel()
+            cancel_task(task)
 
     def _active(self, request_id: str) -> _Pending | None:
         pending = self._pending.get(request_id)
@@ -221,6 +222,11 @@ class Callosum:
             # running. Retrieve late exceptions instead of logging private text
             # as an unhandled task failure. Active awaiters still receive them.
             task.exception()
+
+    async def wait_idle(self) -> None:
+        """Drain owned provider cleanup before reusing a session after a turn."""
+        while self._running:
+            await asyncio.shield(asyncio.gather(*list(self._running), return_exceptions=True))
 
     async def close(self) -> None:
         self._closed = True

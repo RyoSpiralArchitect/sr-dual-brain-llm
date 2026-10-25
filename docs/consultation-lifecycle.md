@@ -95,15 +95,14 @@ capacity, occupied/pending/queued/running counts, shutdown status and cumulative
 overload, expiry, cancellation and discarded-response counters, without qids,
 request IDs or payload text. Expiry/cancellation counters cover admitted calls;
 already-expired calls rejected before admission are not included. The stdio health response adds aggregate
-`consultations` counters. Health requests still use the existing RPC loop; this
-is not an independent heartbeat or a background watchdog.
+`consultations` counters. Health requests are now handled by the [outer RPC reader](turn-lifecycle.md)
+while ordinary work remains serialized. This is not a process watchdog.
 
 ## Scope and verification
 
-The guarantee covers **one consultation hop**. It does not yet impose a common
-deadline on an entire user turn, nor forward a Gateway HTTP disconnection into
-Python turn cancellation. The existing serial RPC reader, per-session state,
-stream output and persistence need a separate design for that outer lifecycle.
+This contract covers **one consultation hop**. The [outer turn lifecycle](turn-lifecycle.md)
+now supplies the whole-turn deadline and Gateway disconnect propagation, including
+serialized state access, stream suppression and the persistence barrier.
 Transport request IDs are ephemeral and do not replace durable
 `memory_operation_id` receipts or undo already committed memory. The independent
 MemoryBus/replay transport is unchanged.
