@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import TimeoutError
 import json
 
 import pytest
@@ -64,6 +65,9 @@ async def test_cancellation_during_slot_or_queue_wait_leaves_no_pending_work(slo
     ask = asyncio.create_task(bus.ask_detail({"qid":"cancel"}))
     await asyncio.sleep(0)
     assert bus.snapshot()["pending"] == 1
+    if slot == 0:
+        await bus._available.wait()
+        assert bus.snapshot()["queued"] == 1
     ask.cancel()
     with pytest.raises(asyncio.CancelledError):
         await ask

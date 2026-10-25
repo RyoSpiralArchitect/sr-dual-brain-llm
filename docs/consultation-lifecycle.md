@@ -114,3 +114,10 @@ slow cancellation acknowledgement, shutdown, worker survival, error redaction,
 wrapper behavior and actual EngineSession health/shutdown. The queued-timeout
 case verifies that expired work behind a busy model never invokes the model.
 No new paid quality measurement or token/latency improvement is claimed.
+
+The transport retains the documented Python 3.10+ support. It uses one bounded
+dispatch waiter and observes model completion separately, so cancellation of the
+worker cannot be confused with cancellation of its child. Local validation passed
+686 unit tests on Python 3.12 and the 30 transport fault cases on Python 3.10.22;
+the full EngineSession case is covered by the 3.12 suite. CI includes the same
+minimal Python 3.10 transport job without model dependencies.

@@ -17,6 +17,7 @@
 # ============================================================================
 
 import asyncio
+from asyncio import TimeoutError
 from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass
@@ -62,6 +63,7 @@ class Callosum:
         self._queued: OrderedDict[str, Dict[str, Any]] = OrderedDict()
         self._available = asyncio.Event()
         self._running: set[asyncio.Future] = set()
+        self._cancellation_requested: set[asyncio.Future] = set()
         self._closed = False
         self._rejected = self._expired = self._cancelled = self._discarded = 0
 
@@ -100,18 +102,22 @@ class Callosum:
         packet.update(qid=qid, request_id=request_id, deadline_at=end)
         pending = _Pending(qid, end, loop.create_future())
         self._pending[request_id] = pending
+        async def dispatch():
+            # Waiting on a future does not propagate cancellation into model
+            # work. The outer waiter exclusively owns the end-to-end timer.
+            if slot:
+                done, _ = await asyncio.wait({pending.future}, timeout=slot)
+                if done:
+                    return pending.future.result()
+            if pending.future.done():
+                return pending.future.result()
+            if loop.time() >= end:
+                raise TimeoutError("Consultation deadline elapsed before dispatch")
+            self._queued[request_id] = packet
+            self._available.set()
+            return await pending.future
         try:
-            async with asyncio.timeout_at(end):
-                # Delay dispatch, not just the caller's receipt. Closing the bus
-                # can interrupt this slot without waiting for its timer.
-                if slot:
-                    try:
-                        return await asyncio.wait_for(asyncio.shield(pending.future), slot)
-                    except TimeoutError:
-                        pass
-                self._queued[request_id] = packet
-                self._available.set()
-                return await pending.future
+            return await asyncio.wait_for(dispatch(), timeout=max(0., end-loop.time()))
         except TimeoutError:
             self._expired += 1
             raise
@@ -130,11 +136,12 @@ class Callosum:
             if pending.operation is not None:
                 self._cancel_operation(pending.operation)
 
-    @staticmethod
-    def _cancel_operation(task: asyncio.Future) -> None:
+    def _cancel_operation(self, task: asyncio.Future) -> None:
         # A second cancellation can interrupt a client's asynchronous cleanup.
-        if not task.done() and (not isinstance(task, asyncio.Task) or not task.cancelling()):
-            task.cancel()
+        if not task.done() and task not in self._cancellation_requested:
+            self._cancellation_requested.add(task)
+            if not getattr(task, "cancelling", lambda: 0)():
+                task.cancel()
 
     def _active(self, request_id: str) -> _Pending | None:
         pending = self._pending.get(request_id)
@@ -190,19 +197,15 @@ class Callosum:
         self._running.add(task)
         task.add_done_callback(self._operation_done)
         try:
-            # ask_detail owns the single deadline timer. Shielding prevents a
-            # worker shutdown from injecting a second cancellation into client
-            # cleanup already started by caller expiry/close.
-            result = await asyncio.shield(task)
+            # wait observes child cancellation as a result, never as cancellation
+            # of this worker. External worker cancellation still propagates.
+            await asyncio.wait({task})
+            if task.cancelled():
+                raise RequestAbandoned()
+            result = task.result()
             if self._active(request_id) is None:
                 raise RequestAbandoned()
             return result
-        except asyncio.CancelledError:
-            # Per-request cancellation must not kill the worker pump. An actual
-            # cancellation of the worker itself must still propagate.
-            if asyncio.current_task().cancelling():
-                raise
-            raise RequestAbandoned() from None
         except TimeoutError:
             if self._active(request_id) is None:
                 raise RequestAbandoned() from None
@@ -212,6 +215,7 @@ class Callosum:
 
     def _operation_done(self, task: asyncio.Future) -> None:
         self._running.discard(task)
+        self._cancellation_requested.discard(task)
         if not task.cancelled():
             # The worker may itself have exited while client cleanup was still
             # running. Retrieve late exceptions instead of logging private text

@@ -26,6 +26,7 @@ transmission between hemispheres.
 from __future__ import annotations
 
 import asyncio
+from asyncio import TimeoutError
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
