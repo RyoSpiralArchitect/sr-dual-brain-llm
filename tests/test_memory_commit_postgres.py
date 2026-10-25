@@ -217,3 +217,67 @@ def test_invalid_later_target_rolls_back_earlier_supersession(pg_store):
     with pytest.raises(MemoryCommitConflict):
         asyncio.run(pg_store.commit_memory_operation("s", "invalid", payload))
     assert load(pg_store) == [old] and count_receipts(pg_store) == 0
+
+
+def test_primary_loader_filters_before_limit_and_keeps_legacy_history(pg_store):
+    current = source('14 days', 1, 'primary')
+    traces = [current, source('EXPIRED', 2, 'expired'), source('SUPERSEDED', 3, 'superseded')]
+    traces[1] = replace(traces[1], valid_until=0)
+    traces[2] = replace(traces[2], evidence_status='superseded')
+    traces += [replace(source('DERIVED', 100+i, f'derived-{i}'), recalled_answer=True) for i in range(32)]
+    asyncio.run(pg_store.append_memory_traces('s', traces))
+    # The legacy/history API still exposes recent QA, including derived answers.
+    assert asyncio.run(pg_store.load_session('s', memory_limit=1))[0][0].recalled_answer
+    assert asyncio.run(pg_store.load_conversation_sources('s', limit=1)) == [current]
+    assert not asyncio.run(pg_store.load_conversation_sources('other', limit=1))
+    assert not asyncio.run(pg_store.load_conversation_sources('s', limit=0))
+    for invalid in (-1, True, 1.5):
+        with pytest.raises(ValueError):
+            asyncio.run(pg_store.load_conversation_sources('s', limit=invalid))
+    assert len(load(pg_store)) == len(traces)
+
+
+def test_primary_loader_has_stable_ties_and_preserves_legacy_default_metadata(pg_store):
+    a, b = source('first', 1, 'first'), source('second', 1, 'second')
+    asyncio.run(pg_store.append_memory_traces('s', [a, b]))
+    # Existing rows without origin metadata retain their historical primary default.
+    with pg_store._connect() as conn:
+        conn.execute(f"UPDATE {pg_store._table('shared_memory')} SET evidence_metadata = '{{}}'::jsonb WHERE qid='first'")
+    assert [t.qid for t in asyncio.run(pg_store.load_conversation_sources('s', limit=1))] == ['second']
+    assert [t.qid for t in asyncio.run(pg_store.load_conversation_sources('s', limit=2))] == ['first', 'second']
+
+
+def test_real_engine_restart_and_correction_replay_retain_buried_primary(pg_store, tmp_path, monkeypatch):
+    from engine_stdio import EngineSession, _persist_session_memory, _prepare_memory_request, _memory_request
+    original = source('14 days', 1, 'old-source')
+    noise = [replace(source('DERIVED', 100+i, f'derived-{i}'), recalled_answer=True) for i in range(1030)]
+    asyncio.run(pg_store.append_memory_traces('s', [original, *noise]))
+    monkeypatch.setenv('DUALBRAIN_MEMORY_CONVERSATION_CONTEXT', '1')
+    monkeypatch.setenv('DUALBRAIN_MEMORY_OUTBOX_PATH', str(tmp_path / 'outbox.sqlite3'))
+    params = {'qid': 'new-source', 'question': 'Project Alpha deadline is now seven days',
+              'memory_operation_id': 'source-correction',
+              'memory_context': {'id': 'Alpha', 'aliases': ['Alpha'], 'remember': True, 'supersedes': ['old-source']}}
+
+    async def run():
+        first = await EngineSession.create('s', state_store=pg_store)
+        try:
+            assert first.memory.past_qas == [original]
+            first.memory.begin_turn(params['question'], params['qid'], params['memory_context'])
+            # Fixture ingestion validates persistence; no model answer is fabricated.
+            first.memory.store({'Q': params['question'], 'A': '7 days'}, qid=params['qid'])
+            receipt = await _persist_session_memory(first, params['qid'], operation_id=params['memory_operation_id'],
+                request=_memory_request(params), result={'answer': '7 days'})
+            assert [t.qid for t in first.memory.past_qas] == ['new-source']
+        finally:
+            await first.close()
+        second = await EngineSession.create('s', state_store=pg_store)
+        try:
+            replay = await _prepare_memory_request(second, params)
+            assert replay['replayed'] and replay['memory_commit'] == receipt
+            assert [t.qid for t in second.memory.past_qas] == ['new-source']
+            second.memory.begin_turn('Project Alpha deadline?', 'probe')
+            assert [t.answer for t in second.memory.retrieve_related_traces('Project Alpha deadline?')] == ['7 days']
+        finally:
+            await second.close()
+    asyncio.run(run())
+    assert len(load(pg_store)) == 1032 and count_receipts(pg_store) == 1

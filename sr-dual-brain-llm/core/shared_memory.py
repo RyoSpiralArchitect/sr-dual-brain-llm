@@ -281,12 +281,28 @@ class SharedMemory:
 
     def restore_committed_traces(self, traces):
         """Refresh durable memory without discarding this process's conversation focus."""
-        self.past_qas = list(traces)[-self.max_items:]
+        self.past_qas = list(traces)
         self.pending_memory_writes.clear()
         self.pending_memory_updates.clear()
         self._turn_question = self._turn_query = None
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
+        self._trim_history()
+
+    def _trim_history(self):
+        """Bound residency without letting derived answers evict active sources."""
+        if not self.conversation_context:
+            del self.past_qas[:max(0, len(self.past_qas) - self.max_items)]
+            return
+        if self.max_items <= 0:
+            self.past_qas.clear()
+            return
+        now = time.time()
+        while len(self.past_qas) > self.max_items:
+            # Old inactive/derived entries go first. When sources alone fill the
+            # budget, retain the newest sources; this is still bounded memory.
+            index = next((i for i, t in enumerate(self.past_qas) if not self._available(t, now)), 0)
+            del self.past_qas[index]
 
     @property
     def primary_write_pending(self):
@@ -422,7 +438,7 @@ class SharedMemory:
 
         self.past_qas.append(trace)
         if len(self.past_qas) > self.max_items:
-            del self.past_qas[0 : len(self.past_qas) - self.max_items]
+            self._trim_history()
 
     # ------------------------------------------------------------------
     def get_context(self, n: int = 5) -> str:

@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "experiment": "postgres_persistent_memory_retention",
+  "date": "2026-10-26",
+  "timezone": "Asia/Tokyo",
+  "provider_calls": 0,
+  "answer_quality_evaluated": false,
+  "fixture_hashes_equal": true,
+  "benchmark_script_hashes_equal": true,
+  "before": {
+    "schema_version": 1,
+    "experiment": "postgres_persistent_memory_retention",
+    "source_revision": "1ce5c9b4ba95c4387af62eb625fc3e167ce2dd4f",
+    "script_sha256": "64ebcc812a64b990bf94cec5d13856a20096c31e8b1d0f842dc911513fceff0d",
+    "postgres_version": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "provider_calls": 0,
+    "answer_quality_evaluated": false,
+    "resident_budget": 1024,
+    "source_count": 8,
+    "unmeasured_process_warmups": 1,
+    "cold_starts_per_size": 3,
+    "retrieval_repetitions": 9,
+    "rows": [
+      {
+        "derived_history": 128,
+        "total_rows_before_correction": 138,
+        "fixture_sha256": "2cab5ccb3ce09c3ab2a1cf661a325500e04110ae947594e0f178e8493a24ba08",
+        "warm_build_ms": 0.02233099985460285,
+        "warm": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 138,
+          "retrieval_ms": {
+            "median": 0.10630950009726803,
+            "p95": 0.16660999972373247,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 15.211679999993066,
+          "p95": 17.36158599942428,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 138,
+          "retrieval_ms": {
+            "median": 0.10442350003359024,
+            "p95": 0.15027100016595796,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          8,
+          8,
+          8
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": true,
+          "old_receipt_replayed": true,
+          "same_receipt": true,
+          "latest_source_only": true,
+          "active_qids_after_old_replay": [
+            "correction-3"
+          ],
+          "pending_hidden": true,
+          "cancel_restores_current": true
+        }
+      },
+      {
+        "derived_history": 1024,
+        "total_rows_before_correction": 1034,
+        "fixture_sha256": "cf39b2b63eaae4f455ede05f0c83ea6477cb08294713dcff69a9fe6b26567df6",
+        "warm_build_ms": 0.1265659993805457,
+        "warm": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.3032760000678536,
+            "p95": 1.0416980003356002,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 28.306985999734025,
+          "p95": 30.0891530005174,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.28677299997070804,
+            "p95": 0.3780979996008682,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          0,
+          0,
+          0
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": false,
+          "error_type": "ValueError"
+        }
+      },
+      {
+        "derived_history": 8192,
+        "total_rows_before_correction": 8202,
+        "fixture_sha256": "d1dbd2e78c4ac30fd56969022612b642455b99dfa44879b4ba104c8c2d7ac7cf",
+        "warm_build_ms": 4.972476000148163,
+        "warm": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.30609999976149993,
+            "p95": 6.819729999733681,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 43.41712199948233,
+          "p95": 56.57396199967479,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.29386799951680587,
+            "p95": 6.3126539998847875,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          0,
+          0,
+          0
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": false,
+          "error_type": "ValueError"
+        }
+      },
+      {
+        "derived_history": 32768,
+        "total_rows_before_correction": 32778,
+        "fixture_sha256": "32f24a7c36e749faf7860ce3b2ecb3cb0b118e7e70622438f748458caf5ae26f",
+        "warm_build_ms": 8.524173999830964,
+        "warm": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.28202649991726503,
+            "p95": 0.3856510002151481,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 23.056230999827676,
+          "p95": 24.34217400059424,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 0,
+          "expected": 8,
+          "recall": 0.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.2849815000445233,
+            "p95": 0.35262599976704223,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          0,
+          0,
+          0
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": false,
+          "error_type": "ValueError"
+        }
+      }
+    ]
+  },
+  "after": {
+    "schema_version": 1,
+    "experiment": "postgres_persistent_memory_retention",
+    "source_revision": "288caae604765f96dad3dffc5231b91e3cdc1f67",
+    "script_sha256": "64ebcc812a64b990bf94cec5d13856a20096c31e8b1d0f842dc911513fceff0d",
+    "postgres_version": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "provider_calls": 0,
+    "answer_quality_evaluated": false,
+    "resident_budget": 1024,
+    "source_count": 8,
+    "unmeasured_process_warmups": 1,
+    "cold_starts_per_size": 3,
+    "retrieval_repetitions": 9,
+    "rows": [
+      {
+        "derived_history": 128,
+        "total_rows_before_correction": 138,
+        "fixture_sha256": "2cab5ccb3ce09c3ab2a1cf661a325500e04110ae947594e0f178e8493a24ba08",
+        "warm_build_ms": 0.022494999939226545,
+        "warm": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 138,
+          "retrieval_ms": {
+            "median": 0.10728300003393088,
+            "p95": 0.14003900014358805,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 19.391462999919895,
+          "p95": 21.355195999603893,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 8,
+          "retrieval_ms": {
+            "median": 0.07125250021999818,
+            "p95": 0.12021699967590393,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          8,
+          8,
+          8
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": true,
+          "old_receipt_replayed": true,
+          "same_receipt": true,
+          "latest_source_only": true,
+          "active_qids_after_old_replay": [
+            "correction-3"
+          ],
+          "pending_hidden": true,
+          "cancel_restores_current": true
+        }
+      },
+      {
+        "derived_history": 1024,
+        "total_rows_before_correction": 1034,
+        "fixture_sha256": "cf39b2b63eaae4f455ede05f0c83ea6477cb08294713dcff69a9fe6b26567df6",
+        "warm_build_ms": 0.14503700003842823,
+        "warm": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.3538915002536669,
+            "p95": 0.5017080002289731,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 17.617425000025833,
+          "p95": 21.651901000041107,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 8,
+          "retrieval_ms": {
+            "median": 0.07217250004032394,
+            "p95": 0.14677300077892141,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          8,
+          8,
+          8
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": true,
+          "old_receipt_replayed": true,
+          "same_receipt": true,
+          "latest_source_only": true,
+          "active_qids_after_old_replay": [
+            "correction-3"
+          ],
+          "pending_hidden": true,
+          "cancel_restores_current": true
+        }
+      },
+      {
+        "derived_history": 8192,
+        "total_rows_before_correction": 8202,
+        "fixture_sha256": "d1dbd2e78c4ac30fd56969022612b642455b99dfa44879b4ba104c8c2d7ac7cf",
+        "warm_build_ms": 26.010412999312393,
+        "warm": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.3447424996920745,
+            "p95": 0.41411499933019513,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 19.49148299991066,
+          "p95": 22.507382000185316,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 8,
+          "retrieval_ms": {
+            "median": 0.07018299993433175,
+            "p95": 0.10060600016004173,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          8,
+          8,
+          8
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": true,
+          "old_receipt_replayed": true,
+          "same_receipt": true,
+          "latest_source_only": true,
+          "active_qids_after_old_replay": [
+            "correction-3"
+          ],
+          "pending_hidden": true,
+          "cancel_restores_current": true
+        }
+      },
+      {
+        "derived_history": 32768,
+        "total_rows_before_correction": 32778,
+        "fixture_sha256": "32f24a7c36e749faf7860ce3b2ecb3cb0b118e7e70622438f748458caf5ae26f",
+        "warm_build_ms": 76.49871800003893,
+        "warm": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 1024,
+          "retrieval_ms": {
+            "median": 0.3413149997868459,
+            "p95": 0.43207700036873575,
+            "samples": 72
+          }
+        },
+        "cold_start_ms": {
+          "median": 19.53558900004282,
+          "p95": 20.159317000434385,
+          "samples": 3
+        },
+        "cold": {
+          "hits": 8,
+          "expected": 8,
+          "recall": 1.0,
+          "unexpected_qids": [],
+          "resident_traces": 8,
+          "retrieval_ms": {
+            "median": 0.06787899974369793,
+            "p95": 0.09551199946145061,
+            "samples": 72
+          }
+        },
+        "cold_repeat_hits": [
+          8,
+          8,
+          8
+        ],
+        "unfocused_pronoun_withheld": true,
+        "correction": {
+          "accepted": true,
+          "old_receipt_replayed": true,
+          "same_receipt": true,
+          "latest_source_only": true,
+          "active_qids_after_old_replay": [
+            "correction-3"
+          ],
+          "pending_hidden": true,
+          "cancel_restores_current": true
+        }
+      }
+    ]
+  }
+}

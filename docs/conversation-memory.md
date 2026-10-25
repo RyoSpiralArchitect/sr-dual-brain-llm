@@ -62,7 +62,14 @@ are persisted as superseded until the new answer is stored. Pending correction
 targets are already hidden from every SharedMemory lookup during that turn; a
 failed/cancelled write leaves their stored status unchanged. PostgreSQL persists the new source
 and old status changes in one transaction; legacy rows default to primary,
-unverified records. The in-session focus is deliberately not restored on restart.
+unverified records. The conversation working set prioritizes active primary sources over derived,
+expired and superseded entries when it reaches its 1,024-entry cap. PostgreSQL
+session creation and post-commit reload use `load_conversation_sources` to filter
+those entries before the cap. Ordinary QAs remain durable in the history API,
+but are not restored into this evidence working set. Missing origin metadata
+retains the existing legacy primary default. More than 1,024 active sources still
+require a separate retrieval policy; the cap is not an unlimited archive search.
+The in-session focus is deliberately not restored on restart.
 Persistent stdio sessions use a durable local outbox and PostgreSQL receipts so
 an uncertain commit can be retried without duplicating or reapplying a correction.
 See [memory commit recovery](memory-commit-recovery.md) for operation IDs, restart
@@ -107,3 +114,7 @@ These controls do not prove the factual correctness of stored model answers or
 prevent every unsupported final answer.
 
 See the [controlled evaluation protocol](benchmarks/conversation-memory-protocol.md).
+
+The [real PostgreSQL retention experiment](benchmarks/persistent-memory-2026-10-26.md)
+covers growing derived history, restart recall, corrections and exact receipt
+replay without provider calls. It also reports latency and live-retention costs.
