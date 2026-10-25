@@ -359,7 +359,7 @@ def cancellation_gateway(request, tmp_path_factory):
     script.write_text('''import asyncio, json, os, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(os.environ["DUALBRAIN_REPO_ROOT"]) / "sr-dual-brain-llm" / "scripts"))
-from engine_stdio import _StdioTransport, _PipeTransport, _BlobPipe
+from engine_stdio import _StdioTransport, _PipeTransport, _BlobPipe, _read_blob_frame
 
 async def main():
     pipe_name = os.environ.get("DUALBRAIN_PIPE_NAME")
@@ -371,13 +371,20 @@ async def main():
             if req is None:
                 break
             with open(os.environ["CANCELLATION_RPC_LOG"], "a") as log:
-                log.write(json.dumps(req) + "\\n")
+                log.write(json.dumps({**req, "_pid": os.getpid()}) + "\\n")
             rid, method, params = req["id"], req["method"], req.get("params", {})
             if method == "health":
                 result = {"status": "ok", "pid": os.getpid(), "postgres": {"enabled": False}}
             elif method == "cancel":
                 await transport.write({"id": params["request_id"], "ok": False, "error": {"type": "Cancelled", "message": "abandoned"}})
                 result = {"accepted": True}
+            elif method == "blob_put":
+                if params.get("session_id") != "accept":
+                    # Simulate queued work: no binary bytes consumed yet.
+                    continue
+                header, meta = await _read_blob_frame(blob, expected_session_id=params["session_id"], expected_blob_id=params["blob_id"])
+                await blob.reader.readexactly(meta["data_len"])
+                result = {"stored": True, "blob_id": params["blob_id"], "size_bytes": meta["data_len"]}
             elif params.get("question") == "fast":
                 result = {"qid": params["qid"], "answer": "fresh", "session_id": params["session_id"], "metrics": {}}
             else:
@@ -405,7 +412,7 @@ asyncio.run(main())
              "--urls", GATEWAY_LISTEN_URL], cwd=REPO_ROOT, env=env, stdout=log_file, stderr=subprocess.STDOUT,
         )
         try:
-            yield _wait_for_gateway(log_path, proc), rpc_log
+            yield _wait_for_gateway(log_path, proc), rpc_log, request.param
         finally:
             proc.terminate()
             try:
@@ -434,7 +441,7 @@ def test_http_disconnect_sends_attempt_scoped_cancel_and_next_request_succeeds(c
     import http.client
     import socket
 
-    base_url, rpc_log = cancellation_gateway
+    base_url, rpc_log, transport = cancellation_gateway
     parsed = parse.urlparse(base_url)
     qid = f"disconnect-{uuid.uuid4().hex}"
     connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=5.)
@@ -474,7 +481,7 @@ def test_http_disconnect_sends_attempt_scoped_cancel_and_next_request_succeeds(c
 
 @pytest.mark.parametrize("stream", [False, True])
 def test_gateway_deadline_sends_cancel_and_reports_timeout(cancellation_gateway, stream):
-    base_url, rpc_log = cancellation_gateway
+    base_url, rpc_log, transport = cancellation_gateway
     qid = f"deadline-{uuid.uuid4().hex}"
     payload = {"qid": qid, "question": "block", "session_id": "timeout-session"}
     started = time.monotonic()
@@ -491,7 +498,7 @@ def test_gateway_deadline_sends_cancel_and_reports_timeout(cancellation_gateway,
 
 def test_restart_does_not_send_old_attempt_cancel_into_replacement_engine(cancellation_gateway):
     import http.client
-    base_url, rpc_log = cancellation_gateway
+    base_url, rpc_log, transport = cancellation_gateway
     parsed = parse.urlparse(base_url)
     qid = f"restart-{uuid.uuid4().hex}"
     connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=5.)
@@ -507,3 +514,58 @@ def test_restart_does_not_send_old_attempt_cancel_into_replacement_engine(cancel
     status, body = _request_json("POST", f"{base_url}/v1/process", payload={"qid": qid, "question": "fast"})
     assert status == 200 and body["answer"] == "fresh"
     assert not any(m["method"] == "cancel" and m["params"]["request_id"] == original["id"] for m in _rpc_messages(rpc_log))
+
+
+@pytest.mark.parametrize("size", [16, 4*1024*1024])
+def test_aborted_binary_upload_does_not_hold_the_rpc_dispatcher(cancellation_gateway, size):
+    import http.client
+    import socket
+    base_url, rpc_log, transport = cancellation_gateway
+    # Binary uploads are intentionally available only on the pipe transport.
+    if transport != "pipes":
+        pytest.skip("binary uploads require pipes")
+    parsed = parse.urlparse(base_url)
+    boundary = f"blob-{uuid.uuid4().hex}"
+    content = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"test.bin\"\r\n"
+               "Content-Type: application/octet-stream\r\n\r\n").encode() + b"x"*size + f"\r\n--{boundary}--\r\n".encode()
+    seen = {m["id"] for m in _rpc_messages(rpc_log)}
+    connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=8.)
+    try:
+        connection.request("POST", "/v1/blobs", body=content,
+                           headers={"content-type": f"multipart/form-data; boundary={boundary}"})
+        original = _wait_rpc(rpc_log, lambda m: m["method"] == "blob_put" and m["id"] not in seen)
+        connection.sock.shutdown(socket.SHUT_RDWR)
+    finally:
+        connection.close()
+    # Both a partial frame and a fully buffered but unconsumed queued frame
+    # require invalidation. Neither may be reused by the next upload.
+    fresh_qid = f"after-blob-{uuid.uuid4().hex}"
+    def fresh_call():
+        return _request_json("POST", f"{base_url}/v1/process", payload={"question": "fast", "qid": fresh_qid}, timeout=10.)
+    deadline = time.monotonic()+10.
+    while True:
+        try:
+            status, body = fresh_call()
+            if status == 200:
+                break
+        except (error.URLError, OSError):
+            pass
+        assert time.monotonic() < deadline, "Interrupted blob left the engine stuck"
+        time.sleep(.05)
+    assert body["answer"] == "fresh"
+    fresh = _wait_rpc(rpc_log, lambda m: m.get("params", {}).get("qid") == fresh_qid)
+    assert fresh["_pid"] != original["_pid"]
+    # Verify the next binary frame too, not only the JSON control stream.
+    content = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"session_id\"\r\n\r\naccept\r\n"
+               f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"fresh.bin\"\r\n"
+               "Content-Type: application/octet-stream\r\n\r\nfresh\r\n"
+               f"--{boundary}--\r\n").encode()
+    connection = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=8.)
+    try:
+        connection.request("POST", "/v1/blobs", body=content,
+                           headers={"content-type": f"multipart/form-data; boundary={boundary}"})
+        response = connection.getresponse()
+        result = json.loads(response.read())
+        assert response.status == 200 and result["stored"] and result["size_bytes"] == 5
+    finally:
+        connection.close()

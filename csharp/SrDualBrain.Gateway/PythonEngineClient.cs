@@ -61,12 +61,18 @@ public sealed class PythonEngineClient : IAsyncDisposable
         return await CallAsync(method, @params, timeout: _defaultTimeout, cancellationToken);
     }
 
-    public async Task<JsonObject> CallAsync(string method, JsonObject? @params, TimeSpan timeout, CancellationToken cancellationToken)
+    public Task<JsonObject> CallAsync(string method, JsonObject? @params, TimeSpan timeout, CancellationToken cancellationToken)
+        => CallCoreAsync(method, @params, timeout, cancellationToken);
+
+    private async Task<JsonObject> CallCoreAsync(
+        string method, JsonObject? @params, TimeSpan timeout, CancellationToken cancellationToken,
+        Process? expectedProcess = null)
     {
         var deadline = DateTimeOffset.UtcNow.Add(timeout).ToUnixTimeMilliseconds();
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeout);
-        await EnsureStartedAsync(timeoutCts.Token);
+        if (expectedProcess is null)
+            await EnsureStartedAsync(timeoutCts.Token);
 
         var id = Guid.NewGuid().ToString("N");
         var request = new JsonObject
@@ -88,7 +94,7 @@ public sealed class PythonEngineClient : IAsyncDisposable
         try
         {
             var line = JsonSerializer.Serialize(request, JsonOptions);
-            sentTo = await WriteMessageAsync(line, timeoutCts.Token);
+            sentTo = await WriteMessageAsync(line, timeoutCts.Token, expectedProcess);
 
             var response = await tcs.Task.WaitAsync(timeoutCts.Token);
             completed = true;
@@ -295,11 +301,17 @@ public sealed class PythonEngineClient : IAsyncDisposable
         {
             await EnsureStartedAsync(cancellationToken);
 
-            var blobPipe = _blobPipe;
-            if (blobPipe is null || !blobPipe.IsConnected)
+            NamedPipeServerStream blobPipe;
+            Process process;
+            await _writeLock.WaitAsync(cancellationToken);
+            try
             {
-                throw new InvalidOperationException("Blob pipe is not connected.");
+                blobPipe = _blobPipe ?? throw new InvalidOperationException("Blob pipe unavailable.");
+                process = _process ?? throw new InvalidOperationException("Python engine unavailable.");
+                if (!blobPipe.IsConnected || process.HasExited)
+                    throw new InvalidOperationException("Blob transport unavailable.");
             }
+            finally { _writeLock.Release(); }
 
             var blobId = Guid.NewGuid().ToString("N");
             var header = new JsonObject
@@ -312,19 +324,50 @@ public sealed class PythonEngineClient : IAsyncDisposable
 
             var headerBytes = JsonSerializer.SerializeToUtf8Bytes(header, JsonOptions);
 
-            var writeTask = WriteBlobFrameAsync(blobPipe, headerBytes, content, (uint)length, cancellationToken);
-
-            var result = await CallAsync(
-                "blob_put",
-                new JsonObject
+            using var uploadCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cts.Token);
+            uploadCts.CancelAfter(_defaultTimeout);
+            var writeTask = WriteBlobFrameAsync(blobPipe, headerBytes, content, (uint)length, uploadCts.Token);
+            Task<JsonObject>? rpcTask = null;
+            var completed = false;
+            try
+            {
+                rpcTask = CallCoreAsync(
+                    "blob_put", new JsonObject { ["session_id"] = sessionId, ["blob_id"] = blobId },
+                    _defaultTimeout, uploadCts.Token, process);
+                // A failed binary writer must wake the RPC waiter too, rather
+                // than leave Python waiting forever for the rest of its frame.
+                if (await Task.WhenAny(writeTask, rpcTask) == writeTask)
+                    await writeTask;
+                var result = await rpcTask;
+                await writeTask;
+                completed = true;
+                return result;
+            }
+            finally
+            {
+                uploadCts.Cancel();
+                try { await writeTask; } catch { }
+                if (!completed)
                 {
-                    ["session_id"] = sessionId,
-                    ["blob_id"] = blobId,
-                },
-                cancellationToken);
-
-            await writeTask;
-            return result;
+                    // Even a fully buffered blob may be unconsumed if its queued
+                    // RPC expired. Reusing that binary stream would misroute the
+                    // next upload. Restart only this captured pipe generation.
+                    await _writeLock.WaitAsync();
+                    try
+                    {
+                        if (ReferenceEquals(blobPipe, _blobPipe) && ReferenceEquals(process, _process))
+                        {
+                            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+                            FailAllPending(new IOException("Blob transport interrupted."));
+                        }
+                    }
+                    finally { _writeLock.Release(); }
+                }
+                if (rpcTask is not null)
+                {
+                    try { await rpcTask; } catch { }
+                }
+            }
         }
         finally
         {

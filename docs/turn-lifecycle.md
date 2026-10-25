@@ -101,7 +101,16 @@ has its own two-second budget and frame completion its own five-second grace;
 these bounded wire-cleanup intervals can extend the caller's response timeout.
 The process lifetime cancellation token still stops all writes during shutdown.
 
-Both stdio lines and length-prefixed named-pipe frames use that rule. Normal
+Both stdio lines and length-prefixed named-pipe RPC frames use that rule. Binary
+uploads additionally own and await their writer and RPC together. A failed or
+abandoned upload invalidates its captured process/pipe generation before reuse,
+including a fully buffered frame whose queued RPC never consumed it. It cannot
+leave a truncated/unread blob in front of the next upload. This transport reset
+loses transient sessions; persistent memory uses the outbox/receipt recovery
+contract after restart. Upload cancellation does not promise to preserve transient
+state across a framing failure.
+
+Normal
 terminal stream delivery is marked complete before yielding, so disposing the
 iterator after its final envelope does not send a spurious cancellation. HTTP
 process timeouts return 504; live SSE timeouts emit an `error` event. Client
