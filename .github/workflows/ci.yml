@@ -5,6 +5,18 @@ on:
   pull_request:
 
 jobs:
+  consultation-python310:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install pytest pytest-asyncio
+      - name: Test consultation lifetime on the minimum Python version
+        # Full EngineSession dependencies/integration run in the 3.12 job.
+        run: pytest -q tests/test_callosum_lifecycle.py -k 'not engine_session'
+
   memory-commit-postgres:
     runs-on: ubuntu-latest
     services:

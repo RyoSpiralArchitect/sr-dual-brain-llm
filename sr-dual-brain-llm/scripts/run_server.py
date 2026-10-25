@@ -27,6 +27,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from core.shared_memory import SharedMemory
 from core.callosum import Callosum
+from core.right_worker import right_worker
 from core.models import LeftBrainModel, RightBrainModel
 from core.policy import RightBrainPolicy
 from core.policy_selector import decide_leading_brain
@@ -35,79 +36,10 @@ from core.auditor import Auditor
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
 from core.dual_brain import DualBrainController
-from core.memory_evidence import request_memory_context
 from core.memory_answerability import answerability_gate_from_environment
 
-async def right_worker(callosum, mem, right_model):
-    if hasattr(callosum, "recv_request"):
-        while True:
-            req = await callosum.recv_request()
-            memory_context = request_memory_context(req)
-            if memory_context is not None:
-                req = {**req, "context": memory_context}
-            if req.get("type") == "ASK_DETAIL":
-                qid = req["qid"]
-                try:
-                    detail = await right_model.deepen(
-                        qid,
-                        req["question"],
-                        req.get("draft_sum", ""),
-                        mem,
-                        temperature=req.get("temperature", 0.7),
-                        budget=req.get("budget", "small"),
-                        context=req.get("context"),
-                    )
-                    await callosum.publish_response(qid, {"qid": qid, "notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]})
-                except Exception as e:
-                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
-            elif req.get("type") == "ASK_CRITIC":
-                qid = req["qid"]
-                try:
-                    critique = await right_model.criticise_reasoning(
-                        qid,
-                        req.get("question", ""),
-                        req.get("draft", "") or req.get("draft_sum", "") or "",
-                        temperature=req.get("temperature", 0.2),
-                        context=req.get("context"),
-                    )
-                    await callosum.publish_response(
-                        qid,
-                        {
-                            "qid": qid,
-                            "verdict": critique.get("verdict"),
-                            "issues": critique.get("issues"),
-                            "fixes": critique.get("fixes"),
-                            "critic_sum": critique.get("critic_sum"),
-                            "confidence_r": critique.get("confidence_r"),
-                            "critic_kind": critique.get("critic_kind"),
-                            "critic_status": critique.get("critic_status"),
-                        },
-                    )
-                except Exception as e:
-                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
-            elif req.get("type") == "ASK_LEAD":
-                qid = req.get("qid")
-                try:
-                    impression = await right_model.generate_lead(
-                        req.get("question", ""),
-                        req.get("context", ""),
-                        temperature=float(req.get("temperature", 0.85)),
-                    )
-                except Exception as e:
-                    await callosum.publish_response(qid, {"qid": qid, "error": str(e)})
-                else:
-                    await callosum.publish_response(
-                        qid,
-                        {
-                            "qid": qid,
-                            "lead_notes": impression,
-                        },
-                    )
-    else:
-        await asyncio.sleep(0.1)
-
 async def main():
-    callosum = Callosum()
+    callosum = Callosum(max_pending=int(os.environ.get("DUALBRAIN_CALLOSUM_MAX_PENDING", "64")))
     # Interactive input has no trusted write/supersession metadata channel.
     mem = SharedMemory(answerability_gate=answerability_gate_from_environment())
     left = LeftBrainModel()
@@ -133,21 +65,29 @@ async def main():
         auditor=auditor,
         orchestrator=orchestrator,
     )
-    asyncio.create_task(right_worker(callosum, mem, right))
+    worker_task = asyncio.create_task(right_worker(callosum, mem, right))
     print("Server ready (callosum=memory). Type questions (stdin). Ctrl-C to quit.")
     loop = asyncio.get_running_loop()
-    while True:
-        question = await loop.run_in_executor(None, input, "Q> ")
-        if not question.strip():
-            continue
-        context_hints = {
-            "novelty": mem.novelty_score(question),
-            "last_leading": mem.get_kv("last_leading_brain"),
-        }
-        leading_brain = decide_leading_brain(question, context_hints)
-        mem.put_kv("last_leading_brain", leading_brain)
-        ans = await controller.process(question, leading_brain=leading_brain)
-        print("A>", ans)
+    try:
+        while True:
+            question = await loop.run_in_executor(None, input, "Q> ")
+            if not question.strip():
+                continue
+            context_hints = {
+                "novelty": mem.novelty_score(question),
+                "last_leading": mem.get_kv("last_leading_brain"),
+            }
+            leading_brain = decide_leading_brain(question, context_hints)
+            mem.put_kv("last_leading_brain", leading_brain)
+            ans = await controller.process(question, leading_brain=leading_brain)
+            print("A>", ans)
+    finally:
+        await callosum.close()
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
 
 if __name__ == "__main__":
     asyncio.run(main())

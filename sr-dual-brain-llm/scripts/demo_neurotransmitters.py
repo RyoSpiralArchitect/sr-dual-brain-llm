@@ -45,7 +45,7 @@ async def demo_information_filtering():
     async def responder():
         request = await callosum.recv_request()
         await callosum.publish_response(
-            request["qid"],
+            request["request_id"],
             {"status": "processed", "result": "analysis complete"}
         )
     
