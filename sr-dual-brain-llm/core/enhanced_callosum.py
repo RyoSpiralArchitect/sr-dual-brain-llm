@@ -25,9 +25,11 @@ transmission between hemispheres.
 
 from __future__ import annotations
 
+import asyncio
+from copy import deepcopy
 from typing import Any, Dict, Optional
 
-from .callosum import Callosum
+from .callosum import Callosum, CallosumClosed
 from .neurotransmitter_modulator import (
     NeurotransmitterModulator,
     InformationFilterResult,
@@ -58,6 +60,14 @@ class EnhancedCallosum:
         self.total_requests = 0
         self.filtered_requests = 0
         self.transmitted_requests = 0
+
+    @property
+    def slot_ms(self):
+        return self.base_callosum.slot_ms
+
+    @slot_ms.setter
+    def slot_ms(self, value):
+        self.base_callosum.slot_ms = value
     
     async def ask_detail(
         self,
@@ -67,6 +77,7 @@ class EnhancedCallosum:
         priority: Optional[float] = None,
         novelty: Optional[float] = None,
         task_relevance: Optional[float] = None,
+        deadline: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Ask for detail with neurotransmitter filtering.
         
@@ -80,7 +91,11 @@ class EnhancedCallosum:
         Returns:
             Response payload with neurotransmitter metadata
         """
+        if self.base_callosum.snapshot()["closed"]:
+            raise CallosumClosed("Consultation channel is closed")
+        deadline = self.base_callosum.deadline_for(timeout_ms, deadline)
         self.total_requests += 1
+        payload = deepcopy(payload)
         
         # Auto-calculate priority if not provided
         if priority is None:
@@ -106,6 +121,8 @@ class EnhancedCallosum:
             
             # Check if transmission should be blocked
             if not filter_result.should_transmit:
+                if asyncio.get_running_loop().time() >= deadline:
+                    raise TimeoutError("Consultation deadline elapsed during filtering")
                 self.filtered_requests += 1
                 # Return filtered response without actual transmission
                 return {
@@ -119,7 +136,7 @@ class EnhancedCallosum:
         self.transmitted_requests += 1
         
         # Transmit through base callosum
-        response = await self.base_callosum.ask_detail(payload, timeout_ms)
+        response = await self.base_callosum.ask_detail(payload, timeout_ms, deadline=deadline)
         
         # Add neurotransmitter metadata to response
         if filter_result:
@@ -127,13 +144,22 @@ class EnhancedCallosum:
         
         return response
     
-    async def publish_response(self, qid: str, response: Dict[str, Any]):
+    async def publish_response(self, request_id: str, response: Dict[str, Any]):
         """Publish response through base callosum."""
-        await self.base_callosum.publish_response(qid, response)
+        return await self.base_callosum.publish_response(request_id, response)
     
     async def recv_request(self) -> Dict[str, Any]:
         """Receive request from base callosum."""
         return await self.base_callosum.recv_request()
+
+    async def run_request(self, request, operation):
+        return await self.base_callosum.run_request(request, operation)
+
+    async def close(self):
+        await self.base_callosum.close()
+
+    def snapshot(self):
+        return self.base_callosum.snapshot()
     
     def _estimate_priority(self, payload: Dict[str, Any]) -> float:
         """Estimate priority from payload content.

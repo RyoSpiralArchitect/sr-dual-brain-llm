@@ -37,6 +37,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from core.auditor import Auditor
 from core.callosum import Callosum
+from core.right_worker import right_worker as _right_worker
 from core.default_mode_network import DefaultModeNetwork
 from core.director_reasoner import DirectorReasonerModel
 from core.dual_brain import DualBrainController
@@ -51,7 +52,6 @@ from core.prefrontal_cortex import PrefrontalCortex
 from core.psychoid_attention import PsychoidAttentionAdapter
 from core.shared_memory import SharedMemory
 from core.temporal_hippocampal_indexing import TemporalHippocampalIndexing
-from core.memory_evidence import request_memory_context
 from core.memory_retrieval import semantic_index_from_environment
 from core.memory_answerability import answerability_gate_from_environment
 from core.memory_commits import (
@@ -627,73 +627,6 @@ async def _resolve_vision_images(
     return resolved
 
 
-async def _right_worker(callosum: Any, memory: SharedMemory, right_model: RightBrainModel) -> None:
-    while True:
-        req = await callosum.recv_request()
-        memory_context = request_memory_context(req)
-        if memory_context is not None:
-            req = {**req, "context": memory_context}
-        if req.get("type") == "ASK_DETAIL":
-            qid = req["qid"]
-            try:
-                detail = await right_model.deepen(
-                    qid,
-                    req["question"],
-                    req.get("draft_sum", ""),
-                    memory,
-                    temperature=req.get("temperature", 0.7),
-                    budget=req.get("budget", "small"),
-                    context=req.get("context"),
-                    psychoid_projection=req.get("psychoid_attention_bias"),
-                )
-                await callosum.publish_response(
-                    qid,
-                    {
-                        "qid": qid,
-                        "notes_sum": detail["notes_sum"],
-                        "confidence_r": detail["confidence_r"],
-                    },
-                )
-            except Exception as exc:
-                await callosum.publish_response(qid, {"qid": qid, "error": str(exc)})
-        elif req.get("type") == "ASK_CRITIC":
-            qid = req["qid"]
-            try:
-                critique = await right_model.criticise_reasoning(
-                    qid,
-                    req.get("question", ""),
-                    req.get("draft", "") or req.get("draft_sum", "") or "",
-                    temperature=req.get("temperature", 0.2),
-                    context=req.get("context"),
-                    psychoid_projection=req.get("psychoid_attention_bias"),
-                )
-                await callosum.publish_response(
-                    qid,
-                    {
-                        "qid": qid,
-                        "verdict": critique.get("verdict"),
-                        "issues": critique.get("issues"),
-                        "fixes": critique.get("fixes"),
-                        "critic_sum": critique.get("critic_sum"),
-                        "confidence_r": critique.get("confidence_r"),
-                        "critic_kind": critique.get("critic_kind"),
-                        "critic_status": critique.get("critic_status"),
-                    },
-                )
-            except Exception as exc:
-                await callosum.publish_response(qid, {"qid": qid, "error": str(exc)})
-        elif req.get("type") == "ASK_LEAD":
-            qid = req.get("qid")
-            try:
-                impression = await right_model.generate_lead(
-                    req.get("question", ""),
-                    req.get("context", ""),
-                    temperature=float(req.get("temperature", 0.85)),
-                )
-            except Exception as exc:
-                await callosum.publish_response(qid, {"qid": qid, "error": str(exc)})
-            else:
-                await callosum.publish_response(qid, {"qid": qid, "lead_notes": impression})
 
 
 @dataclass
@@ -793,7 +726,7 @@ class EngineSession:
                 memory.put_kv("schema_memories", schema_memories)
             persisted_memory = len(memory.past_qas)
             persisted_episodes = len(hippocampus.episodes)
-        callosum = Callosum()
+        callosum = Callosum(max_pending=int(os.environ.get("DUALBRAIN_CALLOSUM_MAX_PENDING", "64")))
         left = LeftBrainModel(llm_config=left_llm_config)
         right = RightBrainModel(llm_config=right_llm_config)
         executive = ExecutiveReasonerModel(llm_config=executive_llm_config)
@@ -870,6 +803,7 @@ class EngineSession:
         )
 
     async def close(self) -> None:
+        await self.callosum.close()
         self.worker_task.cancel()
         try:
             await self.worker_task
@@ -1522,6 +1456,9 @@ def _handle_health(sessions: Dict[str, EngineSession]) -> Dict[str, Any]:
         "status": "ok",
         "sessions": len(sessions),
         "pid": os.getpid(),
+        "consultations": {key: sum(session.callosum.snapshot()[key] for session in sessions.values())
+                          for key in ("occupied", "pending", "queued", "running", "overloaded", "expired",
+                                      "cancelled", "discarded_responses")},
     }
 
 

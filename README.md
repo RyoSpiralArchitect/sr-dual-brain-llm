@@ -81,6 +81,9 @@ Optional engine-side corpus-callosum timeout (bounds right-brain waits):
 # Default: 20000 (20s)
 export DUALBRAIN_CALLOSUM_TIMEOUT_MS=20000
 
+# Per-session consultation capacity, including operations draining cancellation:
+export DUALBRAIN_CALLOSUM_MAX_PENDING=64
+
 # Trade latency for accuracy (longer right-brain / System2 waits):
 export DUALBRAIN_TIMEOUT_MULTIPLIER=1.5
 export DUALBRAIN_SYSTEM2_TIMEOUT_MULTIPLIER=1.2   # optional
@@ -338,12 +341,16 @@ Treat “brains” as **roles** with strict I/O contracts:
 |---|---|---|---|
 | **Left brain (speech/draft)** | Produce the primary user-facing answer draft | Draft answer text | `sr-dual-brain-llm/core/models.py` |
 | **Right brain (deepener/lead)** | Add missing substance; can create a “lead prelude” | Additive notes (not a second full answer) | `sr-dual-brain-llm/core/models.py` |
-| **Corpus callosum** | In-process message bus for right-brain requests/responses | `ASK_DETAIL` / `ASK_LEAD` messages | `sr-dual-brain-llm/core/callosum.py` |
-| **Right worker** | Consumes callosum requests and calls the right model | `notes_sum` / `lead_notes` | `sr-dual-brain-llm/scripts/engine_stdio.py` |
+| **Corpus callosum** | Bounded consultations with request identity, deadlines and cancellation | `ASK_DETAIL` / `ASK_LEAD` messages | `sr-dual-brain-llm/core/callosum.py` |
+| **Right worker** | Shared stdio/interactive pump; cancels abandoned model work | `notes_sum` / `lead_notes` | `sr-dual-brain-llm/core/right_worker.py` |
 | **Executive reasoner** | Private meta-control + optional “mix-in” | `memo` (private) + `mix_in` (user-facing micro-addition) + directives | `sr-dual-brain-llm/core/executive_reasoner.py` |
 | **Policy + timing** | Decide whether to consult, set temperature/slot/timeouts | `action`, `temperature`, `slot_ms` | `sr-dual-brain-llm/core/policy*.py`, `sr-dual-brain-llm/core/hypothalamus.py` |
 | **Auditor** | Sanity checks (keep answers clean) | ok/fail | `sr-dual-brain-llm/core/auditor.py` |
 | **Coherence + motifs** | Post-hoc scoring + “why it routed” signals | `coherence_signal` + tags | `sr-dual-brain-llm/core/coherence_resonator.py` |
+
+The [consultation lifecycle contract](docs/consultation-lifecycle.md) separates
+turn IDs from transport attempts and covers queue limits, deadlines, worker
+cancellation and shutdown. Custom workers must echo `request_id` when replying.
 
 ### Executive “tri-layer” (speech + advice + reasoning)
 This is the “3-layer” structure:

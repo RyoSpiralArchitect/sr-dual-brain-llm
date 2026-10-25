@@ -49,7 +49,7 @@ async def test_enhanced_callosum_transmits_important():
     async def responder():
         request = await callosum.recv_request()
         await callosum.publish_response(
-            request["qid"],
+            request["request_id"],
             {"status": "success", "result": "processed"}
         )
     
@@ -94,7 +94,7 @@ async def test_enhanced_callosum_auto_priority_detection():
             try:
                 request = await callosum.recv_request()
                 await callosum.publish_response(
-                    request["qid"],
+                    request["request_id"],
                     {"status": "ok"}
                 )
             except asyncio.CancelledError:
@@ -148,7 +148,7 @@ async def test_enhanced_callosum_filtering_disabled():
     async def responder():
         request = await callosum.recv_request()
         await callosum.publish_response(
-            request["qid"],
+            request["request_id"],
             {"status": "processed"}
         )
     
@@ -244,7 +244,7 @@ async def test_enhanced_callosum_neurotransmitter_metadata():
         assert "filter_result" in request
         
         await callosum.publish_response(
-            request["qid"],
+            request["request_id"],
             {"status": "ok"}
         )
     
