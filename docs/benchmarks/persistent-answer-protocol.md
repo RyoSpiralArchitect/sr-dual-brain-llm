@@ -36,8 +36,9 @@ assessment or a generalization estimate. Unknown facts and ambiguous references
 have distinct criteria.
 
 Hard provider allocations: 64 baseline-development + 64 repaired-development +
-112 evaluation = 240 calls total. Each command enforces its allocation. At most
-2,048 output tokens per call, no continuations, automatic retries or embeddings.
+112 evaluation = 240 calls total. Each command enforces its allocation. Source/left/right/judge requests use at most
+2,048 completion tokens; the production support backend requests 4,096. No
+continuations, automatic retries or embeddings.
 All provider calls, failures, requested/served models and token usage are recorded
 by role. Missing usage stays unknown. Abort generation failures before later turns
 consume a heuristic fallback; unavailable/partial runs are not successful answers.
@@ -65,3 +66,21 @@ A separate explicit development rerun may use at most 62 calls, preserving the
 original 64-call allocation. Status-only error/cancellation telemetry is added;
 no prompts, rubric, fixtures or output limits change. This is not an automatic
 retry or favorable answer resampling. Missing failed-call token usage stays unknown.
+
+Further technical record before evaluation: two additional repaired-development
+attempts also failed before their first answer; status telemetry identified HTTP
+429. Three isolated support diagnostics include one success and two HTTP 429
+responses, with provider error type `insufficient_quota` under both normal and
+frozen Python clocks. Paid calls are stopped pending usable quota. The three
+failed development attempts used two calls each, and diagnostics used three:
+9 of the repaired-development 64-call allocation are consumed, leaving at most
+55. No completed repaired answer has been sampled or discarded. Retain all
+failures and unknown usage; do not infer zero tokens for rejected requests.
+
+Cap disclosure: the initial protocol incorrectly described 2,048 as a universal
+cap. Inspection of recorded payloads shows the unchanged production support
+backend always requested 4,096 (both initial and repaired attempts); other roles
+requested 2,048. No payload cap was changed to obtain a better result. New metadata
+explicitly reports the support cap; historical exact request journals retain their
+original fields. This deviation and all actual request caps must appear in the
+result report rather than retrofitting historical artifacts.

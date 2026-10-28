@@ -60,3 +60,54 @@ def test_prospective_fixture_contains_disjoint_scopes_and_both_reference_cases()
         assert {p['id'] for p in ep['probes']} >= {'named-unknown', 'ambiguous', 'cold-conditions'}
         assert ep['probes'][-1]['restart_before']
     assert scopes['development'].isdisjoint(scopes['evaluation'])
+
+
+@pytest.mark.asyncio
+async def test_budget_rejection_cannot_corrupt_a_prior_identical_response():
+    from core.llm_client import LLMConfig
+    journal = bench.Journal(LLMConfig('openai', 'test', 'PRIVATE_KEY'), {}, max_calls=1)
+    async def post(*args, **kwargs):
+        return {'model': 'test', 'choices': [{'finish_reason': 'stop', 'message': {'content': 'ok'}}],
+                'usage': {'prompt_tokens': 1, 'completion_tokens': 1}}
+    journal.transport._post_json = post
+    await journal.post('left', 'https://example.invalid', {}, {})
+    original = deepcopy(journal.data)
+    with pytest.raises(ValueError):
+        await journal.post('left', 'https://example.invalid', {}, {})
+    assert journal.data == original and journal.calls == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('cancelled', [False, True])
+async def test_transport_failure_records_only_safe_status_and_unknown_usage(cancelled):
+    from core.llm_client import LLMConfig
+    journal = bench.Journal(LLMConfig('openai', 'test', 'PRIVATE_KEY'), {})
+    async def post(*args, **kwargs):
+        if cancelled:
+            raise asyncio.CancelledError()
+        raise RuntimeError("openai returned 429: {'error': {'type': 'insufficient_quota', 'message': 'PRIVATE_KEY'}}")
+    journal.transport._post_json = post
+    with pytest.raises(asyncio.CancelledError if cancelled else RuntimeError):
+        await journal.post('left', 'https://example.invalid', {}, {})
+    row = next(iter(journal.data['responses'].values()))[0]
+    assert row['error_type'] == ('CancelledError' if cancelled else 'RuntimeError')
+    if not cancelled:
+        assert row['http_status'] == 429 and row['provider_error_category'] == 'insufficient_quota'
+    assert journal.input_tokens is None and journal.output_tokens is None
+    assert 'PRIVATE_KEY' not in json.dumps(journal.data)
+
+
+@pytest.mark.asyncio
+async def test_first_provider_failure_blocks_further_posts_in_the_run():
+    from core.llm_client import LLMConfig
+    journal = bench.Journal(LLMConfig('openai', 'test', 'PRIVATE_KEY'), {})
+    calls = []
+    async def post(*args, **kwargs):
+        calls.append(True)
+        raise RuntimeError("openai returned 429: {'error': {'type': 'insufficient_quota'}}")
+    journal.transport._post_json = post
+    with pytest.raises(RuntimeError):
+        await journal.post('support', 'https://example.invalid', {'messages': [{'content': '{"records": []}'}]}, {})
+    with pytest.raises(RuntimeError, match='blocked'):
+        await journal.post('left', 'https://example.invalid', {'different': True}, {})
+    assert len(calls) == journal.calls == 1

@@ -64,17 +64,28 @@ RUNTIME = {'left': {'leading_brain': 'left', 'system2_mode': 'off'},
 class Journal(BaseJournal):
     """Retain safe HTTP status/cancellation diagnostics without exception text."""
     async def post(self, role, url, payload, headers, **kwargs):
+        if self.data.get('transport_blocked'):
+            raise RuntimeError('Provider transport blocked after a prior failure')
+        key = digest({'role': role, 'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(), 'payload': payload})
+        before = len(self.data['responses'].get(key, []))
         try:
             return await super().post(role, url, payload, headers, **kwargs)
         except BaseException as exc:
-            key = digest({'role': role, 'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(), 'payload': payload})
             rows = self.data['responses'].get(key, [])
-            if rows:
+            # A rejected admission/reused failure must not rewrite an older
+            # successful response for the same request key.
+            frozen_rows = self.frozen['responses'].get(key, []) if self.frozen else []
+            if len(rows) > before or (frozen_rows and frozen_rows[-1].get('error_type')):
+                self.data['transport_blocked'] = True
+            if len(rows) > before:
                 row = rows[-1]
                 row['error_type'] = type(exc).__name__
                 match = re.search(r'returned (\d{3}):', str(exc))
                 if match:
                     row['http_status'] = int(match.group(1))
+                category = re.search(r"'type': '(insufficient_quota|rate_limit_error|tokens|requests|invalid_request_error)'", str(exc))
+                if category:
+                    row['provider_error_category'] = category.group(1)
                 if 'response' not in row:
                     self.input_tokens = self.output_tokens = None
                 for event in reversed(self.events):
@@ -287,6 +298,10 @@ async def worker_turns(payload, journal):
                 params = {'question': probe['question'], 'qid': payload['episode']+':'+probe['id'],
                           'memory_operation_id': 'probe-'+probe['id'], **RUNTIME[payload['arm']]}
                 result, events, elapsed = await process(session, clients, params, journal, options)
+                receipt = result.get('memory_commit') or {}
+                if receipt.get('state') != 'committed' or receipt.get('operation_id') != params['memory_operation_id']:
+                    raise ValueError('Probe has no matching durable commit receipt')
+                row.update(memory_commit_state='committed', memory_commit_sha256=digest(receipt))
                 row.update(status='ok', answer=result['answer'], elapsed_ms=elapsed,
                            metrics=result['metrics'], usage=usage_for(events),
                            calls_by_role=dict(Counter(e['role'] for e in events)),
@@ -348,7 +363,8 @@ async def run(args, fixture, config, journal, source_cache=None):
               'rows': [], 'grades': [], 'sources': {}, 'runtime': RUNTIME, 'call_limit': journal.max_calls,
               'fresh_processes': not getattr(args, 'in_process', False),
               'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-              'generation_model': config.model, 'judge_model': args.judge_model}
+              'generation_model': config.model, 'judge_model': args.judge_model,
+              'role_output_caps': {'seed': 2048, 'left': 2048, 'right': 2048, 'judge': 2048, 'support': 4096}}
     save = lambda: checkpoint(args.output_dir/'report.partial.json', report)
     save()
     if source_cache and (source_cache.get('fixture_sha256') != digest(fixture) or source_cache.get('phase') != args.phase
@@ -474,6 +490,8 @@ def main():
         metadata = {'fixture_sha256': digest(fixture), 'phase': args.phase, 'model': model,
                     'judge_model': args.judge_model, 'judge_policy_sha256': digest(JUDGE), 'support_policy_sha256': digest(POLICY),
                     'runtime': RUNTIME, 'output_cap':2048}
+        if frozen is None or 'support_output_cap' in frozen:
+            metadata['support_output_cap'] = 4096
         journal = Journal(config, metadata, frozen=frozen, max_calls=args.max_calls,
                           save=lambda data: checkpoint(args.output_dir/'journal.partial.json', data))
         report = asyncio.run(run(args, fixture, config, journal, read_json(args.sources) if args.sources else None))

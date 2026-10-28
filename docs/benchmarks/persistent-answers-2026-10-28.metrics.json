@@ -1,0 +1,507 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-28",
+  "timezone": "Asia/Tokyo",
+  "status": "blocked_before_repaired_measurement",
+  "blocker": {
+    "http_status": 429,
+    "provider_error_type": "insufficient_quota"
+  },
+  "baseline": {
+    "source_revision": "767bb2fb5088f71626db3cb1bf4c1c6bbd547db7",
+    "runner_sha256": "d06ddcf6244ef14fe9697a32d48bd7e4d5188072a26052411afcd909fdbf5570",
+    "generation_model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "summaries": {
+      "left": {
+        "probes": 5,
+        "available": 5,
+        "graded": 5,
+        "task_grounding_pass": 4,
+        "all_pass": 4,
+        "grounding_failures": 0,
+        "clarification_failures": 1,
+        "elapsed_ms_median": 4313.138229001197
+      },
+      "collaborative": {
+        "probes": 5,
+        "available": 5,
+        "graded": 5,
+        "task_grounding_pass": 4,
+        "all_pass": 4,
+        "grounding_failures": 0,
+        "clarification_failures": 1,
+        "elapsed_ms_median": 7884.04263099801
+      }
+    },
+    "sources": {
+      "dev-archive": "b36c677a5abbd78d7758eec3e5c6be0a29359d7ce9bcb45e1dc809715d527f8a"
+    },
+    "usage_by_role": {
+      "judge": {
+        "calls": 5,
+        "input_tokens": 3818,
+        "output_tokens": 1192,
+        "records_sent": 0
+      },
+      "left": {
+        "calls": 10,
+        "input_tokens": 3579,
+        "output_tokens": 662,
+        "records_sent": 0
+      },
+      "right": {
+        "calls": 5,
+        "input_tokens": 6572,
+        "output_tokens": 579,
+        "records_sent": 0
+      },
+      "seed": {
+        "calls": 3,
+        "input_tokens": 795,
+        "output_tokens": 559,
+        "records_sent": 0
+      },
+      "support": {
+        "calls": 8,
+        "input_tokens": 3684,
+        "output_tokens": 1286,
+        "records_sent": 10
+      }
+    },
+    "provider_calls": 31,
+    "input_tokens": 18448,
+    "output_tokens": 4278,
+    "grader_failures": 0
+  },
+  "baseline_probe_usage_by_arm": {
+    "left": {
+      "calls": 9,
+      "input_tokens": 3512,
+      "output_tokens": 933,
+      "roles": {
+        "support": 4,
+        "left": 5
+      },
+      "distinct_worker_processes": 2
+    },
+    "collaborative": {
+      "calls": 14,
+      "input_tokens": 10323,
+      "output_tokens": 1594,
+      "roles": {
+        "support": 4,
+        "left": 5,
+        "right": 5
+      },
+      "distinct_worker_processes": 2
+    }
+  },
+  "baseline_probes": [
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "conditions",
+      "answer_sha256": "8e4e3dd9f1068df1452f33ba2aee58709def7cf05e2a6b9bb2f22dceb78c581a",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 4313.138229001197,
+      "hydration_ms": 851.2269629973161,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1
+      },
+      "usage": {
+        "calls": 2,
+        "input_tokens": 821,
+        "output_tokens": 236,
+        "records_sent": 1
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "named-unknown",
+      "answer_sha256": "f7bc4d3e3ad3677b35177cf0ac7a23bfdcf183df28d008fe033d100409a54a4d",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      },
+      "elapsed_ms": 3330.3324120024627,
+      "hydration_ms": 851.2269629973161,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1
+      },
+      "usage": {
+        "calls": 2,
+        "input_tokens": 614,
+        "output_tokens": 123,
+        "records_sent": 1
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "comparison",
+      "answer_sha256": "de4d4bc4cbdb7b844e93e8c615b7ab95d97b92b4fcec08ecb87c88023f982c5d",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 4892.303066997556,
+      "hydration_ms": 851.2269629973161,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1
+      },
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1054,
+        "output_tokens": 178,
+        "records_sent": 2
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "ambiguous",
+      "answer_sha256": "6c82c43f7db6f839a5169091fdd57bd68fbac9d7b789a9fbbb2a660865ce0006",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 1364.297626001644,
+      "hydration_ms": 851.2269629973161,
+      "calls_by_role": {
+        "left": 1
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 202,
+        "output_tokens": 43,
+        "records_sent": 0
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "cold-conditions",
+      "answer_sha256": "706149fdbb8cffb1e6cdb192a862b89684c46a887cba5badb46f5caf76034597",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 4895.4430960002355,
+      "hydration_ms": 830.8883809986582,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1
+      },
+      "usage": {
+        "calls": 2,
+        "input_tokens": 821,
+        "output_tokens": 353,
+        "records_sent": 1
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "conditions",
+      "answer_sha256": "204add64a99041263835a30d3a4b85bdab5e1f75b5e955560ba4724803a5e45f",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 7944.754897001985,
+      "hydration_ms": 828.3806680010457,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1,
+        "right": 1
+      },
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2249,
+        "output_tokens": 485,
+        "records_sent": 1
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "named-unknown",
+      "answer_sha256": "489d0208532ea40ab97fc208230cfa0d0e34763f34de3592e69d503203b79653",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      },
+      "elapsed_ms": 4760.758821998024,
+      "hydration_ms": 828.3806680010457,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1,
+        "right": 1
+      },
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1844,
+        "output_tokens": 225,
+        "records_sent": 1
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "comparison",
+      "answer_sha256": "de4d4bc4cbdb7b844e93e8c615b7ab95d97b92b4fcec08ecb87c88023f982c5d",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 7884.04263099801,
+      "hydration_ms": 828.3806680010457,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1,
+        "right": 1
+      },
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2564,
+        "output_tokens": 502,
+        "records_sent": 2
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "ambiguous",
+      "answer_sha256": "ab9926ad1382f827bc8d70eeeda35eb59c57797b0007a4fc0ff8b00435c72dbe",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 2785.4188609999255,
+      "hydration_ms": 828.3806680010457,
+      "calls_by_role": {
+        "left": 1,
+        "right": 1
+      },
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1424,
+        "output_tokens": 117,
+        "records_sent": 0
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "cold-conditions",
+      "answer_sha256": "aec4527c7d3a078c711a57a7f0af0859366a2ee64d0630d3235cbce6520bee73",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "elapsed_ms": 8090.7206119991315,
+      "hydration_ms": 859.2713729995012,
+      "calls_by_role": {
+        "support": 1,
+        "left": 1,
+        "right": 1
+      },
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2242,
+        "output_tokens": 265,
+        "records_sent": 1
+      }
+    }
+  ],
+  "actual_request_output_caps": {
+    "seed": [
+      2048
+    ],
+    "support": [
+      4096
+    ],
+    "left": [
+      2048
+    ],
+    "right": [
+      520
+    ],
+    "judge": [
+      2048
+    ]
+  },
+  "exact_replay": {
+    "runtime_revision": "767bb2fb5088f71626db3cb1bf4c1c6bbd547db7",
+    "provider_calls": 0,
+    "answers_equal": true,
+    "grades_equal": true,
+    "source_qas_equal": true,
+    "whole_snapshot_hashes_equal": false,
+    "episode_runtime_annotations_differ": true
+  },
+  "repairs": {
+    "source_commit": "a0cbd26",
+    "quality_remeasured": false
+  },
+  "evaluation": {
+    "episodes_planned": 2,
+    "probes_planned_per_arm": 10,
+    "executed": false
+  },
+  "provider_attempts_total": 40,
+  "known_prompt_tokens_lower_bound": 19318,
+  "known_completion_tokens_lower_bound": 4640,
+  "attempts_with_unknown_usage": 7,
+  "allocations": {
+    "baseline_development": 64,
+    "repaired_development": 64,
+    "evaluation": 112,
+    "hard_total": 240,
+    "repaired_attempts_consumed": 9,
+    "repaired_remaining": 55
+  },
+  "stages": [
+    {
+      "id": "persistent-answer-dev-before-2026-10-28",
+      "complete": true,
+      "provider_attempts": 31,
+      "errors": []
+    },
+    {
+      "id": "persistent-answer-dev-after-2026-10-28",
+      "complete": false,
+      "provider_attempts": 2,
+      "errors": [
+        {
+          "role": "left",
+          "error_type": "RuntimeError",
+          "http_status": null
+        }
+      ]
+    },
+    {
+      "id": "persistent-answer-dev-after-recovery-2026-10-28",
+      "complete": false,
+      "provider_attempts": 2,
+      "errors": [
+        {
+          "role": "support",
+          "error_type": "RuntimeError",
+          "http_status": 429
+        },
+        {
+          "role": "left",
+          "error_type": "RuntimeError",
+          "http_status": 429
+        }
+      ]
+    },
+    {
+      "id": "persistent-answer-dev-after-confirmed-2026-10-28",
+      "complete": false,
+      "provider_attempts": 2,
+      "errors": [
+        {
+          "role": "support",
+          "error_type": "RuntimeError",
+          "http_status": 429
+        },
+        {
+          "role": "left",
+          "error_type": "RuntimeError",
+          "http_status": 429
+        }
+      ]
+    },
+    {
+      "http_status": 200,
+      "error_type": "unrecognized",
+      "error_code": "unrecognized",
+      "clock": null,
+      "provider_attempts": 1,
+      "id": "persistent-answer-rate-diagnostic-2026-10-28.json"
+    },
+    {
+      "http_status": 429,
+      "error_type": "insufficient_quota",
+      "error_code": "unrecognized",
+      "clock": "frozen-python-wall-clock",
+      "provider_attempts": 1,
+      "id": "persistent-answer-frozen-clock-diagnostic-2026-10-28.json"
+    },
+    {
+      "http_status": 429,
+      "error_type": "insufficient_quota",
+      "error_code": "unrecognized",
+      "clock": "real-python-wall-clock",
+      "provider_attempts": 1,
+      "id": "persistent-answer-real-clock-diagnostic-2026-10-28.json"
+    }
+  ],
+  "artifact_sha256": {
+    "persistent-answer-dev-before-2026-10-28": {
+      "worker-dev-archive-left-0.partial.json": "047b13fc352a293d21504f080c407ad172cd1a55f7488371e3b3f2797b28910a",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "782b634e8fb7f2d626c59b4c6c429ff7a9973c8511a9ad26fbb67cc41857a589",
+      "report.partial.json": "21704bd98807150038f4d1e4aa158feabcf57341e9e14e954b52bff65034b132",
+      "worker-dev-archive-collaborative-0.partial.json": "0cc57a2a384687cbb1287047bab4962d5b86c56a4ba1e4b403cec907dbba39c7",
+      "report.json": "f23523eae4d6ff1970d73b2355af39d160c51057d149dd218709fd6aa7a41a6f",
+      "worker-dev-archive-left-1.partial.json": "2235c0426ac8fa9d633215c8b10f024496a618367027816922312fecf3208cc5",
+      "worker-dev-archive-collaborative-1.partial.json": "e2fc68faaa14e1344f584c78afd7d73f25337a7cff81e258b9d68939e66e879a",
+      "sources.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a"
+    },
+    "persistent-answer-dev-after-2026-10-28": {
+      "worker-dev-archive-left-0.partial.json": "a97b76c6bfb02ebc5bf77b7154e778e3de34332b2224485979780a874d4d40b0",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "3682f7dfd35d694bc41358aba65e48241bd080c77658f388475a38fae63966ca",
+      "report.partial.json": "63349ec6df7fa1fd1623f9706ddc981359479cff733627be187424abf537da5d",
+      "failure.json": "c80475d65559e2987ad62833a30213e8221f7dd9443869d382f3fb0f211af860"
+    },
+    "persistent-answer-dev-after-recovery-2026-10-28": {
+      "worker-dev-archive-left-0.partial.json": "5b6976b6231475e41ecf9030260cd51ee896344e9e556fdfa5b87b5019e5b10e",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "f8b3d40d94e208eb48487e97ecfea293372c098b554c4092a68d1d004e0d6319",
+      "report.partial.json": "8ae151b5abc6f0aab9a8bded00c3ec884fd77058c3cd8b7db8751f483adfe8dd",
+      "failure.json": "c80475d65559e2987ad62833a30213e8221f7dd9443869d382f3fb0f211af860"
+    },
+    "persistent-answer-dev-after-confirmed-2026-10-28": {
+      "worker-dev-archive-left-0.partial.json": "0025aa11a3f5481f9d982fecd8061ce8a407a104c9c8d87c63a3697a225a5525",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "ead68f162ea11b0bd2e4bb7ccaafa5428ba9893c5314af34d6f0c3964bcbc3eb",
+      "report.partial.json": "c7a232539d3fc092af5d8c3806b4d637ff276174fa6bab01bde64a11a0d0e2d7",
+      "failure.json": "c80475d65559e2987ad62833a30213e8221f7dd9443869d382f3fb0f211af860"
+    },
+    "persistent-answer-rate-diagnostic-2026-10-28.json": "8de3a9fe6f6bd82c15ebee90ad5b8c6ef3471c7ffe07b9d4b9921031337bd229",
+    "persistent-answer-frozen-clock-diagnostic-2026-10-28.json": "13c068be742cfcff122ba6fc1d9eb1d74b08535edca361fd6283477d6d48546d",
+    "persistent-answer-real-clock-diagnostic-2026-10-28.json": "76455187d42aab40410d00bfd99ddc97d22a8a5239e71f010da470bb8106652c"
+  },
+  "replay_artifact_sha256": {
+    "worker-dev-archive-left-0.partial.json": "3e1387849b27edf699cb5ad45ee5df2cee360e6d6497f5bc88b0e0d7cf0fb8ec",
+    "sources.partial.json": "a35cfc5dd365c026944411ad3be92a0c6db9246076d11956bee64c50f0486c94",
+    "report.partial.json": "63fa83c6b11b9ca98b3538362e99e436580fe8906ea32291ae0b1a089327afe0",
+    "worker-dev-archive-collaborative-0.partial.json": "34bec4559da1558528b7ab21ba51a3a56a0172702245bd639c1d8a8cef3261d3",
+    "report.json": "cdc04d4899c0e35c2bff5ebe94f0defbe6e6610d227838109137fe022f290466",
+    "worker-dev-archive-left-1.partial.json": "65d102a7276498eb3fd1f9ede38f3fae6f60a7b8a92fb495ed3377e91a18a82d",
+    "worker-dev-archive-collaborative-1.partial.json": "2451563a3efe5d02a76d3e34c8d71e4c36a7183e458a8a6855741407ed533660",
+    "sources.json": "a35cfc5dd365c026944411ad3be92a0c6db9246076d11956bee64c50f0486c94"
+  }
+}

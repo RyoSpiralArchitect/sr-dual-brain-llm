@@ -118,3 +118,11 @@ See the [controlled evaluation protocol](benchmarks/conversation-memory-protocol
 The [real PostgreSQL retention experiment](benchmarks/persistent-memory-2026-10-26.md)
 covers growing derived history, restart recall, corrections and exact receipt
 replay without provider calls. It also reports latency and live-retention costs.
+
+Conversation contexts also carry identity-only reference resolution independently
+of factual QA approvals. A known project with no approved evidence for a requested
+relation should elicit uncertainty about that fact, not a repeated request to
+identify the project. The metadata contains only resolution state, no project
+IDs, source text or values; alias ambiguity and source lifecycle still apply.
+See the [persistent final-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
+for the measured initial weakness, repair coverage and pending live evaluation.
