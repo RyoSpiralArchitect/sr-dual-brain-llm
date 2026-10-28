@@ -530,3 +530,71 @@ def test_legacy_retention_still_uses_recent_qa_history():
     m.store(MemoryTrace('answer', 'one', qid='one', recalled_answer=True))
     m.store(MemoryTrace('answer', 'two', qid='two', recalled_answer=True))
     assert [t.qid for t in m.past_qas] == ['one', 'two']
+
+
+def test_reference_resolution_remains_separate_from_fact_approvals():
+    m = memory()
+    write(m, 'Alpha', 'alpha', 'PRIVATE_14_DAYS')
+    m.begin_turn('Project Alpha fee?', 'fee')
+    assert m.reference_resolution('Project Alpha fee?') == 'resolved'
+    # No support preparation: identity alone grants no factual approval.
+    assert not m.retrieve_related_traces('Project Alpha fee?')
+    assert not m.retrieve_related('Project Alpha fee?')
+    m.begin_turn('Project Alpha and Project Unknown fees?', 'mixed')
+    assert m.reference_resolution('Project Alpha and Project Unknown fees?') is None
+    write(m, 'Beta', 'beta', 'PRIVATE_29_DAYS')
+    m.begin_turn('Project Alpha and Beta fees?', 'comparison')
+    assert m.reference_resolution('Project Alpha and Beta fees?') == 'multiple_explicit'
+    m.begin_turn('そのプロジェクトの料金は？', 'ambiguous')
+    assert m.reference_resolution('そのプロジェクトの料金は？') is None
+
+
+def test_reference_resolution_rechecks_alias_ambiguity_and_source_lifecycle():
+    from dataclasses import replace
+    m = SharedMemory(conversation_context=True)
+    m.store(MemoryTrace('policy', 'one', qid='a', retrieval_scope='A', scope_aliases=('Shared',)))
+    m.store(MemoryTrace('policy', 'two', qid='b', retrieval_scope='B', scope_aliases=('Shared',)))
+    m.begin_turn('Project Shared fee?', 'probe')
+    assert m.reference_resolution('Project Shared fee?') == 'ambiguous'
+    m.past_qas = [replace(t, evidence_status='superseded') for t in m.past_qas]
+    assert m.reference_resolution('Project Shared fee?') is None
+    m.past_qas = [replace(t, evidence_status='unverified', valid_until=0) for t in m.past_qas]
+    assert m.reference_resolution('Project Shared fee?') is None
+    legacy = SharedMemory()
+    legacy.past_qas = [replace(m.past_qas[0], valid_until=None)]
+    assert legacy.reference_resolution('Project Shared fee?') is None
+
+
+def test_identity_only_context_reaches_real_left_and_right_without_fact_leakage(monkeypatch):
+    from engine_stdio import EngineSession
+    from core.memory_answerability import AnswerabilityGate
+    monkeypatch.setenv('DUALBRAIN_MEMORY_CONVERSATION_CONTEXT', '1')
+    captured = []
+    class Reject:
+        identity = 'reject-all-test'
+        async def evaluate(self, request):
+            return json.dumps({'decisions': [{'id': r['id'], 'supported': False, 'quote': ''} for r in request['records']]})
+    class Capture:
+        def __init__(self, role): self.role = role
+        async def complete(self, prompt, *, system=None, **kwargs):
+            captured.append((self.role, str(system)))
+            if self.role == 'right':
+                return json.dumps({'verdict': 'ok', 'issues': [], 'fixes': [], 'critic_sum': 'No defect', 'confidence_r': .9})
+            return '料金の記録を確認できません。'
+    async def run():
+        session = await EngineSession.create('reference-channel')
+        try:
+            write(session.memory, 'Alpha', 'source', 'PRIVATE_14_DAYS')
+            session.memory.answerability_gate = AnswerabilityGate(Reject())
+            session.left._llm_client, session.right._llm_client = Capture('left'), Capture('right')
+            session.left.uses_external_llm = session.right.uses_external_llm = True
+            await session.controller.process('Project Alpha fee?', qid='fee', leading_brain='left', system2_mode='on')
+            assert not session.memory.retrieve_related_traces('Project Alpha fee?')
+        finally:
+            await session.close()
+    asyncio.run(run())
+    assert {role for role, _ in captured} == {'left', 'right'}
+    for _, system in captured:
+        assert '"reference": "resolved"' in system
+        assert '"approved_qa_supplied": false' in system
+        assert 'PRIVATE_14_DAYS' not in system

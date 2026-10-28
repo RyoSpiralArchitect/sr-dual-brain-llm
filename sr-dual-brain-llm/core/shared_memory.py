@@ -279,6 +279,23 @@ class SharedMemory:
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question
 
+    def reference_resolution(self, question):
+        """Identity metadata alone never establishes support for a requested fact."""
+        if not self.conversation_context:
+            return None
+        cue = self.scope_resolver().query(self.retrieval_question(question))
+        if cue.ambiguous:
+            return "ambiguous"
+        if len(cue.scopes) > 1:
+            return "multiple_explicit"
+        if len(cue.scopes) == 1:
+            # begin_turn clears focus for a known + explicit unknown project.
+            # A partially matched question must not be declared fully resolved.
+            if question == self._turn_question and self._focus_scope is None:
+                return None
+            return "resolved"
+        return None
+
     def restore_committed_traces(self, traces):
         """Refresh durable memory without discarding this process's conversation focus."""
         self.past_qas = list(traces)
