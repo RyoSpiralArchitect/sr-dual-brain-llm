@@ -111,3 +111,25 @@ async def test_first_provider_failure_blocks_further_posts_in_the_run():
     with pytest.raises(RuntimeError, match='blocked'):
         await journal.post('left', 'https://example.invalid', {'different': True}, {})
     assert len(calls) == journal.calls == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('flag', bench.EXTERNAL_BACKEND_FLAGS)
+@pytest.mark.parametrize('seed', [False, True])
+async def test_external_backends_are_rejected_before_any_seed_or_probe_session(flag, seed, monkeypatch):
+    monkeypatch.setenv(flag, 'untracked-backend')
+    called = []
+    async def create(*args, **kwargs):
+        called.append(True)
+        pytest.fail('Session factory reached an unwrapped backend')
+    monkeypatch.setattr(bench.EngineSession, 'create', create)
+    with pytest.raises(ValueError, match=flag):
+        await bench.session_for('guarded', None, None, None, 'left', [0.], seed=seed)
+    assert not called
+
+
+@pytest.mark.asyncio
+async def test_frozen_run_rejects_embedding_selector_before_loading_or_replaying(monkeypatch):
+    monkeypatch.setenv('DUALBRAIN_MEMORY_EMBEDDING_MODEL', 'untracked-backend')
+    with pytest.raises(ValueError, match='DUALBRAIN_MEMORY_EMBEDDING_MODEL'):
+        await bench.run(None, None, None, None)

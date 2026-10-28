@@ -84,3 +84,10 @@ requested 2,048. No payload cap was changed to obtain a better result. New metad
 explicitly reports the support cap; historical exact request journals retain their
 original fields. This deviation and all actual request caps must appear in the
 result report rather than retrofitting historical artifacts.
+
+Review hardening: reject nonempty DUALBRAIN_MEMORY_EMBEDDING_MODEL and
+DUALBRAIN_MEMORY_ANSWERABILITY_MODEL before creating any session, in both live and
+frozen modes. The benchmark creates its own journaled support checker and permits
+no environment-selected embedding/support client. Parent/worker API checks prevent
+untracked provider calls and retrieval-configuration drift. These selectors are
+disabled in the observed environment; the guard is not a prompt/rubric change.

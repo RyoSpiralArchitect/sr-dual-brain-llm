@@ -156,7 +156,7 @@ benchmark drops only its unique table prefix. Replay replaces `--model` with
 `--journal PATH` at the matching recorded code revision; private journals are not
 included in the repository.
 
-Local validation of the repair and benchmark passed **732 Python tests**, including
+Local validation of the repair and benchmark passed **737 Python tests**, including
 **14 real PostgreSQL cases**, with no skips. **17 Gateway tests** passed (two
 unsupported binary-on-stdio cases skipped), and **13 Node UI tests** passed.
 The PostgreSQL runner regression exercises paired source snapshots, real durable
@@ -164,3 +164,12 @@ receipts, fresh spawned worker PIDs, exact zero-network replay and snapshot reus
 Separate tests cover atomic grader validation, provider fallback rejection,
 quota/cancellation diagnostics, immutable prior records and the first-failure
 transport stop. The unused evaluation remains a required live completion step.
+
+Code review identified a configuration escape: inherited embedding settings could
+create an unwrapped provider client, including during frozen replay. The runner
+now rejects both external embedding and automatic-support selectors before any
+session is created, in the parent and spawned workers. It creates only its own
+journaled support backend. Source/probe and replay rejection regressions make this
+configuration boundary explicit. Both selectors are disabled in the observed
+execution environment. This hardening makes no additional provider calls and does
+not change the frozen fixture, rubric or successful request payloads.

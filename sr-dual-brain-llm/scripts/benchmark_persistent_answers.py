@@ -61,6 +61,15 @@ RUNTIME = {'left': {'leading_brain': 'left', 'system2_mode': 'off'},
            'collaborative': {'leading_brain': 'left', 'system2_mode': 'on'}}
 
 
+EXTERNAL_BACKEND_FLAGS = ('DUALBRAIN_MEMORY_EMBEDDING_MODEL', 'DUALBRAIN_MEMORY_ANSWERABILITY_MODEL')
+
+
+def enforce_runtime():
+    blocked = [name for name in EXTERNAL_BACKEND_FLAGS if os.environ.get(name, '').strip()]
+    if blocked:
+        raise ValueError('Unset environment-selected retrieval backends: '+', '.join(blocked))
+
+
 class Journal(BaseJournal):
     """Retain safe HTTP status/cancellation diagnostics without exception text."""
     async def post(self, role, url, payload, headers, **kwargs):
@@ -187,6 +196,7 @@ def stable_store(memory, clock):
 
 
 async def session_for(sid, store, config, journal, arm, clock, *, seed=False):
+    enforce_runtime()
     clock[0] = 1793145600. if seed else 1793150000.
     stable_seed = int(digest([sid.rsplit(':', 1)[0], 'seed' if seed else 'probe'])[:8], 16)
     UUID_RNG.seed(stable_seed)
@@ -351,6 +361,7 @@ async def execute_worker(payload, journal, *, in_process=False):
 
 
 async def run(args, fixture, config, journal, source_cache=None):
+    enforce_runtime()
     dsn = os.environ.get('DUALBRAIN_TEST_PG_DSN')
     if not dsn:
         raise ValueError('Isolated DUALBRAIN_TEST_PG_DSN required')
@@ -471,6 +482,7 @@ def main():
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=False)
     try:
+        enforce_runtime()
         if bool(args.model)==bool(args.journal):
             raise ValueError('Choose live model or exact frozen journal')
         if args.max_calls > (64 if args.phase == 'development' else 112):
@@ -498,7 +510,12 @@ def main():
         write_private(args.output_dir/'report.json', report)
         print(json.dumps({k:report[k] for k in ('summaries','provider_calls','input_tokens','output_tokens','grader_failures')}, ensure_ascii=False, indent=2))
     except BaseException as exc:
-        checkpoint(args.output_dir/'failure.json', {'complete':False, 'error_type':type(exc).__name__})
+        failure = {'complete': False, 'error_type': type(exc).__name__}
+        blocked = [name for name in EXTERNAL_BACKEND_FLAGS if os.environ.get(name, '').strip()]
+        if blocked:
+            failure['unsupported_environment_variables'] = blocked
+            print('Unset unsupported retrieval selectors: '+', '.join(blocked), file=sys.stderr)
+        checkpoint(args.output_dir/'failure.json', failure)
         print('Benchmark incomplete: '+type(exc).__name__, file=sys.stderr)
         raise SystemExit(1) from None
 
