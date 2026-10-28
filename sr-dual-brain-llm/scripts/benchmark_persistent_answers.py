@@ -17,6 +17,7 @@ from collections import defaultdict
 import os
 from pathlib import Path
 import random
+import re
 import statistics
 import subprocess
 import sys
@@ -34,7 +35,7 @@ from core.postgres_state_store import PostgresStateStore
 from core.shared_memory import MemoryTrace
 from core.temporal_hippocampal_indexing import EpisodicTrace
 from engine_stdio import EngineSession, _handle_process
-from benchmark_conversation_memory import Journal, usage_for
+from benchmark_conversation_memory import Journal as BaseJournal, usage_for
 from benchmark_controlled_memory import checkpoint
 from benchmark_frozen_drafts import digest, read_json, write_private
 
@@ -58,6 +59,33 @@ JUDGE = (
 UUID_RNG = random.Random(20261028)
 RUNTIME = {'left': {'leading_brain': 'left', 'system2_mode': 'off'},
            'collaborative': {'leading_brain': 'left', 'system2_mode': 'on'}}
+
+
+class Journal(BaseJournal):
+    """Retain safe HTTP status/cancellation diagnostics without exception text."""
+    async def post(self, role, url, payload, headers, **kwargs):
+        try:
+            return await super().post(role, url, payload, headers, **kwargs)
+        except BaseException as exc:
+            key = digest({'role': role, 'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(), 'payload': payload})
+            rows = self.data['responses'].get(key, [])
+            if rows:
+                row = rows[-1]
+                row['error_type'] = type(exc).__name__
+                match = re.search(r'returned (\d{3}):', str(exc))
+                if match:
+                    row['http_status'] = int(match.group(1))
+                if 'response' not in row:
+                    self.input_tokens = self.output_tokens = None
+                for event in reversed(self.events):
+                    if event['key'] == key:
+                        event['error_type'] = row['error_type']
+                        if row.get('http_status'):
+                            event['http_status'] = row['http_status']
+                        break
+                if self.save:
+                    self.save(self.data)
+            raise
 
 
 class SkipConsult:

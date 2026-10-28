@@ -55,3 +55,13 @@ Development and evaluation commands will be recorded in the result report with
 exact output directories and source revisions. Read-only provider configuration
 is reused; no key or DSN value enters public artifacts. New disposable table
 prefixes are dropped in cleanup; the application DB is never used.
+
+Technical development amendment (before evaluation): the first repaired-development
+attempt stopped before its first answer after one successful support call and one
+provider POST failure. Its partial journal/failure artifacts remain intact; the
+original implementation recorded the error type but not its HTTP status. A
+read-only model-list check returned HTTP 200 with both configured models present.
+A separate explicit development rerun may use at most 62 calls, preserving the
+original 64-call allocation. Status-only error/cancellation telemetry is added;
+no prompts, rubric, fixtures or output limits change. This is not an automatic
+retry or favorable answer resampling. Missing failed-call token usage stays unknown.
