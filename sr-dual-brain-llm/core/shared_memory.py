@@ -203,6 +203,14 @@ class SharedMemory:
                 and not (self.conversation_context and trace.qid in self._pending_supersedes)
                 and trace.evidence_status != "superseded" and (trace.valid_until is None or trace.valid_until > now))
 
+    @staticmethod
+    def _mentions_unknown_project(question, resolver):
+        for marker in re.finditer(r"\bproject\s+|プロジェクト\s*", question, re.I):
+            name = re.match(r"[^\s:：?？,、。]+", question[marker.end():])
+            if not resolver.query(f"Project {name.group() if name else ''}").scopes:
+                return True
+        return False
+
     def begin_turn(self, question, qid, metadata=None):
         """Caller-declared scope/write intent; never infer a correction from recency."""
         self._turn_question = self._turn_query = None
@@ -244,11 +252,7 @@ class SharedMemory:
         query = question
         # A known project plus an explicit unknown project must not leave a
         # deceptively unique focus for the next pronoun-only turn.
-        project_mentions = []
-        for marker in re.finditer(r"\bproject\s+|プロジェクト\s*", question, re.I):
-            name = re.match(r"[^\s:：?？,、。]+", question[marker.end():])
-            project_mentions.append(name.group() if name else "")
-        unknown_project = any(not resolver.query(f"Project {name}").scopes for name in project_mentions)
+        unknown_project = self._mentions_unknown_project(question, resolver)
         if unknown_project:
             focus = None
         elif not cue.ambiguous and len(cue.scopes) == 1:
@@ -283,16 +287,15 @@ class SharedMemory:
         """Identity metadata alone never establishes support for a requested fact."""
         if not self.conversation_context:
             return None
-        cue = self.scope_resolver().query(self.retrieval_question(question))
+        resolver = self.scope_resolver()
+        if self._mentions_unknown_project(question, resolver):
+            return None
+        cue = resolver.query(self.retrieval_question(question))
         if cue.ambiguous:
             return "ambiguous"
         if len(cue.scopes) > 1:
             return "multiple_explicit"
         if len(cue.scopes) == 1:
-            # begin_turn clears focus for a known + explicit unknown project.
-            # A partially matched question must not be declared fully resolved.
-            if question == self._turn_question and self._focus_scope is None:
-                return None
             return "resolved"
         return None
 

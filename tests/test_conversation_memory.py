@@ -598,3 +598,20 @@ def test_identity_only_context_reaches_real_left_and_right_without_fact_leakage(
         assert '"reference": "resolved"' in system
         assert '"approved_qa_supplied": false' in system
         assert 'PRIVATE_14_DAYS' not in system
+
+
+def test_partial_multi_project_identity_is_not_reported_as_fully_resolved():
+    from dataclasses import replace
+    m = SharedMemory(conversation_context=True)
+    write(m, 'Alpha', 'alpha', '14 days')
+    write(m, 'Beta', 'beta', '29 days')
+    mixed = 'What are the fees for Project Alpha, Project Beta, and Project Unknown?'
+    m.begin_turn(mixed, 'mixed')
+    assert m.reference_resolution(mixed) is None
+    known = 'What are the fees for Project Alpha and Project Beta?'
+    m.begin_turn(known, 'known')
+    assert m.reference_resolution(known) == 'multiple_explicit'
+    # A source can expire while async preparation runs: recheck the registry
+    # rather than trusting the focus/alias result captured at begin_turn.
+    m.past_qas = [replace(t, valid_until=0) if t.qid == 'beta' else t for t in m.past_qas]
+    assert m.reference_resolution(known) is None

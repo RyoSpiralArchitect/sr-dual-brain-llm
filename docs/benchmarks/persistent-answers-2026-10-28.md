@@ -156,7 +156,7 @@ benchmark drops only its unique table prefix. Replay replaces `--model` with
 `--journal PATH` at the matching recorded code revision; private journals are not
 included in the repository.
 
-Local validation of the repair and benchmark passed **737 Python tests**, including
+Local validation of the repair and benchmark passed **738 Python tests**, including
 **14 real PostgreSQL cases**, with no skips. **17 Gateway tests** passed (two
 unsupported binary-on-stdio cases skipped), and **13 Node UI tests** passed.
 The PostgreSQL runner regression exercises paired source snapshots, real durable
@@ -173,3 +173,10 @@ journaled support backend. Source/probe and replay rejection regressions make th
 configuration boundary explicit. Both selectors are disabled in the observed
 execution environment. This hardening makes no additional provider calls and does
 not change the frozen fixture, rubric or successful request payloads.
+
+A second review repair reuses explicit-unknown project detection for every
+reference cardinality, including two known scopes plus an unknown third scope.
+It resolves against the current active registry, so expiry during preparation
+cannot leave a partially matched multi-project request marked fully resolved.
+The authored live fixture and rubric are unchanged; this boundary is covered by
+a new model-free lifecycle regression, with no additional provider requests.
