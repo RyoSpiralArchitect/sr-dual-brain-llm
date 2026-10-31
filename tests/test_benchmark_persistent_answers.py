@@ -124,6 +124,23 @@ async def test_first_provider_failure_blocks_further_posts_in_the_run():
 
 
 @pytest.mark.asyncio
+async def test_frozen_failure_blocks_its_turn_even_if_same_key_later_succeeds():
+    from core.llm_client import LLMConfig
+    config=LLMConfig('openai','test','PRIVATE_KEY')
+    request={'role':'right','endpoint_sha256':__import__('hashlib').sha256(b'https://example.invalid').hexdigest(),'payload':{}}
+    error={'request':request,'error_type':'ValueError','response':{'choices':[{'finish_reason':'stop','message':{'content':''}}]}}
+    success={'request':request,'response':{'choices':[{'finish_reason':'stop','message':{'content':'ok'}}]}}
+    journal=bench.Journal(config,{},frozen={'complete':True,'responses':{bench.digest(request):[error,success]}})
+    with pytest.raises(RuntimeError):
+        await journal.post('right','https://example.invalid',{}, {})
+    assert journal.data['transport_blocked']
+    journal.data['transport_blocked']=False  # A new, independently planned cell.
+    assert (await journal.post('right','https://example.invalid',{}, {}))['choices'][0]['message']['content']=='ok'
+    journal.finish()
+    assert journal.calls==0
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize('flag', bench.EXTERNAL_BACKEND_FLAGS)
 @pytest.mark.parametrize('seed', [False, True])
 async def test_external_backends_are_rejected_before_any_seed_or_probe_session(flag, seed, monkeypatch):
