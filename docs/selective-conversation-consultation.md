@@ -52,6 +52,7 @@ answer was independently verified.
 
 See the [prospective pilot protocol](benchmarks/selective-consultation-protocol.md)
 for the frozen-draft comparison, separate natural/synthetic strata, costs and
-limits. The preceding [persistent-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
+limits, and the [measured result](benchmarks/selective-consultation-2026-11-01.md)
+for the observed call savings and remaining task-completeness gap. The preceding [persistent-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
 provides the factual-memory motivation, but its forced-on/off comparison does not
 measure this new router or ordinary automatic routing.
