@@ -133,6 +133,12 @@ def test_continuation_never_retries_failed_or_completed_cells_and_replays_all_re
     args.output_dir=tmp_path/'continued'; args.output_dir.mkdir(); args.resume=prefix
     continued=bench.base.Journal(config,metadata,max_calls=64)
     continued.transport._post_json=post
+    # This simulated prefix was produced in the current working tree, which
+    # need not be committed while developing; independently test freeze rejection.
+    monkeypatch.setattr(bench,'production_unchanged',lambda _:False)
+    with pytest.raises(ValueError,match='Production runtime changed'):
+        bench.resume_prefix(args,fixture,config,continued)
+    monkeypatch.setattr(bench,'production_unchanged',lambda _:True)
     wrong_model=bench.base.Journal(LLMConfig('openai','different-model','PRIVATE_KEY'),metadata,max_calls=64)
     with pytest.raises(ValueError):
         bench.resume_prefix(args,fixture,LLMConfig('openai','different-model','PRIVATE_KEY'),wrong_model)

@@ -85,6 +85,12 @@ def test_ambiguous_or_unconsumed_signs_cannot_be_read_as_unsigned_values(value):
     assert route(approved_records=[source],draft=source.answer).reason=='unsupported_numeric_format'
 
 
+@pytest.mark.parametrize('value', ['-$11','-€11','+$11','-USD 11','11-','non-negative 11'])
+def test_unconsumed_numeric_signs_cannot_vanish_around_currency_or_other_text(value):
+    source=MemoryTrace('Project Amber thresholds',f'The recorded balance is {value}.')
+    assert route(approved_records=[source],draft='The recorded balance is $11.').reason=='unsupported_numeric_format'
+
+
 async def routing_stage(monkeypatch, **changes):
     monkeypatch.setenv('DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT', '1')
     m = SharedMemory(conversation_context=True, answerability_gate=AnswerabilityGate(Checks()))

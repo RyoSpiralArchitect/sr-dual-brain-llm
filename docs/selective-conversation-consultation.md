@@ -35,6 +35,9 @@ not a calibrated provider score. Broader evaluation is required before making th
 router the default. Standard comma-separated thousands groups are parsed as whole
 values. Malformed grouping, space-separated groups, fractions and scientific or
 multi-dot forms request consultation rather than silently comparing digit sets.
+Unconsumed plus/minus signs, including signs before currency symbols/codes, also
+request consultation. This intentionally includes some benign hyphenated text;
+unsupported surface forms must not silently lose numeric polarity.
 
 Missing, ambiguous, multiple, qualitative-only or incomplete evidence defers to
 normal routing. So do low-confidence and risk signals. A successful support check

@@ -35,7 +35,7 @@ def _numbers(text):
     # Never silently discard an unrecognized numeric fragment alongside a
     # supported value: partial extraction could otherwise authorize a skip.
     residual = _NUMBERS.sub('', normalized)
-    if re.search(r'\d', residual) or any(_SCALAR.fullmatch(value) is None for value in values):
+    if re.search(r'[\d+\-]', residual) or any(_SCALAR.fullmatch(value) is None for value in values):
         raise ValueError('Unsupported numeric grouping')
     return {Decimal(value.replace(',', '')) for value in values}
 

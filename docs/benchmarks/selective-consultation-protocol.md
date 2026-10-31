@@ -122,3 +122,11 @@ other exact request with zero provider calls. This is a technical completion of
 the original trial plan, not a new evaluation draw or favorable subset.
 Right detail requests use 450 tokens (900 for large budget); critique normally
 uses 520 and format repair can use 900. Publish all observed caps by role.
+
+Post-measurement review amendment: review found a sign before a currency symbol
+could remain unconsumed (`-$11` becoming unsigned 11). Reject every residual
+plus/minus sign after scalar extraction, conservatively including benign
+hyphenated prose. Add monetary/sign regressions. No new provider calls or
+evaluation draws are permitted: require full exact-request replay of development
+and combined evaluation to establish that the observed decisions, answers,
+unavailable cell and grades remain unchanged under this final parser hardening.

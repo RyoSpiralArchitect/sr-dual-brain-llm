@@ -103,16 +103,20 @@ def failed_events_are_completions(journal, events):
     return bool(failed) and all(generation_failure(rows[e['key']][journal.counts[e['key']]-1]) for e in failed)
 
 
+def production_unchanged(revision):
+    return (re.fullmatch(r'[0-9a-f]{40}',revision or '') is not None
+            and subprocess.run(['git','diff','--quiet',revision,'--',
+                                'sr-dual-brain-llm/core','sr-dual-brain-llm/scripts/engine_stdio.py'],
+                               cwd=base.ROOT.parent).returncode==0)
+
+
 def resume_prefix(args, fixture, config, journal):
     path=getattr(args,'resume',None)
     if path is None:
         return None
     old=read_json(path/'report.partial.json')
     data=read_json(path/'journal.partial.json')
-    if (re.fullmatch(r'[0-9a-f]{40}',old.get('source_revision','')) is None
-            or subprocess.run(['git','diff','--quiet',old['source_revision'],'--',
-                               'sr-dual-brain-llm/core','sr-dual-brain-llm/scripts/engine_stdio.py'],
-                              cwd=base.ROOT.parent).returncode!=0):
+    if not production_unchanged(old.get('source_revision')):
         raise ValueError('Production runtime changed after the frozen prefix')
     if (data.get('complete') or old.get('complete') or old.get('grades')
             or old['fixture_sha256']!=digest(fixture) or old['phase']!=args.phase
