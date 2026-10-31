@@ -20,7 +20,8 @@ def test_frozen_fixture_separates_development_and_preserves_counterfactual_prove
     assert {c['origin'] for c in evaluation}=={'model','synthetic_clean','synthetic_faulty'}
 
 
-def test_real_sessions_frozen_draft_identity_selective_telemetry_and_exact_replay(tmp_path, monkeypatch):
+@pytest.mark.parametrize('missing_usage', [False, True])
+def test_real_sessions_frozen_draft_identity_selective_telemetry_and_exact_replay(tmp_path, monkeypatch, missing_usage):
     monkeypatch.delenv('DUALBRAIN_MEMORY_EMBEDDING_MODEL',raising=False)
     monkeypatch.delenv('DUALBRAIN_MEMORY_ANSWERABILITY_MODEL',raising=False)
     fixture=bench.read_json(bench.FIXTURE)
@@ -41,11 +42,15 @@ def test_real_sessions_frozen_draft_identity_selective_telemetry_and_exact_repla
             text=json.dumps({'verdict':'ok','issues':[],'fixes':[]})
         else:
             text='According to the record, retention is 11 days.'
-        return {'model':payload['model'],'choices':[{'finish_reason':'stop','message':{'content':text}}],
-                'usage':{'prompt_tokens':1,'completion_tokens':1}}
+        response={'model':payload['model'],'choices':[{'finish_reason':'stop','message':{'content':text}}]}
+        if not missing_usage:
+            response['usage']={'prompt_tokens':1,'completion_tokens':1}
+        return response
     journal.transport._post_json=post
     report=asyncio.run(bench.run(args,fixture,config,journal))
     assert report['complete'] and report['grader_failures']==0 and len(report['rows'])==8
+    assert (report['input_tokens'] is None) is missing_usage
+    assert (report['summaries']['all']['selective_auto']['input_tokens'] is None) is missing_usage
     for case in ('dev-lookup','dev-calculation'):
         rows=[r for r in report['rows'] if r['episode']==case and r['arm']!='no_revision']
         assert len({r['draft_sha256'] for r in rows})==1

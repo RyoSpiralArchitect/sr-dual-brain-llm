@@ -19,7 +19,7 @@ from unittest.mock import patch
 import benchmark_persistent_answers as base
 from benchmark_conversation_memory import usage_for
 from benchmark_controlled_memory import checkpoint
-from benchmark_frozen_drafts import digest, read_json, write_private
+from benchmark_frozen_drafts import digest, read_json, write_private, sum_usage
 from core.consultation_router import VERSION
 from core.llm_client import LLMConfig, load_llm_config
 from core.policy import TORCH_AVAILABLE
@@ -154,8 +154,8 @@ async def run(args, fixture, config, journal):
                 'all_pass':sum(all(v['verdict']=='pass' for v in g['scores'].values()) for g in grades),
                 'grounding_failures':sum(g['scores']['grounding']['verdict']=='fail' for g in grades),
                 'calls':sum(r['usage']['calls'] for r in rows),
-                'input_tokens':sum(r['usage']['input_tokens'] for r in rows),
-                'output_tokens':sum(r['usage']['output_tokens'] for r in rows),
+                'input_tokens':sum_usage([r['usage'] for r in rows],'input_tokens'),
+                'output_tokens':sum_usage([r['usage'] for r in rows],'output_tokens'),
                 'handler_ms_median':statistics.median(r['elapsed_ms'] for r in rows) if rows else None}
         report['summaries'][origin]=summary
     return report

@@ -50,6 +50,14 @@ def test_new_numeric_claim_requests_a_critic_instead_of_skipping():
     assert route(draft='The recorded retention is 19 days.').reason == 'numeric_drift'
 
 
+def test_grouped_numbers_are_whole_values_and_other_formats_never_silently_skip():
+    source=MemoryTrace('Project Amber request limit','The limit is 1,000 requests.')
+    assert route(approved_records=[source],draft='The recorded limit is 1,000,000 requests.').reason=='numeric_drift'
+    assert route(approved_records=[source],draft='The recorded limit is 1000 requests.').action=='skip'
+    for text in ('1,00 requests','1 000 requests','1/2 requests','1e3 requests','1.2.3 requests'):
+        assert route(approved_records=[replace(source,answer=text)],draft=text).reason=='unsupported_numeric_format'
+
+
 async def routing_stage(monkeypatch, **changes):
     monkeypatch.setenv('DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT', '1')
     m = SharedMemory(conversation_context=True, answerability_gate=AnswerabilityGate(Checks()))

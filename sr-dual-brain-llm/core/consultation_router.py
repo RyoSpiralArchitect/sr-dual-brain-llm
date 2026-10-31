@@ -17,11 +17,18 @@ _REASONING = re.compile(
     re.I,
 )
 _LOOKUP = re.compile(r"\b(what|which|when|recall|repeat)\b|教えて|何|どの|いつ|再掲|そのまま|は[?？]?$", re.I)
-_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.])[+-]?\d+(?:\.\d+)?(?![A-Za-z0-9_.])")
+_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.])[+-]?\d+(?:,\d+)*(?:\.\d+)?(?![A-Za-z0-9_])")
+_SCALAR = re.compile(r"[+-]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?")
 
 
 def _numbers(text):
-    return {Decimal(value) for value in _NUMBERS.findall(unicodedata.normalize("NFKC", text))}
+    normalized = unicodedata.normalize("NFKC", text)
+    if re.search(r"\d\s*/\s*\d|\d\s+[0-9]|\d\s*[eE]\s*[+-]?\s*\d|\d\.\d+\.\d", normalized):
+        raise ValueError('Unsupported numeric format')
+    values = _NUMBERS.findall(normalized)
+    if any(_SCALAR.fullmatch(value) is None for value in values):
+        raise ValueError('Unsupported numeric grouping')
+    return {Decimal(value.replace(',', '')) for value in values}
 
 
 @dataclass(frozen=True)
@@ -54,11 +61,14 @@ def route_conversation_lookup(*, question, draft, confidence, risk, q_type,
     if not draft.strip() or len(q) > 180 or "\n" in q or not _LOOKUP.search(q):
         return ConsultationRoute("defer", "not_bounded_lookup")
     source = approved_records[0]
-    source_numbers, draft_values = _numbers(source.answer), _numbers(draft)
-    # Declared identity/version digits are not requested factual coverage.
-    identity_numbers = _numbers(" ".join(source.scope_aliases))
+    try:
+        source_numbers, draft_values = _numbers(source.answer), _numbers(draft)
+        # Declared identity/version digits are not requested factual coverage.
+        identity_numbers = _numbers(" ".join(source.scope_aliases))
+        allowed = source_numbers | _numbers(source.question) | _numbers(q)
+    except ValueError:
+        return ConsultationRoute("consult", "unsupported_numeric_format")
     values = source_numbers - identity_numbers
-    allowed = source_numbers | _numbers(source.question) | _numbers(q)
     if draft_values - allowed:
         return ConsultationRoute("consult", "numeric_drift")
     if not values or not values <= draft_values:

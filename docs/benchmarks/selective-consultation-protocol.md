@@ -58,7 +58,11 @@ Journal all POSTs by role, including shared drafting/support and grading; abort
 generation on a provider failure and block further transport after the first
 failure. Missing usage remains unknown. Requested output caps are 2048 for
 draft/left/judge, 520 for right critique and 4096 for support. No continuations or
-automatic retries. Unused calls are not permission to resample.
+transport retries. The ordinary critic can request JSON-format repair (up to 900
+output tokens) if its response is unstructured; that different request is counted
+under the same role and budget. No such repair occurred in development. Publish
+observed caps rather than assuming every right request used 520. Unused calls are
+not permission to resample.
 
 Report per-arm post-draft costs separately from shared draft creation and judge
 costs. Include actual token usage, calls and outer handler wall time. The zero-
@@ -69,3 +73,15 @@ turn costs. Timing is descriptive only. Match exact full-request replay with zer
 provider calls; preserve failures, policy/fixture/revision/request hashes and
 actual configured/served models. Raw drafts, responses, quotes and journals stay
 private in ignored target/benchmarks; publish only metrics and hashes.
+
+Pre-evaluation review amendment: the two development trials completed at
+`6defb14` using 20 calls; existing-auto, selective-auto and forced-on each passed
+2/2. Selective saved one lookup call and used one extra calculation verification
+call, totaling the same five post-draft calls as existing auto. Exact development
+replay used zero provider calls. Review then found grouped numbers could collapse
+into identical digit sets, and missing usage could crash final cost aggregation.
+Normalize standard thousands groups as whole scalar values, consult for unsupported
+formats, and preserve unknown aggregate token counts. Add regressions before any
+evaluation. These repairs do not change the observed development inputs/prompts;
+verify their exact journal replay rather than resampling development answers.
+The unused evaluation and remaining 44-call development allocation stay untouched.
