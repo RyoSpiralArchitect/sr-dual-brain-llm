@@ -10,7 +10,8 @@ For model-origin trials, one real clamped left-only turn produces a shared draft
 using the production memory context and support checker. Capture that initial
 draft unchanged. Synthetic clean/faulty variants are authored counterfactuals;
 report them separately from model drafts. All arms receive exactly the same draft
-and primary records. Ground-truth references and rubric enter grading only.
+and primary records. The `reference` and `criteria` fields enter grading only;
+authored records and synthetic drafts are the prescribed controlled inputs.
 
 Arms: unchanged draft (zero post-draft calls), existing auto routing, selective
 auto routing, and forced System2 on. Actual controller draft generation is replaced
@@ -71,8 +72,9 @@ end-to-end latency. Session creation/hydration is outside handler timing. Frozen
 draft generation is shared once, so arm costs are not full independent production
 turn costs. Timing is descriptive only. Match exact full-request replay with zero
 provider calls; preserve failures, policy/fixture/revision/request hashes and
-actual configured/served models. Raw drafts, responses, quotes and journals stay
-private in ignored target/benchmarks; publish only metrics and hashes.
+actual configured/served models. Authored synthetic drafts are in the reviewable
+fixture. Generated drafts, responses, grading quotes and journals stay private in
+ignored target/benchmarks; publish only metrics and hashes from those artifacts.
 
 Pre-evaluation review amendment: the two development trials completed at
 `6defb14` using 20 calls; existing-auto, selective-auto and forced-on each passed
@@ -85,3 +87,8 @@ formats, and preserve unknown aggregate token counts. Add regressions before any
 evaluation. These repairs do not change the observed development inputs/prompts;
 verify their exact journal replay rather than resampling development answers.
 The unused evaluation and remaining 44-call development allocation stay untouched.
+A second review found leading-dot decimals could be dropped beside another
+supported value. Parse signed leading-dot decimals as complete values and reject
+unparsed numeric fragments rather than relying on partial extraction. Add drift
+and unsupported-format regressions before evaluation; retain the original live
+development data and verify exact replay at the final frozen code revision.

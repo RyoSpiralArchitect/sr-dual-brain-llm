@@ -17,16 +17,20 @@ _REASONING = re.compile(
     re.I,
 )
 _LOOKUP = re.compile(r"\b(what|which|when|recall|repeat)\b|教えて|何|どの|いつ|再掲|そのまま|は[?？]?$", re.I)
-_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.])[+-]?\d+(?:,\d+)*(?:\.\d+)?(?![A-Za-z0-9_])")
-_SCALAR = re.compile(r"[+-]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?")
+_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.])[+-]?(?:\d+(?:,\d+)*(?:\.\d+)?|\.\d+)(?![A-Za-z0-9_])")
+_SCALAR = re.compile(r"[+-]?(?:(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?|\.\d+)")
 
 
 def _numbers(text):
     normalized = unicodedata.normalize("NFKC", text)
-    if re.search(r"\d\s*/\s*\d|\d\s+[0-9]|\d\s*[eE]\s*[+-]?\s*\d|\d\.\d+\.\d", normalized):
+    if (any(c.isnumeric() and unicodedata.category(c) != 'Nd' for c in text)
+            or re.search(r"\d\s*[/⁄∕]\s*[+-]?[.\d]|\d\s+[0-9]|\d\s*[eE]\s*[+-]?\s*\d|\d\.\d+\.\d|[٫٬]", normalized)):
         raise ValueError('Unsupported numeric format')
     values = _NUMBERS.findall(normalized)
-    if any(_SCALAR.fullmatch(value) is None for value in values):
+    # Never silently discard an unrecognized numeric fragment alongside a
+    # supported value: partial extraction could otherwise authorize a skip.
+    residual = _NUMBERS.sub('', normalized)
+    if re.search(r'\d', residual) or any(_SCALAR.fullmatch(value) is None for value in values):
         raise ValueError('Unsupported numeric grouping')
     return {Decimal(value.replace(',', '')) for value in values}
 

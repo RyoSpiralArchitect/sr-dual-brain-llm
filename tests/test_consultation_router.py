@@ -58,6 +58,19 @@ def test_grouped_numbers_are_whole_values_and_other_formats_never_silently_skip(
         assert route(approved_records=[replace(source,answer=text)],draft=text).reason=='unsupported_numeric_format'
 
 
+@pytest.mark.parametrize('value,changed', [('.5','.9'),('-.5','.5'),('+0.5','-.5'),('1,000.5','1,000.9')])
+def test_decimal_drift_cannot_hide_beside_an_unchanged_supported_value(value, changed):
+    source=MemoryTrace('Project Amber retention and delay',f'Retention is 11 days; delay is {value} seconds.')
+    assert route(approved_records=[source],draft=f'Retention is 11 days; delay is {changed} seconds.').reason=='numeric_drift'
+    assert route(approved_records=[source],draft=f'Retention is 11 days; delay is {value} seconds.').action=='skip'
+
+
+@pytest.mark.parametrize('value', ['.5e2','1abc','½','١٫٥'])
+def test_unparsed_numeric_fragments_never_disappear_beside_a_valid_value(value):
+    source=MemoryTrace('Project Amber retention and delay',f'Retention is 11 days; delay is {value} seconds.')
+    assert route(approved_records=[source],draft=source.answer).reason=='unsupported_numeric_format'
+
+
 async def routing_stage(monkeypatch, **changes):
     monkeypatch.setenv('DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT', '1')
     m = SharedMemory(conversation_context=True, answerability_gate=AnswerabilityGate(Checks()))
