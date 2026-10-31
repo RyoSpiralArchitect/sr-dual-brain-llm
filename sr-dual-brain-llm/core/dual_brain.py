@@ -910,6 +910,21 @@ class DualBrainController:
         if replay_ctx:
             rebuilt.append(f"[Hippocampal replay] {replay_ctx}")
 
+        resolver = getattr(self.memory, "reference_resolution", None)
+        resolution = resolver(question) if guarded_memory and callable(resolver) else None
+        if resolution:
+            # Keep reference identity separate from approved QA evidence and its
+            # salience/gating counts. This carries no source text, values or IDs.
+            rebuilt.append(
+                "Conversation reference metadata (identity only, not factual evidence): "
+                + json.dumps({"reference": resolution, "approved_qa_supplied": bool(mem_ctx)})
+                + ". A resolved reference or multiple explicitly named projects must not be re-identified. "
+                "Missing approved evidence means requested facts cannot be confirmed from this context, "
+                "not that the project name is ambiguous. Acknowledge missing facts or request their source; "
+                "do not guess values. For an ambiguous reference, ask which project is intended. "
+                "This metadata does not verify any project fact."
+            )
+
         context = "\n".join(rebuilt)
         return context, focus
 

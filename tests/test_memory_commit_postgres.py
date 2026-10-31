@@ -281,3 +281,62 @@ def test_real_engine_restart_and_correction_replay_retain_buried_primary(pg_stor
             await second.close()
     asyncio.run(run())
     assert len(load(pg_store)) == 1032 and count_receipts(pg_store) == 1
+
+
+@pytest.mark.parametrize('selected', [None, ['conditions', 'cold-conditions']])
+def test_persistent_answer_runner_real_store_pairing_and_snapshot_reuse(pg_store, tmp_path, monkeypatch, selected):
+    import benchmark_persistent_answers as bench
+    import json
+    from types import SimpleNamespace
+    from core.llm_client import LLMConfig
+    fixture = bench.read_json(bench.FIXTURE)
+    fixture['episodes'] = [ep for ep in fixture['episodes'] if ep['split'] == 'development']
+    config = LLMConfig('openai', 'fake-model', 'NEVER_PERSIST_THIS_KEY', auto_continue=False)
+    args = SimpleNamespace(phase='development', output_dir=tmp_path / 'first', judge_model='fake-judge',
+                           in_process=True, development_probes=selected)
+    args.output_dir.mkdir()
+    journal = bench.Journal(config, {}, max_calls=64)
+    async def post(url, payload, headers, **kwargs):
+        if payload.get('response_format', {}).get('type') == 'json_schema':
+            packet = json.loads(payload['messages'][-1]['content'])
+            text = json.dumps({'scores': {label: {c: {'verdict': 'pass', 'quote': answer}
+                               for c in bench.CRITERIA} for label, answer in packet['answers'].items()}})
+        elif payload.get('response_format'):
+            packet = json.loads(payload['messages'][-1]['content'])
+            text = json.dumps({'decisions': [{'id': r['id'], 'supported': False, 'quote': ''} for r in packet['records']]})
+        elif 'verdict' in str(payload['messages']):
+            text = json.dumps({'verdict': 'ok', 'issues': [], 'fixes': [], 'critic_sum': 'No defect', 'confidence_r': .9})
+        else:
+            text = '確認できる記録がありません。'
+        return {'model': payload['model'], 'choices': [{'finish_reason': 'stop', 'message': {'content': text}}],
+                'usage': {'prompt_tokens': 10, 'completion_tokens': 5}}
+    journal.transport._post_json = post
+    report = asyncio.run(bench.run(args, fixture, config, journal))
+    assert report['complete'] and report['grader_failures'] == 0
+    expected = len(selected) if selected else 5
+    assert report['summaries']['left']['probes'] == report['summaries']['collaborative']['probes'] == expected
+    assert len(report['grades']) == 2*expected
+    if selected:
+        assert {row['id'] for row in report['rows']} == set(selected)
+    assert report['usage_by_role']['right']['calls'] > 0
+    assert 'NEVER_PERSIST_THIS_KEY' not in json.dumps(journal.data)
+    sources = bench.read_json(args.output_dir / 'sources.json')
+    args.output_dir = tmp_path / 'second'
+    args.output_dir.mkdir()
+    reused = bench.Journal(config, {}, max_calls=64)
+    reused.transport._post_json = post
+    repeated = asyncio.run(bench.run(args, fixture, config, reused, sources))
+    assert repeated['sources'] == report['sources']
+    assert 'seed' not in repeated['usage_by_role']
+    # Spawned workers have fresh interpreters and may only use exact recorded
+    # requests; a missing request fails instead of reaching the fake/live client.
+    args.output_dir = tmp_path / 'spawned-replay'
+    args.output_dir.mkdir()
+    args.in_process = False
+    frozen = bench.Journal(config, {}, frozen=journal.data, max_calls=64)
+    replayed = asyncio.run(bench.run(args, fixture, config, frozen))
+    assert replayed['fresh_processes'] and replayed['provider_calls'] == 0
+    assert replayed['grades'] == report['grades']
+    for arm in bench.ARMS:
+        pids = {row['worker_pid'] for row in replayed['rows'] if row['arm'] == arm}
+        assert len(pids) == 2
