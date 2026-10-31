@@ -91,3 +91,24 @@ frozen modes. The benchmark creates its own journaled support checker and permit
 no environment-selected embedding/support client. Parent/worker API checks prevent
 untracked provider calls and retrieval-configuration drift. These selectors are
 disabled in the observed environment; the guard is not a prompt/rubric change.
+
+Development amendment — 2026-11-01 (before any evaluation): after the user
+confirmed restored quota, the complete five-probe development measurement at
+`2b39d43` used 34 calls with the original frozen sources. Left-centered scored
+5/5; collaborative scored 3/5. Preserve that full result, including the two
+collaborative failures. Inspection of development-only journals showed the critic
+discarding recorded values solely because historical answers were not externally
+verified, even when the draft attributed them to the conversation. Clarify source
+attribution in production memory context and critic guidance; do not promote the
+records to verified status or bypass the support gate.
+
+Of the repaired-development allocation, 9 earlier attempts + 34 resumed calls =
+43 are consumed. Use at most the remaining 21 calls for a separately labeled
+paired diagnostic on the two failed development probes, `conditions` and
+`cold-conditions`. This diagnostic is not a replacement five-probe score and
+cannot establish a final 5/5 development result. It reuses the same source data,
+questions, references and rubric. A development-only CLI selection records the
+executed subset, rejects evaluation filtering, and makes no grading calls for
+unexecuted probes. Keep the full 5/5 versus 3/5 run visible. Freeze the resulting
+production code before the original two evaluation episodes; run those once in
+full under their unchanged 112-call allocation, without tuning on their answers.

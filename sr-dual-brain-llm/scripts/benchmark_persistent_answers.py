@@ -182,6 +182,18 @@ def validate_fixture(fixture):
             raise ValueError('Incomplete criteria')
 
 
+def development_probe_selection(args, fixture):
+    selected = getattr(args, 'development_probes', None)
+    if selected is None:
+        return None
+    if args.phase != 'development':
+        raise ValueError('Probe selection is restricted to development diagnostics')
+    known = {p['id'] for ep in fixture['episodes'] if ep['split'] == 'development' for p in ep['probes']}
+    if not selected or len(set(selected)) != len(selected) or not set(selected) <= known:
+        raise ValueError('Unknown, empty or duplicate development probe selection')
+    return frozenset(selected)
+
+
 def stable_store(memory, clock):
     original = memory.store
     def store(qa, **kwargs):
@@ -249,6 +261,8 @@ async def grade(journal, config, fixture, phase, rows, save):
             continue
         for probe in ep['probes']:
             candidates = [r for r in rows if r['episode'] == ep['id'] and r['id'] == probe['id']]
+            if not candidates:
+                continue  # Development diagnostics must not grade unexecuted probes.
             random.Random(int(digest([ep['id'], probe['id']])[:8], 16)).shuffle(candidates)
             labels = {chr(65+i): row for i, row in enumerate(candidates)}
             answers = {k: row['answer'] for k, row in labels.items()}
@@ -362,6 +376,7 @@ async def execute_worker(payload, journal, *, in_process=False):
 
 async def run(args, fixture, config, journal, source_cache=None):
     enforce_runtime()
+    selected = development_probe_selection(args, fixture)
     dsn = os.environ.get('DUALBRAIN_TEST_PG_DSN')
     if not dsn:
         raise ValueError('Isolated DUALBRAIN_TEST_PG_DSN required')
@@ -375,6 +390,7 @@ async def run(args, fixture, config, journal, source_cache=None):
               'fresh_processes': not getattr(args, 'in_process', False),
               'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'generation_model': config.model, 'judge_model': args.judge_model,
+              'development_probes': sorted(selected) if selected is not None else None,
               'role_output_caps': {'seed': 2048, 'left': 2048, 'right': 2048, 'judge': 2048, 'support': 4096}}
     save = lambda: checkpoint(args.output_dir/'report.partial.json', report)
     save()
@@ -422,6 +438,8 @@ async def run(args, fixture, config, journal, source_cache=None):
                     expected = {t.qid: digest(asdict(t)) for t in qas if not t.recalled_answer and t.evidence_status != 'superseded'}
                     chunks = []
                     for item in enumerate(ep['probes']):
+                        if selected is not None and item[1]['id'] not in selected:
+                            continue
                         if not chunks or item[1]['restart_before']:
                             chunks.append([])
                         chunks[-1].append(item)
@@ -479,6 +497,7 @@ def main():
     parser.add_argument('--sources', type=Path)
     parser.add_argument('--judge-model', default='gpt-6-sol')
     parser.add_argument('--max-calls', type=int, required=True)
+    parser.add_argument('--development-probes', nargs='+', help='Development-only diagnostic subset; never evaluation')
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=False)
     try:
@@ -489,6 +508,7 @@ def main():
             raise ValueError('Allocation exceeds the frozen phase budget')
         fixture = read_json(FIXTURE)
         validate_fixture(fixture)
+        selected = development_probe_selection(args, fixture)
         frozen = read_json(args.journal) if args.journal else None
         model = args.model or frozen['model']
         config = load_llm_config(default_model=model)
@@ -504,6 +524,8 @@ def main():
                     'runtime': RUNTIME, 'output_cap':2048}
         if frozen is None or 'support_output_cap' in frozen:
             metadata['support_output_cap'] = 4096
+        if selected is not None:
+            metadata['development_probes'] = sorted(selected)
         journal = Journal(config, metadata, frozen=frozen, max_calls=args.max_calls,
                           save=lambda data: checkpoint(args.output_dir/'journal.partial.json', data))
         report = asyncio.run(run(args, fixture, config, journal, read_json(args.sources) if args.sources else None))

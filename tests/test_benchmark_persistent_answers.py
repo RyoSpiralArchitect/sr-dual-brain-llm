@@ -62,6 +62,16 @@ def test_prospective_fixture_contains_disjoint_scopes_and_both_reference_cases()
     assert scopes['development'].isdisjoint(scopes['evaluation'])
 
 
+@pytest.mark.parametrize('phase,selected', [
+    ('evaluation', ['conditions']), ('development', ['unknown-probe']),
+    ('development', ['conditions', 'conditions']), ('development', []),
+])
+def test_diagnostic_selection_cannot_filter_evaluation_or_silently_lose_cases(phase, selected):
+    fixture = bench.read_json(bench.FIXTURE)
+    with pytest.raises(ValueError):
+        bench.development_probe_selection(SimpleNamespace(phase=phase, development_probes=selected), fixture)
+
+
 @pytest.mark.asyncio
 async def test_budget_rejection_cannot_corrupt_a_prior_identical_response():
     from core.llm_client import LLMConfig

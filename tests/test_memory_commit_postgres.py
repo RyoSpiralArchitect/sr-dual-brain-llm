@@ -283,7 +283,8 @@ def test_real_engine_restart_and_correction_replay_retain_buried_primary(pg_stor
     assert len(load(pg_store)) == 1032 and count_receipts(pg_store) == 1
 
 
-def test_persistent_answer_runner_real_store_pairing_and_snapshot_reuse(pg_store, tmp_path, monkeypatch):
+@pytest.mark.parametrize('selected', [None, ['conditions', 'cold-conditions']])
+def test_persistent_answer_runner_real_store_pairing_and_snapshot_reuse(pg_store, tmp_path, monkeypatch, selected):
     import benchmark_persistent_answers as bench
     import json
     from types import SimpleNamespace
@@ -291,7 +292,8 @@ def test_persistent_answer_runner_real_store_pairing_and_snapshot_reuse(pg_store
     fixture = bench.read_json(bench.FIXTURE)
     fixture['episodes'] = [ep for ep in fixture['episodes'] if ep['split'] == 'development']
     config = LLMConfig('openai', 'fake-model', 'NEVER_PERSIST_THIS_KEY', auto_continue=False)
-    args = SimpleNamespace(phase='development', output_dir=tmp_path / 'first', judge_model='fake-judge', in_process=True)
+    args = SimpleNamespace(phase='development', output_dir=tmp_path / 'first', judge_model='fake-judge',
+                           in_process=True, development_probes=selected)
     args.output_dir.mkdir()
     journal = bench.Journal(config, {}, max_calls=64)
     async def post(url, payload, headers, **kwargs):
@@ -311,7 +313,11 @@ def test_persistent_answer_runner_real_store_pairing_and_snapshot_reuse(pg_store
     journal.transport._post_json = post
     report = asyncio.run(bench.run(args, fixture, config, journal))
     assert report['complete'] and report['grader_failures'] == 0
-    assert report['summaries']['left']['probes'] == report['summaries']['collaborative']['probes'] == 5
+    expected = len(selected) if selected else 5
+    assert report['summaries']['left']['probes'] == report['summaries']['collaborative']['probes'] == expected
+    assert len(report['grades']) == 2*expected
+    if selected:
+        assert {row['id'] for row in report['rows']} == set(selected)
     assert report['usage_by_role']['right']['calls'] > 0
     assert 'NEVER_PERSIST_THIS_KEY' not in json.dumps(journal.data)
     sources = bench.read_json(args.output_dir / 'sources.json')
