@@ -2,11 +2,7 @@
   "schema_version": 1,
   "date": "2026-10-28",
   "timezone": "Asia/Tokyo",
-  "status": "blocked_before_repaired_measurement",
-  "blocker": {
-    "http_status": 429,
-    "provider_error_type": "insufficient_quota"
-  },
+  "status": "measured_after_quota_recovery",
   "baseline": {
     "source_revision": "767bb2fb5088f71626db3cb1bf4c1c6bbd547db7",
     "runner_sha256": "d06ddcf6244ef14fe9697a32d48bd7e4d5188072a26052411afcd909fdbf5570",
@@ -360,24 +356,651 @@
   },
   "repairs": {
     "source_commit": "a0cbd26",
-    "quality_remeasured": false
+    "quality_remeasured": true,
+    "measured_source_revision": "2b39d439ae4873e986024f025ea32adde34e224a"
   },
   "evaluation": {
     "episodes_planned": 2,
     "probes_planned_per_arm": 10,
-    "executed": false
+    "executed": true,
+    "source_revision": "40cd2c3b2cb7706cc9f9ecb7524abeb4403bf3eb",
+    "runner_sha256": "c1eb36cda351f54b3f15eea8af4ad6bb2ea4f600d6cce670e5d1ac0f5146763c",
+    "generation_model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "summaries": {
+      "left": {
+        "probes": 10,
+        "available": 10,
+        "graded": 10,
+        "task_grounding_pass": 10,
+        "all_pass": 10,
+        "grounding_failures": 0,
+        "clarification_failures": 0,
+        "elapsed_ms_median": 3923.904875497101
+      },
+      "collaborative": {
+        "probes": 10,
+        "available": 10,
+        "graded": 10,
+        "task_grounding_pass": 10,
+        "all_pass": 10,
+        "grounding_failures": 0,
+        "clarification_failures": 0,
+        "elapsed_ms_median": 6093.964065512409
+      }
+    },
+    "sources": {
+      "eval-archive": "688217e636e182ee4880e61960ee39b7945df71525805050aed94509543db111",
+      "eval-transfer": "ee8658462254eef2d9be6fbc9ad4c6a4672af179ea4962e302ce13467daf6f9a"
+    },
+    "usage_by_role": {
+      "judge": {
+        "calls": 10,
+        "input_tokens": 7977,
+        "output_tokens": 2620,
+        "records_sent": 0
+      },
+      "left": {
+        "calls": 20,
+        "input_tokens": 9394,
+        "output_tokens": 2024,
+        "records_sent": 0
+      },
+      "right": {
+        "calls": 10,
+        "input_tokens": 15006,
+        "output_tokens": 1472,
+        "records_sent": 0
+      },
+      "seed": {
+        "calls": 6,
+        "input_tokens": 1613,
+        "output_tokens": 765,
+        "records_sent": 0
+      },
+      "support": {
+        "calls": 16,
+        "input_tokens": 7446,
+        "output_tokens": 2012,
+        "records_sent": 20
+      }
+    },
+    "provider_calls": 62,
+    "input_tokens": 41436,
+    "output_tokens": 8893,
+    "grader_failures": 0,
+    "fresh_processes": true,
+    "fixture_sha256": "5c552a6a504b92d1c531d0bb0ae58faa68bc15b71b9b510b1acf9e290c4c0946",
+    "served_models": [
+      "gpt-6-luna",
+      "gpt-6-sol"
+    ],
+    "development_probes": null,
+    "probe_usage_by_arm": {
+      "left": {
+        "calls": 18,
+        "input_tokens": 8183,
+        "output_tokens": 2097,
+        "roles": {
+          "support": 8,
+          "left": 10
+        },
+        "distinct_worker_processes": 4
+      },
+      "collaborative": {
+        "calls": 28,
+        "input_tokens": 23663,
+        "output_tokens": 3411,
+        "roles": {
+          "support": 8,
+          "left": 10,
+          "right": 10
+        },
+        "distinct_worker_processes": 4
+      }
+    },
+    "probes": [
+      {
+        "episode": "eval-archive",
+        "arm": "left",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 4211.8615779909305,
+        "hydration_ms": 824.5144749525934,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 962,
+          "output_tokens": 267,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "b87def59a2d81f6011ba7ff47356949f118ebbada4a19744d6da054d37bc2fd0",
+        "answer_sha256": "917da9cf82e854a87e9149d2841b7fd7ad7dcc86a2245d8abffdcf7bb58e7d42",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "left",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 3599.051663011778,
+        "hydration_ms": 824.5144749525934,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 711,
+          "output_tokens": 232,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "d4328c17746cf3896b46e32bc9ff9e33db583c03eeaa5def50ef25599ca415aa",
+        "answer_sha256": "3c0f8b28d8f5ecad6099aff57c5b6bf2b2d8baa530aa587be42e4509d579951a",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "left",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 4699.75611101836,
+        "hydration_ms": 824.5144749525934,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1227,
+          "output_tokens": 274,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "ae5b459d39076ff4c72299f35abf4212abafcaf74e5d7521162eff063d0011a4",
+        "answer_sha256": "dce5f24e7c487c7b6a05c1ddce5b4bcb7a88aaf094f7fe2e8fb5d6cb2fdeba10",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "left",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 1359.4019250012934,
+        "hydration_ms": 824.5144749525934,
+        "calls_by_role": {
+          "left": 1
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 202,
+          "output_tokens": 42,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "142ea7e6d3106e57a58d19a145e705ff1f5b39ae576f6b19bd63ca0270e53048",
+        "answer_sha256": "a875c8addca46861d6e23c09c60549657ee6db48d668f89b5849fcdb6b4a8d65",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "left",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 4489.670084964018,
+        "hydration_ms": 845.2891549677588,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 962,
+          "output_tokens": 273,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "b336a7c16131875a01602c6a478d619ed6b962b478f5b723a6dbe469d5387735",
+        "answer_sha256": "fdd88fbd64b97f93bd5887c844f594ac567ab0e757456a320470d0ec603e3bd5",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "collaborative",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 9517.41986500565,
+        "hydration_ms": 843.1836740346625,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2607,
+          "output_tokens": 387,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "19567fff6a461384bf154afc7fddc5757123f7bda60844ada550b31930f1cdce",
+        "answer_sha256": "4ec8a5249c7933df9923c5be07a6ac57023728efd2a24fd17429d5aba817f2b8",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "collaborative",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 5402.904115966521,
+        "hydration_ms": 843.1836740346625,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2091,
+          "output_tokens": 272,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "613f5bc544846261ecb07a22c27b0b6dc39fe66e7954eeb1a5426d711174ecf5",
+        "answer_sha256": "7d5fd01e008aedcd843d4e5af9392638d9aef7a6a86838175b83f6353738fe3d",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "collaborative",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 6981.6357280360535,
+        "hydration_ms": 843.1836740346625,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2968,
+          "output_tokens": 395,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "19b3e412675999ef731925b52c9b78a44d9f33028a016ccd428e117fa4e25f63",
+        "answer_sha256": "e410d0f7479a5e72e81c161463d62ae46beb4a9688c7d500a9663a99f75d4c8b",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "collaborative",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 5002.135841001291,
+        "hydration_ms": 843.1836740346625,
+        "calls_by_role": {
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1487,
+          "output_tokens": 234,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "4351c301e47954b1fa38a46abc18cdd079c722e960fd2fcdd22fa51f445383ad",
+        "answer_sha256": "3164c30907f009f27047b2743d06390ed102394e432159e04f900470fe517389",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-archive",
+        "arm": "collaborative",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 5035.044515971094,
+        "hydration_ms": 835.5788880144246,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2606,
+          "output_tokens": 333,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "b9a524a35a62a8229f2a3efa7bc73c1c02da007597b56ec465075ceaf099f7c3",
+        "answer_sha256": "eac52508e0e220404bff0d41b33495adace49c67f2f039979099ca828aa9a2d7",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "left",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 3635.948173003271,
+        "hydration_ms": 845.8841079846025,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 982,
+          "output_tokens": 212,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "f253e7f65ffd4124536878606cb09c3ed56ee369246f1201ca061d58c4d0e926",
+        "answer_sha256": "f37d4a1d3320a8d6797ef5a8a0875fbf6548278923d0970ed35025028fcf2708",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "left",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 3052.934872044716,
+        "hydration_ms": 845.8841079846025,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 714,
+          "output_tokens": 158,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "590c117551e3f875b35e5c407d9684e52822455d3519985e4fc88f5bff0ef99b",
+        "answer_sha256": "7a7d4bae87515f4525c2845afef1c3006245d203f2482f3baa22732ffa4f4260",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "left",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 4722.248987003695,
+        "hydration_ms": 845.8841079846025,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1239,
+          "output_tokens": 242,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "299252e2bf7858505ea07183bf9e906e75a3d6dce0fd0e1ffe775817f5bea82d",
+        "answer_sha256": "b8ec52d329e9296f6de610c7b4754c8fc55435d14643900bdaf23bc01b50e258",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "left",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 1120.6589399953373,
+        "hydration_ms": 845.8841079846025,
+        "calls_by_role": {
+          "left": 1
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 202,
+          "output_tokens": 39,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "408173f65bb5e4ac40919fcac8d1fecf4c9639c1493f5bdc0d53c3b43fff65c5",
+        "answer_sha256": "cbccbf1bcbd92c5a61962a65eeb9cad3a3eb660a67f682b5c830793df82c691b",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "left",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 4818.11380101135,
+        "hydration_ms": 822.8023630217649,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 982,
+          "output_tokens": 358,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "e65ebfd9e770d7aafefddf3d705141ebc1fd74afeff6a03388ba5f03734ecb3f",
+        "answer_sha256": "e1673b633e58b07aaeb8cbf4d65bcb18cff4b26382189e6b3c54cd37f8916ff2",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "collaborative",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 6364.216093032155,
+        "hydration_ms": 825.6100599537604,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2643,
+          "output_tokens": 394,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "95b97e76bd2e5c0bc52fd278de4ae96deec910b3e15bf45fb371dfe9d1ca3366",
+        "answer_sha256": "f37d4a1d3320a8d6797ef5a8a0875fbf6548278923d0970ed35025028fcf2708",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "collaborative",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 6691.685433965176,
+        "hydration_ms": 825.6100599537604,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2110,
+          "output_tokens": 320,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "358ba6403c180d901e3274c805f0e3be199a30a0c6d3a0d6ca4f37da450dc4cd",
+        "answer_sha256": "ffdda503d0bd438dde72b9df9fd6b23d5bd50a0604dec07aa80750a2c3cd932e",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "collaborative",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 9374.41021000268,
+        "hydration_ms": 825.6100599537604,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 3008,
+          "output_tokens": 626,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "9fb89d97544ede65fb1ae10aa4dca8a689690418f1f1fff8d2d06ae0feeb2299",
+        "answer_sha256": "9fb8194b60b3d31e23cdf8addac498e98028c2bbbb95ace1616a957d595bd4a6",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "collaborative",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 2735.070773982443,
+        "hydration_ms": 825.6100599537604,
+        "calls_by_role": {
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1491,
+          "output_tokens": 105,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "95879eb7adfbfcd008566b22b89911b61bf2a92da89219d37582b0a7bfb6cea9",
+        "answer_sha256": "349b89643664c84b47ea5634ff34ac247ced7efdde575d373a7f9e37924358e7",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "eval-transfer",
+        "arm": "collaborative",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 5823.712037992664,
+        "hydration_ms": 875.7733500096947,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2652,
+          "output_tokens": 345,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "520acd6cbf82e39279e893ed05b6c4542944f48300f1473bd740603a377bc2a6",
+        "answer_sha256": "c928e0e350cbc0e6d66b41413df49e79e26b7c3a91c8027fb54f672f79a1a172",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      }
+    ]
   },
-  "provider_attempts_total": 40,
-  "known_prompt_tokens_lower_bound": 19318,
-  "known_completion_tokens_lower_bound": 4640,
+  "provider_attempts_total": 148,
+  "known_prompt_tokens_lower_bound": 95104,
+  "known_completion_tokens_lower_bound": 20644,
   "attempts_with_unknown_usage": 7,
   "allocations": {
     "baseline_development": 64,
     "repaired_development": 64,
     "evaluation": 112,
     "hard_total": 240,
-    "repaired_attempts_consumed": 9,
-    "repaired_remaining": 55
+    "repaired_attempts_consumed": 55,
+    "repaired_remaining": 9,
+    "evaluation_attempts_consumed": 62,
+    "evaluation_remaining": 50
   },
   "stages": [
     {
@@ -455,6 +1078,24 @@
       "clock": "real-python-wall-clock",
       "provider_attempts": 1,
       "id": "persistent-answer-real-clock-diagnostic-2026-10-28.json"
+    },
+    {
+      "id": "persistent-answer-dev-resumed-2026-11-01",
+      "complete": true,
+      "provider_attempts": 34,
+      "errors": []
+    },
+    {
+      "id": "persistent-answer-dev-attribution-diagnostic-2026-11-01",
+      "complete": true,
+      "provider_attempts": 12,
+      "errors": []
+    },
+    {
+      "id": "persistent-answer-evaluation-2026-11-01",
+      "complete": true,
+      "provider_attempts": 62,
+      "errors": []
     }
   ],
   "artifact_sha256": {
@@ -492,7 +1133,78 @@
     },
     "persistent-answer-rate-diagnostic-2026-10-28.json": "8de3a9fe6f6bd82c15ebee90ad5b8c6ef3471c7ffe07b9d4b9921031337bd229",
     "persistent-answer-frozen-clock-diagnostic-2026-10-28.json": "13c068be742cfcff122ba6fc1d9eb1d74b08535edca361fd6283477d6d48546d",
-    "persistent-answer-real-clock-diagnostic-2026-10-28.json": "76455187d42aab40410d00bfd99ddc97d22a8a5239e71f010da470bb8106652c"
+    "persistent-answer-real-clock-diagnostic-2026-10-28.json": "76455187d42aab40410d00bfd99ddc97d22a8a5239e71f010da470bb8106652c",
+    "persistent-answer-dev-resumed-2026-11-01": {
+      "worker-dev-archive-left-0.partial.json": "2fe0dc9b27b38bed9c9c9fbd693f6d2ffa1d86949e7ef0e14764f94942d2d1e7",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "df43644f14d313286860869fb1e8ebc86dc30c7e1ed3da3cdfe442ffff8faa91",
+      "report.partial.json": "e64540d526305a10271029b338ecade50650a1688277b678a6e3a7f091c9a2ea",
+      "worker-dev-archive-collaborative-0.partial.json": "c62f6675f7a00b74a9591159ebedb697dc0ecd20f06fd5f4a3c446b9a65438cf",
+      "report.json": "b8ecb642e0218632bc9191d4f87677c218d0e13900c490c510a1a0e5e1551b70",
+      "worker-dev-archive-left-1.partial.json": "56d72ea0e424935104be6f38de9f5a976bce1ff960cd2317fa7348a28ea6b7bb",
+      "worker-dev-archive-collaborative-1.partial.json": "f40af2eed80784112097f5bad22dee226bba6c60265f61ee7b677f82048cae44",
+      "sources.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a"
+    },
+    "persistent-answer-dev-attribution-diagnostic-2026-11-01": {
+      "worker-dev-archive-left-0.partial.json": "04e785749de60e754a11b64a11fa5776d699f588e911ef48b2c6cab32bc329c6",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "journal.partial.json": "7a4d96eed24f014ebf001e473121aeb6ffa8f22fc9556b2702a5c930b212785d",
+      "report.partial.json": "028968b411e7eea194a29cfbff417efccf9487561dcabd963719f5b17b895d34",
+      "worker-dev-archive-collaborative-0.partial.json": "47d3ba764a0fcf4d89e248ff75a9ae2099ea23e59113a2c12d94ed65e7709674",
+      "report.json": "bd5bddc711f7c3dc96be0febd60fa3ed848c3d0ef2d5e94a9bbe6e86e23c55fe",
+      "worker-dev-archive-left-1.partial.json": "b7aad2525a973100a00bcd5d3c11fd3f9a7e0ca61b9121339a2e27341a8c4a34",
+      "worker-dev-archive-collaborative-1.partial.json": "e0d7dcf3fe865cb3b0164371d0e24c6993461207079c2360571d359e886adc1c",
+      "sources.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a"
+    },
+    "persistent-answer-evaluation-2026-11-01": {
+      "worker-eval-transfer-collaborative-0.partial.json": "1a7d46f61a27910a494701afb7c90c5bf06b4672782783374a6f0145d763efb6",
+      "worker-eval-archive-left-0.partial.json": "79bbb4a5bb1122d3800c3bb3f8533caa8d0ae51e9fb8d7396a8af81073c62d19",
+      "worker-eval-transfer-collaborative-1.partial.json": "d202eae7d2e52ddb1d3482509d8b350b28495d42fb22e55a9849b37fd99d6cad",
+      "sources.partial.json": "327843f144571b01bdcadcb531b10f2bb245ebf5460d3063e6950837d128491d",
+      "journal.partial.json": "2906fc2fc2d55af140beb148dcfe4cc8ed88b096f402a533437eababe32b43af",
+      "worker-eval-archive-collaborative-0.partial.json": "e990ea90817a8c2c538ae65658872eb359d1db96ae58cd42bacaef9ca04668e7",
+      "report.partial.json": "7b8dea4084928dfbdf5ac689485d1a462a9608af979f15d663239c60f8d565c5",
+      "report.json": "183b92ac338c4985ae9f05cff78ad057ff8bc57f7bde2320395b0f8c6251926a",
+      "worker-eval-archive-collaborative-1.partial.json": "d4327c8e529a833af56db3d2b857e049bdca1c4df6b1ad3153d648da01fc38e6",
+      "worker-eval-transfer-left-0.partial.json": "0be6cd55eee9bff221507ca06fec2132892395be7ae1b63537ac7e460dbf36e5",
+      "sources.json": "327843f144571b01bdcadcb531b10f2bb245ebf5460d3063e6950837d128491d",
+      "worker-eval-transfer-left-1.partial.json": "2424c77c21ef43bd25fa26fda53ce81b905997a1689939734bebf63f21c20429",
+      "worker-eval-archive-left-1.partial.json": "9573c94e9011bac0023028436cf72e62931bca1635a2233593d6a678466dc8da"
+    },
+    "persistent-answer-dev-resumed-replay-2026-11-01": {
+      "worker-dev-archive-left-0.partial.json": "65ef3a225f8b3a4dc248e4171262977c921d494b5a9f9704f53fe0841308dcf7",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "report.partial.json": "2138196fb9a4c90b67add9517b2a7147507fdfe4e0304ddda1405cafaf52c553",
+      "worker-dev-archive-collaborative-0.partial.json": "d87694eb8c8454c3af0a42c053ae7020925a599cb31f10718c274e288f92d833",
+      "report.json": "45c2d4aec7135b84c9e7ec969885946c5ee596b01043fe9a3372e71c11800f79",
+      "worker-dev-archive-left-1.partial.json": "5bd7c9b5913c743237e9227061259c31c3dbb6ff9ab74a06f1fcd24a91a1341a",
+      "worker-dev-archive-collaborative-1.partial.json": "0c58b52423bed0b181fec162d3d0b777a02e10e50d269effefeae32b520649cf",
+      "sources.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a"
+    },
+    "persistent-answer-dev-attribution-diagnostic-replay-2026-11-01": {
+      "worker-dev-archive-left-0.partial.json": "5bf5e16d242d3057dd5e03bf00e72a476c7e71277eab0757ca91e96991576bdb",
+      "sources.partial.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a",
+      "report.partial.json": "b6348d9670823512630e37809bf6ea9855463c4139dd8d074c7eab44a326904c",
+      "worker-dev-archive-collaborative-0.partial.json": "bc8ad46ba00f58b323fa66c5993b3d35e28b539cf615193854bfd8cf5625b52c",
+      "report.json": "fa762221d7ec8392ec3dafdf623e1a150b4deec25c2e2a671bb86baf975a054b",
+      "worker-dev-archive-left-1.partial.json": "f822028d49b7cc61c56fc4ead854c81cf344cfff996ab114cfacce7a1b4f0c89",
+      "worker-dev-archive-collaborative-1.partial.json": "d39d8082f67eb556a053f2b2744ae810b8cbbb6740b89c7f7e9c045163e9ad5a",
+      "sources.json": "e930c0f57001cfea6e4a72f6a15016dc0fccaa729f1948117ad9b46234f1f84a"
+    },
+    "persistent-answer-evaluation-replay-2026-11-01": {
+      "worker-eval-transfer-collaborative-0.partial.json": "9a1db9d5d9ab10a2fb57de6433e6a2749d16493a8443523d585ce0edf0e26dca",
+      "worker-eval-archive-left-0.partial.json": "7b2f6becb4c95b407925d928c45ab0fd49cd91ac90ebb1693a4aad1682340e01",
+      "worker-eval-transfer-collaborative-1.partial.json": "39eb1cea18044ee473c2ef4d4342f6755d3899863de44a5e9e00df227fb4269f",
+      "sources.partial.json": "9576fe9e296b283836f10d4fefacecd1a811c74df0c642f7dcc1582f4173ccb4",
+      "worker-eval-archive-collaborative-0.partial.json": "75cd29d8ac53a9cbc76721c4ae3a32e4d8115566d278a0ec4362b21321fe3d86",
+      "report.partial.json": "5670b7589be0d748105d4215fb75990363e8c34e56b5ef45aa90d4d0a5672401",
+      "report.json": "4295eca48a7d81aa0277d69d321cb16dacee3eb3bb2b7bc8fd5402367d77cc1a",
+      "worker-eval-archive-collaborative-1.partial.json": "ad41598849adae23ed72af56f99e86e17ffa409dd91857c83c7c073c44903426",
+      "worker-eval-transfer-left-0.partial.json": "c88420fecf3cab61104b052411651cd7789b46bae633bed494f01b4d45996d08",
+      "sources.json": "9576fe9e296b283836f10d4fefacecd1a811c74df0c642f7dcc1582f4173ccb4",
+      "worker-eval-transfer-left-1.partial.json": "8dc58fa9df6e52e3522063207662ab280f46a05f96bcf29a0be622b667e0d614",
+      "worker-eval-archive-left-1.partial.json": "ed5e6dbe64ef0d9d94abd0a47c7ce7e099c95657d3d9451477d54fd46f3e06aa"
+    }
   },
   "replay_artifact_sha256": {
     "worker-dev-archive-left-0.partial.json": "3e1387849b27edf699cb5ad45ee5df2cee360e6d6497f5bc88b0e0d7cf0fb8ec",
@@ -503,5 +1215,1149 @@
     "worker-dev-archive-left-1.partial.json": "65d102a7276498eb3fd1f9ede38f3fae6f60a7b8a92fb495ed3377e91a18a82d",
     "worker-dev-archive-collaborative-1.partial.json": "2451563a3efe5d02a76d3e34c8d71e4c36a7183e458a8a6855741407ed533660",
     "sources.json": "a35cfc5dd365c026944411ad3be92a0c6db9246076d11956bee64c50f0486c94"
+  },
+  "last_updated": "2026-11-01",
+  "historical_blocker": {
+    "http_status": 429,
+    "provider_error_type": "insufficient_quota",
+    "resolved_before_resumed_development": true
+  },
+  "repaired_development": {
+    "source_revision": "2b39d439ae4873e986024f025ea32adde34e224a",
+    "runner_sha256": "bacccb0e1021c3d0b36c2cdc96fafad8c42fae81e951df1ca5d979f6402e580d",
+    "generation_model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "summaries": {
+      "left": {
+        "probes": 5,
+        "available": 5,
+        "graded": 5,
+        "task_grounding_pass": 5,
+        "all_pass": 5,
+        "grounding_failures": 0,
+        "clarification_failures": 0,
+        "elapsed_ms_median": 4872.810167027637
+      },
+      "collaborative": {
+        "probes": 5,
+        "available": 5,
+        "graded": 5,
+        "task_grounding_pass": 3,
+        "all_pass": 3,
+        "grounding_failures": 0,
+        "clarification_failures": 0,
+        "elapsed_ms_median": 11111.951077007689
+      }
+    },
+    "sources": {
+      "dev-archive": "b36c677a5abbd78d7758eec3e5c6be0a29359d7ce9bcb45e1dc809715d527f8a"
+    },
+    "usage_by_role": {
+      "judge": {
+        "calls": 5,
+        "input_tokens": 3926,
+        "output_tokens": 1206,
+        "records_sent": 0
+      },
+      "left": {
+        "calls": 13,
+        "input_tokens": 6398,
+        "output_tokens": 1538,
+        "records_sent": 0
+      },
+      "right": {
+        "calls": 8,
+        "input_tokens": 11547,
+        "output_tokens": 1511,
+        "records_sent": 0
+      },
+      "support": {
+        "calls": 8,
+        "input_tokens": 3684,
+        "output_tokens": 1044,
+        "records_sent": 10
+      }
+    },
+    "provider_calls": 34,
+    "input_tokens": 25555,
+    "output_tokens": 5299,
+    "grader_failures": 0,
+    "fresh_processes": true,
+    "fixture_sha256": "5c552a6a504b92d1c531d0bb0ae58faa68bc15b71b9b510b1acf9e290c4c0946",
+    "served_models": [
+      "gpt-6-luna",
+      "gpt-6-sol"
+    ],
+    "development_probes": null,
+    "probe_usage_by_arm": {
+      "left": {
+        "calls": 9,
+        "input_tokens": 3904,
+        "output_tokens": 1426,
+        "roles": {
+          "support": 4,
+          "left": 5
+        },
+        "distinct_worker_processes": 2
+      },
+      "collaborative": {
+        "calls": 20,
+        "input_tokens": 17725,
+        "output_tokens": 2667,
+        "roles": {
+          "support": 4,
+          "left": 8,
+          "right": 8
+        },
+        "distinct_worker_processes": 2
+      }
+    },
+    "probes": [
+      {
+        "episode": "dev-archive",
+        "arm": "left",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 8860.082369996235,
+        "hydration_ms": 1149.0613889764063,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 918,
+          "output_tokens": 539,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "1049b622ab7db96fc36cf5ca4a52cb26564982a58bd62cdbf6b581e27d9b9180",
+        "answer_sha256": "88213ddbbf48ad031180e02846d7831c30953ebba3411104446bf2bb5f61a2a8",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "left",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 4872.810167027637,
+        "hydration_ms": 1149.0613889764063,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 713,
+          "output_tokens": 215,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "8b9b2915521d58df7d3d1469b151f7e186b03ffc6248ae4d9207ac834668e562",
+        "answer_sha256": "4939b4d33a8fda9c2494003273afef961f12dfde396d79078791616a181c9243",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "left",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 3643.517624004744,
+        "hydration_ms": 1149.0613889764063,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1153,
+          "output_tokens": 199,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "e1ec08a5f2b201a16c9614b72df47847ff7cea0ec506b535e8c5b2d3d009d28b",
+        "answer_sha256": "de4d4bc4cbdb7b844e93e8c615b7ab95d97b92b4fcec08ecb87c88023f982c5d",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "left",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 1703.0724789947271,
+        "hydration_ms": 1149.0613889764063,
+        "calls_by_role": {
+          "left": 1
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 202,
+          "output_tokens": 67,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "36c4a4efb72a1a8cbbcfbcacce7e318609b60d62f8f7cbd5acd150419b80500a",
+        "answer_sha256": "6c82c43f7db6f839a5169091fdd57bd68fbac9d7b789a9fbbb2a660865ce0006",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "left",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 10354.875869990792,
+        "hydration_ms": 820.4660899937153,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 918,
+          "output_tokens": 406,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "8e1d1d5a7b6c59ed194a2a193f2ba662304e9ed0a357e08d0f03cbfd239cc7ec",
+        "answer_sha256": "4138d596d8a79c21c7ac63f2f37cec850e99f4dbd93fbbcb1f7b2772a1c35455",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "collaborative",
+        "id": "conditions",
+        "status": "ok",
+        "elapsed_ms": 16657.254511024803,
+        "hydration_ms": 837.4205369618721,
+        "calls_by_role": {
+          "support": 1,
+          "left": 2,
+          "right": 2
+        },
+        "usage": {
+          "calls": 5,
+          "input_tokens": 4638,
+          "output_tokens": 961,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "d82d08578d755186fb71e48720830cdf0a0d9cd8efdd39af3ee763345610fc9d",
+        "answer_sha256": "ca590aaf6429bea501a3fe604c54991f6f76cacb46bf7f46807a9fab12ec37ad",
+        "verdicts": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "collaborative",
+        "id": "named-unknown",
+        "status": "ok",
+        "elapsed_ms": 5713.5971109964885,
+        "hydration_ms": 837.4205369618721,
+        "calls_by_role": {
+          "support": 1,
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 3,
+          "input_tokens": 2045,
+          "output_tokens": 287,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "e2317034d6febf5749a095ca55e008fe6c5749162a43a58755bea13f889d7db3",
+        "answer_sha256": "c559d618a10a5ebddff5545cfc8b68716c5ab8ae0030270f7b3740b438108440",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "collaborative",
+        "id": "comparison",
+        "status": "ok",
+        "elapsed_ms": 11111.951077007689,
+        "hydration_ms": 837.4205369618721,
+        "calls_by_role": {
+          "support": 1,
+          "left": 2,
+          "right": 2
+        },
+        "usage": {
+          "calls": 5,
+          "input_tokens": 5006,
+          "output_tokens": 582,
+          "records_sent": 2
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "d38eb2194b26b7a898339fdf18b59d763c2d5cec0f60f00066cf780854059d08",
+        "answer_sha256": "d254fcf733218132d1c3d4af923f032d7ab164993d88fab0cb3673c62d25eb92",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "collaborative",
+        "id": "ambiguous",
+        "status": "ok",
+        "elapsed_ms": 4532.624983985443,
+        "hydration_ms": 837.4205369618721,
+        "calls_by_role": {
+          "left": 1,
+          "right": 1
+        },
+        "usage": {
+          "calls": 2,
+          "input_tokens": 1428,
+          "output_tokens": 235,
+          "records_sent": 0
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "26d41cfda0106229041c2dd20ea0fe5a7464dcd278c25d85c8d68034e372c55f",
+        "answer_sha256": "d3993de1adfe2403cf671c0877dee8b9876a849a8750b97fac8668db0f2e9ee9",
+        "verdicts": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "episode": "dev-archive",
+        "arm": "collaborative",
+        "id": "cold-conditions",
+        "status": "ok",
+        "elapsed_ms": 12702.762400032952,
+        "hydration_ms": 837.4713190132752,
+        "calls_by_role": {
+          "support": 1,
+          "left": 2,
+          "right": 2
+        },
+        "usage": {
+          "calls": 5,
+          "input_tokens": 4608,
+          "output_tokens": 602,
+          "records_sent": 1
+        },
+        "memory_commit_state": "committed",
+        "memory_commit_sha256": "9a4140c004688e20df4eb66451eb3fd4c71d8a0144492eda468da945b343e8a4",
+        "answer_sha256": "373c4de49a95381030e5322eb1f481c3f19652411e26b03eaef7e4792c5b81d8",
+        "verdicts": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      }
+    ]
+  },
+  "attribution_repair": {
+    "measured_source_revision": "40cd2c3b2cb7706cc9f9ecb7524abeb4403bf3eb",
+    "full_development_remeasured": false,
+    "targeted_diagnostic": {
+      "source_revision": "40cd2c3b2cb7706cc9f9ecb7524abeb4403bf3eb",
+      "runner_sha256": "c1eb36cda351f54b3f15eea8af4ad6bb2ea4f600d6cce670e5d1ac0f5146763c",
+      "generation_model": "gpt-6-luna",
+      "judge_model": "gpt-6-sol",
+      "summaries": {
+        "left": {
+          "probes": 2,
+          "available": 2,
+          "graded": 2,
+          "task_grounding_pass": 2,
+          "all_pass": 2,
+          "grounding_failures": 0,
+          "clarification_failures": 0,
+          "elapsed_ms_median": 4127.791174512822
+        },
+        "collaborative": {
+          "probes": 2,
+          "available": 2,
+          "graded": 2,
+          "task_grounding_pass": 2,
+          "all_pass": 2,
+          "grounding_failures": 0,
+          "clarification_failures": 0,
+          "elapsed_ms_median": 6863.168272015173
+        }
+      },
+      "sources": {
+        "dev-archive": "b36c677a5abbd78d7758eec3e5c6be0a29359d7ce9bcb45e1dc809715d527f8a"
+      },
+      "usage_by_role": {
+        "judge": {
+          "calls": 2,
+          "input_tokens": 1656,
+          "output_tokens": 571,
+          "records_sent": 0
+        },
+        "left": {
+          "calls": 4,
+          "input_tokens": 2218,
+          "output_tokens": 388,
+          "records_sent": 0
+        },
+        "right": {
+          "calls": 2,
+          "input_tokens": 3181,
+          "output_tokens": 174,
+          "records_sent": 0
+        },
+        "support": {
+          "calls": 4,
+          "input_tokens": 1740,
+          "output_tokens": 679,
+          "records_sent": 4
+        }
+      },
+      "provider_calls": 12,
+      "input_tokens": 8795,
+      "output_tokens": 1812,
+      "grader_failures": 0,
+      "fresh_processes": true,
+      "fixture_sha256": "5c552a6a504b92d1c531d0bb0ae58faa68bc15b71b9b510b1acf9e290c4c0946",
+      "served_models": [
+        "gpt-6-luna",
+        "gpt-6-sol"
+      ],
+      "development_probes": [
+        "cold-conditions",
+        "conditions"
+      ],
+      "probe_usage_by_arm": {
+        "left": {
+          "calls": 4,
+          "input_tokens": 1932,
+          "output_tokens": 569,
+          "roles": {
+            "support": 2,
+            "left": 2
+          },
+          "distinct_worker_processes": 2
+        },
+        "collaborative": {
+          "calls": 6,
+          "input_tokens": 5207,
+          "output_tokens": 672,
+          "roles": {
+            "support": 2,
+            "left": 2,
+            "right": 2
+          },
+          "distinct_worker_processes": 2
+        }
+      },
+      "probes": [
+        {
+          "episode": "dev-archive",
+          "arm": "left",
+          "id": "conditions",
+          "status": "ok",
+          "elapsed_ms": 4277.490482025314,
+          "hydration_ms": 848.6786459689029,
+          "calls_by_role": {
+            "support": 1,
+            "left": 1
+          },
+          "usage": {
+            "calls": 2,
+            "input_tokens": 966,
+            "output_tokens": 263,
+            "records_sent": 1
+          },
+          "memory_commit_state": "committed",
+          "memory_commit_sha256": "fe9f97ff2672087352574f3892b18ec7a31806df885056c1f2af490d3723a2cd",
+          "answer_sha256": "d88fed29945227cccc2c0677f7dff2cd8aa2a70017b44ef0c4ae8bc278bd8156",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        {
+          "episode": "dev-archive",
+          "arm": "left",
+          "id": "cold-conditions",
+          "status": "ok",
+          "elapsed_ms": 3978.0918670003302,
+          "hydration_ms": 834.521391952876,
+          "calls_by_role": {
+            "support": 1,
+            "left": 1
+          },
+          "usage": {
+            "calls": 2,
+            "input_tokens": 966,
+            "output_tokens": 306,
+            "records_sent": 1
+          },
+          "memory_commit_state": "committed",
+          "memory_commit_sha256": "bad5ebf0ca8047fe6879c7898d6dda228e24383d293c8528c0ce5bafd4b00ec1",
+          "answer_sha256": "39364eded041eb1db6c20f018012e944d54cd89f0cd882f227e2ebc7dc3a86b2",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        {
+          "episode": "dev-archive",
+          "arm": "collaborative",
+          "id": "conditions",
+          "status": "ok",
+          "elapsed_ms": 6845.169930020347,
+          "hydration_ms": 824.3500129901804,
+          "calls_by_role": {
+            "support": 1,
+            "left": 1,
+            "right": 1
+          },
+          "usage": {
+            "calls": 3,
+            "input_tokens": 2611,
+            "output_tokens": 335,
+            "records_sent": 1
+          },
+          "memory_commit_state": "committed",
+          "memory_commit_sha256": "e2749a02e66f75dcd27ff52685aa35d94f2eb70a52fe39326be03e4685c69006",
+          "answer_sha256": "e725ca1c0ac0f0d9b9d0831919d7a036390c3e2b2e930c30dd17eb48baf3c150",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        {
+          "episode": "dev-archive",
+          "arm": "collaborative",
+          "id": "cold-conditions",
+          "status": "ok",
+          "elapsed_ms": 6881.166614009999,
+          "hydration_ms": 823.6408449593,
+          "calls_by_role": {
+            "support": 1,
+            "left": 1,
+            "right": 1
+          },
+          "usage": {
+            "calls": 3,
+            "input_tokens": 2596,
+            "output_tokens": 337,
+            "records_sent": 1
+          },
+          "memory_commit_state": "committed",
+          "memory_commit_sha256": "528c8f010fc064f90fc6b58411b4a38dcb659e43f163c567ab4d1aa1e075d0d1",
+          "answer_sha256": "d20479845690cc1149ac114006a0990689522688311af4234ec53313eea605ba",
+          "verdicts": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        }
+      ]
+    }
+  },
+  "paired_development": [
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "conditions",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "named-unknown",
+      "before": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "comparison",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "ambiguous",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "left",
+      "id": "cold-conditions",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "conditions",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "named-unknown",
+      "before": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "comparison",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "ambiguous",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "episode": "dev-archive",
+      "arm": "collaborative",
+      "id": "cold-conditions",
+      "before": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      },
+      "after": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    }
+  ],
+  "actual_request_output_caps_by_phase": {
+    "baseline": {
+      "seed": [
+        2048
+      ],
+      "support": [
+        4096
+      ],
+      "left": [
+        2048
+      ],
+      "right": [
+        520
+      ],
+      "judge": [
+        2048
+      ]
+    },
+    "repaired_development": {
+      "support": [
+        4096
+      ],
+      "left": [
+        2048
+      ],
+      "right": [
+        520
+      ],
+      "judge": [
+        2048
+      ]
+    },
+    "attribution_diagnostic": {
+      "support": [
+        4096
+      ],
+      "left": [
+        2048
+      ],
+      "right": [
+        520
+      ],
+      "judge": [
+        2048
+      ]
+    },
+    "evaluation": {
+      "seed": [
+        2048
+      ],
+      "support": [
+        4096
+      ],
+      "left": [
+        2048
+      ],
+      "right": [
+        520
+      ],
+      "judge": [
+        2048
+      ]
+    }
+  },
+  "transport_audit_by_stage": {
+    "persistent-answer-dev-before-2026-10-28": {
+      "policy_sha256": {
+        "judge_policy_sha256": "2426798878667244a95b42ea572701cefd3fa9ea5fbdaeda0289a1ac2eefac4c",
+        "support_policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e"
+      },
+      "request_sha256_occurrences_by_role": {
+        "seed": [
+          "664ccd5242ba485c58a56954289c5edc4c92e898b0d8b99b5a1777bc48d85f9f",
+          "7ba98ffb88a5aafae93f6eec36f7c5eaf2471d2929391daa7457757f93500709",
+          "bae483b5ddd7308b6c0007a816ebda87136d94181662e2ce5675e0b2db6fc021"
+        ],
+        "support": [
+          "6c99150234d4d5250cbd1953bbf318c6b10da2565df9a92155b5eced4bc9bcd5",
+          "6c99150234d4d5250cbd1953bbf318c6b10da2565df9a92155b5eced4bc9bcd5",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "c8ddde0d2c1fe282ffa5ec6d0838ac0894f3fa1085b0b6588747ac90f5ecc3f5",
+          "c8ddde0d2c1fe282ffa5ec6d0838ac0894f3fa1085b0b6588747ac90f5ecc3f5"
+        ],
+        "left": [
+          "04c600898c105d29e482b31f71f3ff4fee88da0db3d4174a94a9a16c71e0ea95",
+          "04c600898c105d29e482b31f71f3ff4fee88da0db3d4174a94a9a16c71e0ea95",
+          "06061e59f4a8114aef2ff9676ad1b0392572538a4196a75d313a0d8264e7564b",
+          "237ec353a784e6ad89493ac89680c24d66ffc395ba183dc78b78c2f296147a84",
+          "2cfde748d18f7cbbdfc7b471c0af71e8e28eecbcdbb95f0faff130a4b16d176d",
+          "4c481dfd94a6ce0cb2fbf03e3129193313c67ba63cee95fe80bac3fa16059210",
+          "59666d779cd842af8b8950fffd584e5b709d64fafb76f989ead84de78c71d9f0",
+          "59666d779cd842af8b8950fffd584e5b709d64fafb76f989ead84de78c71d9f0",
+          "69d7b6a2ce3875c16d907a8fe01100fd3882d7b016df87d673b25aa3bd612ee7",
+          "c114b8ad9e5901281ae1925ecc130f96b030e6213a3da1aab7d871ba69032b10"
+        ],
+        "right": [
+          "18749ebc880b916f3acef1c58c04e2edf72c4b8991b1fbf63b65fa62202a6d4c",
+          "220acd05f4dd1c34d9a6bf735639ce00694ffad075e8354aecdfd15de9431cf1",
+          "2fbc0826efe21584cd4816e16a48e22fd3a70ebd7feb4c3f66a6172dd0dc04de",
+          "677931bb523bed0646a08fc9d5b708fdfa68c8a7ad439238074d3277a5f8598f",
+          "e880cb3299647ea017471dac1ef1dc71f3f6ddda5ca52f1e7517af8f3cd17f44"
+        ],
+        "judge": [
+          "6a483510a7e39233b6f634175e00514cbb943e606529fb50b971e9d3e1e6c142",
+          "7373aeec51bfca5b9620aeffff9ccdd49f274a73201eca930045f4c9df348e72",
+          "cef11c649202af2e60fb422cb0e90c7a6a8862f4e45273cb9a9b954833caf9b7",
+          "df4ad9e211cfdc59af17a76f8687f7c9bab13b13645f849a069f18e737763bdc",
+          "e60028a7b1447de8404d85ebadaa965e7117b05fc193bf42dc1a2326697dfc5f"
+        ]
+      },
+      "requested_models_by_role": {
+        "seed": [
+          "gpt-6-luna"
+        ],
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      },
+      "served_models_by_role": {
+        "seed": [
+          "gpt-6-luna"
+        ],
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      }
+    },
+    "persistent-answer-dev-resumed-2026-11-01": {
+      "policy_sha256": {
+        "judge_policy_sha256": "2426798878667244a95b42ea572701cefd3fa9ea5fbdaeda0289a1ac2eefac4c",
+        "support_policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e"
+      },
+      "request_sha256_occurrences_by_role": {
+        "support": [
+          "6c99150234d4d5250cbd1953bbf318c6b10da2565df9a92155b5eced4bc9bcd5",
+          "6c99150234d4d5250cbd1953bbf318c6b10da2565df9a92155b5eced4bc9bcd5",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "c8ddde0d2c1fe282ffa5ec6d0838ac0894f3fa1085b0b6588747ac90f5ecc3f5",
+          "c8ddde0d2c1fe282ffa5ec6d0838ac0894f3fa1085b0b6588747ac90f5ecc3f5"
+        ],
+        "left": [
+          "1f61bd80dce702cdb63fc7ce4828b6bfab629f93d1d96326a8b77c1930c46a3a",
+          "2cfde748d18f7cbbdfc7b471c0af71e8e28eecbcdbb95f0faff130a4b16d176d",
+          "9fa17a2368f01ac21280700780370db2a0a657e088a0122ea43a0078da6e519e",
+          "9fa17a2368f01ac21280700780370db2a0a657e088a0122ea43a0078da6e519e",
+          "a493425570f7ab6ee5fb2cad10f0a956cec700489843221d4e92eebf24f2acbf",
+          "a900db7e2af60c6dda24f9ce8a1cea31d9b2871ec74bd718d0a8e84cfdbfe775",
+          "ab188005dcad825d47a1ef52a0a4a880320e4d3fda4c9c7d2b9f4756d8ffe0c6",
+          "c114b8ad9e5901281ae1925ecc130f96b030e6213a3da1aab7d871ba69032b10",
+          "c8f2b596c05a7f065ed729d4476d950b01f821caa96272adc38d4b9259105d59",
+          "d7363616e1777825e36dc902fc912d9b43e8f8b0154c4f2a8c467421dbf6ab2e",
+          "f1971e1e88168f1587b9f9b865c01811ce37272c2849ab24b128e7473ea38737",
+          "f73467a6c0f234c876eae0f667e7a8e05f7980ee673a2ab77c0a084ead60f481",
+          "f73467a6c0f234c876eae0f667e7a8e05f7980ee673a2ab77c0a084ead60f481"
+        ],
+        "right": [
+          "020a8e701e07f246a2c4ce0c30f9cbbcd536fd0d0698269bc9d72b70fb66ae68",
+          "485f31d53508bf7d52fb33d6106154c43dfce18f2bfad7c5e6fdc28af7cf622f",
+          "58eb27fa9e2cff322504b8584a371ea1d6350785e29323cfd105b32d160ed8a0",
+          "5c58226ce027b68c618c267ced3578d972256849a313aabc7bc00c6f6c17a6ec",
+          "8683abe319923f3fb3e9d9f36d4a6b9216a6cce34b05817a1156dd059041130d",
+          "8ff8bf904c386138f05ae75c9b30568000759b76675aa5e3ed9e6ac4c97cf35f",
+          "d31e4d0f9caaea24bb4d57777e16b2a1f530f95f27beedc5787866108bf43d88",
+          "f89f7741a3fbeeccc8e1105092a60c9e7910bb56b2d0abdd7089dde8a56d9b65"
+        ],
+        "judge": [
+          "183cd0da48c6dad5b214c939d9d8ad53a68ef582b135f5b047efda128df87cfb",
+          "18cd431fcf93f4c36ce25e4793b47ebf4984c7aa4096d3df4125d90faeeb95c0",
+          "9291713e524fbd8678526ab5718f47320162e3dfa1c5a0812f6f5ac5c9affd90",
+          "92ce675ef9e2edd8606e4e0035ba6fe5c3de6e511dac9d92ef83ea01f050cc22",
+          "eefec8a1ca8ea156f91b90e11e2dd9040309d2525d7a1fb17266aebfbbf47bf1"
+        ]
+      },
+      "requested_models_by_role": {
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      },
+      "served_models_by_role": {
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      }
+    },
+    "persistent-answer-dev-attribution-diagnostic-2026-11-01": {
+      "policy_sha256": {
+        "judge_policy_sha256": "2426798878667244a95b42ea572701cefd3fa9ea5fbdaeda0289a1ac2eefac4c",
+        "support_policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e"
+      },
+      "request_sha256_occurrences_by_role": {
+        "support": [
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a",
+          "a829ca3d9d615dd9c359bd929f783c00180184898eaac8172d1160f564c62a4a"
+        ],
+        "left": [
+          "45b288ee6874d6fc1bed3cc58ed76471f1d857ce668c2aeccf66f970a2edfefd",
+          "45b288ee6874d6fc1bed3cc58ed76471f1d857ce668c2aeccf66f970a2edfefd",
+          "bb3810b12fbd9c358ad2b7ead96147686dd8dfdf0ed83d235be0bb7f85b84cdf",
+          "bb3810b12fbd9c358ad2b7ead96147686dd8dfdf0ed83d235be0bb7f85b84cdf"
+        ],
+        "right": [
+          "3179e62d4663a7b64a10cd4e1212257ddcf45559b7641241a96962b613da9b9e",
+          "dac40b8d072a3eaa9d2f578ab8e8180afe9246d40081fcd9b391155d699336d8"
+        ],
+        "judge": [
+          "2ad3ad2319f0053a21529eba254b685424c829886f9583f3feac148c32073e64",
+          "34895a59138b5b73ad2e5e0241844d05a293833ad5ff542a04ce55c198d223aa"
+        ]
+      },
+      "requested_models_by_role": {
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      },
+      "served_models_by_role": {
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      }
+    },
+    "persistent-answer-evaluation-2026-11-01": {
+      "policy_sha256": {
+        "judge_policy_sha256": "2426798878667244a95b42ea572701cefd3fa9ea5fbdaeda0289a1ac2eefac4c",
+        "support_policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e"
+      },
+      "request_sha256_occurrences_by_role": {
+        "seed": [
+          "0454a13f51ab32660f5d1f3d7de709da4f1032025a9096070181e9f1bcc02a4b",
+          "7368da716853b15bc4a32a6880da59cd669f5677b8a22d5121f8a53655736c2c",
+          "77b9975072f8487ffbdfab1e2ff317def5ac2ed7de694cb6b0b1e7ba2fb5bf9f",
+          "8d588197ce7d7996b8cdd1eb42c138f5b1a02387e552112979c347771fe59c5b",
+          "f0d2f54f851ae28a7274cd9d68ae66efbaac3548c3f37089bf53b7de7b3ca83b",
+          "fcfcca1ebbc475ac026d8a89dced1c4a46f0899e33d9f38334f533cab59ac037"
+        ],
+        "support": [
+          "24847864439fc57c53de9fd897d55378346e1fe9aee31ac6f9c6e275b11b65d9",
+          "24847864439fc57c53de9fd897d55378346e1fe9aee31ac6f9c6e275b11b65d9",
+          "3753e5fcc354eb095b5108a2af8552467a183da91352d25c74df9aa75ddf3306",
+          "3753e5fcc354eb095b5108a2af8552467a183da91352d25c74df9aa75ddf3306",
+          "41df343824cd212308c5da03a629c6da43597fc8ef3cafcf660013113ae22a69",
+          "41df343824cd212308c5da03a629c6da43597fc8ef3cafcf660013113ae22a69",
+          "990fd1aeaa431daa76940ca645a8ee9306e4fbae5f2170d9fac1d83ca8a4f6d5",
+          "990fd1aeaa431daa76940ca645a8ee9306e4fbae5f2170d9fac1d83ca8a4f6d5",
+          "a4f5343e9338b55934b336d248b9affb42b8508466aedd59397fe03e8ba6bce0",
+          "a4f5343e9338b55934b336d248b9affb42b8508466aedd59397fe03e8ba6bce0",
+          "a4f5343e9338b55934b336d248b9affb42b8508466aedd59397fe03e8ba6bce0",
+          "a4f5343e9338b55934b336d248b9affb42b8508466aedd59397fe03e8ba6bce0",
+          "d50ef01e070d8938231ca8b05d4f9093f8a0e224cfedcfb917cb1ffa118cb707",
+          "d50ef01e070d8938231ca8b05d4f9093f8a0e224cfedcfb917cb1ffa118cb707",
+          "d50ef01e070d8938231ca8b05d4f9093f8a0e224cfedcfb917cb1ffa118cb707",
+          "d50ef01e070d8938231ca8b05d4f9093f8a0e224cfedcfb917cb1ffa118cb707"
+        ],
+        "left": [
+          "14683f3763413ca0a7f317b91a9490e42339deedea3bab34705718466935496e",
+          "14683f3763413ca0a7f317b91a9490e42339deedea3bab34705718466935496e",
+          "1cc564fa9fb8848647126cee5e4bc80a56dcba21e2a713b248932a2f07a737f1",
+          "2cfde748d18f7cbbdfc7b471c0af71e8e28eecbcdbb95f0faff130a4b16d176d",
+          "2cfde748d18f7cbbdfc7b471c0af71e8e28eecbcdbb95f0faff130a4b16d176d",
+          "5f1c35e7a9aa2088e1435f3ea650ffcd586649671681399c3027a303a2604b05",
+          "604da4cc1f979c65d0f6352f435d2edee4e1df2bceff0c3e40b29f37e1e4705d",
+          "604da4cc1f979c65d0f6352f435d2edee4e1df2bceff0c3e40b29f37e1e4705d",
+          "64515eea12616fbf966c4fc18bfa8b8ce384840794efd38f2b16e1ca60ff3d1f",
+          "7b26349d0d85b8ae308504e43e67c084d4cead4fcca4969b6e6f229f544d98cd",
+          "7b26349d0d85b8ae308504e43e67c084d4cead4fcca4969b6e6f229f544d98cd",
+          "7e317060b3131b978bb57b27b8e30f04c06274030cda7e19bbf61b8fc01cd473",
+          "b97291ec697848b8a6d35086f08625395da2273c9281b8294505ef2d078dedb1",
+          "bc2aa64560e269c452a37bb3d43d641d3af3a6abd67a3e7429a6766040837eec",
+          "c114b8ad9e5901281ae1925ecc130f96b030e6213a3da1aab7d871ba69032b10",
+          "c114b8ad9e5901281ae1925ecc130f96b030e6213a3da1aab7d871ba69032b10",
+          "d7b4fab34183a21b211141d15d07cd5d2477c3165caade18995c9f437219ec7e",
+          "ecce8c48bc834875223594cb806a6cdb9e2c4808c1361e553a550874851b8170",
+          "f31c466145c543c4f8052b18bb860d80a3b64e3f1e616567485f1d0af174ff5b",
+          "f31c466145c543c4f8052b18bb860d80a3b64e3f1e616567485f1d0af174ff5b"
+        ],
+        "right": [
+          "208a50952b46c9e51c951cbe3f039d926fe771e53b26c7b54486c1791ee92506",
+          "2774dcfa839212301559258a52f5e8cfaddd98a75626a9d6ff01c7de3a651dad",
+          "6c8b6ea431e96dc4bbca48d37cee9c6b5869f1ed9dbc34c89870b8a7d0893bc2",
+          "7121675d41c02c712bf8207d9ca0d22c2fc0d19cb784b2519c078cda59d92219",
+          "a2c7a89e91fc253aaaded64fd1bb4d565da4ca39a81a5d7789f6d9c21e780e2f",
+          "c6d9ce8ab64819d9d5cfa0dfdaaa72766ae73f6062bb569ac8dbd245a483d9d4",
+          "cfe1ddb41b02543bf59368814d66c1a612f5bfa69163f0e9e4817962fc3fe26e",
+          "f12d08d03322d844a3176783b3ddc3d9a78da2c2171e36dcf0370c4d482c466c",
+          "f3f0a44f6c242d3cc22ae989c0dc313540ff1923c162763c8aff4ecaf8ab4e25",
+          "fc04978721dc92671eaf0b4a22048a0da3f84822b7b08be91cf644603f10ba90"
+        ],
+        "judge": [
+          "0aa58ce69358a955fe1fdc3bc98fa3aeda1663748054f30f80a9d423c5101823",
+          "0d878b61785eda5fd05d1023eba78bf935a6b7bdcde5741b4c48679649542850",
+          "26e3491fec5d06001efd576caeec03e622c9984c325debc1d399f151a6465d6e",
+          "313144bfb2c11e3599829410f497c1afac3e3f73533257ad832716980a5ba460",
+          "57e6702d9b0f8343e33e9b13fe318d248f73fafc4034ebac6099f188a24a48e2",
+          "b312326a023a89ad9069d7332fb9ddf35e4aa747a792942b5d40dab7a795a9c3",
+          "c0ba356fb6408d305c136e27ad1f2a8503278b09e5ad197eea60dcab32982b92",
+          "c915732ddc8040d115049a225bb95404e2cace8fbf2a2ef35be0969b51405c42",
+          "c94eb22a8fd64a307fb82771c49257b3d35a6be465f630a19be483a717b6e165",
+          "ef04feeddcdad669c63aed55fbabafa97f7d10e7c56ce42b577440f2fd2699eb"
+        ]
+      },
+      "requested_models_by_role": {
+        "seed": [
+          "gpt-6-luna"
+        ],
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      },
+      "served_models_by_role": {
+        "seed": [
+          "gpt-6-luna"
+        ],
+        "support": [
+          "gpt-6-luna"
+        ],
+        "left": [
+          "gpt-6-luna"
+        ],
+        "right": [
+          "gpt-6-luna"
+        ],
+        "judge": [
+          "gpt-6-sol"
+        ]
+      }
+    }
+  },
+  "repaired_development_exact_replay": {
+    "runtime_revision": "2b39d439ae4873e986024f025ea32adde34e224a",
+    "provider_calls": 0,
+    "answers_equal": true,
+    "grades_equal": true,
+    "source_qas_equal": true,
+    "whole_snapshot_hashes_equal": true,
+    "reused_frozen_sources": true
+  },
+  "attribution_diagnostic_exact_replay": {
+    "runtime_revision": "40cd2c3b2cb7706cc9f9ecb7524abeb4403bf3eb",
+    "provider_calls": 0,
+    "answers_equal": true,
+    "grades_equal": true,
+    "source_qas_equal": true,
+    "whole_snapshot_hashes_equal": true,
+    "reused_frozen_sources": true
+  },
+  "evaluation_exact_replay": {
+    "runtime_revision": "40cd2c3b2cb7706cc9f9ecb7524abeb4403bf3eb",
+    "provider_calls": 0,
+    "answers_equal": true,
+    "grades_equal": true,
+    "source_qas_equal": true,
+    "whole_snapshot_hashes_equal": false,
+    "reused_frozen_sources": false
   }
 }

@@ -124,5 +124,11 @@ of factual QA approvals. A known project with no approved evidence for a request
 relation should elicit uncertainty about that fact, not a repeated request to
 identify the project. The metadata contains only resolution state, no project
 IDs, source text or values; alias ambiguity and source lifecycle still apply.
+Supported conversation records may be reported with source attribution and the
+appropriate uncertainty, without claiming independent verification. Both answer
+and critic guidance distinguish that use from asserting verified facts: lack of
+external verification alone should lead to an attribution caveat, not deletion of
+otherwise supported values and conditions. Evidence status and support approvals
+are unchanged; unsupported values and contradictions must still be challenged.
 See the [persistent final-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
-for the measured initial weakness, repair coverage and pending live evaluation.
+for measured development failures, repairs, and the frozen evaluation results.
