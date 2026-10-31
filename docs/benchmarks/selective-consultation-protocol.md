@@ -96,3 +96,29 @@ Further pre-evaluation review found U+2212 minus signs could lose polarity.
 Normalize canonical Unicode minus, prevent unsigned fallback after an unconsumed
 sign, and reject ambiguous sign/group forms. Add sign-reversal regressions before
 evaluation; no new live development calls or fixture/rubric changes are involved.
+
+Evaluation transport amendment (before any continuation calls): at frozen router
+revision `5bbfbd1`, evaluation stopped after 49 POSTs. One existing-auto detail
+request returned HTTP completion `stop` with empty text (450-token requested cap,
+three output tokens). Its cell, `eval-explicit-review/legacy_auto`, remains
+unavailable permanently; do not retry it or substitute its initial draft. No
+evaluation packet has been graded. The original partial report, failure and
+journal stay immutable.
+
+Add runner-only continuation for a returned invalid completion, preserving the
+exact fixture, router hash, model, runtime, generation caps and grading rubric.
+Verify the ungraded prefix, hash its artifacts, restore its 49 consumed calls and
+usage, reuse shared drafts, and skip every attempted cell including the failed
+one. Only unattempted cells run in fresh sessions; all eight planned trials stay
+in the denominator. The original 160-call evaluation budget includes the prefix,
+leaving at most 111 further calls. A new output directory retains the continuation
+and combined journal. HTTP/quota/cancellation failures remain transport-blocking.
+
+Returned empty/truncated completions become unavailable cells without fallback or
+retry; later independent cells may proceed. Grade available answers once, leave
+the failed cell explicitly ungraded, and report its cost and missing original
+handler time. Complete combined replay must reproduce the failed cell and every
+other exact request with zero provider calls. This is a technical completion of
+the original trial plan, not a new evaluation draw or favorable subset.
+Right detail requests use 450 tokens (900 for large budget); critique normally
+uses 520 and format repair can use 900. Publish all observed caps by role.

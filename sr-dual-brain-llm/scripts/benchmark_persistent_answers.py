@@ -77,6 +77,7 @@ class Journal(BaseJournal):
             raise RuntimeError('Provider transport blocked after a prior failure')
         key = digest({'role': role, 'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(), 'payload': payload})
         before = len(self.data['responses'].get(key, []))
+        frozen_position = 0 if role == 'seed' else self.counts[key]
         try:
             return await super().post(role, url, payload, headers, **kwargs)
         except BaseException as exc:
@@ -84,7 +85,8 @@ class Journal(BaseJournal):
             # A rejected admission/reused failure must not rewrite an older
             # successful response for the same request key.
             frozen_rows = self.frozen['responses'].get(key, []) if self.frozen else []
-            if len(rows) > before or (frozen_rows and frozen_rows[-1].get('error_type')):
+            frozen_row = frozen_rows[frozen_position] if frozen_position < len(frozen_rows) else {}
+            if len(rows) > before or frozen_row.get('error_type'):
                 self.data['transport_blocked'] = True
             if len(rows) > before:
                 row = rows[-1]
