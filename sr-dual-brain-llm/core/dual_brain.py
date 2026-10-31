@@ -39,6 +39,7 @@ from .predictive_coding import PredictiveCodingController, PredictionFrame
 from .salience_network import SalienceNetwork, SalienceSignal
 from .thalamus import ThalamicRelay, Thalamus
 from .micro_critic import micro_criticise_reasoning
+from .consultation_router import route_conversation_lookup, VERSION as CONSULTATION_ROUTER_VERSION
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
     _LEFT_HEMISPHERE_MARKERS,
@@ -2367,6 +2368,7 @@ class DualBrainController:
         is_trivial_chat: bool,
         phase_add: Callable[[str, float], None],
         context_signal_len: int,
+        leading_brain: str = "left",
     ) -> RoutingStageResult:
         focus_metric = context_frame.focus_metric
         acc_signal_pre: ConflictSignal | None = None
@@ -2677,6 +2679,61 @@ class DualBrainController:
                 decision.state["director_memory_working"] = "drop"
             if lt == "drop":
                 decision.state["director_memory_long_term"] = "drop"
+
+        # Opt-in and scoped to guarded, left-led conversation turns. Explicit
+        # modes/leads, source writes, director directives and ACC controls retain
+        # their existing authority. This never changes evidence eligibility.
+        if (
+            _env_flag("DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT", False)
+            and getattr(self.memory, "conversation_context", False)
+            and getattr(self.memory, "answerability_gate", None) is not None
+            and not getattr(self.memory, "primary_write_pending", False)
+            and system2_mode == "auto" and not precision_priority
+            and system2_capable and leading_brain == "left"
+            and not force_right_lead
+            and str((director_control or {}).get("consult") or "auto").lower() == "auto"
+            and not any(decision.state.get(key) for key in (
+                "amygdala_override", "acc_override_consult", "acc_system2_bump"))
+        ):
+            approved = (self.memory.retrieve_related_traces(question)
+                        if context_parts.get("memory") else [])
+            route = route_conversation_lookup(
+                question=question, draft=draft, confidence=confidence,
+                risk=float(affect.get("risk", 0.0)), q_type=decision.state.get("q_type"),
+                reference=self.memory.reference_resolution(question), approved_records=approved,
+            )
+            before_action, before_system2 = decision.action, system2_active
+            if route.action == "skip":
+                decision.action, system2_active = 0, False
+                system2_reason, system2_round_target = "selective_supported_lookup", 0
+            elif route.action == "consult":
+                decision.action, system2_active = max(1, decision.action), True
+                system2_reason = "selective_" + route.reason
+                if not before_system2:
+                    decision.temperature = max(.1, min(.6, float(decision.temperature)))
+                    decision.state["system2_temperature"] = decision.temperature
+                    system2_round_target = max(
+                        self._system2_round_budget(
+                            system2_mode=system2_mode, q_type=str(decision.state.get("q_type") or ""),
+                            question=question, context_signal_len=context_signal_len,
+                            focus_metric=context_frame.focus_metric, priority=system2_priority),
+                        _env_int("DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN", 0, minimum=0, maximum=3),
+                    )
+            decision.state["selective_consultation"] = {
+                "version": CONSULTATION_ROUTER_VERSION, "action": route.action, "reason": route.reason,
+                "prior_action": before_action, "prior_system2": bool(before_system2),
+                "final_action": decision.action, "final_system2": bool(system2_active),
+                "approved_records": len(approved),
+            }
+            decision.state.update(system2_enabled=bool(system2_active), system2_reason=system2_reason,
+                                  system2_round_target=system2_round_target)
+            self.telemetry.log("consultation_route", qid=decision.qid, **decision.state["selective_consultation"])
+            # Expose the final post-draft decision, rather than the earlier
+            # perception-only activation, through existing metrics extraction.
+            self.telemetry.log("system2_mode", qid=decision.qid, mode=system2_mode,
+                               enabled=bool(system2_active), capable=bool(system2_capable),
+                               reason=system2_reason, priority=system2_priority,
+                               low_signal_filter=bool(system2_low_signal_filter))
 
         return RoutingStageResult(
             context_frame=context_frame,
@@ -5117,6 +5174,7 @@ class DualBrainController:
             is_trivial_chat=is_trivial_chat,
             phase_add=_phase_add,
             context_signal_len=context_signal_len,
+            leading_brain=leading,
         )
         context_frame = routing_stage.context_frame
         context = context_frame.context

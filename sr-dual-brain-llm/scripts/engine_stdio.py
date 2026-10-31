@@ -100,6 +100,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
+    consultation_ev = _last_event(events, "consultation_route")
     system2_refine_ev = _last_event(events, "system2_refinement") or {}
     latency_breakdown_ev = _last_event(events, "latency_breakdown") or {}
     policy_state = (
@@ -328,6 +329,10 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "action": policy_ev.get("action"),
             "temperature": policy_ev.get("temperature"),
             "slot_ms": policy_ev.get("slot_ms"),
+            "consultation_route": ({key:consultation_ev.get(key) for key in (
+                "version", "action", "reason", "prior_action", "prior_system2",
+                "final_action", "final_system2", "approved_records")}
+                if consultation_ev is not None else None),
         },
         "leading": lead_ev.get("leading"),
         "latency_ms": complete_ev.get("latency_ms"),

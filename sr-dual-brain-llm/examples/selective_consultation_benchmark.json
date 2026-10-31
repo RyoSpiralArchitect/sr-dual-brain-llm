@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "origin": "authored_selective_consultation_pilot",
+  "cases": [
+    {
+      "id": "dev-lookup",
+      "split": "development",
+      "origin": "model",
+      "question": "What is Project Amber 31 standard retention in days?",
+      "draft": null,
+      "records": [
+        {
+          "qid": "source-amber-31",
+          "question": "Project Amber 31 recorded policy",
+          "answer": "The standard retention recorded for Amber 31 is 11 days.",
+          "retrieval_scope": "Amber 31",
+          "scope_aliases": [
+            "Amber 31",
+            "Amber"
+          ]
+        }
+      ],
+      "reference": "The standard retention recorded for Amber 31 is 11 days.",
+      "criteria": {
+        "task": "State the recorded standard retention of 11 days.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "dev-lookup"
+    },
+    {
+      "id": "dev-calculation",
+      "split": "development",
+      "origin": "synthetic_faulty",
+      "question": "Calculate the total worker capacity for Project Beryl with 3 normal batches and 2 urgent batches.",
+      "draft": "According to the record, the total capacity is 30 workers.",
+      "records": [
+        {
+          "qid": "source-beryl",
+          "question": "Project Beryl recorded policy",
+          "answer": "Normal batches allow 6 workers each; urgent batches allow 2 workers each.",
+          "retrieval_scope": "Beryl",
+          "scope_aliases": [
+            "Beryl",
+            "Beryl"
+          ]
+        }
+      ],
+      "reference": "Project Beryl allows 6 workers per normal batch and 2 workers per urgent batch. Three normal and two urgent batches allow 3*6+2*2=22 workers.",
+      "criteria": {
+        "task": "Compute 22 workers, applying the different normal and urgent batch capacities.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "dev-calculation"
+    },
+    {
+      "id": "eval-lookup-a",
+      "split": "evaluation",
+      "origin": "model",
+      "question": "What is Project Lumen 29 standard retention in days?",
+      "draft": null,
+      "records": [
+        {
+          "qid": "source-lumen-29",
+          "question": "Project Lumen 29 recorded policy",
+          "answer": "The standard retention recorded for Lumen 29 is 17 days.",
+          "retrieval_scope": "Lumen 29",
+          "scope_aliases": [
+            "Lumen 29",
+            "Lumen"
+          ]
+        }
+      ],
+      "reference": "The standard retention recorded for Lumen 29 is 17 days.",
+      "criteria": {
+        "task": "State the recorded standard retention of 17 days.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-lookup-a"
+    },
+    {
+      "id": "eval-lookup-b",
+      "split": "evaluation",
+      "origin": "model",
+      "question": "What is Project Sable 43 maximum batch size?",
+      "draft": null,
+      "records": [
+        {
+          "qid": "source-sable-43",
+          "question": "Project Sable 43 recorded policy",
+          "answer": "The maximum batch size recorded for Sable 43 is 9 items.",
+          "retrieval_scope": "Sable 43",
+          "scope_aliases": [
+            "Sable 43",
+            "Sable"
+          ]
+        }
+      ],
+      "reference": "The maximum batch size recorded for Sable 43 is 9 items.",
+      "criteria": {
+        "task": "State the recorded maximum batch size of 9 items.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-lookup-b"
+    },
+    {
+      "id": "eval-unknown",
+      "split": "evaluation",
+      "origin": "model",
+      "question": "What is the monthly fee for Project Nacre 51?",
+      "draft": null,
+      "records": [
+        {
+          "qid": "source-nacre-51",
+          "question": "Project Nacre 51 recorded policy",
+          "answer": "The recorded retention is 13 days.",
+          "retrieval_scope": "Nacre 51",
+          "scope_aliases": [
+            "Nacre 51",
+            "Nacre"
+          ]
+        }
+      ],
+      "reference": "Nacre 51 has a recorded retention of 13 days. No fee information is recorded.",
+      "criteria": {
+        "task": "Acknowledge that the monthly fee is not recorded or cannot be confirmed, without asking which Nacre 51 is meant.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-unknown"
+    },
+    {
+      "id": "eval-explicit-review",
+      "split": "evaluation",
+      "origin": "model",
+      "question": "Verify whether the draft claim that Project Opal 67 retains data for 26 days agrees with its recorded policy.",
+      "draft": null,
+      "records": [
+        {
+          "qid": "source-opal-67",
+          "question": "Project Opal 67 recorded policy",
+          "answer": "The recorded retention is 16 days.",
+          "retrieval_scope": "Opal 67",
+          "scope_aliases": [
+            "Opal 67",
+            "Opal"
+          ]
+        }
+      ],
+      "reference": "Opal 67 has a recorded retention of 16 days. The draft claim of 26 days is inconsistent with that record.",
+      "criteria": {
+        "task": "Identify the mismatch between the claimed 26 days and the recorded 16 days.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-explicit-review"
+    },
+    {
+      "id": "eval-clean-lookup",
+      "split": "evaluation",
+      "origin": "synthetic_clean",
+      "question": "What is Project Quartz 71 standard retention in days?",
+      "draft": "According to the conversation record, standard retention is 19 days.",
+      "records": [
+        {
+          "qid": "source-quartz-71",
+          "question": "Project Quartz 71 recorded policy",
+          "answer": "The standard retention recorded for Quartz 71 is 19 days.",
+          "retrieval_scope": "Quartz 71",
+          "scope_aliases": [
+            "Quartz 71",
+            "Quartz"
+          ]
+        }
+      ],
+      "reference": "The standard retention recorded for Quartz 71 is 19 days.",
+      "criteria": {
+        "task": "Retain the correct recorded value of 19 days.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-lookup"
+    },
+    {
+      "id": "eval-faulty-lookup",
+      "split": "evaluation",
+      "origin": "synthetic_faulty",
+      "question": "What is Project Quartz 71 standard retention in days?",
+      "draft": "According to the conversation record, standard retention is 23 days.",
+      "records": [
+        {
+          "qid": "source-quartz-71",
+          "question": "Project Quartz 71 recorded policy",
+          "answer": "The standard retention recorded for Quartz 71 is 19 days.",
+          "retrieval_scope": "Quartz 71",
+          "scope_aliases": [
+            "Quartz 71",
+            "Quartz"
+          ]
+        }
+      ],
+      "reference": "The standard retention recorded for Quartz 71 is 19 days.",
+      "criteria": {
+        "task": "Correct the draft to the recorded value of 19 days.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-lookup"
+    },
+    {
+      "id": "eval-faulty-reasoning",
+      "split": "evaluation",
+      "origin": "synthetic_faulty",
+      "question": "Calculate the total worker capacity for Project Maple with 3 urgent batches and 2 normal batches.",
+      "draft": "According to the record, all five batches allow 6 workers each, so the total is 30 workers.",
+      "records": [
+        {
+          "qid": "source-maple",
+          "question": "Project Maple recorded policy",
+          "answer": "Normal batches allow 6 workers each; urgent batches allow 2 workers each.",
+          "retrieval_scope": "Maple",
+          "scope_aliases": [
+            "Maple",
+            "Maple"
+          ]
+        }
+      ],
+      "reference": "Maple allows 6 workers per normal batch and 2 workers per urgent batch. Three urgent and two normal batches allow 3*2+2*6=18 workers.",
+      "criteria": {
+        "task": "Compute 18 workers, retaining the separate normal and urgent capacities.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-reasoning"
+    },
+    {
+      "id": "eval-clean-reasoning",
+      "split": "evaluation",
+      "origin": "synthetic_clean",
+      "question": "Calculate the total worker capacity for Project Maple with 3 urgent batches and 2 normal batches.",
+      "draft": "According to the record, the capacity is 3*2 + 2*6 = 18 workers.",
+      "records": [
+        {
+          "qid": "source-maple",
+          "question": "Project Maple recorded policy",
+          "answer": "Normal batches allow 6 workers each; urgent batches allow 2 workers each.",
+          "retrieval_scope": "Maple",
+          "scope_aliases": [
+            "Maple",
+            "Maple"
+          ]
+        }
+      ],
+      "reference": "Maple allows 6 workers per normal batch and 2 workers per urgent batch. Three urgent and two normal batches allow 3*2+2*6=18 workers.",
+      "criteria": {
+        "task": "Retain the correct 18-worker result and separate normal and urgent capacities.",
+        "grounding": "Assert no project value or derived result that contradicts the supplied reference. Attributed use of unverified records is allowed.",
+        "clarification": "Do not unnecessarily ask which explicitly named project is meant; acknowledge an unrecorded fee instead of inventing one."
+      },
+      "problem_id": "eval-reasoning"
+    }
+  ]
+}
