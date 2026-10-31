@@ -567,8 +567,9 @@
       },
       "exact_replay": {
         "original_runtime_revision": "6defb141a9689e9e4692783770a4f1dac6e147de",
-        "replay_runtime_revision": "5bbfbd17776fdfc549bf2eff8adf4f5a5e26bf7c",
+        "replay_runtime_revision": "464901df2451721da1601dfb61c1b016232b942c",
         "provider_calls": 0,
+        "replay_router_sha256": "28e3b17ce167a1fe7fbd20cf5f68f6bbd5a311638d787b301e99e06915101fe7",
         "initial_drafts_equal": true,
         "answers_equal": true,
         "grades_equal": true,
@@ -581,8 +582,8 @@
         "report.json": "e132611310466790062bd3511f05e994ddfd779038b5928acfe2ef25c514deb3"
       },
       "replay_artifact_sha256": {
-        "report.partial.json": "7777de76eebeee7ecb63aa19712a0018fb13339173ba2c49708ff791c3fa4777",
-        "report.json": "c61f06a1055eeb15db4ccded194b516eacd90f21747d0b0df0f1c163a5d85820"
+        "report.partial.json": "af4c58862fdaae3b7dac677e70897abb936a82890177b201265e4fac9067a847",
+        "report.json": "ffcd1beeaa035ef57f8eb74ba355cc8268ad368ff5b3d3bc38ca1943e65421b5"
       }
     },
     "evaluation": {
@@ -1922,8 +1923,9 @@
       },
       "exact_replay": {
         "original_runtime_revision": "3b999e79810dd07069fc06e4474db47fd5ecb7c2",
-        "replay_runtime_revision": "3b999e79810dd07069fc06e4474db47fd5ecb7c2",
+        "replay_runtime_revision": "464901df2451721da1601dfb61c1b016232b942c",
         "provider_calls": 0,
+        "replay_router_sha256": "28e3b17ce167a1fe7fbd20cf5f68f6bbd5a311638d787b301e99e06915101fe7",
         "initial_drafts_equal": true,
         "answers_equal": true,
         "grades_equal": true,
@@ -1945,15 +1947,15 @@
         "5bbfbd17776fdfc549bf2eff8adf4f5a5e26bf7c",
         "3b999e79810dd07069fc06e4474db47fd5ecb7c2"
       ],
-      "production_runtime_unchanged": true,
+      "production_runtime_unchanged_during_continuation": true,
       "prefix_artifact_sha256": {
         "journal.partial.json": "3e8699c36b17506b26ab5574bb4582be63d7f6ddbb3e10c574f895c6c6a5513e",
         "report.partial.json": "181f08f50b81a889ae9450163dc051fd4393e93b95e1717b2d38ba903e2d3035",
         "failure.json": "c80475d65559e2987ad62833a30213e8221f7dd9443869d382f3fb0f211af860"
       },
       "replay_artifact_sha256": {
-        "report.partial.json": "fab8fdaab3a139144e8e652962c8953d4524817bcca0c1d221577bb7389e47e2",
-        "report.json": "70f888a3dc1620b2fe12273b14b0f029fb640bb7dcc6e59247c097ecc2bd39c0"
+        "report.partial.json": "bb0eef01701ff27b4ca11879883291a3e5d12653cf67bdbfd3c5a51d76fe9a9d",
+        "report.json": "65182f55eeefe8ca5745661df6f850767d7d692fe602d8f30ed8c8df0e651883"
       }
     }
   },

@@ -221,7 +221,14 @@ and original prefix artifact hashes. Development exactly replayed after parser
 repairs with zero provider calls. The complete combined evaluation journal also
 replayed with zero provider calls, reproducing every initial draft, final answer,
 failed cell and grade, with full exact-request coverage. No synthetic success was
-substituted for the empty response.
+substituted for the empty response. After measurement, final review identified an
+unconsumed sign before currency (`-$11`). The final parser at `464901d` rejects
+any unconsumed plus/minus, conservatively including some hyphenated prose. No
+provider calls or new evaluation draw followed this review hardening. Both complete
+journals replayed again at that revision: all requests, routes, drafts, available/
+unavailable statuses, answers and grades remained identical. Public metrics retain
+the measured and final-replay router hashes separately; this equivalence applies
+to the observed inputs, not arbitrary future quantities.
 
 Actual evaluation commands, with the original allocation preserved:
 
@@ -240,11 +247,12 @@ a fresh output directory, the same phase/budget, and no `--resume`. Complete mod
 replay is independent of the private original prefix directory. Neither the
 completed trial plan nor its failed cell should be resampled for a better result.
 
-Local validation passed **805 Python tests**, including **15 real PostgreSQL
-cases**, with no skips. Focused routing/runner/failure checks passed 82 cases, including
+Local validation passed **811 Python tests**, including **15 real PostgreSQL
+cases**, with no skips. Focused routing/runner/failure checks passed 88 cases, including
 same-draft identity, actual final routing telemetry, both complete and missing
 provider usage, exact zero-network replay, protected explicit controls and numeric
 format regressions, immutable failed-cell continuation and exact combined replay.
 An additional 149 whole-value scalar checks passed. All eight CI checks passed at
-`3b999e7`, and Codex re-review completed with no findings. The final report commit
-changes documentation/metrics only and is checked separately before merge.
+`3b999e7`, and Codex re-review completed with no findings. The post-measurement parser guard at `464901d` passed the 811-test suite and exact
+zero-call replay. The final documentation/metrics commit is checked separately
+before merge.
