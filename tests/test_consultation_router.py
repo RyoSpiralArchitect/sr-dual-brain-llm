@@ -65,9 +65,23 @@ def test_decimal_drift_cannot_hide_beside_an_unchanged_supported_value(value, ch
     assert route(approved_records=[source],draft=f'Retention is 11 days; delay is {value} seconds.').action=='skip'
 
 
-@pytest.mark.parametrize('value', ['.5e2','1abc','½','١٫٥'])
+@pytest.mark.parametrize('value', ['.5e2','1abc','½','١٫٥',"1'000",'1’000','1:2','1.,000',"1''000"])
 def test_unparsed_numeric_fragments_never_disappear_beside_a_valid_value(value):
     source=MemoryTrace('Project Amber retention and delay',f'Retention is 11 days; delay is {value} seconds.')
+    assert route(approved_records=[source],draft=source.answer).reason=='unsupported_numeric_format'
+
+
+@pytest.mark.parametrize('value', ['−11','−.5','－11','﹣11'])
+def test_unicode_minus_signs_preserve_negative_polarity(value):
+    source=MemoryTrace('Project Amber thresholds',f'The threshold is {value} degrees.')
+    unsigned='0.5' if '.5' in value else '11'
+    assert route(approved_records=[source],draft=f'The threshold is {unsigned} degrees.').reason=='numeric_drift'
+    assert route(approved_records=[source],draft=source.answer).action=='skip'
+
+
+@pytest.mark.parametrize('value', ['➖11','–11','- 11','+ 11','(11)','($11)','value−11'])
+def test_ambiguous_or_unconsumed_signs_cannot_be_read_as_unsigned_values(value):
+    source=MemoryTrace('Project Amber thresholds',f'The threshold is {value} degrees.')
     assert route(approved_records=[source],draft=source.answer).reason=='unsupported_numeric_format'
 
 

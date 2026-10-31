@@ -17,14 +17,19 @@ _REASONING = re.compile(
     re.I,
 )
 _LOOKUP = re.compile(r"\b(what|which|when|recall|repeat)\b|教えて|何|どの|いつ|再掲|そのまま|は[?？]?$", re.I)
-_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.])[+-]?(?:\d+(?:,\d+)*(?:\.\d+)?|\.\d+)(?![A-Za-z0-9_])")
+_NUMBERS = re.compile(r"(?<![A-Za-z0-9_.+\-])[+-]?(?:\d+(?:,\d+)*(?:\.\d+)?|\.\d+)(?![A-Za-z0-9_])")
 _SCALAR = re.compile(r"[+-]?(?:(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?|\.\d+)")
 
 
 def _numbers(text):
-    normalized = unicodedata.normalize("NFKC", text)
+    normalized = unicodedata.normalize("NFKC", text).replace('\N{MINUS SIGN}', '-')
     if (any(c.isnumeric() and unicodedata.category(c) != 'Nd' for c in text)
-            or re.search(r"\d\s*[/⁄∕]\s*[+-]?[.\d]|\d\s+[0-9]|\d\s*[eE]\s*[+-]?\s*\d|\d\.\d+\.\d|[٫٬]", normalized)):
+            or any(separator not in {',','.'}
+                   for separator in re.findall(r'(?<=\d)([^\w]+)(?=\d)', normalized))
+            or any(c not in '+-' and (unicodedata.category(c)=='Pd'
+                       or 'MINUS' in unicodedata.name(c,'') or 'PLUS' in unicodedata.name(c,''))
+                   for c in normalized)
+            or re.search(r"\d\s*[/⁄∕]\s*[+-]?[.\d]|\d\s+[0-9]|\d\s*[eE]\s*[+-]?\s*\d|\d\.\d+\.\d|[٫٬]|[-+]\s+[.\d]|\(\s*[$€£]?\s*[+\-]?(?:\d|\.\d)", normalized)):
         raise ValueError('Unsupported numeric format')
     values = _NUMBERS.findall(normalized)
     # Never silently discard an unrecognized numeric fragment alongside a

@@ -92,3 +92,7 @@ supported value. Parse signed leading-dot decimals as complete values and reject
 unparsed numeric fragments rather than relying on partial extraction. Add drift
 and unsupported-format regressions before evaluation; retain the original live
 development data and verify exact replay at the final frozen code revision.
+Further pre-evaluation review found U+2212 minus signs could lose polarity.
+Normalize canonical Unicode minus, prevent unsigned fallback after an unconsumed
+sign, and reject ambiguous sign/group forms. Add sign-reversal regressions before
+evaluation; no new live development calls or fixture/rubric changes are involved.
