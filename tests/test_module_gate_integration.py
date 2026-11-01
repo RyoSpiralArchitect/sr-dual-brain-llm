@@ -151,6 +151,9 @@ def test_gate_telemetry_failure_preserves_admission_and_state():
 async def test_real_engine_uses_auto_admission_without_an_extra_model_classifier(monkeypatch,tmp_path):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / 'sr-dual-brain-llm/scripts'))
     from engine_stdio import EngineSession,_handle_process
+    from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
+    for spec in DEFAULT_REGISTRY.values():
+        monkeypatch.setenv(spec.mode_env, 'auto')
     monkeypatch.setenv('DUALBRAIN_MEMORY_CONVERSATION_CONTEXT','1')
     monkeypatch.setenv('DUALBRAIN_SYSTEM2_PRIORITY_AUTO','balanced')
     monkeypatch.setenv('DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE','auto')

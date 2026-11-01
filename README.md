@@ -359,7 +359,9 @@ deadlines through generation, drains owned work before session reuse, and defers
 cancellation once factual memory writes begin.
 
 The [optional-module gating prototype](docs/module-gating.md) centralizes controls
-for the selective consultation router, ACC monitoring and cerebellar correction.
+for twelve optional functions, including the selective consultation router, ACC
+and basal consultation controls, cerebellar correction, DMN injection and
+Executive/Director observation.
 Defaults remain unchanged. New optional switches should follow its naming,
 registration, fallback and validation rules.
 

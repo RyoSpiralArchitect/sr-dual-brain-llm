@@ -17,7 +17,7 @@ feedback policy, model classifier, or recursive meta-router.
 
 ## Inventory and controls
 
-The initial registry is explicit and immutable. Defaults preserve the existing
+The registry is explicit and immutable. Defaults preserve the existing
 switches; introducing the registry does not activate automatic policies.
 
 | Functional module ID | Owning controller method | Default | Legacy switch |
@@ -25,6 +25,20 @@ switches; introducing the registry does not activate automatic policies.
 | `conversation_selective_consultation` | `_run_routing_stage` (post-draft) | `off` | `DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT` |
 | `acc_monitor` | `_run_conflict_regulation_stage` (final answer) | `on` | `DUALBRAIN_ACC_MONITOR` |
 | `cerebellar_correction` | `_run_conflict_regulation_stage` (final answer) | `on` | `DUALBRAIN_CEREBELLUM_MICRO_CORRECTION` |
+| `default_mode_reflection_injection` | `_run_unconscious_resonance_stage` | `on` | None; existing suppression/cooldown remain |
+| `system2_stalled_followup` | `_run_system2_refinement_stage` | `on` | `DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP` |
+| `executive_advice` | `_prepare_observer_stage` | `on` within requested caller mode | `executive_mode=observe/assist/polish` remains required |
+| `director_advice` | `_prepare_observer_stage` | `on` within requested caller mode | `executive_observer_mode=director/both` remains required |
+| `executive_metrics_observation` | `_run_post_turn_observer_stage` | `on` within requested caller mode | `executive_observer_mode=metrics/both` remains required |
+| `acc_consult_promotion` | `_run_routing_stage` | `off` | `DUALBRAIN_ACC_OVERRIDE_CONSULT` |
+| `acc_system2_promotion` | `_run_routing_stage` | `off` | `DUALBRAIN_ACC_SYSTEM2_BUMP` |
+| `acc_temperature_adjustment` | `_run_routing_stage` | `on` when amount is positive | `DUALBRAIN_ACC_TEMPERATURE_DROP` remains the amount, default `0` |
+| `basal_consult_promotion` | `_run_routing_stage` | `on` under the existing loop recommendation | None; ACC/salience-driven consultation override |
+
+All twelve entries are connected to their production admission point. The nine
+follow-on migration candidates are implemented; no candidate in this inventory
+is a registration-only placeholder. This inventory covers optional work selected
+by the controller's public modes/enable switches plus DMN prompt injection.
 
 Canonical configuration is `DUALBRAIN_MODULE_<UPPER_ID>_MODE=on|off|auto`.
 For example, configure automatic decisions for subsequent turns with:
@@ -48,23 +62,28 @@ Eligibility and protected controls veto even `on`. Automatic admission never
 bypasses a module's checks. For the selective router, disabled means retain legacy
 consultation routing; it does not mean consultation or System2 is forced off.
 ACC monitoring and cerebellar correction keep their independent controls.
-`acc_monitor` controls final-answer monitoring only; pre-routing ACC overrides
-remain independent and retain their existing authority.
+`acc_monitor` controls final-answer monitoring only. Pre-routing ACC interventions
+have three independent registrations and keep their configured signal thresholds.
+For temperature adjustment, `on` cannot invent a positive drop amount.
 
-The broader switch inventory sets the boundary for later work:
+The remaining controls have an explicit disposition:
 
 | Existing control | Current owner | Treatment |
 | --- | --- | --- |
 | `system2_mode` and `DUALBRAIN_SYSTEM2_PRIORITY*` | System2 activation/settings | Protected caller mode and priority; preserve authority. |
-| `DUALBRAIN_ACC_OVERRIDE_CONSULT`, `DUALBRAIN_ACC_SYSTEM2_BUMP`, `DUALBRAIN_ACC_TEMPERATURE_DROP` | Pre-routing ACC | Separate opt-in interventions; retain existing defaults/thresholds. |
 | `DUALBRAIN_SYSTEM2_LOW_SIGNAL_FILTER` | System2 refinement | Keep validation local. |
-| `DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP` | System2 refinement | Possible later optional phase; retain round/progress guards. |
-| `executive_mode`, `executive_observer_mode` | Observer/adviser/director preparation | Preserve named caller modes; a later gate must target a specific function. |
-| Default-mode reflection injection | Unconscious stage / `DefaultModeNetwork` | Next migration candidate: `default_mode_reflection_injection`; retain history, cooldown and existing load/suppression checks. |
+| `DUALBRAIN_CRITIC_MICRO_FALLBACK`, `DUALBRAIN_CRITIC_JSON_REPAIR_CALL`, `DUALBRAIN_CRITIC_MICRO_SANITY_OVERRIDE` | Right-model critic | Keep response-contract recovery and validation local; these are not optional cognitive admission. |
+| `executive_mode`, `executive_observer_mode` | Caller | Retain named output/director semantics; TRN may omit a selected function but cannot select a mode that was not requested. |
 | `REASONING_DIAL` | Engine reasoning settings | Selects a reasoning mode rather than optional execution. |
+| Memory scope/support/currentness, commit/recovery and embedding availability | Memory pipeline | Mandatory evidence and lifecycle contracts; retain local ownership. |
+| Deadlines, cancellation, request identity, capacity and stream/vision I/O | Engine / callosum / Gateway | Operational contracts; retain local ownership. |
+| Audit/sanitization and critic filtering | Answer validation | Mandatory validation; retain local ownership. |
 
 Salience, prediction, thalamic relay and hypothalamic resource signals stay fact
-producers. This prototype does not migrate these remaining controls.
+producers. Unconscious analysis and DMN history/cooldown updates also stay active
+as fact/state producers. The excluded controls are intentionally retained, rather
+than unfinished migration candidates. New optional execution sites must join the
+registry under the rules below; a new inventory item needs an explicit disposition.
 
 ```mermaid
 flowchart TD
@@ -111,6 +130,41 @@ external-model availability, correction thresholds, and subsequent checks still
 decide whether correction runs. Admission is not an assertion of correctness or
 a promise that a provider call will occur.
 
+DMN automatic injection requires a generated reflection with finite confidence
+`>= 0.6`, finite task-positive load below `0.62`, and finite zero risk. Existing
+low-focus streak, thalamic and predictive suppression veto all modes, including
+`on`. Reflection generation still advances history and cooldown even when prompt
+injection is `off`. Private/debug reflection records remain separate from injection.
+
+Executive advice, director advice and post-turn metrics use a non-empty,
+nontrivial-input AUTO predicate. Caller modes and model availability are hard
+eligibility requirements. Defaults preserve requested `observe`/`assist`/`polish`
+behavior; AUTO may omit the selected function on trivial input and never converts
+one named mode into another. Advice/director admission happens before task creation;
+metrics admission happens after a final answer. Existing timeouts and cancellation
+ownership continue to govern admitted work.
+
+Pre-routing ACC AUTO requires known micro issues (one to six), finite micro
+confidence `>= 0.86` and finite conflict `>= 0.75`, in addition to existing
+configured thresholds. The three interventions are independent; System2 promotion
+also requires inactive, capable System2 in caller `auto` mode. Lowering the local
+threshold cannot lower these versioned AUTO floors. Disabling all interventions
+avoids their shared micro/monitor preparation.
+
+The basal loop's consultation promotion is a separate admission site: computing
+ACC facts must not silently bypass a declined AUTO intervention through that loop.
+Basal signal computation stays active under its existing conditions. Its AUTO
+promotion requires the same strong micro/conflict facts or the existing salience
+memory-recall/System2 pressure signal; trivial turns are omitted. Its default `on`
+preserves the old loop recommendation path, independently of direct ACC promotion.
+
+Stalled-follow-up admission controls only the extra stalled checklist path;
+ordinary progress-based follow-ups keep their existing policy. Remaining issue
+count, lack of progress, configured minimum issue count and a third-round budget
+remain hard guards. AUTO additionally needs an unresolved structured external
+`issues` verdict, critic detail, finite confidence `>= 0.85` and at most six
+remaining calibrated issues. Unknown/unstructured critique cannot trigger it.
+
 Literal completeness comes first because the selective pilot passed **6/7 jointly
 graded trials versus legacy's 7/7**. The missing case involved requested capacity
 labels despite a correct numeric result; selective and forced-on both missed it.
@@ -132,6 +186,23 @@ requested mode, configuration source, effective admission, and bounded reason.
 The metrics projection is `metrics.modules.gates`. Existing module events
 record actual execution and final routing separately: admitted, executed, and
 consulted are different outcomes. Gate telemetry carries no conversation content.
+An absent gate event means its owning phase was not reached; it is not evidence
+that the module was disabled. A turn can expose admission for all reached phases
+even when no provider task is created.
+
+## Validation sequence
+
+Finish the migration inventory before evaluating automatic behavior. First check
+default/legacy compatibility, OFF/ON/AUTO at real call sites, protected-mode vetoes,
+unknown signals, and stateful turn-to-turn behavior. Then exercise all AUTO modes
+together and measure actual task creation, calls and final answers separately from
+admission decisions. Run the full offline suite, real PostgreSQL and Gateway/UI
+contracts before reviewing the change.
+
+Broader live evaluation must compare frozen inputs and matched requested modes,
+report quality and provider cost together, retain failed cells and distinguish
+natural model outputs from injected faults. A deterministic fixture or fewer
+admitted modules alone does not establish improved answer quality or paid savings.
 
 ## Naming and registration rules
 

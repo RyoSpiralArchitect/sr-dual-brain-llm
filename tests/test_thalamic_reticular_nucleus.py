@@ -6,6 +6,10 @@ import pytest
 from core.thalamic_reticular_nucleus import (
     ACC_MONITOR, CEREBELLAR_CORRECTION, CONVERSATION_SELECTIVE_CONSULTATION,
     DEFAULT_REGISTRY, GateConfig, GateFacts, GateMode, ThalamicReticularNucleus,
+    DEFAULT_MODE_REFLECTION_INJECTION, SYSTEM2_STALLED_FOLLOWUP,
+    EXECUTIVE_ADVICE, DIRECTOR_ADVICE, EXECUTIVE_METRICS_OBSERVATION,
+    ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT,
+    BASAL_CONSULT_PROMOTION,
 )
 
 
@@ -29,6 +33,11 @@ def decide_auto(nucleus, module, facts):
 @pytest.mark.parametrize("module,mode", [
     (CONVERSATION_SELECTIVE_CONSULTATION, GateMode.OFF),
     (ACC_MONITOR, GateMode.ON), (CEREBELLAR_CORRECTION, GateMode.ON),
+    (DEFAULT_MODE_REFLECTION_INJECTION, GateMode.ON), (SYSTEM2_STALLED_FOLLOWUP, GateMode.ON),
+    (EXECUTIVE_ADVICE, GateMode.ON), (DIRECTOR_ADVICE, GateMode.ON),
+    (EXECUTIVE_METRICS_OBSERVATION, GateMode.ON), (ACC_TEMPERATURE_ADJUSTMENT, GateMode.ON),
+    (ACC_CONSULT_PROMOTION, GateMode.OFF), (ACC_SYSTEM2_PROMOTION, GateMode.OFF),
+    (BASAL_CONSULT_PROMOTION, GateMode.ON),
 ])
 def test_defaults_preserve_existing_enablement(nucleus, module, mode):
     assert nucleus.configure(module, {}) == GateConfig(mode, "default", True)
@@ -39,9 +48,10 @@ def test_defaults_preserve_existing_enablement(nucleus, module, mode):
     ("off", GateMode.OFF), ("0", GateMode.OFF), ("False", GateMode.OFF), ("no", GateMode.OFF),
 ])
 @pytest.mark.parametrize("module", list(DEFAULT_REGISTRY))
-def test_legacy_boolean_spellings_remain_compatible(nucleus, value, mode, module):
+def test_boolean_spellings_remain_compatible(nucleus, value, mode, module):
     spec = nucleus.registry[module]
-    assert nucleus.configure(module, {spec.legacy_env: value}) == GateConfig(mode, "legacy", True)
+    if spec.legacy_env is not None:
+        assert nucleus.configure(module, {spec.legacy_env: value}) == GateConfig(mode, "legacy", True)
     assert nucleus.configure(module, {spec.mode_env: value}) == GateConfig(mode, "canonical", True)
 
 
@@ -312,3 +322,48 @@ def test_registry_rejects_environment_name_collisions(nucleus, collision):
         first = replace(first, legacy_env=first.mode_env)
     with pytest.raises(ValueError, match="must be unique"):
         ThalamicReticularNucleus({ACC_MONITOR: first, CEREBELLAR_CORRECTION: second})
+
+
+@pytest.mark.parametrize('module', [EXECUTIVE_ADVICE, DIRECTOR_ADVICE, EXECUTIVE_METRICS_OBSERVATION])
+def test_observation_auto_suppresses_trivial_or_missing_input(nucleus, module):
+    assert decide_auto(nucleus, module, GateFacts(eligible=True, has_input=True, has_draft=True)).enabled
+    assert not decide_auto(nucleus, module, GateFacts(eligible=True, has_input=True, is_trivial=True)).enabled
+    assert not decide_auto(nucleus, module, GateFacts(eligible=True)).enabled
+
+
+def test_post_turn_metrics_auto_needs_an_answer(nucleus):
+    assert not decide_auto(nucleus, EXECUTIVE_METRICS_OBSERVATION,
+        GateFacts(eligible=True, has_input=True)).enabled
+
+
+def test_reflection_auto_requires_reliable_resting_state(nucleus):
+    facts = GateFacts(eligible=True, reflection_count=1, reflection_confidence=.6, task_positive_load=.61, risk=0.)
+    assert decide_auto(nucleus, DEFAULT_MODE_REFLECTION_INJECTION, facts).enabled
+    for changes in ({'risk': .1}, {'task_positive_load': .62}, {'reflection_confidence': .59},
+                    {'risk': None}, {'reflection_confidence': float('nan')}, {'reflection_count': 0}):
+        result = decide_auto(nucleus, DEFAULT_MODE_REFLECTION_INJECTION, replace(facts, **changes))
+        assert not result.enabled and result.reason != 'policy_error'
+
+
+@pytest.mark.parametrize('module', [ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT])
+def test_acc_intervention_auto_requires_known_strong_conflict(nucleus, module):
+    facts = GateFacts(eligible=True, micro_known=True, micro_issues=1, micro_confidence=.86, conflict_level=.75)
+    assert decide_auto(nucleus, module, facts).enabled
+    for changes in ({'micro_known': False}, {'micro_issues': 7}, {'micro_confidence': .85},
+                    {'conflict_level': .74}, {'conflict_level': float('nan')}):
+        assert not decide_auto(nucleus, module, replace(facts, **changes)).enabled
+
+
+def test_stalled_followup_auto_requires_reliable_bounded_critique(nucleus):
+    facts = GateFacts(eligible=True, critic_structured=True, critic_confidence=.85, remaining_issues=4)
+    assert decide_auto(nucleus, SYSTEM2_STALLED_FOLLOWUP, facts).enabled
+    for changes in ({'critic_structured': False}, {'critic_confidence': None},
+                    {'critic_confidence': .84}, {'remaining_issues': 0}, {'remaining_issues': 7}):
+        assert not decide_auto(nucleus, SYSTEM2_STALLED_FOLLOWUP, replace(facts, **changes)).enabled
+
+
+def test_basal_auto_requires_memory_pressure_or_strong_conflict(nucleus):
+    facts = GateFacts(eligible=True, memory_pressure=True)
+    assert decide_auto(nucleus, BASAL_CONSULT_PROMOTION, facts).enabled
+    assert not decide_auto(nucleus, BASAL_CONSULT_PROMOTION, replace(facts, is_trivial=True)).enabled
+    assert not decide_auto(nucleus, BASAL_CONSULT_PROMOTION, GateFacts(eligible=True)).enabled

@@ -19,6 +19,15 @@ from typing import Callable, Mapping
 CONVERSATION_SELECTIVE_CONSULTATION = "conversation_selective_consultation"
 ACC_MONITOR = "acc_monitor"
 CEREBELLAR_CORRECTION = "cerebellar_correction"
+DEFAULT_MODE_REFLECTION_INJECTION = "default_mode_reflection_injection"
+SYSTEM2_STALLED_FOLLOWUP = "system2_stalled_followup"
+EXECUTIVE_ADVICE = "executive_advice"
+DIRECTOR_ADVICE = "director_advice"
+EXECUTIVE_METRICS_OBSERVATION = "executive_metrics_observation"
+ACC_CONSULT_PROMOTION = "acc_consult_promotion"
+ACC_SYSTEM2_PROMOTION = "acc_system2_promotion"
+ACC_TEMPERATURE_ADJUSTMENT = "acc_temperature_adjustment"
+BASAL_CONSULT_PROMOTION = "basal_consult_promotion"
 
 
 class GateMode(str, Enum):
@@ -49,6 +58,15 @@ class GateFacts:
     micro_known: bool = False
     micro_issues: int = 0
     micro_confidence: float | None = None
+    has_input: bool = False
+    reflection_count: int = 0
+    reflection_confidence: float | None = None
+    task_positive_load: float | None = None
+    conflict_level: float | None = None
+    critic_structured: bool = False
+    critic_confidence: float | None = None
+    remaining_issues: int = 0
+    memory_pressure: bool = False
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -98,6 +116,8 @@ BLOCKED_REASONS = frozenset({
     "system2_unavailable", "right_lead", "director_override", "amygdala_override",
     "acc_override", "system2_active", "model_unavailable", "module_unavailable",
     "micro_unavailable",
+    "caller_mode_off", "no_reflections", "default_mode_suppressed",
+    "followup_not_eligible", "signal_unavailable", "adjustment_zero",
 })
 AUTO_REASONS = frozenset({
     "no_draft", "trivial_turn", "unknown_signal", "risk_or_uncertainty",
@@ -106,6 +126,10 @@ AUTO_REASONS = frozenset({
     "observation_needed", "observation_not_needed", "micro_unknown",
     "no_micro_issues", "micro_issue_limit", "micro_confidence_low",
     "micro_correction_candidate",
+    "no_input", "optional_observation_needed", "no_reflections", "reflection_signal_low",
+    "reflection_injection_needed", "conflict_control_needed",
+    "critic_signal_uncertain", "stalled_checklist_needed",
+    "memory_consultation_needed",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -209,6 +233,61 @@ def _auto_cerebellar_correction(facts: GateFacts) -> tuple[bool, str]:
     return True, "micro_correction_candidate"
 
 
+def _auto_optional_observation(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.has_input:
+        return False, "no_input"
+    if facts.is_trivial:
+        return False, "trivial_turn"
+    return True, "optional_observation_needed"
+
+
+def _auto_metrics_observation(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.has_draft:
+        return False, "no_draft"
+    return _auto_optional_observation(facts)
+
+
+def _auto_reflection_injection(facts: GateFacts) -> tuple[bool, str]:
+    if type(facts.reflection_count) is not int or facts.reflection_count < 1:
+        return False, "no_reflections"
+    if not all(_finite(value) for value in (
+        facts.reflection_confidence, facts.task_positive_load, facts.risk,
+    )):
+        return False, "unknown_signal"
+    if (facts.reflection_confidence < 0.6 or facts.task_positive_load >= 0.62
+            or facts.risk != 0):
+        return False, "reflection_signal_low"
+    return True, "reflection_injection_needed"
+
+
+def _auto_conflict_control(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.micro_known:
+        return False, "micro_unknown"
+    if not all(_finite(value) for value in (facts.micro_confidence, facts.conflict_level)):
+        return False, "unknown_signal"
+    if (type(facts.micro_issues) is not int or not 1 <= facts.micro_issues <= 6
+            or facts.micro_confidence < 0.86 or facts.conflict_level < 0.75):
+        return False, "risk_or_uncertainty"
+    return True, "conflict_control_needed"
+
+
+def _auto_stalled_followup(facts: GateFacts) -> tuple[bool, str]:
+    if (not facts.critic_structured or not _finite(facts.critic_confidence)
+            or facts.critic_confidence < 0.85
+            or type(facts.remaining_issues) is not int
+            or not 1 <= facts.remaining_issues <= 6):
+        return False, "critic_signal_uncertain"
+    return True, "stalled_checklist_needed"
+
+
+def _auto_basal_consult_promotion(facts: GateFacts) -> tuple[bool, str]:
+    if facts.is_trivial:
+        return False, "trivial_turn"
+    if facts.memory_pressure:
+        return True, "memory_consultation_needed"
+    return _auto_conflict_control(facts)
+
+
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     CONVERSATION_SELECTIVE_CONSULTATION: ModuleSpec(
         module_id=CONVERSATION_SELECTIVE_CONSULTATION,
@@ -230,6 +309,63 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
         mode_env="DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE",
         legacy_env="DUALBRAIN_CEREBELLUM_MICRO_CORRECTION",
         default_mode=GateMode.ON, auto_policy=_auto_cerebellar_correction,
+    ),
+    DEFAULT_MODE_REFLECTION_INJECTION: ModuleSpec(
+        module_id=DEFAULT_MODE_REFLECTION_INJECTION,
+        phase="unconscious", policy_version="reflection_injection_v1",
+        mode_env="DUALBRAIN_MODULE_DEFAULT_MODE_REFLECTION_INJECTION_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_reflection_injection,
+    ),
+    SYSTEM2_STALLED_FOLLOWUP: ModuleSpec(
+        module_id=SYSTEM2_STALLED_FOLLOWUP,
+        phase="system2_refinement", policy_version="stalled_checklist_v1",
+        mode_env="DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE",
+        legacy_env="DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP",
+        default_mode=GateMode.ON, auto_policy=_auto_stalled_followup,
+    ),
+    EXECUTIVE_ADVICE: ModuleSpec(
+        module_id=EXECUTIVE_ADVICE,
+        phase="observer_preparation", policy_version="optional_observation_v1",
+        mode_env="DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
+    ),
+    DIRECTOR_ADVICE: ModuleSpec(
+        module_id=DIRECTOR_ADVICE,
+        phase="observer_preparation", policy_version="optional_observation_v1",
+        mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
+    ),
+    EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
+        module_id=EXECUTIVE_METRICS_OBSERVATION,
+        phase="post_turn_observation", policy_version="optional_observation_v1",
+        mode_env="DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_metrics_observation,
+    ),
+    ACC_CONSULT_PROMOTION: ModuleSpec(
+        module_id=ACC_CONSULT_PROMOTION,
+        phase="routing", policy_version="acc_conflict_control_v1",
+        mode_env="DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE",
+        legacy_env="DUALBRAIN_ACC_OVERRIDE_CONSULT",
+        default_mode=GateMode.OFF, auto_policy=_auto_conflict_control,
+    ),
+    ACC_SYSTEM2_PROMOTION: ModuleSpec(
+        module_id=ACC_SYSTEM2_PROMOTION,
+        phase="routing", policy_version="acc_conflict_control_v1",
+        mode_env="DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE",
+        legacy_env="DUALBRAIN_ACC_SYSTEM2_BUMP",
+        default_mode=GateMode.OFF, auto_policy=_auto_conflict_control,
+    ),
+    ACC_TEMPERATURE_ADJUSTMENT: ModuleSpec(
+        module_id=ACC_TEMPERATURE_ADJUSTMENT,
+        phase="routing", policy_version="acc_conflict_control_v1",
+        mode_env="DUALBRAIN_MODULE_ACC_TEMPERATURE_ADJUSTMENT_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_conflict_control,
+    ),
+    BASAL_CONSULT_PROMOTION: ModuleSpec(
+        module_id=BASAL_CONSULT_PROMOTION,
+        phase="routing", policy_version="basal_consult_promotion_v1",
+        mode_env="DUALBRAIN_MODULE_BASAL_CONSULT_PROMOTION_MODE", legacy_env=None,
+        default_mode=GateMode.ON, auto_policy=_auto_basal_consult_promotion,
     ),
 })
 
@@ -318,4 +454,8 @@ __all__ = [
     "ACC_MONITOR", "CEREBELLAR_CORRECTION", "CONVERSATION_SELECTIVE_CONSULTATION",
     "GateMode", "GateConfig", "GateFacts", "ModuleSpec", "GateDecision",
     "ThalamicReticularNucleus", "DEFAULT_REGISTRY",
+    "DEFAULT_MODE_REFLECTION_INJECTION", "SYSTEM2_STALLED_FOLLOWUP",
+    "EXECUTIVE_ADVICE", "DIRECTOR_ADVICE", "EXECUTIVE_METRICS_OBSERVATION",
+    "ACC_CONSULT_PROMOTION", "ACC_SYSTEM2_PROMOTION", "ACC_TEMPERATURE_ADJUSTMENT",
+    "BASAL_CONSULT_PROMOTION",
 ]
