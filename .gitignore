@@ -220,3 +220,4 @@ __marimo__/
 # Benchmark outputs (generated)
 sr-dual-brain-llm/samples/*.json
 sr-dual-brain-llm/samples/*.jsonl
+sr-dual-brain-llm/samples/module-gating-*/
