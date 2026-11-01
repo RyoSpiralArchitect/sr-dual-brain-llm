@@ -39,7 +39,14 @@ from .predictive_coding import PredictiveCodingController, PredictionFrame
 from .salience_network import SalienceNetwork, SalienceSignal
 from .thalamus import ThalamicRelay, Thalamus
 from .micro_critic import micro_criticise_reasoning
-from .consultation_router import route_conversation_lookup, VERSION as CONSULTATION_ROUTER_VERSION
+from .consultation_router import (
+    route_conversation_lookup, literal_record_replay_requested,
+    VERSION as CONSULTATION_ROUTER_VERSION,
+)
+from .thalamic_reticular_nucleus import (
+    ThalamicReticularNucleus, GateMode, GateFacts, GateConfig, GateDecision,
+    CONVERSATION_SELECTIVE_CONSULTATION, ACC_MONITOR, CEREBELLAR_CORRECTION,
+)
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
     _LEFT_HEMISPHERE_MARKERS,
@@ -380,6 +387,7 @@ class DualBrainController:
         salience_network: Optional[SalienceNetwork] = None,
         thalamus: Optional[Thalamus] = None,
         predictive_coding: Optional[PredictiveCodingController] = None,
+        thalamic_reticular_nucleus: Optional[ThalamicReticularNucleus] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -410,6 +418,7 @@ class DualBrainController:
         self.insula = insula or Insula()
         self.salience_network = salience_network or SalienceNetwork()
         self.thalamus = thalamus or Thalamus()
+        self.thalamic_reticular_nucleus = thalamic_reticular_nucleus or ThalamicReticularNucleus()
         self.predictive_coding = predictive_coding or PredictiveCodingController()
         self._last_leading_brain: Optional[str] = "right"
         self._default_mode_low_focus_streak = 0
@@ -419,6 +428,19 @@ class DualBrainController:
         if self.neural_integrator is None:
             self.neural_integrator = self._create_default_neural_network()
     
+    def _module_gate(
+        self, module_id: str, *, facts: GateFacts, decision: DecisionOutcome,
+        config: GateConfig | None = None,
+    ) -> GateDecision:
+        gate = self.thalamic_reticular_nucleus.decide(module_id, facts=facts, config=config)
+        payload = gate.to_payload()
+        decision.state.setdefault('module_gates', {})[module_id] = payload
+        try:
+            self.telemetry.log('module_gate', qid=decision.qid, **payload)
+        except Exception:  # Optional observability cannot change module admission.
+            pass
+        return gate
+
     def _create_default_neural_network(self) -> NeuralIntegrator:
         """Create a default neural network for impulse simulation.
         
@@ -1256,6 +1278,8 @@ class DualBrainController:
         path.append(dialogue_entry)
 
         integration_modules = ["CoherenceResonator", "Auditor"]
+        if self.thalamic_reticular_nucleus is not None:
+            integration_modules.append("ThalamicReticularNucleus")
         if self.anterior_cingulate_cortex is not None:
             integration_modules.append("AnteriorCingulateCortex")
         if self.salience_network is not None:
@@ -2680,33 +2704,52 @@ class DualBrainController:
             if lt == "drop":
                 decision.state["director_memory_long_term"] = "drop"
 
-        # Opt-in and scoped to guarded, left-led conversation turns. Explicit
-        # modes/leads, source writes, director directives and ACC controls retain
-        # their existing authority. This never changes evidence eligibility.
-        if (
-            _env_flag("DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT", False)
-            and getattr(self.memory, "conversation_context", False)
-            and getattr(self.memory, "answerability_gate", None) is not None
-            and not getattr(self.memory, "primary_write_pending", False)
-            and system2_mode == "auto" and not precision_priority
-            and system2_capable and leading_brain == "left"
-            and not force_right_lead
-            and str((director_control or {}).get("consult") or "auto").lower() == "auto"
-            and not any(decision.state.get(key) for key in (
-                "amygdala_override", "acc_override_consult", "acc_system2_bump"))
-        ):
-            approved = (self.memory.retrieve_related_traces(question)
-                        if context_parts.get("memory") else [])
+        # TRN admits optional processing. The protected scope stays local, and
+        # neither ON nor AUTO can override it or approve historical evidence.
+        protected = (
+            (not getattr(self.memory, 'conversation_context', False), 'conversation_context_disabled'),
+            (getattr(self.memory, 'answerability_gate', None) is None, 'answerability_gate_unavailable'),
+            (getattr(self.memory, 'primary_write_pending', False), 'primary_write_pending'),
+            (system2_mode != 'auto', 'explicit_system2_mode'),
+            (precision_priority, 'precision_priority'),
+            (not system2_capable, 'system2_unavailable'),
+            (leading_brain != 'left' or force_right_lead, 'right_lead'),
+            (str((director_control or {}).get('consult') or 'auto').strip().lower() != 'auto', 'director_override'),
+            (bool(decision.state.get('amygdala_override')), 'amygdala_override'),
+            (bool(decision.state.get('acc_override_consult') or decision.state.get('acc_system2_bump')), 'acc_override'),
+        )
+        blocked = next((reason for active, reason in protected if active), None)
+        gate_config = self.thalamic_reticular_nucleus.configure(CONVERSATION_SELECTIVE_CONSULTATION)
+        approved = (self.memory.retrieve_related_traces(question)
+                    if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF
+                    and context_parts.get('memory') else [])
+        reference = (self.memory.reference_resolution(question)
+                     if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF else None)
+        literal_requested = False
+        source_replayed = False
+        if gate_config.mode == GateMode.AUTO and blocked is None and len(approved) == 1:
+            cue = self.memory.scope_resolver().query(self.memory.retrieval_question(question))
+            literal_requested = literal_record_replay_requested(cue.content)
+            source_replayed = str(draft).strip() == approved[0].answer.strip()
+        gate = self._module_gate(CONVERSATION_SELECTIVE_CONSULTATION, decision=decision, config=gate_config,
+            facts=GateFacts(eligible=blocked is None, blocked_reason=blocked or 'outside_scope',
+                has_draft=bool(str(draft).strip()), is_trivial=is_trivial_chat,
+                confidence=confidence, risk=affect.get('risk', 0.0), approved_records=len(approved),
+                reference_resolved=reference == 'resolved', literal_replay_requested=literal_requested,
+                full_source_replayed=source_replayed))
+        if gate.enabled:
             route = route_conversation_lookup(
                 question=question, draft=draft, confidence=confidence,
                 risk=float(affect.get("risk", 0.0)), q_type=decision.state.get("q_type"),
-                reference=self.memory.reference_resolution(question), approved_records=approved,
+                reference=reference, approved_records=approved,
             )
             before_action, before_system2 = decision.action, system2_active
-            if route.action == "skip":
+            apply_route = route.action in {'skip', 'consult'} and (
+                gate_config.mode != GateMode.AUTO or route.action == 'skip')
+            if apply_route and route.action == "skip":
                 decision.action, system2_active = 0, False
                 system2_reason, system2_round_target = "selective_supported_lookup", 0
-            elif route.action == "consult":
+            elif apply_route and route.action == "consult":
                 decision.action, system2_active = max(1, decision.action), True
                 system2_reason = "selective_" + route.reason
                 if not before_system2:
@@ -2724,6 +2767,7 @@ class DualBrainController:
                 "prior_action": before_action, "prior_system2": bool(before_system2),
                 "final_action": decision.action, "final_system2": bool(system2_active),
                 "approved_records": len(approved),
+                "activation_mode": gate_config.mode.value, "applied": bool(apply_route),
             }
             decision.state.update(system2_enabled=bool(system2_active), system2_reason=system2_reason,
                                   system2_round_target=system2_round_target)
@@ -3938,19 +3982,41 @@ class DualBrainController:
             and final_answer
             and str(final_answer).strip()
         ):
+            blocked = ('system2_active' if system2_active else
+                       'explicit_system2_mode' if system2_mode != 'auto' else 'outside_scope')
+            for module_id in (ACC_MONITOR, CEREBELLAR_CORRECTION):
+                self._module_gate(module_id, decision=decision,
+                    facts=GateFacts(eligible=False, blocked_reason=blocked,
+                        has_draft=bool(str(final_answer or '').strip()), is_trivial=is_trivial_chat,
+                        confidence=confidence, risk=decision.state.get('amygdala_risk', 0.0)))
             return ConflictRegulationStageResult(
                 final_answer=final_answer,
                 steps=steps,
             )
 
-        acc_enabled = _env_flag("DUALBRAIN_ACC_MONITOR", True)
-        cerebellum_enabled = _env_flag("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", True)
+        acc_config = self.thalamic_reticular_nucleus.configure(ACC_MONITOR)
+        cerebellum_config = self.thalamic_reticular_nucleus.configure(CEREBELLAR_CORRECTION)
         micro_result = None
-        if acc_enabled or cerebellum_enabled:
+        if any(c.valid and c.mode != GateMode.OFF for c in (acc_config, cerebellum_config)):
             try:
                 micro_result = micro_criticise_reasoning(question, final_answer)
             except Exception:
                 micro_result = None
+
+        shared_facts = dict(has_draft=bool(str(final_answer).strip()), is_trivial=is_trivial_chat,
+            confidence=confidence, risk=decision.state.get('amygdala_risk', 0.0),
+            micro_known=micro_result is not None and str(micro_result.domain or '') not in {'', 'unknown'},
+            micro_issues=len(micro_result.issues or []) if micro_result is not None else 0,
+            micro_confidence=micro_result.confidence_r if micro_result is not None else None)
+        acc_enabled = self._module_gate(ACC_MONITOR, decision=decision, config=acc_config,
+            facts=GateFacts(eligible=self.anterior_cingulate_cortex is not None,
+                            blocked_reason='module_unavailable', **shared_facts)).enabled
+        cerebellum_blocked = ('micro_unavailable' if micro_result is None else
+                             'module_unavailable' if self.cerebellum is None else 'model_unavailable')
+        cerebellum_enabled = self._module_gate(CEREBELLAR_CORRECTION, decision=decision, config=cerebellum_config,
+            facts=GateFacts(eligible=micro_result is not None and self.cerebellum is not None
+                            and bool(getattr(self.left_model, 'uses_external_llm', False)),
+                            blocked_reason=cerebellum_blocked, **shared_facts)).enabled
 
         acc_signal = None
         if acc_enabled and self.anterior_cingulate_cortex is not None:

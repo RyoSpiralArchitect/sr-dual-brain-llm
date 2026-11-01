@@ -1,0 +1,321 @@
+"""Model-free activation gates for explicitly registered optional modules.
+
+The thalamic reticular nucleus analogy describes selective inhibition. This
+component decides whether a module may run; modules retain their own algorithms
+and local guards. Evidence approval, persistence and transport are outside it.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import Enum
+import math
+import os
+import re
+from types import MappingProxyType
+from typing import Callable, Mapping
+
+
+CONVERSATION_SELECTIVE_CONSULTATION = "conversation_selective_consultation"
+ACC_MONITOR = "acc_monitor"
+CEREBELLAR_CORRECTION = "cerebellar_correction"
+
+
+class GateMode(str, Enum):
+    ON = "on"
+    OFF = "off"
+    AUTO = "auto"
+
+
+@dataclass(frozen=True)
+class GateConfig:
+    mode: GateMode
+    source: str
+    valid: bool
+
+
+@dataclass(frozen=True)
+class GateFacts:
+    eligible: bool
+    blocked_reason: str = "outside_scope"
+    has_draft: bool = False
+    is_trivial: bool = False
+    confidence: float | None = None
+    risk: float | None = None
+    approved_records: int = 0
+    reference_resolved: bool = False
+    literal_replay_requested: bool = False
+    full_source_replayed: bool = False
+    micro_known: bool = False
+    micro_issues: int = 0
+    micro_confidence: float | None = None
+
+
+AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
+
+
+@dataclass(frozen=True)
+class ModuleSpec:
+    module_id: str
+    phase: str
+    policy_version: str
+    mode_env: str
+    legacy_env: str | None
+    default_mode: GateMode
+    auto_policy: AutoPolicy
+
+
+@dataclass(frozen=True)
+class GateDecision:
+    module: str
+    phase: str
+    mode: GateMode
+    source: str
+    eligible: bool
+    enabled: bool
+    reason: str
+    policy_version: str
+
+    def to_payload(self) -> dict[str, str | bool]:
+        """Return only fixed metadata; no source text, IDs or numeric signals."""
+        return {
+            "module": self.module,
+            "phase": self.phase,
+            "mode": self.mode.value,
+            "source": self.source,
+            "eligible": self.eligible,
+            "enabled": self.enabled,
+            "reason": self.reason,
+            "policy_version": self.policy_version,
+        }
+
+
+# Callers supply these codes for hard eligibility failures. Unknown text never
+# enters decision telemetry. Changes to auto reasons accompany policy versions.
+BLOCKED_REASONS = frozenset({
+    "outside_scope", "conversation_context_disabled", "answerability_gate_unavailable",
+    "primary_write_pending", "explicit_system2_mode", "precision_priority",
+    "system2_unavailable", "right_lead", "director_override", "amygdala_override",
+    "acc_override", "system2_active", "model_unavailable", "module_unavailable",
+    "micro_unavailable",
+})
+AUTO_REASONS = frozenset({
+    "no_draft", "trivial_turn", "unknown_signal", "risk_or_uncertainty",
+    "literal_replay_not_requested", "source_replay_incomplete",
+    "unsupported_record_count", "reference_unresolved", "supported_literal_replay",
+    "observation_needed", "observation_not_needed", "micro_unknown",
+    "no_micro_issues", "micro_issue_limit", "micro_confidence_low",
+    "micro_correction_candidate",
+})
+_CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
+_MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
+_METADATA_CODE = re.compile(r"[a-z][a-z0-9_]*")
+_ENVIRONMENT_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
+_GATE_SELF_IDS = frozenset({"thalamic_reticular_nucleus", "module_gate"})
+
+
+def _bounded_code(value: object, pattern: re.Pattern[str], limit: int) -> bool:
+    return type(value) is str and 0 < len(value) <= limit and pattern.fullmatch(value) is not None
+
+
+def _validated_registry(registry: Mapping[str, ModuleSpec]) -> Mapping[str, ModuleSpec]:
+    """Copy explicitly supplied trusted policies and enforce registration rules."""
+    copied = dict(registry)
+    environment_names: set[str] = set()
+    for module_id, spec in copied.items():
+        if not _bounded_code(module_id, _MODULE_ID, 64):
+            raise ValueError("Module IDs must be bounded lowercase snake-case identifiers")
+        if module_id in _GATE_SELF_IDS:
+            raise ValueError("The module gate cannot register itself")
+        if not isinstance(spec, ModuleSpec) or spec.module_id != module_id:
+            raise ValueError("Registry keys must match their ModuleSpec module IDs")
+        if not _bounded_code(spec.phase, _METADATA_CODE, 32):
+            raise ValueError("Module phases must be bounded metadata codes")
+        if not _bounded_code(spec.policy_version, _METADATA_CODE, 64):
+            raise ValueError("Policy versions must be bounded metadata codes")
+        if spec.mode_env != f"DUALBRAIN_MODULE_{module_id.upper()}_MODE":
+            raise ValueError("Canonical environment names must derive from the module ID")
+        if not isinstance(spec.default_mode, GateMode):
+            raise ValueError("Module default modes must be GateMode values")
+        if not callable(spec.auto_policy):
+            raise ValueError("Module auto policies must be explicit callable objects")
+        for environment_name in (spec.mode_env, spec.legacy_env):
+            if environment_name is None:
+                continue
+            if not _bounded_code(environment_name, _ENVIRONMENT_NAME, 128):
+                raise ValueError("Environment names must be bounded uppercase identifiers")
+            if environment_name in environment_names:
+                raise ValueError("Module environment names must be unique")
+            environment_names.add(environment_name)
+    return MappingProxyType(copied)
+
+
+def _finite(value: float | None) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except (OverflowError, TypeError, ValueError):
+        return False
+
+
+def _auto_selective_consultation(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.has_draft:
+        return False, "no_draft"
+    if facts.is_trivial:
+        return False, "trivial_turn"
+    if not (_finite(facts.confidence) and _finite(facts.risk)):
+        return False, "unknown_signal"
+    if facts.confidence < 0.85 or facts.risk != 0:
+        return False, "risk_or_uncertainty"
+    if not facts.literal_replay_requested:
+        return False, "literal_replay_not_requested"
+    if not facts.full_source_replayed:
+        return False, "source_replay_incomplete"
+    if type(facts.approved_records) is not int or facts.approved_records != 1:
+        return False, "unsupported_record_count"
+    if not facts.reference_resolved:
+        return False, "reference_unresolved"
+    return True, "supported_literal_replay"
+
+
+def _auto_acc_monitor(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.has_draft:
+        return False, "no_draft"
+    if facts.is_trivial:
+        return False, "trivial_turn"
+    if (facts.micro_known
+            or (_finite(facts.risk) and facts.risk > 0)
+            or (_finite(facts.confidence) and facts.confidence < 0.85)):
+        return True, "observation_needed"
+    if not (_finite(facts.risk) and _finite(facts.confidence)):
+        return False, "unknown_signal"
+    return False, "observation_not_needed"
+
+
+def _auto_cerebellar_correction(facts: GateFacts) -> tuple[bool, str]:
+    if not facts.micro_known:
+        return False, "micro_unknown"
+    if type(facts.micro_issues) is not int:
+        return False, "unknown_signal"
+    if facts.micro_issues < 1:
+        return False, "no_micro_issues"
+    if facts.micro_issues > 4:
+        return False, "micro_issue_limit"
+    if not _finite(facts.micro_confidence):
+        return False, "unknown_signal"
+    if facts.micro_confidence < 0.88:
+        return False, "micro_confidence_low"
+    return True, "micro_correction_candidate"
+
+
+DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
+    CONVERSATION_SELECTIVE_CONSULTATION: ModuleSpec(
+        module_id=CONVERSATION_SELECTIVE_CONSULTATION,
+        phase="routing", policy_version="literal_replay_v1",
+        mode_env="DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE",
+        legacy_env="DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT",
+        default_mode=GateMode.OFF, auto_policy=_auto_selective_consultation,
+    ),
+    ACC_MONITOR: ModuleSpec(
+        module_id=ACC_MONITOR,
+        phase="conflict_regulation", policy_version="acc_observation_v1",
+        mode_env="DUALBRAIN_MODULE_ACC_MONITOR_MODE",
+        legacy_env="DUALBRAIN_ACC_MONITOR",
+        default_mode=GateMode.ON, auto_policy=_auto_acc_monitor,
+    ),
+    CEREBELLAR_CORRECTION: ModuleSpec(
+        module_id=CEREBELLAR_CORRECTION,
+        phase="conflict_regulation", policy_version="cerebellar_micro_v1",
+        mode_env="DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE",
+        legacy_env="DUALBRAIN_CEREBELLUM_MICRO_CORRECTION",
+        default_mode=GateMode.ON, auto_policy=_auto_cerebellar_correction,
+    ),
+})
+
+
+def _parse_mode(value: object, *, legacy: bool) -> GateMode | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    if normalized in {"on", "1", "true", "yes"}:
+        return GateMode.ON
+    if normalized in {"off", "0", "false", "no"}:
+        return GateMode.OFF
+    if normalized == "auto" and not legacy:
+        return GateMode.AUTO
+    return None
+
+
+class ThalamicReticularNucleus:
+    """Resolve configuration and pure policies without executing any module.
+
+    The registry is an immutable copy of an explicit mapping. Contributions add
+    reviewed specifications here, rather than having modules register themselves.
+    """
+
+    def __init__(self, registry: Mapping[str, ModuleSpec] | None = None) -> None:
+        self._registry = _validated_registry(DEFAULT_REGISTRY if registry is None else registry)
+
+    @property
+    def registry(self) -> Mapping[str, ModuleSpec]:
+        return self._registry
+
+    def configure(
+        self, module_id: str, environment: Mapping[str, str] | None = None,
+    ) -> GateConfig:
+        spec = self.registry.get(module_id)
+        if spec is None:
+            return GateConfig(GateMode.OFF, "default", False)
+        environment = os.environ if environment is None else environment
+        if spec.mode_env in environment:
+            mode = _parse_mode(environment[spec.mode_env], legacy=False)
+            return GateConfig(mode or GateMode.OFF, "canonical", mode is not None)
+        if spec.legacy_env is not None and spec.legacy_env in environment:
+            mode = _parse_mode(environment[spec.legacy_env], legacy=True)
+            return GateConfig(mode or GateMode.OFF, "legacy", mode is not None)
+        return GateConfig(spec.default_mode, "default", True)
+
+    def decide(
+        self, module_id: str, *, facts: GateFacts, config: GateConfig | None = None,
+    ) -> GateDecision:
+        spec = self.registry.get(module_id)
+        if spec is None:
+            return GateDecision(
+                module="unknown", phase="unknown", mode=GateMode.OFF,
+                source="default", eligible=False, enabled=False,
+                reason="unknown_module", policy_version="unknown",
+            )
+        config = self.configure(module_id) if config is None else config
+        valid = config.valid is True and isinstance(config.mode, GateMode)
+        mode = config.mode if isinstance(config.mode, GateMode) else GateMode.OFF
+        source = config.source if type(config.source) is str and config.source in _CONFIG_SOURCES else "explicit"
+        eligible = bool(facts.eligible)
+        enabled = False
+        if not valid:
+            reason = "invalid_configuration"
+        elif mode is GateMode.OFF:
+            reason = "forced_off"
+        elif not eligible:
+            reason = facts.blocked_reason if facts.blocked_reason in BLOCKED_REASONS else "outside_scope"
+        elif mode is GateMode.ON:
+            enabled, reason = True, "forced_on"
+        else:
+            try:
+                enabled, reason = spec.auto_policy(facts)
+                if type(enabled) is not bool or reason not in AUTO_REASONS:
+                    enabled, reason = False, "policy_error"
+            except Exception:
+                enabled, reason = False, "policy_error"
+        return GateDecision(
+            module=spec.module_id, phase=spec.phase, mode=mode, source=source,
+            eligible=eligible, enabled=enabled, reason=reason,
+            policy_version=spec.policy_version,
+        )
+
+
+__all__ = [
+    "ACC_MONITOR", "CEREBELLAR_CORRECTION", "CONVERSATION_SELECTIVE_CONSULTATION",
+    "GateMode", "GateConfig", "GateFacts", "ModuleSpec", "GateDecision",
+    "ThalamicReticularNucleus", "DEFAULT_REGISTRY",
+]

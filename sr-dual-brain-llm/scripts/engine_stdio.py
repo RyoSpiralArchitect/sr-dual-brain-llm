@@ -62,6 +62,7 @@ from core.memory_commits import (
     MemoryCommitConflict, MemoryOutbox, memory_payload, reconcile_memory, validate_operation_id,
 )
 from core.unconscious_field import UnconsciousField
+from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
 
 
 def _jsonable(value: Any) -> Any:
@@ -101,6 +102,12 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
     consultation_ev = _last_event(events, "consultation_route")
+    gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
+    module_gates = {}
+    for event in events or []:
+        module = event.get('module')
+        if event.get('event') == 'module_gate' and isinstance(module, str) and module in DEFAULT_REGISTRY:
+            module_gates[module] = {key:event.get(key) for key in gate_fields}
     system2_refine_ev = _last_event(events, "system2_refinement") or {}
     latency_breakdown_ev = _last_event(events, "latency_breakdown") or {}
     policy_state = (
@@ -331,7 +338,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "slot_ms": policy_ev.get("slot_ms"),
             "consultation_route": ({key:consultation_ev.get(key) for key in (
                 "version", "action", "reason", "prior_action", "prior_system2",
-                "final_action", "final_system2", "approved_records")}
+                "final_action", "final_system2", "approved_records", "activation_mode", "applied")}
                 if consultation_ev is not None else None),
         },
         "leading": lead_ev.get("leading"),
@@ -354,6 +361,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "active": active_modules,
             "count": len(active_modules),
             "stages": stage_modules,
+            "gates": module_gates,
         },
         "brain": {
             "amygdala": affect_payload,

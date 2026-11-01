@@ -8,6 +8,29 @@ import re
 import unicodedata
 
 VERSION = "conversation_lookup_v1"
+
+
+def literal_record_replay_requested(reference_content: str) -> bool:
+    """Positive request shapes after the existing resolver removes known aliases.
+
+    This recognizes a whole-record repeat, not arbitrary fact lookup or semantic
+    completeness. Extra clauses, transformations and requested outputs fail shut.
+    """
+    text = unicodedata.normalize('NFKC', reference_content).casefold().strip()
+    text = re.sub(r'\s+', ' ', text).strip(' .。!?？')
+    text = re.sub(r'\b(?:for|of)\s*(?=verbatim\b|exactly\b|$)', '', text).strip()
+    if re.fullmatch(r'(?:please )?(?:repeat|reproduce|quote) (?:the )?(?:recorded|stored) '
+                    r'(?:answer|text|record) (?:verbatim|exactly)', text):
+        return True
+    text = re.sub(r'^の\s*', '', text)
+    return text in {
+        '記録をそのまま再掲して', '記録をそのまま再掲してください',
+        '記録された回答をそのまま再掲して', '記録された回答をそのまま再掲してください',
+        '保存済みの回答をそのまま再掲して', '記録文をそのまま引用して',
+        '記録された回答を一字一句繰り返して',
+    }
+
+
 _REASONING = re.compile(
     r"\b(verify|check|review|audit|prove|calculate|compute|sum|total|difference|"
     r"compare|comparison|versus|why|derive|design|plan|debug|evaluate|tradeoff|"
