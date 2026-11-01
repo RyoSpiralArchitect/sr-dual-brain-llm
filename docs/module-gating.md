@@ -171,6 +171,10 @@ labels despite a correct numeric result; selective and forced-on both missed it.
 Aggregate selective 7/8 includes a passing case unavailable in legacy and does
 not establish preserved quality. See the [measured result](benchmarks/selective-consultation-2026-11-01.md).
 This prototype makes no broad automatic-activation, quality, or paid cost claim.
+The [first twelve-gate pilot](benchmarks/module-gating-2026-11-01.md) retained
+8/8 graded answers in both profiles with 22 versus 19 processing attempts. It
+also exposed replacement work on trivial turns, deadline cancellations and seven
+gates without positive AUTO exposure; those limits govern the next work.
 
 ## Facts and observability
 
