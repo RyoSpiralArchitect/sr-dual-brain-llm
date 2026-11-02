@@ -18,7 +18,8 @@ from .director_reasoner import DirectorAdvice, DirectorReasonerModel
 from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
-from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task
+from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task, remaining_turn_ms, turn_abandoned
+from .advisor_timing import AdvisorWork, LatencyEstimate, model_profile
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -446,6 +447,150 @@ class DualBrainController:
         except Exception:  # Optional observability cannot change module admission.
             pass
         return gate
+
+    def _advisor_event(self, event, *, qid, **payload):
+        try:
+            self.telemetry.log(event, qid=qid, **payload)
+        except Exception:  # Observability must not change admission/execution.
+            pass
+
+    def _advisor_budget(self, module, model, *, qid, phase_budget_ms=None):
+        remaining = remaining_turn_ms()
+        budget = phase_budget_ms
+        source = 'phase_wait' if phase_budget_ms is not None else 'unknown'
+        if remaining is not None and (budget is None or remaining < budget):
+            budget, source = remaining, 'turn_deadline'
+        ledger = getattr(self.hypothalamus, 'advisor_timing', None)
+        try:
+            estimate = ledger.estimate(module, model_profile(model)) if ledger is not None else LatencyEstimate()
+        except Exception:
+            estimate = LatencyEstimate()
+        self._advisor_event('advisor_budget', qid=qid, module=module,
+            remaining_budget_ms=budget, budget_source=source, estimated_latency_ms=estimate.ms,
+            estimate_kind=estimate.kind, completed_samples=estimate.completed_samples,
+            censored_samples=estimate.censored_samples)
+        return dict(remaining_budget_ms=budget, estimated_latency_ms=estimate.ms), remaining is not None and remaining <= 0
+
+    @staticmethod
+    def _advisor_usable(result):
+        if result is None or getattr(result, 'source', '') == 'error':
+            return False
+        memo = str(getattr(result, 'memo', '') or '').strip()
+        return (memo not in {'', '(no memo)'} or bool(getattr(result, 'mix_in', ''))
+                or bool(getattr(result, 'control', None)) or bool(getattr(result, 'directives', None)))
+
+    def _finish_advisor(self, work, state, result=None):
+        if work.finished:
+            return
+        work.finished = True
+        started = work.started_at is not None
+        total = max(0., (time.perf_counter() - work.started_at) * 1000.) if started else None
+        elapsed = work.stop_elapsed_ms if work.stop_elapsed_ms is not None else total
+        # A provider may return during cancellation cleanup. Its late output
+        # was no longer available within the wait window; never learn the
+        # earlier cancellation bound as a successful completion duration.
+        if started and work.stop_elapsed_ms is not None:
+            state = 'cancelled'
+        usable = state == 'completed' and self._advisor_usable(result)
+        if started and state == 'cancelled' and work.stop_reason == 'wait_timeout':
+            state = 'timed_out'
+        if started and (state in {'timed_out', 'cancelled'} or
+                        (usable and getattr(result, 'source', '') == 'llm')):
+            ledger = getattr(self.hypothalamus, 'advisor_timing', None)
+            if ledger is not None:
+                try:
+                    ledger.record(work.module, work.profile, elapsed, censored=state != 'completed')
+                except Exception:
+                    pass
+        self._advisor_event('advisor_work', qid=work.qid, module=work.module, state=state,
+            elapsed_ms=elapsed, cleanup_ms=max(0., total - elapsed) if started else 0.,
+            usable_output=usable, stop_reason=work.stop_reason,
+            usage_status='unknown' if started else 'not_started')
+
+    def _start_advisor(self, module, model, *, qid, factory):
+        work = AdvisorWork(module, model_profile(model), qid)
+
+        async def run():
+            remaining = remaining_turn_ms()
+            if turn_abandoned() or (remaining is not None and remaining <= 0):
+                work.stop_reason = 'turn_abandoned' if turn_abandoned() else 'turn_deadline'
+                self._finish_advisor(work, 'not_started')
+                return None
+            work.started_at = time.perf_counter()
+            self._advisor_event('advisor_work', qid=qid, module=module, state='started')
+            try:
+                result = await factory()
+            except asyncio.CancelledError:
+                self._finish_advisor(work, 'cancelled')
+                raise
+            except BaseException:
+                work.stop_reason = 'call_failed'
+                self._finish_advisor(work, 'failed')
+                raise
+            else:
+                failed = getattr(result, 'source', '') == 'error'
+                if failed:
+                    work.stop_reason = 'model_error'
+                self._finish_advisor(work, 'failed' if failed else 'completed', result)
+                return result
+
+        def cancellation_requested():
+            if work.finished:
+                return
+            if work.stop_reason == 'none':
+                work.stop_reason = 'turn_abandoned' if turn_abandoned() else 'owner_cleanup'
+            if work.started_at is None:
+                self._finish_advisor(work, 'not_started')
+            elif work.stop_elapsed_ms is None:
+                work.stop_elapsed_ms = max(0., (time.perf_counter() - work.started_at) * 1000.)
+
+        coroutine = run()
+        try:
+            task = create_turn_task(coroutine, on_cancel=cancellation_requested)
+        except BaseException:
+            coroutine.close()
+            work.stop_reason = 'task_creation_failed'
+            self._finish_advisor(work, 'not_started')
+            raise
+        task._advisor_work = work
+
+        def finished(child):
+            if not work.finished:
+                self._finish_advisor(work, 'not_started' if work.started_at is None else 'cancelled')
+
+        task.add_done_callback(finished)
+        return task
+
+    def _cancel_advisor(self, task, reason):
+        if not isinstance(reason, str) or reason not in {
+            'wait_timeout', 'turn_deadline', 'turn_abandoned', 'caller_cancelled',
+            'trivial_control', 'no_advice', 'generation_failed', 'owner_cleanup',
+        }:
+            reason = 'owner_cleanup'
+        work = getattr(task, '_advisor_work', None)
+        if work is not None and not work.finished:
+            work.stop_reason = reason
+            if work.started_at is None:
+                self._finish_advisor(work, 'not_started')
+            elif work.stop_elapsed_ms is None:
+                work.stop_elapsed_ms = max(0., (time.perf_counter() - work.started_at) * 1000.)
+        cancel_task(task)
+
+    async def _wait_advisor(self, task, *, timeout_ms):
+        if task.done():
+            return task.result()
+        remaining = remaining_turn_ms()
+        budget = min(float(timeout_ms), remaining) if remaining is not None else float(timeout_ms)
+        try:
+            return await asyncio.wait_for(asyncio.shield(task), timeout=max(0., budget) / 1000.)
+        except asyncio.TimeoutError:
+            self._cancel_advisor(task, 'turn_deadline' if remaining is not None and remaining <= timeout_ms else 'wait_timeout')
+            await asyncio.gather(task, return_exceptions=True)
+            raise
+        except asyncio.CancelledError:
+            self._cancel_advisor(task, 'turn_abandoned' if turn_abandoned() else 'caller_cancelled')
+            await asyncio.gather(task, return_exceptions=True)
+            raise
 
     def _create_default_neural_network(self) -> NeuralIntegrator:
         """Create a default neural network for impulse simulation.
@@ -2075,28 +2220,39 @@ class DualBrainController:
         use_director = executive_observer_mode_norm in {"director", "both"}
         use_metrics_observer = executive_observer_mode_norm in {"metrics", "both"}
 
+        # Executive advice overlaps later drafting/consultation. Its eventual
+        # wait window is not known here: only an existing RPC deadline is a
+        # sound upper bound. Director and post-turn observation have local caps.
+        advice_timing, advice_expired = self._advisor_budget(EXECUTIVE_ADVICE, self.executive_model, qid=qid)
+        director_timing, director_expired = self._advisor_budget(DIRECTOR_ADVICE, self.director_model,
+                                                               qid=qid, phase_budget_ms=1600.)
+
         advice_gate = self._module_gate(
             EXECUTIVE_ADVICE, qid=qid,
             facts=GateFacts(
-                eligible=self.executive_model is not None and executive_mode_norm != 'off',
-                blocked_reason='caller_mode_off' if executive_mode_norm == 'off' else 'model_unavailable',
+                eligible=self.executive_model is not None and executive_mode_norm != 'off' and not advice_expired,
+                blocked_reason=('turn_deadline_elapsed' if advice_expired else
+                                'caller_mode_off' if executive_mode_norm == 'off' else 'model_unavailable'),
                 has_input=bool(question.strip()), is_trivial=is_trivial_chat,
+                **advice_timing,
             ),
         )
         director_gate = self._module_gate(
             DIRECTOR_ADVICE, qid=qid,
             facts=GateFacts(
-                eligible=self.director_model is not None and use_director,
-                blocked_reason='caller_mode_off' if not use_director else 'model_unavailable',
+                eligible=self.director_model is not None and use_director and not director_expired,
+                blocked_reason=('turn_deadline_elapsed' if director_expired else
+                                'caller_mode_off' if not use_director else 'model_unavailable'),
                 has_input=bool(question.strip()), is_trivial=is_trivial_chat,
+                **director_timing,
             ),
         )
 
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
         if advice_gate.enabled:
             try:
-                executive_task = create_turn_task(
-                    self.executive_model.advise(
+                executive_task = self._start_advisor(EXECUTIVE_ADVICE, self.executive_model, qid=qid,
+                    factory=lambda: self.executive_model.advise(
                         question=question,
                         context=context,
                         focus_keywords=focus_keywords,
@@ -2109,11 +2265,7 @@ class DualBrainController:
         if director_gate.enabled:
             try:
                 has_qmark = ("?" in (question or "")) or ("？" in (question or ""))
-                director_task = create_turn_task(
-                    self.director_model.advise(
-                        question=question,
-                        context=context,
-                        signals={
+                director_kwargs = dict(question=question, context=context, signals={
                             "is_trivial_chat": is_trivial_chat,
                             "question_len": len(question or ""),
                             "question_has_qmark": has_qmark,
@@ -2133,9 +2285,9 @@ class DualBrainController:
                                 or context_parts.get("hippocampal")
                                 or context_parts.get("replay")
                             ),
-                        },
-                    )
-                )
+                        })
+                director_task = self._start_advisor(DIRECTOR_ADVICE, self.director_model, qid=qid,
+                    factory=lambda: self.director_model.advise(**director_kwargs))
             except Exception:  # pragma: no cover - defensive guard
                 director_task = None
 
@@ -2193,14 +2345,12 @@ class DualBrainController:
                 source="fast_path",
             )
             if director_task is not None:
-                cancel_task(director_task)
+                self._cancel_advisor(director_task, 'trivial_control')
             director_task = None
         else:
             try:
                 director_wait_started = time.perf_counter()
-                advice = await asyncio.wait_for(
-                    asyncio.shield(director_task), timeout=1.6
-                )
+                advice = await self._wait_advisor(director_task, timeout_ms=1600.)
                 phase_add("executive", director_wait_started)
             except asyncio.TimeoutError:
                 phase_add("executive", director_wait_started)
@@ -2210,7 +2360,7 @@ class DualBrainController:
             except Exception:  # pragma: no cover - defensive guard
                 advice = None
             if advice is None:
-                cancel_task(director_task)
+                self._cancel_advisor(director_task, 'no_advice')
                 director_task = None
                 advice = DirectorAdvice(
                     memo=(
@@ -2670,10 +2820,7 @@ class DualBrainController:
             else:
                 try:
                     director_wait_started = time.perf_counter()
-                    advice = await asyncio.wait_for(
-                        asyncio.shield(director_task),
-                        timeout=0.9,
-                    )
+                    advice = await self._wait_advisor(director_task, timeout_ms=900.)
                     phase_add("executive", director_wait_started)
                 except asyncio.TimeoutError:
                     phase_add("executive", director_wait_started)
@@ -2701,7 +2848,7 @@ class DualBrainController:
                     control=director_control,
                 )
             else:
-                cancel_task(director_task)
+                self._cancel_advisor(director_task, 'no_advice')
                 director_task = None
 
         director_max_chars: int | None = None
@@ -3213,7 +3360,7 @@ class DualBrainController:
             timeout_ms = max(1200, min(4500, decision.slot_ms * 8))
         try:
             executive_wait_started = time.perf_counter()
-            advice = await asyncio.wait_for(executive_task, timeout=timeout_ms / 1000.0)
+            advice = await self._wait_advisor(executive_task, timeout_ms=timeout_ms)
             phase_add("executive", executive_wait_started)
         except asyncio.TimeoutError:
             phase_add("executive", executive_wait_started)
@@ -4720,14 +4867,18 @@ class DualBrainController:
         is_trivial_chat: bool = False,
     ) -> PostTurnObserverStageResult:
         executive_observer_payload: Dict[str, Any] | None = director_payload
+        timing, expired = self._advisor_budget(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
+                                               qid=decision.qid, phase_budget_ms=2500.)
         observation_gate = self._module_gate(
             EXECUTIVE_METRICS_OBSERVATION, decision=decision,
             facts=GateFacts(
-                eligible=self.executive_model is not None and use_metrics_observer,
-                blocked_reason=('caller_mode_off' if not use_metrics_observer else
+                eligible=self.executive_model is not None and use_metrics_observer and not expired,
+                blocked_reason=('turn_deadline_elapsed' if expired else
+                                'caller_mode_off' if not use_metrics_observer else
                                 'model_unavailable' if self.executive_model is None else 'outside_scope'),
                 has_input=bool(question.strip()), has_draft=bool(user_answer.strip()),
                 is_trivial=is_trivial_chat,
+                **timing,
             ),
         )
         if not observation_gate.enabled:
@@ -4793,8 +4944,8 @@ class DualBrainController:
         ).strip()
 
         try:
-            observer_task = create_turn_task(
-                self.executive_model.advise(
+            observer_task = self._start_advisor(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
+                qid=decision.qid, factory=lambda: self.executive_model.advise(
                     question=question,
                     context=observer_context,
                     focus_keywords=focus_keywords,
@@ -4806,7 +4957,7 @@ class DualBrainController:
         if observer_task is not None:
             try:
                 observer_wait_started = time.perf_counter()
-                observer_advice = await asyncio.wait_for(observer_task, timeout=2.5)
+                observer_advice = await self._wait_advisor(observer_task, timeout_ms=2500.)
                 phase_add("executive", observer_wait_started)
             except asyncio.TimeoutError:
                 phase_add("executive", observer_wait_started)
@@ -5249,7 +5400,7 @@ class DualBrainController:
         except BaseException:
             pending = [task for task in (executive_task, director_task) if task is not None]
             for task in pending:
-                cancel_task(task)
+                self._cancel_advisor(task, 'generation_failed')
             if pending:
                 await asyncio.gather(*pending, return_exceptions=True)
             raise
@@ -5957,7 +6108,7 @@ class DualBrainController:
                 tail_timeout = 6.0 if executive_mode_norm in {"polish", "assist"} else 2.0
                 try:
                     executive_wait_started = time.perf_counter()
-                    advice = await asyncio.wait_for(executive_task, timeout=tail_timeout)
+                    advice = await self._wait_advisor(executive_task, timeout_ms=tail_timeout * 1000.)
                     _phase_add("executive", executive_wait_started)
                 except asyncio.CancelledError:
                     advice = None

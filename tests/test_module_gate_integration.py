@@ -181,6 +181,10 @@ async def test_real_engine_uses_auto_admission_without_an_extra_model_classifier
         assert 'right' in calls
         text=json.dumps(second['metrics']['modules']['gates'])
         assert 'Amber' not in text and SOURCE not in text and 'primary' not in text
+        timing=second['metrics']['modules']['advisor_timing']
+        assert set(timing)=={'executive_advice','director_advice','executive_metrics_observation'}
+        assert all(not row['started'] and row['outcome']=='not_admitted' for row in timing.values())
+        assert 'Amber' not in json.dumps(timing) and SOURCE not in json.dumps(timing)
     finally:
         await session.close()
 

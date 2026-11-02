@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_advisor_budget_pilot",
+  "cases": [
+    {
+      "id": "event-loop-analogies", "problem_id": "event-loop-analogies", "origin": "model",
+      "question": "Give exactly three analogies for a single-threaded event loop, one sentence per analogy.",
+      "draft": null, "records": [], "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Three apt analogies for one worker dispatching or handling ready tasks in turn; exactly three sentences, one analogy each. Concurrency does not require simultaneous execution on multiple threads.",
+      "criteria": {"task": "Give exactly three apt analogies in exactly three sentences, one per analogy.", "grounding": "Do not assert simultaneous multi-threaded execution or other false event-loop properties.", "clarification": "Answer directly without requesting unnecessary information."}
+    },
+    {
+      "id": "udp-loss", "problem_id": "udp-loss", "origin": "model",
+      "question": "In exactly two sentences, explain why UDP datagrams can be lost and how an application can detect a missing datagram.",
+      "draft": null, "records": [], "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "UDP provides no delivery guarantee or built-in retransmission; packets may be dropped through congestion, full buffers or network faults. Application-level sequence numbers plus a timeout or subsequent sequence gap can detect expected missing data, with reordering or delay distinguished from proven permanent loss.",
+      "criteria": {"task": "In exactly two sentences, explain possible loss and a concrete application-level detection mechanism.", "grounding": "Do not claim UDP guarantees delivery, retransmits automatically, or that a sequence gap alone proves permanent loss.", "clarification": "Answer the fully specified question directly."}
+    },
+    {
+      "id": "retry-safety", "problem_id": "retry-safety", "origin": "model",
+      "question": "List exactly three checks before retrying an HTTP payment request after a timeout, as three bullet points with no introduction.",
+      "draft": null, "records": [], "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Check the original operation's status because a timeout does not prove failure; verify provider idempotency support and reuse the same operation key/payload within its retention rules; check retry policy, transient-error eligibility and bounded backoff/rate limits. Three distinct practical checks, exactly three bullets, with no preamble.",
+      "criteria": {"task": "Give exactly three distinct practical checks covering ambiguous original status, duplicate prevention and bounded retry eligibility/policy, as three bullets without a preamble.", "grounding": "Do not equate timeout with payment failure, assume all payment APIs are idempotent, or recommend a new idempotency key for the same uncertain operation.", "clarification": "Provide general checks without asking for credentials or unnecessary missing details."}
+    }
+  ]
+}
