@@ -1,0 +1,3322 @@
+{
+  "schema_version": 1,
+  "publication_note": "Controlled transport receipts and idle are synthetic; live source/state history is never seeded. Raw answers, prompts and HTTP bodies are excluded.",
+  "controlled": {
+    "schema_version": 1,
+    "experiment": "advisor_session_sequence",
+    "complete": true,
+    "evidence": "controlled",
+    "frozen_replay": false,
+    "source_revision": "27d887ce6b10b097a85a8e90eb1e77415ba90d14",
+    "metadata": {
+      "model": "controlled-advisor",
+      "judge_model": "gpt-6-sol",
+      "fixture_sha256": "0b5ff22692c4bec59e7d58471a46f9e20202a1d46e59a710d33e1f82c6b0393b",
+      "code_sha256": "90d4450a7b626d06d5e80186c50585393fe9b3fa7370e31e6479b9f35d3dee1e",
+      "config": {
+        "provider": "openai",
+        "model": "controlled-advisor",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "controlled-advisor",
+          "temperature": 0.2,
+          "max_tokens": 2048
+        }
+      },
+      "call_limit": 96,
+      "arms": [
+        "untimed_advisors",
+        "timed_advisors"
+      ],
+      "history_policy": "same_EngineSession_per_arm;no_seeding;recorded_reads_only_in_replay",
+      "controlled": true,
+      "torch_policy": true,
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "time_budget_observation_v2",
+        "director_advice": "time_budget_observation_v2",
+        "executive_metrics_observation": "time_budget_observation_v2",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "transport_calls": 52,
+    "live_provider_calls": 0,
+    "experiment_usage": {
+      "calls": 52,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 450,
+      "known_output_tokens": 225,
+      "unknown_usage_calls": 7,
+      "cancelled_calls": 7,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "untimed_advisors": {
+          "planned": 6,
+          "available": 5,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 28,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 230,
+            "known_output_tokens": 115,
+            "unknown_usage_calls": 5,
+            "cancelled_calls": 5,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 6,
+            "director": 6,
+            "primary": 6,
+            "executive_metrics": 5,
+            "support": 5
+          },
+          "advisor_lifecycle": {
+            "director_advice": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 4,
+              "outcomes": {
+                "timed_out": 2,
+                "completed": 4
+              }
+            },
+            "executive_advice": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5,
+                "cancelled": 1
+              }
+            },
+            "executive_metrics_observation": {
+              "admitted": 5,
+              "started": 5,
+              "usable_output": 3,
+              "outcomes": {
+                "timed_out": 2,
+                "completed": 3,
+                "unreached": 1
+              }
+            }
+          }
+        },
+        "timed_advisors": {
+          "planned": 6,
+          "available": 6,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 24,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 220,
+            "known_output_tokens": 110,
+            "unknown_usage_calls": 2,
+            "cancelled_calls": 2,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 5,
+            "director": 4,
+            "primary": 6,
+            "executive_metrics": 4,
+            "support": 5
+          },
+          "advisor_lifecycle": {
+            "director_advice": {
+              "admitted": 4,
+              "started": 4,
+              "usable_output": 3,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 2,
+                "completed": 3
+              }
+            },
+            "executive_advice": {
+              "admitted": 5,
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5,
+                "not_admitted": 1
+              }
+            },
+            "executive_metrics_observation": {
+              "admitted": 4,
+              "started": 4,
+              "usable_output": 3,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 2,
+                "completed": 3
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 0,
+      "paired_timing_regressions": [],
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "idle_intervals": [
+      {
+        "before": "expired",
+        "requested_seconds": 61,
+        "observed_seconds": 3.0589872039854527e-06,
+        "simulated": true,
+        "replay_skipped": false
+      }
+    ],
+    "rows": [
+      {
+        "case": "cold",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 1,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 5585.739527014084,
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119998.37389198365,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1352.4699059780687,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1600.8255199994892,
+            "cleanup_ms": 1.459790044464171,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2502.7339010266587,
+            "cleanup_ms": 8.712053997442126,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "executive",
+          "primary"
+        ],
+        "timing_reads_sha256": "d06d8da94c2a8608a84306dc9f31ecb65021ff810960aa7fe87b908e49d54e85",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "cold",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 1,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 5567.204713996034,
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119998.96623799577,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1352.747795986943,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1600.973039981909,
+            "cleanup_ms": 1.7339460318908095,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2502.993684960529,
+            "cleanup_ms": 2.0976480445824564,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "executive",
+          "primary"
+        ],
+        "timing_reads_sha256": "d06d8da94c2a8608a84306dc9f31ecb65021ff810960aa7fe87b908e49d54e85",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 2,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "elapsed_ms": 1465.5247489572503,
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119992.63179599075,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1352.747795986943,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1352.5583790033124,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1600.973039981909,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.993684960529,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "executive",
+          "primary"
+        ],
+        "timing_reads_sha256": "bea70a5750ecc0864fe69d1d69fe4a5c4dedc5d2c69f2d6614747367fed5d7ad",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 2,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 5592.474164033774,
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119992.79321200447,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1352.4699059780687,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1366.0064800060354,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1600.8255199994892,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 1601.1656959890388,
+            "cleanup_ms": 3.1990830320864916,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7339010266587,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 2502.8052399866283,
+            "cleanup_ms": 3.150477015879005,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "executive",
+          "primary"
+        ],
+        "timing_reads_sha256": "3d7b81698d1b34a626ad27b9e630e48eaa10d664b7570420c2056ea1034864bb",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm_again",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 3,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 1478.391784010455,
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119991.99345399393,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1366.0064800060354,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1353.7403319496661,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.1656959890388,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 6.21463602874428,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.8052399866283,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 6.42290897667408,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "executive",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "eb15845874007da5a3b03fbf28047820574c93cfe4c6a782be30f5288ce531d4",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm_again",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 3,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "elapsed_ms": 1465.227892040275,
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119992.2662540339,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1352.747795986943,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1353.3327169716358,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1600.973039981909,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.993684960529,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "executive",
+          "primary"
+        ],
+        "timing_reads_sha256": "18771aa80ee500f27eb75d5256603a22ddf1d4d4fd80eac62a5762ae40969794",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "expired",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 4,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 1480.0239269970916,
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119991.75147002097,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1353.4364969818853,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 6.571964011527598,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 6.730091001372784,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "executive",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "d06d8da94c2a8608a84306dc9f31ecb65021ff810960aa7fe87b908e49d54e85",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "expired",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 4,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 1481.0596309835091,
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119991.52293102816,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1354.0898750070482,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 6.870442011859268,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.10306700784713,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "executive",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "d06d8da94c2a8608a84306dc9f31ecb65021ff810960aa7fe87b908e49d54e85",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "recovered_warm",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 5,
+        "rpc_seconds": 3.0,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 1482.7022120007314,
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 2991.5477089816704,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1354.0898750070482,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1354.623744962737,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 6.870442011859268,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.131442951504141,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 1525.6507800077088,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 7.10306700784713,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.304936007130891,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "executive",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "0e8284dffa077a7b990679b3bedad561d6c6162d7c73cbc40893611534186ef2",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "recovered_warm",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 5,
+        "rpc_seconds": 3.0,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 1483.3341659978032,
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 2991.339464962948,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1353.4364969818853,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1354.6182989957742,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 6.571964011527598,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.037533971015364,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 1525.4114469862543,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 6.730091001372784,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.64126202557236,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "executive",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "aad26692352d7336a451927127821c152f426597fc15da8484ab8cc8108ac428",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "bounded_rpc",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 6,
+        "rpc_seconds": 0.4,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 40,
+          "output_tokens": 20,
+          "known_input_tokens": 40,
+          "known_output_tokens": 20,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 51.318885991349816,
+        "pending_advisors": 0,
+        "memory_sources": 6,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 390.9657999756746,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1354.6182989957742,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "director_advice": {
+            "remaining_budget_ms": 390.9190319827758,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 7.037533971015364,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.346257974859327,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 357.3099430068396,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 7.64126202557236,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.509202987421304,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "primary",
+          "executive_metrics"
+        ],
+        "timing_reads_sha256": "a48da3c316800a318a5bd9b6c4a786305110db0ad1efdcdcaa82e6ae2223a370",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "bounded_rpc",
+        "arm": "untimed_advisors",
+        "status": "unavailable",
+        "session_turn": 6,
+        "rpc_seconds": 0.4,
+        "error_type": "DeadlineExceeded",
+        "may_have_committed": false,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1
+        },
+        "elapsed_ms": 408.6894739884883,
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 391.1663800245151,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 1354.623744962737,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 391.7998420074582,
+            "cleanup_ms": 7.026906998362392,
+            "usable_output": false,
+            "stop_reason": "turn_abandoned",
+            "usage_status": "unknown",
+            "outcome": "cancelled",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 391.1196860135533,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 7.131442951504141,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 7.430628000292927,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {},
+        "controlled_completed_roles": [
+          "support",
+          "director",
+          "primary"
+        ],
+        "timing_reads_sha256": "476017d7a9f076c8ba4ad119fb5cf7ec7bf0b6f2430539979a0f80b06cbd017c",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      }
+    ],
+    "primary_draft_scores": {
+      "untimed_advisors": {
+        "available": 6,
+        "graded": 0,
+        "all_pass": 0
+      },
+      "timed_advisors": {
+        "available": 6,
+        "graded": 0,
+        "all_pass": 0
+      }
+    }
+  },
+  "live": {
+    "schema_version": 1,
+    "experiment": "advisor_session_sequence",
+    "complete": true,
+    "evidence": "live",
+    "frozen_replay": false,
+    "source_revision": "27d887ce6b10b097a85a8e90eb1e77415ba90d14",
+    "metadata": {
+      "model": "gpt-6-luna",
+      "judge_model": "gpt-6-sol",
+      "fixture_sha256": "0b5ff22692c4bec59e7d58471a46f9e20202a1d46e59a710d33e1f82c6b0393b",
+      "code_sha256": "90d4450a7b626d06d5e80186c50585393fe9b3fa7370e31e6479b9f35d3dee1e",
+      "config": {
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "gpt-6-luna",
+          "max_completion_tokens": 2048
+        }
+      },
+      "call_limit": 96,
+      "arms": [
+        "untimed_advisors",
+        "timed_advisors"
+      ],
+      "history_policy": "same_EngineSession_per_arm;no_seeding;recorded_reads_only_in_replay",
+      "controlled": false,
+      "torch_policy": true,
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "time_budget_observation_v2",
+        "director_advice": "time_budget_observation_v2",
+        "executive_metrics_observation": "time_budget_observation_v2",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "transport_calls": 74,
+    "live_provider_calls": 74,
+    "experiment_usage": {
+      "calls": 74,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 39735,
+      "known_output_tokens": 9887,
+      "unknown_usage_calls": 15,
+      "cancelled_calls": 15,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 6,
+      "input_tokens": 5311,
+      "output_tokens": 3338,
+      "known_input_tokens": 5311,
+      "known_output_tokens": 3338,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "untimed_advisors": {
+          "planned": 6,
+          "available": 6,
+          "graded": 6,
+          "all_pass": 4,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 5,
+            "clarification": 6
+          },
+          "usage": {
+            "calls": 38,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 17845,
+            "known_output_tokens": 3372,
+            "unknown_usage_calls": 11,
+            "cancelled_calls": 11,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 6,
+            "primary": 6,
+            "right": 6,
+            "executive": 6,
+            "left": 3,
+            "executive_metrics": 6,
+            "support": 5
+          },
+          "advisor_lifecycle": {
+            "director_advice": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 6
+              }
+            },
+            "executive_advice": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 6,
+              "outcomes": {
+                "completed": 6
+              }
+            },
+            "executive_metrics_observation": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 1,
+              "outcomes": {
+                "timed_out": 5,
+                "completed": 1
+              }
+            }
+          }
+        },
+        "timed_advisors": {
+          "planned": 6,
+          "available": 6,
+          "graded": 6,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 6,
+            "clarification": 6
+          },
+          "usage": {
+            "calls": 30,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 16579,
+            "known_output_tokens": 3177,
+            "unknown_usage_calls": 4,
+            "cancelled_calls": 4,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 2,
+            "primary": 6,
+            "executive": 6,
+            "right": 6,
+            "left": 3,
+            "executive_metrics": 2,
+            "support": 5
+          },
+          "advisor_lifecycle": {
+            "director_advice": {
+              "admitted": 2,
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 4
+              }
+            },
+            "executive_advice": {
+              "admitted": 6,
+              "started": 6,
+              "usable_output": 6,
+              "outcomes": {
+                "completed": 6
+              }
+            },
+            "executive_metrics_observation": {
+              "admitted": 2,
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 4
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 6,
+      "paired_timing_regressions": [],
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "idle_intervals": [
+      {
+        "before": "expired",
+        "requested_seconds": 61,
+        "observed_seconds": 61.06256820203271,
+        "simulated": false,
+        "replay_skipped": false
+      }
+    ],
+    "rows": [
+      {
+        "case": "cold",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 1,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 1954,
+          "known_output_tokens": 513,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "primary": 1,
+          "right": 1,
+          "executive": 1,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 10004.382563987747,
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "7476f175d8a3d53f4d4eb1f2ca735d23a8eba87d72110b172f5b3bb337c8b804",
+        "draft_sha256": "e33d9be32ab680264b100742e84354a7edd04e14dc860dbbc3f443cbe42ee3e6",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119998.23408201337,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 6353.4158280235715,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1601.182594022248,
+            "cleanup_ms": 2.0697989966720343,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2502.570434997324,
+            "cleanup_ms": 2.502704970538616,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "fail",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "fail",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "39c7274bd980e0abaff3c923cbf5b22d91e86b8a7a3cf774a9ec7114fbd2a983",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "cold",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 1,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 1966,
+          "known_output_tokens": 538,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 9602.363934973255,
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "e4b806b9cb0d7e832cd7fc35ea780950e9aa313a766113c4b652ec0d021793d5",
+        "draft_sha256": "6de11e258b7f400dc47a4d08792a5c2a1811351ae6e6b0ced0017f98c14006bd",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119999.36518800678,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 4941.642443998717,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1604.4748700223863,
+            "cleanup_ms": 5.656222987454385,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2505.2973720012233,
+            "cleanup_ms": 9.637038980145007,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "39c7274bd980e0abaff3c923cbf5b22d91e86b8a7a3cf774a9ec7114fbd2a983",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 2,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 2471,
+          "output_tokens": 474,
+          "known_input_tokens": 2471,
+          "known_output_tokens": 474,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1
+        },
+        "elapsed_ms": 7289.945388038177,
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "e9b2d5ebb089edb8c2397815d3bcb12fe9ba6a59e6f4806b4ba22f3422907423",
+        "draft_sha256": "e9b2d5ebb089edb8c2397815d3bcb12fe9ba6a59e6f4806b4ba22f3422907423",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118517.43213500595,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 4941.642443998717,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3531.688426970504,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1604.4748700223863,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2505.2973720012233,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "e47ef84351e932ddd4ede911aab15bdb90dbbed40a94d14b405b8c280b99cefc",
+        "system2": {
+          "enabled": true,
+          "rounds": 1,
+          "initial_issues": 0,
+          "final_issues": 0
+        }
+      },
+      {
+        "case": "warm",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 2,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 8,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 4487,
+          "known_output_tokens": 782,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 2,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 16713.114292011596,
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "ce4c812a69c4d506b9d9e55e36f042f27c6af4dfb6d22e08d6abb71567eb4587",
+        "draft_sha256": "c2bfdd9ddb8d33e2cf2391310ce5e31a745492c2f97d12b2bce8cb04f49cffa1",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118300.41737301508,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 6353.4158280235715,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3273.192135966383,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.182594022248,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 1601.7841080320068,
+            "cleanup_ms": 5.328474973794073,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.570434997324,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 2503.3713500015438,
+            "cleanup_ms": 6.053033052012324,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "b27ae0139be4e1a90f1a487d0d2314d398c78d4299185b42d5433151a3d7f961",
+        "system2": {
+          "enabled": true,
+          "rounds": 2,
+          "initial_issues": 1,
+          "final_issues": 1
+        }
+      },
+      {
+        "case": "warm_again",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 3,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 7,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3037,
+          "known_output_tokens": 677,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 12087.802141963039,
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "9025d6f1ad3645b6a7023b3f6a812689296ca6d674ab2746615b7535fbe1291f",
+        "draft_sha256": "d7f65491be2b1400dbe6cb4312b43db5d40dcae69d0e08bfcd752223086c5dd7",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118535.43749597156,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 6353.4158280235715,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 4572.753215034027,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.7841080320068,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 1603.8601020118222,
+            "cleanup_ms": 10.610778990667313,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.3713500015438,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 2503.2738329609856,
+            "cleanup_ms": 6.964337022509426,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "d98909cb0e55eaff1a3dd4d3403e6cf471ccf34a73964d1dd2a54bef7599cf77",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "warm_again",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 3,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 2867,
+          "output_tokens": 667,
+          "known_input_tokens": 2867,
+          "known_output_tokens": 667,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "left": 1
+        },
+        "elapsed_ms": 8750.304549001157,
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "c18e36b621c3652b59b2cebb1aaed0b76047f8db9b9e58b0905d044f234283a1",
+        "draft_sha256": "ef4d44299f3d9fdb4ffe706a7ac926aa35331c33b68eb27989de39209aacce90",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 117848.29832497053,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 4941.642443998717,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3987.581001012586,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1604.4748700223863,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2505.2973720012233,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "963104aeb888d24fccfad09746f25c7ec675ac9d73bd91a8ac3d27dac86576e2",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "expired",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 4,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 1393,
+          "known_output_tokens": 319,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 8076.365271990653,
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "1e3e39c06233ae7b3308db1cb3e62c515c111d2a7864a5910da0da072153a54f",
+        "draft_sha256": "1e3e39c06233ae7b3308db1cb3e62c515c111d2a7864a5910da0da072153a54f",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118075.90643898584,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3555.217418994289,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1601.8267309991643,
+            "cleanup_ms": 8.174718008376658,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2503.673817962408,
+            "cleanup_ms": 7.92559003457427,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "39c7274bd980e0abaff3c923cbf5b22d91e86b8a7a3cf774a9ec7114fbd2a983",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "expired",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 4,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 1523,
+          "known_output_tokens": 408,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 8802.548911015037,
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "dad31d79b814498141351ef526a24b9453c8c95c8bd80c3291715c7871603496",
+        "draft_sha256": "dad31d79b814498141351ef526a24b9453c8c95c8bd80c3291715c7871603496",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 117786.7770800367,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 4074.126844992861,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 1602.1684320294298,
+            "cleanup_ms": 9.533308970276266,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2503.217352030333,
+            "cleanup_ms": 8.67917895084247,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "39c7274bd980e0abaff3c923cbf5b22d91e86b8a7a3cf774a9ec7114fbd2a983",
+        "system2": {
+          "enabled": false,
+          "rounds": null,
+          "initial_issues": null,
+          "final_issues": null
+        }
+      },
+      {
+        "case": "recovered_warm",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 5,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3172,
+          "known_output_tokens": 474,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 9756.20866799727,
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "e3f82b96482b78fe713d4daff33bd2e9ea37c328aea2909377344fea109f729e",
+        "draft_sha256": "e3f82b96482b78fe713d4daff33bd2e9ea37c328aea2909377344fea109f729e",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 117931.23357498553,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 4074.126844992861,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 4501.037532987539,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.1684320294298,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 1601.9435999915004,
+            "cleanup_ms": 9.608297026716173,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.217352030333,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "started": true,
+            "elapsed_ms": 2503.006609971635,
+            "cleanup_ms": 10.958756029140204,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "ee9b4a4857ef9326998453c62ed14eb7e3e7cf640d152c41864a9b1c68425403",
+        "system2": {
+          "enabled": true,
+          "rounds": 1,
+          "initial_issues": 0,
+          "final_issues": 0
+        }
+      },
+      {
+        "case": "recovered_warm",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 5,
+        "rpc_seconds": 120,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 2945,
+          "output_tokens": 470,
+          "known_input_tokens": 2945,
+          "known_output_tokens": 470,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "right": 1,
+          "executive": 1
+        },
+        "elapsed_ms": 5687.195101985708,
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "d4270a116e32af317458b589169cee1e76535553eccb1356d64ea164f565835c",
+        "draft_sha256": "d4270a116e32af317458b589169cee1e76535553eccb1356d64ea164f565835c",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118178.3454969991,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3555.217418994289,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3862.249833997339,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8267309991643,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.673817962408,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "fail",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "a34e18cfef4dc5b3469ec95f7700191d41ec29c50af547404b055e6d4c57cea8",
+        "system2": {
+          "enabled": true,
+          "rounds": 1,
+          "initial_issues": 0,
+          "final_issues": 0
+        }
+      },
+      {
+        "case": "bounded_rpc",
+        "arm": "timed_advisors",
+        "status": "ok",
+        "session_turn": 6,
+        "rpc_seconds": 20,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": 4937,
+          "output_tokens": 709,
+          "known_input_tokens": 4937,
+          "known_output_tokens": 709,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 2,
+          "left": 1
+        },
+        "elapsed_ms": 11206.910278997384,
+        "pending_advisors": 0,
+        "memory_sources": 6,
+        "answer_sha256": "8c99a595a27a8f809b424c7e74bb56cd651dfb89499f18e416f5f79e951f3904",
+        "draft_sha256": "370c844e90207a8417095643ea6c4dd0329e3baf138fd50c8281b00852bda030",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 18540.30564898858,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3862.249833997339,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 3329.361987009179,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8267309991643,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.673817962408,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "e954fc2a0cf0f2c5314e9bc3ff59d6e783f4fb0b80b757f20777ab9837c7790d",
+        "system2": {
+          "enabled": true,
+          "rounds": 2,
+          "initial_issues": 1,
+          "final_issues": 0
+        }
+      },
+      {
+        "case": "bounded_rpc",
+        "arm": "untimed_advisors",
+        "status": "ok",
+        "session_turn": 6,
+        "rpc_seconds": 20,
+        "error_type": null,
+        "may_have_committed": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3672,
+          "known_output_tokens": 518,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "elapsed_ms": 9210.812506033108,
+        "pending_advisors": 0,
+        "memory_sources": 6,
+        "answer_sha256": "fc30cdd221c3d3b6baaa2dc9ce3378dc4f8d91a7c7e292fcb109d1851dba2a1d",
+        "draft_sha256": "fc30cdd221c3d3b6baaa2dc9ce3378dc4f8d91a7c7e292fcb109d1851dba2a1d",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "director_advice": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          },
+          "executive_metrics_observation": {
+            "mode": "on",
+            "source": "canonical",
+            "eligible": true,
+            "enabled": true,
+            "reason": "forced_on",
+            "policy_version": "time_budget_observation_v2"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 18742.708967009094,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 4501.037532987539,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "started": true,
+            "elapsed_ms": 2925.1346399541944,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.1684320294298,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 1602.1542759845033,
+            "cleanup_ms": 20.535800023935735,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.217352030333,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "started": true,
+            "elapsed_ms": 2318.2709090178832,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "timing_reads_sha256": "ba2409d35f93bdfbd339ba775221c3ee9170771e70c9e710918ce983407fb4b6",
+        "system2": {
+          "enabled": true,
+          "rounds": 1,
+          "initial_issues": 0,
+          "final_issues": 0
+        }
+      }
+    ],
+    "primary_draft_scores": {
+      "untimed_advisors": {
+        "available": 6,
+        "graded": 6,
+        "all_pass": 4
+      },
+      "timed_advisors": {
+        "available": 6,
+        "graded": 6,
+        "all_pass": 5
+      }
+    }
+  },
+  "live_replay_check": {
+    "recorded_attempts": 74,
+    "replayed_attempts": 74,
+    "new_provider_calls": 0,
+    "cells": 12,
+    "status_differences": 0,
+    "answer_differences": 0,
+    "draft_differences": 0,
+    "timing_reads_differences": 0,
+    "memory_sources_differences": 0,
+    "pending_advisors_differences": 0,
+    "gate_differences": 0,
+    "grades_equal": true,
+    "lifecycle_differences": 15
+  }
+}
