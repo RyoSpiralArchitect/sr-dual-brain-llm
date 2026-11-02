@@ -180,6 +180,10 @@ The [first twelve-gate pilot](benchmarks/module-gating-2026-11-01.md) retained
 8/8 graded answers in both profiles with 22 versus 19 processing attempts. It
 also exposed replacement work on trivial turns, deadline cancellations and seven
 gates without positive AUTO exposure; those limits govern the next work.
+Its trivial-steering issue was repaired before merge; a
+[separate two-input confirmation](benchmarks/module-gating-steering-2026-11-02.md)
+preserved 2/2 answers per profile with 4 versus 0 post-draft attempts and no
+replacement consultation. Unknown cancellation billing still limits cost claims.
 
 ## Facts and observability
 
@@ -235,3 +239,5 @@ Keep operational, evidence, persistence, security, and cancellation gates outsid
 this optional-module registry. Source approval and lifecycle validation remain
 mandatory. Extending admission requires evidence for the new scope; adding a
 registry entry alone does not justify enabling its automatic policy by default.
+Gate the optional provider work at its own boundary; keep free deterministic
+steering and mandatory local safeguards independent of whether its task exists.

@@ -130,6 +130,12 @@ Priorities from the evidence:
    bounded stalled-verification, positive temperature-drop and basal-loop cases.
    Freeze approved context as well as source/draft when isolating critic quality.
 
+The first item was subsequently fixed before merge in response to Codex review.
+The [separate November 2 steering confirmation](module-gating-steering-2026-11-02.md)
+used two different greeting inputs, retained 2/2 passing answers per profile,
+and observed 4 → 0 post-draft attempts. Its results are not pooled into this table.
+Deadline-aware advisor admission is the next open work item (#70).
+
 ## Reproduction and artifacts
 
 The complete journal was replayed with its live transport disabled: **0 new
