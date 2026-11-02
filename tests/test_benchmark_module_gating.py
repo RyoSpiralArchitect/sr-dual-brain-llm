@@ -85,6 +85,41 @@ async def test_transport_failure_blocks_new_paid_requests():
     assert 'PRIVATE_ERROR' not in json.dumps(journal.data)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize('exempt_outcome', ['cancelled', 'incomplete'])
+async def test_concurrent_exempt_failure_cannot_unlock_a_transport_failure(exempt_outcome):
+    journal = bench.Journal(LLMConfig('openai', 'test', 'PRIVATE_KEY'), {}, max_calls=4)
+    started, finish_exempt = asyncio.Event(), asyncio.Event()
+    attempts = []
+
+    async def transport(url, payload, headers, **kwargs):
+        attempts.append(payload['request'])
+        if payload['request'] == 'transport-failure':
+            raise RuntimeError('PRIVATE_ERROR')
+        started.set()
+        await finish_exempt.wait()
+        if exempt_outcome == 'cancelled':
+            raise asyncio.CancelledError
+        return {'choices': [{'finish_reason': 'length', 'message': {'content': ''}}],
+                'usage': {'prompt_tokens': 1, 'completion_tokens': 1}}
+
+    journal.transport._post_json = transport
+    in_flight = asyncio.create_task(journal.post('executive', 'https://example.invalid', {'request': 'exempt'}, {}))
+    await started.wait()
+    try:
+        with pytest.raises(RuntimeError):
+            await journal.post('left', 'https://example.invalid', {'request': 'transport-failure'}, {})
+    finally:
+        finish_exempt.set()
+    with pytest.raises(asyncio.CancelledError if exempt_outcome == 'cancelled' else ValueError):
+        await in_flight
+    assert journal.data['transport_blocked']
+    with pytest.raises(RuntimeError):
+        await journal.post('judge', 'https://example.invalid', {'request': 'must-not-start'}, {})
+    assert attempts == ['exempt', 'transport-failure']
+    assert journal.calls == 2 and len(journal.events) == 2
+
+
 async def fake_response(url, payload, headers, **kwargs):
     messages = payload['messages']
     try:

@@ -41,6 +41,15 @@ attempts are directly observed, but complete billed savings cannot be priced.
 Primary draft generation is shared/excluded from the processing comparison;
 this is not a claim of zero end-to-end model use.
 
+A subsequent review fixed a measurement-runner race: an allowed cancellation or
+invalid completion could clear another concurrent request's genuine transport
+failure. The runner now holds that blocking failure independently and tests both
+exempt outcomes after a concurrent failure. Neither live journal contains a
+genuine transport failure (the first has one recorded output-limit completion),
+so this repair does not change either study's data or replay record. The
+source-pinned commands below reproduce the measured runner; current-head tests
+cover the strengthened stop behavior.
+
 Full transport replay consumed all **8 recorded request events**, including the
 three cancellations, with **0 new provider calls**. Status, final answers, draft
 identity, gate payloads and grades all matched. The

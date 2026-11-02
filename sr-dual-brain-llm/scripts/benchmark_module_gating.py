@@ -75,7 +75,13 @@ def validate(fixture):
 
 class Journal(base.Journal):
     """Retain expected cancellation; block new transport after network failures."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._blocking_transport_failure = False
+
     async def post(self, role, url, payload, headers, **kwargs):
+        if self._blocking_transport_failure:
+            raise RuntimeError('Provider transport blocked after a prior failure')
         key = digest({'role': role, 'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(), 'payload': payload})
         before = len(self.events)
         try:
@@ -85,10 +91,13 @@ class Journal(base.Journal):
             position = self.counts[key] - 1
             row = rows[position] if 0 <= position < len(rows) and len(self.events) > before else {}
             cancelled = isinstance(exc, asyncio.CancelledError) or row.get('error_type') == 'CancelledError'
-            if cancelled or generation_failure(row):
-                self.data['transport_blocked'] = False
-                if self.save:
-                    self.save(self.data)
+            if not cancelled and not generation_failure(row):
+                self._blocking_transport_failure = True
+            # An exempt in-flight response cannot clear another request's
+            # genuine failure. This latch is monotonic for this experiment.
+            self.data['transport_blocked'] = self._blocking_transport_failure
+            if self.save:
+                self.save(self.data)
             if cancelled:
                 raise asyncio.CancelledError from None
             raise
