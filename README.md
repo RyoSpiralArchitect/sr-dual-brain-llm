@@ -347,6 +347,7 @@ Treat “brains” as **roles** with strict I/O contracts:
 | **Right worker** | Shared stdio/interactive pump; cancels abandoned model work | `notes_sum` / `lead_notes` | `sr-dual-brain-llm/core/right_worker.py` |
 | **Executive reasoner** | Private meta-control + optional “mix-in” | `memo` (private) + `mix_in` (user-facing micro-addition) + directives | `sr-dual-brain-llm/core/executive_reasoner.py` |
 | **Policy + timing** | Decide whether to consult, set temperature/slot/timeouts | `action`, `temperature`, `slot_ms` | `sr-dual-brain-llm/core/policy*.py`, `sr-dual-brain-llm/core/hypothalamus.py` |
+| **Thalamic reticular nucleus** | Admit optional modules under their existing controls | Per-turn `on` / `off` / `auto` gate decisions | `sr-dual-brain-llm/core/thalamic_reticular_nucleus.py` |
 | **Auditor** | Sanity checks (keep answers clean) | ok/fail | `sr-dual-brain-llm/core/auditor.py` |
 | **Coherence + motifs** | Post-hoc scoring + “why it routed” signals | `coherence_signal` + tags | `sr-dual-brain-llm/core/coherence_resonator.py` |
 
@@ -356,6 +357,13 @@ cancellation and shutdown. Custom workers must echo `request_id` when replying.
 The [outer turn lifecycle](docs/turn-lifecycle.md) forwards HTTP disconnection and
 deadlines through generation, drains owned work before session reuse, and defers
 cancellation once factual memory writes begin.
+
+The [optional-module gating prototype](docs/module-gating.md) centralizes controls
+for twelve optional functions, including the selective consultation router, ACC
+and basal consultation controls, cerebellar correction, DMN injection and
+Executive/Director observation.
+Defaults remain unchanged. New optional switches should follow its naming,
+registration, fallback and validation rules.
 
 ### Executive “tri-layer” (speech + advice + reasoning)
 This is the “3-layer” structure:

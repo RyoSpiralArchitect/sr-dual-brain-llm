@@ -39,7 +39,18 @@ from .predictive_coding import PredictiveCodingController, PredictionFrame
 from .salience_network import SalienceNetwork, SalienceSignal
 from .thalamus import ThalamicRelay, Thalamus
 from .micro_critic import micro_criticise_reasoning
-from .consultation_router import route_conversation_lookup, VERSION as CONSULTATION_ROUTER_VERSION
+from .consultation_router import (
+    route_conversation_lookup, literal_record_replay_requested,
+    VERSION as CONSULTATION_ROUTER_VERSION,
+)
+from .thalamic_reticular_nucleus import (
+    ThalamicReticularNucleus, GateMode, GateFacts, GateConfig, GateDecision,
+    CONVERSATION_SELECTIVE_CONSULTATION, ACC_MONITOR, CEREBELLAR_CORRECTION,
+    DEFAULT_MODE_REFLECTION_INJECTION, SYSTEM2_STALLED_FOLLOWUP,
+    EXECUTIVE_ADVICE, DIRECTOR_ADVICE, EXECUTIVE_METRICS_OBSERVATION,
+    ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT,
+    BASAL_CONSULT_PROMOTION,
+)
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
     _LEFT_HEMISPHERE_MARKERS,
@@ -142,6 +153,7 @@ class ObserverSetup:
     use_metrics_observer: bool
     executive_task: asyncio.Task[ExecutiveAdvice] | None
     director_task: asyncio.Task[DirectorAdvice] | None
+    module_gates: Dict[str, Dict[str, Any]]
 
 
 @dataclass
@@ -380,6 +392,7 @@ class DualBrainController:
         salience_network: Optional[SalienceNetwork] = None,
         thalamus: Optional[Thalamus] = None,
         predictive_coding: Optional[PredictiveCodingController] = None,
+        thalamic_reticular_nucleus: Optional[ThalamicReticularNucleus] = None,
     ) -> None:
         self.callosum = callosum
         self.memory = memory
@@ -410,6 +423,7 @@ class DualBrainController:
         self.insula = insula or Insula()
         self.salience_network = salience_network or SalienceNetwork()
         self.thalamus = thalamus or Thalamus()
+        self.thalamic_reticular_nucleus = thalamic_reticular_nucleus or ThalamicReticularNucleus()
         self.predictive_coding = predictive_coding or PredictiveCodingController()
         self._last_leading_brain: Optional[str] = "right"
         self._default_mode_low_focus_streak = 0
@@ -419,6 +433,20 @@ class DualBrainController:
         if self.neural_integrator is None:
             self.neural_integrator = self._create_default_neural_network()
     
+    def _module_gate(
+        self, module_id: str, *, facts: GateFacts, decision: DecisionOutcome | None = None,
+        config: GateConfig | None = None, qid: str | None = None,
+    ) -> GateDecision:
+        gate = self.thalamic_reticular_nucleus.decide(module_id, facts=facts, config=config)
+        payload = gate.to_payload()
+        if decision is not None:
+            decision.state.setdefault('module_gates', {})[module_id] = payload
+        try:
+            self.telemetry.log('module_gate', qid=decision.qid if decision is not None else qid, **payload)
+        except Exception:  # Optional observability cannot change module admission.
+            pass
+        return gate
+
     def _create_default_neural_network(self) -> NeuralIntegrator:
         """Create a default neural network for impulse simulation.
         
@@ -744,6 +772,20 @@ class DualBrainController:
                 and predictive_frame.networks.suppress_default_mode
             )
         )
+        # Generate reflections above even when injection is inhibited: DMN history
+        # and cooldown are bookkeeping, not optional downstream prompt material.
+        reflection_gate = self._module_gate(
+            DEFAULT_MODE_REFLECTION_INJECTION, decision=decision,
+            facts=GateFacts(
+                eligible=bool(default_mode_reflections) and not suppress_default_mode_reflections,
+                blocked_reason='default_mode_suppressed' if suppress_default_mode_reflections else 'no_reflections',
+                reflection_count=len(default_mode_reflections or []),
+                reflection_confidence=max((r.confidence for r in default_mode_reflections or []), default=None),
+                task_positive_load=task_positive_load, risk=affect.get('risk'),
+            ),
+        )
+        suppress_default_mode_reflections = suppress_default_mode_reflections or bool(
+            default_mode_reflections and not reflection_gate.enabled)
         try:
             self.telemetry.log(
                 "task_positive_network",
@@ -1256,6 +1298,8 @@ class DualBrainController:
         path.append(dialogue_entry)
 
         integration_modules = ["CoherenceResonator", "Auditor"]
+        if self.thalamic_reticular_nucleus is not None:
+            integration_modules.append("ThalamicReticularNucleus")
         if self.anterior_cingulate_cortex is not None:
             integration_modules.append("AnteriorCingulateCortex")
         if self.salience_network is not None:
@@ -2020,6 +2064,7 @@ class DualBrainController:
         collaboration_profile: CollaborationProfile,
         executive_mode: str,
         executive_observer_mode: str,
+        qid: str | None = None,
     ) -> ObserverSetup:
         executive_mode_norm = str(executive_mode or "off").strip().lower()
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
@@ -2030,8 +2075,25 @@ class DualBrainController:
         use_director = executive_observer_mode_norm in {"director", "both"}
         use_metrics_observer = executive_observer_mode_norm in {"metrics", "both"}
 
+        advice_gate = self._module_gate(
+            EXECUTIVE_ADVICE, qid=qid,
+            facts=GateFacts(
+                eligible=self.executive_model is not None and executive_mode_norm != 'off',
+                blocked_reason='caller_mode_off' if executive_mode_norm == 'off' else 'model_unavailable',
+                has_input=bool(question.strip()), is_trivial=is_trivial_chat,
+            ),
+        )
+        director_gate = self._module_gate(
+            DIRECTOR_ADVICE, qid=qid,
+            facts=GateFacts(
+                eligible=self.director_model is not None and use_director,
+                blocked_reason='caller_mode_off' if not use_director else 'model_unavailable',
+                has_input=bool(question.strip()), is_trivial=is_trivial_chat,
+            ),
+        )
+
         executive_task: asyncio.Task[ExecutiveAdvice] | None = None
-        if self.executive_model is not None and executive_mode_norm != "off":
+        if advice_gate.enabled:
             try:
                 executive_task = create_turn_task(
                     self.executive_model.advise(
@@ -2044,7 +2106,7 @@ class DualBrainController:
                 executive_task = None
 
         director_task: asyncio.Task[DirectorAdvice] | None = None
-        if self.director_model is not None and use_director:
+        if director_gate.enabled:
             try:
                 has_qmark = ("?" in (question or "")) or ("？" in (question or ""))
                 director_task = create_turn_task(
@@ -2084,6 +2146,7 @@ class DualBrainController:
             use_metrics_observer=use_metrics_observer,
             executive_task=executive_task,
             director_task=director_task,
+            module_gates={gate.module: gate.to_payload() for gate in (advice_gate, director_gate)},
         )
 
     async def _run_pre_draft_director_stage(
@@ -2095,11 +2158,15 @@ class DualBrainController:
         context_frame: ContextFrame,
         context_parts: Dict[str, str],
         director_task: asyncio.Task[DirectorAdvice] | None,
+        director_requested: bool,
         phase_add: Callable[[str, float], None],
     ) -> DirectorStageResult:
         director_payload: Dict[str, Any] | None = None
         director_control: Dict[str, Any] | None = None
-        if director_task is None:
+        # Caller-selected deterministic steering is independent of optional
+        # provider admission. Inhibiting a task must not remove the free guard.
+        trivial_control = is_trivial_chat and director_requested
+        if director_task is None and not trivial_control:
             return DirectorStageResult(
                 context_frame=context_frame,
                 director_task=director_task,
@@ -2108,7 +2175,7 @@ class DualBrainController:
             )
 
         advice: DirectorAdvice | None = None
-        if is_trivial_chat:
+        if trivial_control:
             advice = DirectorAdvice(
                 memo=(
                     "(Director memo / fast-path)\n"
@@ -2125,7 +2192,8 @@ class DualBrainController:
                 latency_ms=0.0,
                 source="fast_path",
             )
-            cancel_task(director_task)
+            if director_task is not None:
+                cancel_task(director_task)
             director_task = None
         else:
             try:
@@ -2372,8 +2440,12 @@ class DualBrainController:
     ) -> RoutingStageResult:
         focus_metric = context_frame.focus_metric
         acc_signal_pre: ConflictSignal | None = None
-        acc_override_consult = _env_flag("DUALBRAIN_ACC_OVERRIDE_CONSULT", False)
-        acc_system2_bump = _env_flag("DUALBRAIN_ACC_SYSTEM2_BUMP", False)
+        control_ids = (ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT)
+        control_configs = {module: self.thalamic_reticular_nucleus.configure(module) for module in control_ids}
+        control_requested = {
+            module: config.valid and config.mode != GateMode.OFF
+            for module, config in control_configs.items()
+        }
         acc_temp_drop = _env_float(
             "DUALBRAIN_ACC_TEMPERATURE_DROP",
             0.0,
@@ -2381,14 +2453,16 @@ class DualBrainController:
             maximum=0.6,
         )
         acc_control_enabled = bool(
-            (acc_override_consult or acc_system2_bump or acc_temp_drop > 0.0)
+            (control_requested[ACC_CONSULT_PROMOTION] or control_requested[ACC_SYSTEM2_PROMOTION]
+             or (control_requested[ACC_TEMPERATURE_ADJUSTMENT] and acc_temp_drop > 0.0))
             and not is_trivial_chat
             and draft
             and str(draft).strip()
             and self.anterior_cingulate_cortex is not None
         )
+        micro_pre = None
+        eligible = False
         if acc_control_enabled:
-            micro_pre = None
             try:
                 micro_pre = micro_criticise_reasoning(question, draft)
             except Exception:
@@ -2439,48 +2513,53 @@ class DualBrainController:
                     and len(micro_pre.issues or []) <= int(max_micro_issues)
                     and float(acc_signal_pre.conflict_level) >= float(threshold)
                 )
-                if eligible:
-                    if acc_temp_drop > 0.0:
-                        base_temp = float(decision.temperature)
-                        new_temp = max(
-                            0.1,
-                            min(
-                                0.95,
-                                base_temp - float(acc_temp_drop) * float(acc_signal_pre.conflict_level),
-                            ),
-                        )
-                        if new_temp < base_temp:
-                            decision.temperature = new_temp
-                            decision.state["acc_temperature"] = {
-                                "base": float(base_temp),
-                                "adjusted": float(new_temp),
-                                "drop": float(base_temp - new_temp),
-                                "conflict": float(acc_signal_pre.conflict_level),
-                                "domain": str(micro_pre.domain),
-                            }
-                    if acc_override_consult and decision.action == 0 and self.right_model is not None:
-                        decision.action = 1
-                        decision.state["acc_override_consult"] = True
-                    if (
-                        acc_system2_bump
-                        and system2_mode == "auto"
-                        and not system2_active
-                        and system2_capable
-                    ):
-                        system2_active = True
-                        system2_reason = "acc_bump"
-                        decision.state["acc_system2_bump"] = True
-                        try:
-                            self.telemetry.log(
-                                "acc_system2_bump",
-                                qid=decision.qid,
-                                conflict=float(acc_signal_pre.conflict_level),
-                                micro_domain=str(micro_pre.domain),
-                                micro_confidence=float(micro_pre.confidence_r),
-                                micro_issues=int(len(micro_pre.issues or [])),
-                            )
-                        except Exception:  # pragma: no cover - telemetry best-effort
-                            pass
+        control_facts = dict(
+            has_draft=bool(str(draft or '').strip()), is_trivial=is_trivial_chat,
+            micro_known=micro_pre is not None and micro_pre.domain not in {'', 'unknown'},
+            micro_issues=len(micro_pre.issues or []) if micro_pre is not None else 0,
+            micro_confidence=micro_pre.confidence_r if micro_pre is not None else None,
+            conflict_level=acc_signal_pre.conflict_level if acc_signal_pre is not None else None,
+        )
+        consult_gate = self._module_gate(
+            ACC_CONSULT_PROMOTION, decision=decision, config=control_configs[ACC_CONSULT_PROMOTION],
+            facts=GateFacts(eligible=eligible and self.right_model is not None,
+                blocked_reason='signal_unavailable', **control_facts),
+        )
+        system2_gate = self._module_gate(
+            ACC_SYSTEM2_PROMOTION, decision=decision, config=control_configs[ACC_SYSTEM2_PROMOTION],
+            facts=GateFacts(eligible=eligible and system2_mode == 'auto' and not system2_active and system2_capable,
+                blocked_reason='explicit_system2_mode' if system2_mode != 'auto' else 'signal_unavailable',
+                **control_facts),
+        )
+        temperature_gate = self._module_gate(
+            ACC_TEMPERATURE_ADJUSTMENT, decision=decision, config=control_configs[ACC_TEMPERATURE_ADJUSTMENT],
+            facts=GateFacts(eligible=eligible and acc_temp_drop > 0,
+                blocked_reason='adjustment_zero' if acc_temp_drop <= 0 else 'signal_unavailable', **control_facts),
+        )
+        if eligible:
+            if temperature_gate.enabled:
+                base_temp = float(decision.temperature)
+                new_temp = max(0.1, min(0.95,
+                    base_temp - float(acc_temp_drop) * float(acc_signal_pre.conflict_level)))
+                if new_temp < base_temp:
+                    decision.temperature = new_temp
+                    decision.state['acc_temperature'] = {
+                        'base': base_temp, 'adjusted': new_temp, 'drop': base_temp - new_temp,
+                        'conflict': float(acc_signal_pre.conflict_level), 'domain': str(micro_pre.domain),
+                    }
+            if consult_gate.enabled and decision.action == 0 and self.right_model is not None:
+                decision.action = 1
+                decision.state['acc_override_consult'] = True
+            if system2_gate.enabled:
+                system2_active = True
+                system2_reason = 'acc_bump'
+                decision.state['acc_system2_bump'] = True
+                try:
+                    self.telemetry.log('acc_system2_bump', qid=decision.qid,
+                        conflict=float(acc_signal_pre.conflict_level), micro_domain=str(micro_pre.domain),
+                        micro_confidence=float(micro_pre.confidence_r), micro_issues=len(micro_pre.issues or []))
+                except Exception:  # pragma: no cover - telemetry best-effort
+                    pass
 
         basal_loop_signal: BasalGangliaSignal | None = None
         if self.basal_ganglia is not None and (
@@ -2506,25 +2585,6 @@ class DualBrainController:
                 basal_loop_signal = None
             if basal_loop_signal is not None:
                 decision.state["basal_loop_signal"] = basal_loop_signal.to_dict()
-                if (
-                    basal_loop_signal.recommended_action == 1
-                    and decision.action == 0
-                    and self.right_model is not None
-                    and (
-                        (
-                            acc_signal_pre is not None
-                            and str(acc_signal_pre.recommended_control or "").lower()
-                            in {"consult", "system2"}
-                        )
-                        or (
-                            salience_signal is not None
-                            and salience_signal.dominant_network == "memory_recall"
-                            and salience_signal.system2_gate
-                        )
-                    )
-                ):
-                    decision.action = 1
-                    decision.state["basal_loop_override"] = "consult"
                 try:
                     self.telemetry.log(
                         "basal_ganglia_loop",
@@ -2533,6 +2593,20 @@ class DualBrainController:
                     )
                 except Exception:  # pragma: no cover - telemetry best-effort
                     pass
+
+        memory_pressure = bool(salience_signal is not None
+            and salience_signal.dominant_network == 'memory_recall' and salience_signal.system2_gate)
+        basal_gate = self._module_gate(BASAL_CONSULT_PROMOTION, decision=decision,
+            facts=GateFacts(
+                eligible=bool(basal_loop_signal is not None and basal_loop_signal.recommended_action == 1
+                    and decision.action == 0 and self.right_model is not None
+                    and (memory_pressure or (acc_signal_pre is not None
+                        and str(acc_signal_pre.recommended_control or '').lower() in {'consult', 'system2'}))),
+                memory_pressure=memory_pressure, **control_facts,
+            ))
+        if basal_gate.enabled:
+            decision.action = 1
+            decision.state['basal_loop_override'] = 'consult'
 
         if precision_priority:
             decision.state["q_type"] = self._infer_question_type(
@@ -2635,8 +2709,11 @@ class DualBrainController:
         if director_control is not None:
             consult = str(director_control.get("consult") or "auto").strip().lower()
             if consult == "skip":
-                decision.action = 0
-                decision.state["director_consult"] = "skip"
+                if system2_mode == 'on' and system2_active:
+                    decision.state['director_consult_blocked'] = 'system2_on'
+                else:
+                    decision.action = 0
+                    decision.state["director_consult"] = "skip"
             elif consult == "force" and not is_trivial_chat:
                 decision.action = max(1, decision.action)
                 decision.state["director_consult"] = "force"
@@ -2680,33 +2757,52 @@ class DualBrainController:
             if lt == "drop":
                 decision.state["director_memory_long_term"] = "drop"
 
-        # Opt-in and scoped to guarded, left-led conversation turns. Explicit
-        # modes/leads, source writes, director directives and ACC controls retain
-        # their existing authority. This never changes evidence eligibility.
-        if (
-            _env_flag("DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT", False)
-            and getattr(self.memory, "conversation_context", False)
-            and getattr(self.memory, "answerability_gate", None) is not None
-            and not getattr(self.memory, "primary_write_pending", False)
-            and system2_mode == "auto" and not precision_priority
-            and system2_capable and leading_brain == "left"
-            and not force_right_lead
-            and str((director_control or {}).get("consult") or "auto").lower() == "auto"
-            and not any(decision.state.get(key) for key in (
-                "amygdala_override", "acc_override_consult", "acc_system2_bump"))
-        ):
-            approved = (self.memory.retrieve_related_traces(question)
-                        if context_parts.get("memory") else [])
+        # TRN admits optional processing. The protected scope stays local, and
+        # neither ON nor AUTO can override it or approve historical evidence.
+        protected = (
+            (not getattr(self.memory, 'conversation_context', False), 'conversation_context_disabled'),
+            (getattr(self.memory, 'answerability_gate', None) is None, 'answerability_gate_unavailable'),
+            (getattr(self.memory, 'primary_write_pending', False), 'primary_write_pending'),
+            (system2_mode != 'auto', 'explicit_system2_mode'),
+            (precision_priority, 'precision_priority'),
+            (not system2_capable, 'system2_unavailable'),
+            (leading_brain != 'left' or force_right_lead, 'right_lead'),
+            (str((director_control or {}).get('consult') or 'auto').strip().lower() != 'auto', 'director_override'),
+            (bool(decision.state.get('amygdala_override')), 'amygdala_override'),
+            (bool(decision.state.get('acc_override_consult') or decision.state.get('acc_system2_bump')), 'acc_override'),
+        )
+        blocked = next((reason for active, reason in protected if active), None)
+        gate_config = self.thalamic_reticular_nucleus.configure(CONVERSATION_SELECTIVE_CONSULTATION)
+        approved = (self.memory.retrieve_related_traces(question)
+                    if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF
+                    and context_parts.get('memory') else [])
+        reference = (self.memory.reference_resolution(question)
+                     if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF else None)
+        literal_requested = False
+        source_replayed = False
+        if gate_config.mode == GateMode.AUTO and blocked is None and len(approved) == 1:
+            cue = self.memory.scope_resolver().query(self.memory.retrieval_question(question))
+            literal_requested = literal_record_replay_requested(cue.content)
+            source_replayed = str(draft).strip() == approved[0].answer.strip()
+        gate = self._module_gate(CONVERSATION_SELECTIVE_CONSULTATION, decision=decision, config=gate_config,
+            facts=GateFacts(eligible=blocked is None, blocked_reason=blocked or 'outside_scope',
+                has_draft=bool(str(draft).strip()), is_trivial=is_trivial_chat,
+                confidence=confidence, risk=affect.get('risk', 0.0), approved_records=len(approved),
+                reference_resolved=reference == 'resolved', literal_replay_requested=literal_requested,
+                full_source_replayed=source_replayed))
+        if gate.enabled:
             route = route_conversation_lookup(
                 question=question, draft=draft, confidence=confidence,
                 risk=float(affect.get("risk", 0.0)), q_type=decision.state.get("q_type"),
-                reference=self.memory.reference_resolution(question), approved_records=approved,
+                reference=reference, approved_records=approved,
             )
             before_action, before_system2 = decision.action, system2_active
-            if route.action == "skip":
+            apply_route = route.action in {'skip', 'consult'} and (
+                gate_config.mode != GateMode.AUTO or route.action == 'skip')
+            if apply_route and route.action == "skip":
                 decision.action, system2_active = 0, False
                 system2_reason, system2_round_target = "selective_supported_lookup", 0
-            elif route.action == "consult":
+            elif apply_route and route.action == "consult":
                 decision.action, system2_active = max(1, decision.action), True
                 system2_reason = "selective_" + route.reason
                 if not before_system2:
@@ -2724,6 +2820,7 @@ class DualBrainController:
                 "prior_action": before_action, "prior_system2": bool(before_system2),
                 "final_action": decision.action, "final_system2": bool(system2_active),
                 "approved_records": len(approved),
+                "activation_mode": gate_config.mode.value, "applied": bool(apply_route),
             }
             decision.state.update(system2_enabled=bool(system2_active), system2_reason=system2_reason,
                                   system2_round_target=system2_round_target)
@@ -3311,6 +3408,9 @@ class DualBrainController:
             and final_answer
             and final_answer.strip()
         )
+        if not should_verify:
+            self._module_gate(SYSTEM2_STALLED_FOLLOWUP, decision=decision,
+                facts=GateFacts(eligible=False, blocked_reason='followup_not_eligible'))
         if should_verify:
             verify_draft_limit = max(
                 1200,
@@ -3359,6 +3459,7 @@ class DualBrainController:
                 verify_response.get("verdict") or ""
             ).strip().lower()
             verify_kind = verify_response.get("critic_kind")
+            verify_confidence = verify_response.get('confidence_r')
             verify_status = verify_response.get("critic_status")
             verify_issues_raw_for_resolution = _normalise_issue_list(
                 verify_response.get("issues"), limit=12,
@@ -3397,6 +3498,7 @@ class DualBrainController:
                         verify_fallback.get("verdict") or ""
                     ).strip().lower()
                     verify_kind = verify_fallback.get("critic_kind")
+                    verify_confidence = verify_fallback.get('confidence_r')
                     verify_status = verify_fallback.get("critic_status")
                     verify_issues_raw_for_resolution = _normalise_issue_list(
                         verify_fallback.get("issues"), limit=12,
@@ -3493,21 +3595,23 @@ class DualBrainController:
                 and int(verify_issue_count_calibrated)
                 <= int(system2_followup_max_remaining)
             )
-            stalled_followup_enabled = _env_flag(
-                "DUALBRAIN_SYSTEM2_STALLED_FOLLOWUP",
-                True,
-            )
             stalled_followup_min_issues = _env_int(
                 "DUALBRAIN_SYSTEM2_STALLED_MIN_ISSUES",
                 4,
                 minimum=1,
             )
-            stalled_followup = bool(
-                stalled_followup_enabled
-                and int(verify_issue_count_calibrated) >= int(stalled_followup_min_issues)
-                and followup_progress <= 0
-                and system2_round_target >= 3
-            )
+            stalled_gate = self._module_gate(SYSTEM2_STALLED_FOLLOWUP, decision=decision,
+                facts=GateFacts(
+                    eligible=bool(
+                        int(verify_issue_count_calibrated) >= int(stalled_followup_min_issues)
+                        and followup_progress <= 0 and system2_round_target >= 3),
+                    blocked_reason='followup_not_eligible',
+                    critic_structured=verify_kind == 'external' and verify_verdict == 'issues'
+                        and bool(verify_detail) and not system2_resolved,
+                    critic_confidence=verify_confidence,
+                    remaining_issues=int(verify_issue_count_calibrated),
+                ))
+            stalled_followup = stalled_gate.enabled
             if stalled_followup:
                 followup_eligible = True
             decision.state["system2_followup_progress"] = int(
@@ -3938,19 +4042,41 @@ class DualBrainController:
             and final_answer
             and str(final_answer).strip()
         ):
+            blocked = ('system2_active' if system2_active else
+                       'explicit_system2_mode' if system2_mode != 'auto' else 'outside_scope')
+            for module_id in (ACC_MONITOR, CEREBELLAR_CORRECTION):
+                self._module_gate(module_id, decision=decision,
+                    facts=GateFacts(eligible=False, blocked_reason=blocked,
+                        has_draft=bool(str(final_answer or '').strip()), is_trivial=is_trivial_chat,
+                        confidence=confidence, risk=decision.state.get('amygdala_risk', 0.0)))
             return ConflictRegulationStageResult(
                 final_answer=final_answer,
                 steps=steps,
             )
 
-        acc_enabled = _env_flag("DUALBRAIN_ACC_MONITOR", True)
-        cerebellum_enabled = _env_flag("DUALBRAIN_CEREBELLUM_MICRO_CORRECTION", True)
+        acc_config = self.thalamic_reticular_nucleus.configure(ACC_MONITOR)
+        cerebellum_config = self.thalamic_reticular_nucleus.configure(CEREBELLAR_CORRECTION)
         micro_result = None
-        if acc_enabled or cerebellum_enabled:
+        if any(c.valid and c.mode != GateMode.OFF for c in (acc_config, cerebellum_config)):
             try:
                 micro_result = micro_criticise_reasoning(question, final_answer)
             except Exception:
                 micro_result = None
+
+        shared_facts = dict(has_draft=bool(str(final_answer).strip()), is_trivial=is_trivial_chat,
+            confidence=confidence, risk=decision.state.get('amygdala_risk', 0.0),
+            micro_known=micro_result is not None and str(micro_result.domain or '') not in {'', 'unknown'},
+            micro_issues=len(micro_result.issues or []) if micro_result is not None else 0,
+            micro_confidence=micro_result.confidence_r if micro_result is not None else None)
+        acc_enabled = self._module_gate(ACC_MONITOR, decision=decision, config=acc_config,
+            facts=GateFacts(eligible=self.anterior_cingulate_cortex is not None,
+                            blocked_reason='module_unavailable', **shared_facts)).enabled
+        cerebellum_blocked = ('micro_unavailable' if micro_result is None else
+                             'module_unavailable' if self.cerebellum is None else 'model_unavailable')
+        cerebellum_enabled = self._module_gate(CEREBELLAR_CORRECTION, decision=decision, config=cerebellum_config,
+            facts=GateFacts(eligible=micro_result is not None and self.cerebellum is not None
+                            and bool(getattr(self.left_model, 'uses_external_llm', False)),
+                            blocked_reason=cerebellum_blocked, **shared_facts)).enabled
 
         acc_signal = None
         if acc_enabled and self.anterior_cingulate_cortex is not None:
@@ -4591,9 +4717,20 @@ class DualBrainController:
         collaborative_lead: bool,
         selection_reason: str,
         phase_add: Callable[[str, float], None],
+        is_trivial_chat: bool = False,
     ) -> PostTurnObserverStageResult:
         executive_observer_payload: Dict[str, Any] | None = director_payload
-        if self.executive_model is None or not use_metrics_observer:
+        observation_gate = self._module_gate(
+            EXECUTIVE_METRICS_OBSERVATION, decision=decision,
+            facts=GateFacts(
+                eligible=self.executive_model is not None and use_metrics_observer,
+                blocked_reason=('caller_mode_off' if not use_metrics_observer else
+                                'model_unavailable' if self.executive_model is None else 'outside_scope'),
+                has_input=bool(question.strip()), has_draft=bool(user_answer.strip()),
+                is_trivial=is_trivial_chat,
+            ),
+        )
+        if not observation_gate.enabled:
             return PostTurnObserverStageResult(
                 executive_observer_payload=executive_observer_payload
             )
@@ -4988,6 +5125,7 @@ class DualBrainController:
         )
 
         observer_setup = self._prepare_observer_stage(
+            qid=qid_value,
             question=question,
             context=context,
             focus=focus,
@@ -5029,6 +5167,7 @@ class DualBrainController:
             context_frame=context_frame,
             context_parts=context_parts,
             director_task=director_task,
+            director_requested=observer_setup.use_director,
             phase_add=_phase_add,
         )
         context_frame = director_stage.context_frame
@@ -5141,6 +5280,7 @@ class DualBrainController:
             hemisphere_bias,
             qid=qid_value,
         )
+        decision.state.setdefault('module_gates', {}).update(observer_setup.module_gates)
         if insula_state is not None:
             decision.state["interoception"] = insula_state.to_payload()
         if salience_signal is not None:
@@ -6269,6 +6409,7 @@ class DualBrainController:
         architecture_path = memory_stage.architecture_path
 
         observer_stage = await self._run_post_turn_observer_stage(
+            is_trivial_chat=is_trivial_chat,
             question=question,
             context=context,
             focus=focus,

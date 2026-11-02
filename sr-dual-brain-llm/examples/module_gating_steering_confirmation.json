@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_module_gating_steering_confirmation",
+  "cases": [
+    {
+      "id": "steering-hello-en", "problem_id": "steering-hello-en", "origin": "model",
+      "question": "Hello!", "draft": null, "records": [],
+      "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A brief friendly English greeting. An ordinary offer to help is allowed.",
+      "criteria": {"task": "Greet the user briefly and naturally in English.", "grounding": "Invent no user circumstances or factual observations.", "clarification": "No unrelated clarification; an ordinary offer to help is allowed."}
+    },
+    {
+      "id": "steering-hello-ja", "problem_id": "steering-hello-ja", "origin": "model",
+      "question": "こんにちは！", "draft": null, "records": [],
+      "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A brief friendly Japanese greeting. An ordinary offer to help is allowed.",
+      "criteria": {"task": "Greet the user briefly and naturally in Japanese.", "grounding": "Invent no user circumstances or factual observations.", "clarification": "No unrelated clarification; an ordinary offer to help is allowed."}
+    }
+  ]
+}

@@ -2,7 +2,14 @@
 
 Set `DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT=1` to enable the experimental router.
 It is off by default. It applies after drafting, only to left-led, guarded
-conversation turns with an answerability gate in balanced System2 auto mode.
+conversation turns with an answerability gate in non-precision System2 auto mode
+(`balanced` or `latency`).
+The canonical control is now
+`DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE=on|off|auto`;
+it takes precedence over the legacy Boolean switch. `on` retains the router
+described below. The opt-in `auto` prototype admits only recognized literal
+record replays and applies only skip proposals; other turns retain legacy routing.
+See [optional-module gating](module-gating.md) for scope, defaults and registration rules.
 For a controlled deployment use `leading_brain="left"`, `system2_mode="auto"`
 and conversation memory enabled. Auto-selected lead previews can already have
 made calls before routing; this feature controls the subsequent consultation.
@@ -50,7 +57,10 @@ a bounded lookup; the evidence gate and record lifecycle never are.
 final action/System2 flags, and approved-record count. It carries no question,
 answer, project identifier or fact value. The same fields appear in
 `metrics.policy.consultation_route`; the final post-draft System2 status is exposed
-through `metrics.system2`. A skip means consultation was omitted, not that the
+through `metrics.system2`. `activation_mode` and `applied` show whether a child
+skip/consult proposal was accepted; prior/final flags show the resulting change.
+Admission decisions also appear in
+`metrics.modules.gates`. A skip means consultation was omitted, not that the
 answer was independently verified.
 
 See the [prospective pilot protocol](benchmarks/selective-consultation-protocol.md)

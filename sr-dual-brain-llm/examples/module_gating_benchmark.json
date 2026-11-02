@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_module_gating_pilot",
+  "cases": [
+    {
+      "id": "greeting-en", "problem_id": "greeting-en", "origin": "model",
+      "question": "hi", "draft": null, "records": [],
+      "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A brief friendly greeting is appropriate. An ordinary offer to help is allowed.",
+      "criteria": {"task": "Greet the user briefly and naturally.", "grounding": "Invent no user circumstances or factual observations.", "clarification": "No unrelated clarification; an ordinary offer to help is allowed."}
+    },
+    {
+      "id": "greeting-ja", "problem_id": "greeting-ja", "origin": "model",
+      "question": "ありがとう！", "draft": null, "records": [],
+      "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A brief Japanese acknowledgement of thanks is appropriate.",
+      "criteria": {"task": "Acknowledge thanks briefly in Japanese.", "grounding": "Invent no user circumstances or factual observations.", "clarification": "Do not request unrelated missing information."}
+    },
+    {
+      "id": "literal-natural", "problem_id": "vireo-retention", "origin": "model",
+      "question": "Repeat the recorded answer for Project Vireo verbatim.", "draft": null,
+      "executive_mode": "off", "executive_observer_mode": "off",
+      "records": [{"qid": "source-vireo", "question": "Project Vireo recorded retention policy", "answer": "The normal retention is 13 days. The urgent retention is 3 days.", "retrieval_scope": "Vireo", "scope_aliases": ["Vireo"]}],
+      "reference": "The normal retention is 13 days. The urgent retention is 3 days.",
+      "criteria": {"task": "Reproduce the complete reference answer verbatim, without a preamble or extra output.", "grounding": "Keep the normal/urgent labels and their 13/3 day values; assert no other project fact.", "clarification": "Do not ask which explicitly named project is meant."}
+    },
+    {
+      "id": "literal-positive-control", "problem_id": "vireo-retention", "origin": "synthetic_clean",
+      "question": "Repeat the recorded answer for Project Vireo verbatim.",
+      "draft": "The normal retention is 13 days. The urgent retention is 3 days.",
+      "executive_mode": "off", "executive_observer_mode": "off",
+      "records": [{"qid": "source-vireo", "question": "Project Vireo recorded retention policy", "answer": "The normal retention is 13 days. The urgent retention is 3 days.", "retrieval_scope": "Vireo", "scope_aliases": ["Vireo"]}],
+      "reference": "The normal retention is 13 days. The urgent retention is 3 days.",
+      "criteria": {"task": "Reproduce the complete reference answer verbatim, without a preamble or extra output.", "grounding": "Keep the normal/urgent labels and their 13/3 day values; assert no other project fact.", "clarification": "Do not ask which explicitly named project is meant."}
+    },
+    {
+      "id": "retention-comparison", "problem_id": "vireo-retention", "origin": "model",
+      "question": "For Project Vireo, compare normal and urgent retention and state the difference in days.", "draft": null,
+      "executive_mode": "off", "executive_observer_mode": "off",
+      "records": [{"qid": "source-vireo", "question": "Project Vireo recorded retention policy", "answer": "The normal retention is 13 days. The urgent retention is 3 days.", "retrieval_scope": "Vireo", "scope_aliases": ["Vireo"]}],
+      "reference": "Normal retention is 13 days; urgent retention is 3 days. Normal is 10 days longer.",
+      "criteria": {"task": "State both labeled retention values and the 10 day difference.", "grounding": "Preserve labels, units and subtraction direction; do not invent project facts.", "clarification": "Do not ask which explicitly named project is meant."}
+    },
+    {
+      "id": "arithmetic-natural", "problem_id": "product-17-23", "origin": "model",
+      "question": "Compute 17*23. State only the result.", "draft": null, "records": [],
+      "executive_mode": "off", "executive_observer_mode": "off",
+      "reference": "391",
+      "criteria": {"task": "Return only the result 391.", "grounding": "Assert no incorrect arithmetic.", "clarification": "Do not ask for information; the calculation is fully specified."}
+    },
+    {
+      "id": "arithmetic-fault-control", "problem_id": "product-17-23", "origin": "synthetic_faulty",
+      "question": "Compute 17*23. State only the result.", "draft": "17*23=400.", "records": [],
+      "executive_mode": "off", "executive_observer_mode": "off",
+      "reference": "391",
+      "criteria": {"task": "Return only the result 391.", "grounding": "Assert no incorrect arithmetic.", "clarification": "Do not ask for information; the calculation is fully specified."}
+    },
+    {
+      "id": "queue-metaphors", "problem_id": "queue-metaphors", "origin": "model",
+      "question": "Give exactly two metaphors for a software queue, one sentence each.", "draft": null, "records": [],
+      "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Any two apt metaphors that convey ordered waiting/processing, such as a checkout line or a reservoir with an outlet. Exactly two sentences, one metaphor each.",
+      "criteria": {"task": "Give exactly two apt software-queue metaphors, in exactly two sentences, one metaphor per sentence.", "grounding": "Do not make false technical claims about queues or invent personal observations.", "clarification": "Answer directly; no clarification is needed."}
+    }
+  ]
+}

@@ -1,0 +1,3117 @@
+{
+  "schema_version": 1,
+  "experiment": "module_gating",
+  "complete": true,
+  "source_revision": "514af7aaaad3df0a5ea02cff34b5c58c10f9ffe8",
+  "metadata": {
+    "model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "fixture_sha256": "296e59dc416aa6970ffc634a34225c3eabc9bbee08e4e767e6e004d88177e99d",
+    "runner_sha256": "c16c9399a6b358be10f053d7710c45e82e0a77ac24762421466b1fed1b78610d",
+    "core_sha256": "7fb0223ef280e8f21555ab824df8675a51f009ffbafede03921d1a1f7428dfb1",
+    "engine_sha256": "256d7c4de86211d09a832436abfdfedf7ad669ebc7c8d21a7236bb9ffd632c25",
+    "judge_policy_sha256": "7dd4c3d21210c66d82509688acad9d5fa94a38959d0b80130014e62a04b8556e",
+    "support_policy_sha256": "f23e792c42871c4054091114638aab3f9a15f26cd63fdd63a14521b2d616c07e",
+    "config": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 2048
+      }
+    },
+    "arms": [
+      "legacy_default",
+      "all_auto"
+    ],
+    "runtime": {
+      "DUALBRAIN_SYSTEM2_PRIORITY_AUTO": "balanced",
+      "REASONING_DIAL": "evaluative"
+    },
+    "call_limit": 96,
+    "torch_policy": true,
+    "gate_policies": {
+      "conversation_selective_consultation": "literal_replay_v1",
+      "acc_monitor": "acc_observation_v1",
+      "cerebellar_correction": "cerebellar_micro_v1",
+      "default_mode_reflection_injection": "reflection_injection_v1",
+      "system2_stalled_followup": "stalled_checklist_v1",
+      "executive_advice": "optional_observation_v1",
+      "director_advice": "optional_observation_v1",
+      "executive_metrics_observation": "optional_observation_v1",
+      "acc_consult_promotion": "acc_conflict_control_v1",
+      "acc_system2_promotion": "acc_conflict_control_v1",
+      "acc_temperature_adjustment": "acc_conflict_control_v1",
+      "basal_consult_promotion": "basal_consult_promotion_v1"
+    }
+  },
+  "provider_calls": 57,
+  "experiment_usage": {
+    "calls": 57,
+    "input_tokens": null,
+    "output_tokens": null,
+    "known_input_tokens": 36034,
+    "known_output_tokens": 6943,
+    "unknown_usage_calls": 2,
+    "cancelled_calls": 2,
+    "failed_calls": 1
+  },
+  "generation_usage": {
+    "calls": 8,
+    "input_tokens": 2108,
+    "output_tokens": 478,
+    "known_input_tokens": 2108,
+    "known_output_tokens": 478,
+    "unknown_usage_calls": 0,
+    "cancelled_calls": 0,
+    "failed_calls": 0
+  },
+  "judge_usage": {
+    "calls": 8,
+    "input_tokens": 5098,
+    "output_tokens": 2087,
+    "known_input_tokens": 5098,
+    "known_output_tokens": 2087,
+    "unknown_usage_calls": 0,
+    "cancelled_calls": 0,
+    "failed_calls": 0
+  },
+  "summaries": {
+    "by_origin": {
+      "all": {
+        "no_revision": {
+          "planned": 8,
+          "available": 8,
+          "graded": 8,
+          "all_pass": 6,
+          "criterion_pass": {
+            "task": 6,
+            "grounding": 7,
+            "clarification": 8
+          },
+          "usage": {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "known_input_tokens": 0,
+            "known_output_tokens": 0,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "legacy_default": {
+          "planned": 8,
+          "available": 8,
+          "graded": 8,
+          "all_pass": 8,
+          "criterion_pass": {
+            "task": 8,
+            "grounding": 8,
+            "clarification": 8
+          },
+          "usage": {
+            "calls": 22,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 15177,
+            "known_output_tokens": 2710,
+            "unknown_usage_calls": 1,
+            "cancelled_calls": 1,
+            "failed_calls": 1
+          }
+        },
+        "all_auto": {
+          "planned": 8,
+          "available": 8,
+          "graded": 8,
+          "all_pass": 8,
+          "criterion_pass": {
+            "task": 8,
+            "grounding": 8,
+            "clarification": 8
+          },
+          "usage": {
+            "calls": 19,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 13651,
+            "known_output_tokens": 1668,
+            "unknown_usage_calls": 1,
+            "cancelled_calls": 1,
+            "failed_calls": 0
+          }
+        }
+      },
+      "model": {
+        "no_revision": {
+          "planned": 6,
+          "available": 6,
+          "graded": 6,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 6,
+            "clarification": 6
+          },
+          "usage": {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "known_input_tokens": 0,
+            "known_output_tokens": 0,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "legacy_default": {
+          "planned": 6,
+          "available": 6,
+          "graded": 6,
+          "all_pass": 6,
+          "criterion_pass": {
+            "task": 6,
+            "grounding": 6,
+            "clarification": 6
+          },
+          "usage": {
+            "calls": 17,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 10688,
+            "known_output_tokens": 2189,
+            "unknown_usage_calls": 1,
+            "cancelled_calls": 1,
+            "failed_calls": 1
+          }
+        },
+        "all_auto": {
+          "planned": 6,
+          "available": 6,
+          "graded": 6,
+          "all_pass": 6,
+          "criterion_pass": {
+            "task": 6,
+            "grounding": 6,
+            "clarification": 6
+          },
+          "usage": {
+            "calls": 15,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 10397,
+            "known_output_tokens": 1491,
+            "unknown_usage_calls": 1,
+            "cancelled_calls": 1,
+            "failed_calls": 0
+          }
+        }
+      },
+      "synthetic_clean": {
+        "no_revision": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 1,
+          "criterion_pass": {
+            "task": 1,
+            "grounding": 1,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "known_input_tokens": 0,
+            "known_output_tokens": 0,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "legacy_default": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 1,
+          "criterion_pass": {
+            "task": 1,
+            "grounding": 1,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 2,
+            "input_tokens": 1547,
+            "output_tokens": 412,
+            "known_input_tokens": 1547,
+            "known_output_tokens": 412,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "all_auto": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 1,
+          "criterion_pass": {
+            "task": 1,
+            "grounding": 1,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 1,
+            "input_tokens": 300,
+            "output_tokens": 72,
+            "known_input_tokens": 300,
+            "known_output_tokens": 72,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        }
+      },
+      "synthetic_faulty": {
+        "no_revision": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "known_input_tokens": 0,
+            "known_output_tokens": 0,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "legacy_default": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 1,
+          "criterion_pass": {
+            "task": 1,
+            "grounding": 1,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 3,
+            "input_tokens": 2942,
+            "output_tokens": 109,
+            "known_input_tokens": 2942,
+            "known_output_tokens": 109,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        },
+        "all_auto": {
+          "planned": 1,
+          "available": 1,
+          "graded": 1,
+          "all_pass": 1,
+          "criterion_pass": {
+            "task": 1,
+            "grounding": 1,
+            "clarification": 1
+          },
+          "usage": {
+            "calls": 3,
+            "input_tokens": 2954,
+            "output_tokens": 105,
+            "known_input_tokens": 2954,
+            "known_output_tokens": 105,
+            "unknown_usage_calls": 0,
+            "cancelled_calls": 0,
+            "failed_calls": 0
+          }
+        }
+      }
+    },
+    "jointly_graded_pairs": 8,
+    "paired_auto_regressions": [],
+    "grader_failures": 0
+  },
+  "rows": [
+    {
+      "case": "queue-metaphors",
+      "problem_id": "queue-metaphors",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "33e8002c432b0261de1cfc45ad8b52f26462da31469cbb49b23a2bc80e4f967e",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-natural",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-natural",
+      "problem_id": "product-17-23",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "839c89cc4bbd310072d0bc23d57b8a2c82b997dbc19dacf5a5330e45684fcd8f",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "retention-comparison",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "4b240cdc73c32fe5973f9505f6d1b1073924a151362a748ab7292b5884b5bb03",
+      "gates": {},
+      "scores": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-fault-control",
+      "problem_id": "product-17-23",
+      "origin": "synthetic_faulty",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "f40af91013ac3f3034b345d89a3f2a0d28d6ebfbaf144c64053e8806bc2e7545",
+      "gates": {},
+      "scores": {
+        "task": "fail",
+        "grounding": "fail",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-positive-control",
+      "problem_id": "vireo-retention",
+      "origin": "synthetic_clean",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-en",
+      "problem_id": "greeting-en",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "9070346bf16bbfea7a8ecb71bdf6311d5f4e18729bb224e6d6562f844ccce3b2",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-ja",
+      "problem_id": "greeting-ja",
+      "origin": "model",
+      "arm": "no_revision",
+      "status": "ok",
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {},
+      "answer_sha256": "466f1db614d59cd8a1ae623e9a4616a9badf6b72458b054530e8e8df46a366fe",
+      "gates": {},
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "queue-metaphors",
+      "problem_id": "queue-metaphors",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 5,
+        "input_tokens": null,
+        "output_tokens": null,
+        "known_input_tokens": 2307,
+        "known_output_tokens": 616,
+        "unknown_usage_calls": 1,
+        "cancelled_calls": 1,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "director": 1,
+        "right": 1,
+        "executive": 1,
+        "left": 1,
+        "executive_metrics": 1
+      },
+      "answer_sha256": "33e8002c432b0261de1cfc45ad8b52f26462da31469cbb49b23a2bc80e4f967e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "queue-metaphors",
+      "problem_id": "queue-metaphors",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 5,
+        "input_tokens": null,
+        "output_tokens": null,
+        "known_input_tokens": 2309,
+        "known_output_tokens": 542,
+        "unknown_usage_calls": 1,
+        "cancelled_calls": 1,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "director": 1,
+        "executive": 1,
+        "right": 1,
+        "left": 1,
+        "executive_metrics": 1
+      },
+      "answer_sha256": "33e8002c432b0261de1cfc45ad8b52f26462da31469cbb49b23a2bc80e4f967e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "optional_observation_needed",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "optional_observation_needed",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "conversation_context_disabled",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "observation_not_needed",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "optional_observation_needed",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-natural",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 300,
+        "output_tokens": 127,
+        "known_input_tokens": 300,
+        "known_output_tokens": 127,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1
+      },
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "supported_literal_replay",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "observation_not_needed",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-natural",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1967,
+        "output_tokens": 545,
+        "known_input_tokens": 1967,
+        "known_output_tokens": 545,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 1
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      },
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": true,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-natural",
+      "problem_id": "product-17-23",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1218,
+        "output_tokens": 39,
+        "known_input_tokens": 1218,
+        "known_output_tokens": 39,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 1
+      },
+      "answer_sha256": "839c89cc4bbd310072d0bc23d57b8a2c82b997dbc19dacf5a5330e45684fcd8f",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-natural",
+      "problem_id": "product-17-23",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1218,
+        "output_tokens": 41,
+        "known_input_tokens": 1218,
+        "known_output_tokens": 41,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 1
+      },
+      "answer_sha256": "839c89cc4bbd310072d0bc23d57b8a2c82b997dbc19dacf5a5330e45684fcd8f",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "conversation_context_disabled",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "retention-comparison",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 4,
+        "input_tokens": 3814,
+        "output_tokens": 590,
+        "known_input_tokens": 3814,
+        "known_output_tokens": 590,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 2,
+        "left": 1
+      },
+      "answer_sha256": "17900e38aa3adde8bf294f80d8e1cbd836f3cccb9833c04c3e44164994062df6",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "literal_replay_not_requested",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "retention-comparison",
+      "problem_id": "vireo-retention",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 4,
+        "input_tokens": 3790,
+        "output_tokens": 502,
+        "known_input_tokens": 3790,
+        "known_output_tokens": 502,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 2,
+        "left": 1
+      },
+      "answer_sha256": "ff0fa8c235bb006cc499b9922c098c01690dec4434bba3940f1eb730895a5706",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": true,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-fault-control",
+      "problem_id": "product-17-23",
+      "origin": "synthetic_faulty",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2942,
+        "output_tokens": 109,
+        "known_input_tokens": 2942,
+        "known_output_tokens": 109,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 2,
+        "left": 1
+      },
+      "answer_sha256": "839c89cc4bbd310072d0bc23d57b8a2c82b997dbc19dacf5a5330e45684fcd8f",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "arithmetic-fault-control",
+      "problem_id": "product-17-23",
+      "origin": "synthetic_faulty",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2954,
+        "output_tokens": 105,
+        "known_input_tokens": 2954,
+        "known_output_tokens": 105,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 2,
+        "left": 1
+      },
+      "answer_sha256": "839c89cc4bbd310072d0bc23d57b8a2c82b997dbc19dacf5a5330e45684fcd8f",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "conflict_control_needed",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "conversation_context_disabled",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "default_mode_suppressed",
+          "policy_version": "reflection_injection_v1"
+        },
+        "system2_stalled_followup": {
+          "module": "system2_stalled_followup",
+          "phase": "system2_refinement",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "followup_not_eligible",
+          "policy_version": "stalled_checklist_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "system2_active",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-positive-control",
+      "problem_id": "vireo-retention",
+      "origin": "synthetic_clean",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 300,
+        "output_tokens": 72,
+        "known_input_tokens": 300,
+        "known_output_tokens": 72,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1
+      },
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": true,
+          "reason": "supported_literal_replay",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "observation_not_needed",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "literal-positive-control",
+      "problem_id": "vireo-retention",
+      "origin": "synthetic_clean",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1547,
+        "output_tokens": 412,
+        "known_input_tokens": 1547,
+        "known_output_tokens": 412,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1
+      },
+      "answer_sha256": "228603d32406d31761f843feb500b5de2acafc302c7737260331121b53c6804e",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": true,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "micro_unavailable",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "caller_mode_off",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-en",
+      "problem_id": "greeting-en",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 2,
+        "input_tokens": 705,
+        "output_tokens": 245,
+        "known_input_tokens": 705,
+        "known_output_tokens": 245,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "executive": 1,
+        "executive_metrics": 1
+      },
+      "answer_sha256": "9070346bf16bbfea7a8ecb71bdf6311d5f4e18729bb224e6d6562f844ccce3b2",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-en",
+      "problem_id": "greeting-en",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1383,
+        "output_tokens": 176,
+        "known_input_tokens": 1383,
+        "known_output_tokens": 176,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 1,
+        "left": 1
+      },
+      "answer_sha256": "9070346bf16bbfea7a8ecb71bdf6311d5f4e18729bb224e6d6562f844ccce3b2",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "conversation_context_disabled",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-ja",
+      "problem_id": "greeting-ja",
+      "origin": "model",
+      "arm": "all_auto",
+      "status": "ok",
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1373,
+        "output_tokens": 15,
+        "known_input_tokens": 1373,
+        "known_output_tokens": 15,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "right": 1,
+        "left": 1
+      },
+      "answer_sha256": "466f1db614d59cd8a1ae623e9a4616a9badf6b72458b054530e8e8df46a366fe",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "signal_unavailable",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "conversation_context_disabled",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "auto",
+          "source": "canonical",
+          "eligible": true,
+          "enabled": false,
+          "reason": "trivial_turn",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "greeting-ja",
+      "problem_id": "greeting-ja",
+      "origin": "model",
+      "arm": "legacy_default",
+      "status": "ok",
+      "usage": {
+        "calls": 2,
+        "input_tokens": 701,
+        "output_tokens": 242,
+        "known_input_tokens": 701,
+        "known_output_tokens": 242,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "executive": 1,
+        "executive_metrics": 1
+      },
+      "answer_sha256": "466f1db614d59cd8a1ae623e9a4616a9badf6b72458b054530e8e8df46a366fe",
+      "gates": {
+        "executive_advice": {
+          "module": "executive_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "director_advice": {
+          "module": "director_advice",
+          "phase": "observer_preparation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        },
+        "acc_consult_promotion": {
+          "module": "acc_consult_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_system2_promotion": {
+          "module": "acc_system2_promotion",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "acc_temperature_adjustment": {
+          "module": "acc_temperature_adjustment",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "adjustment_zero",
+          "policy_version": "acc_conflict_control_v1"
+        },
+        "basal_consult_promotion": {
+          "module": "basal_consult_promotion",
+          "phase": "routing",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "basal_consult_promotion_v1"
+        },
+        "conversation_selective_consultation": {
+          "module": "conversation_selective_consultation",
+          "phase": "routing",
+          "mode": "off",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "forced_off",
+          "policy_version": "literal_replay_v1"
+        },
+        "default_mode_reflection_injection": {
+          "module": "default_mode_reflection_injection",
+          "phase": "unconscious",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "no_reflections",
+          "policy_version": "reflection_injection_v1"
+        },
+        "acc_monitor": {
+          "module": "acc_monitor",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "acc_observation_v1"
+        },
+        "cerebellar_correction": {
+          "module": "cerebellar_correction",
+          "phase": "conflict_regulation",
+          "mode": "on",
+          "source": "default",
+          "eligible": false,
+          "enabled": false,
+          "reason": "outside_scope",
+          "policy_version": "cerebellar_micro_v1"
+        },
+        "executive_metrics_observation": {
+          "module": "executive_metrics_observation",
+          "phase": "post_turn_observation",
+          "mode": "on",
+          "source": "default",
+          "eligible": true,
+          "enabled": true,
+          "reason": "forced_on",
+          "policy_version": "optional_observation_v1"
+        }
+      },
+      "scores": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    }
+  ],
+  "replay": {
+    "provider_calls": 0,
+    "complete": true,
+    "differences": {
+      "status": 0,
+      "answer": 0,
+      "draft_sha256": 0,
+      "gates": 0,
+      "grades": 0
+    },
+    "request_events": 57
+  },
+  "provider_healthy_paired_subset": {
+    "cases": [
+      "arithmetic-natural",
+      "retention-comparison",
+      "arithmetic-fault-control",
+      "literal-positive-control",
+      "greeting-en",
+      "greeting-ja"
+    ],
+    "calls": {
+      "legacy_default": 14,
+      "all_auto": 13
+    },
+    "selection": "descriptive post-run health subset; not the primary denominator"
+  },
+  "usage_complete_paired_subset": {
+    "cases": [
+      "literal-natural",
+      "arithmetic-natural",
+      "retention-comparison",
+      "arithmetic-fault-control",
+      "literal-positive-control",
+      "greeting-en",
+      "greeting-ja"
+    ],
+    "calls": {
+      "legacy_default": 17,
+      "all_auto": 14
+    },
+    "selection": "descriptive post-run health subset; not the primary denominator"
+  },
+  "gate_coverage": {
+    "legacy_default": {
+      "conversation_selective_consultation": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 0,
+        "reasons": {
+          "forced_off": 8
+        }
+      },
+      "acc_monitor": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 3,
+        "reasons": {
+          "forced_on": 3,
+          "system2_active": 3,
+          "outside_scope": 2
+        }
+      },
+      "cerebellar_correction": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "micro_unavailable": 3,
+          "system2_active": 3,
+          "outside_scope": 2
+        }
+      },
+      "default_mode_reflection_injection": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "no_reflections": 5,
+          "default_mode_suppressed": 3
+        }
+      },
+      "system2_stalled_followup": {
+        "reached": 3,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "followup_not_eligible": 3
+        }
+      },
+      "executive_advice": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 3,
+        "reasons": {
+          "forced_on": 3,
+          "caller_mode_off": 5
+        }
+      },
+      "director_advice": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 3,
+        "reasons": {
+          "forced_on": 3,
+          "caller_mode_off": 5
+        }
+      },
+      "executive_metrics_observation": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 3,
+        "reasons": {
+          "forced_on": 3,
+          "caller_mode_off": 5
+        }
+      },
+      "acc_consult_promotion": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "forced_off": 8
+        }
+      },
+      "acc_system2_promotion": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "forced_off": 8
+        }
+      },
+      "acc_temperature_adjustment": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "adjustment_zero": 8
+        }
+      },
+      "basal_consult_promotion": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "outside_scope": 8
+        }
+      }
+    },
+    "all_auto": {
+      "conversation_selective_consultation": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 2,
+        "reasons": {
+          "conversation_context_disabled": 5,
+          "supported_literal_replay": 2,
+          "literal_replay_not_requested": 1
+        }
+      },
+      "acc_monitor": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 0,
+        "reasons": {
+          "observation_not_needed": 3,
+          "system2_active": 3,
+          "outside_scope": 2
+        }
+      },
+      "cerebellar_correction": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "micro_unavailable": 3,
+          "system2_active": 3,
+          "outside_scope": 2
+        }
+      },
+      "default_mode_reflection_injection": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "no_reflections": 5,
+          "default_mode_suppressed": 3
+        }
+      },
+      "system2_stalled_followup": {
+        "reached": 3,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "followup_not_eligible": 3
+        }
+      },
+      "executive_advice": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 1,
+        "reasons": {
+          "optional_observation_needed": 1,
+          "caller_mode_off": 5,
+          "trivial_turn": 2
+        }
+      },
+      "director_advice": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 1,
+        "reasons": {
+          "optional_observation_needed": 1,
+          "caller_mode_off": 5,
+          "trivial_turn": 2
+        }
+      },
+      "executive_metrics_observation": {
+        "reached": 8,
+        "eligible": 3,
+        "admitted": 1,
+        "reasons": {
+          "optional_observation_needed": 1,
+          "caller_mode_off": 5,
+          "trivial_turn": 2
+        }
+      },
+      "acc_consult_promotion": {
+        "reached": 8,
+        "eligible": 1,
+        "admitted": 1,
+        "reasons": {
+          "signal_unavailable": 7,
+          "conflict_control_needed": 1
+        }
+      },
+      "acc_system2_promotion": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "signal_unavailable": 8
+        }
+      },
+      "acc_temperature_adjustment": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "adjustment_zero": 8
+        }
+      },
+      "basal_consult_promotion": {
+        "reached": 8,
+        "eligible": 0,
+        "admitted": 0,
+        "reasons": {
+          "outside_scope": 8
+        }
+      }
+    }
+  },
+  "literal_exact_match": {
+    "literal-natural": {
+      "no_revision": true,
+      "legacy_default": true,
+      "all_auto": true
+    },
+    "literal-positive-control": {
+      "no_revision": true,
+      "legacy_default": true,
+      "all_auto": true
+    }
+  }
+}
