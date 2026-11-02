@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_advisor_session_sequence",
+  "idle_before_expired_seconds": 61,
+  "cases": [
+    {
+      "id": "cold", "question": "Give exactly two analogies for a semaphore, one sentence each.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 120,
+      "reference": "A semaphore limits concurrent access using permits; an apt analogy is a parking lot with a fixed number of permits or a venue admitting a limited number of guests. Two sentences, one analogy each.",
+      "criteria": {"task": "Give exactly two apt analogies in exactly two sentences, one per analogy.", "grounding": "Do not equate every semaphore with a single-owner mutex or claim permits guarantee execution order.", "clarification": "Answer directly without unnecessary clarification."}
+    },
+    {
+      "id": "warm", "question": "In exactly two sentences, explain how a bounded queue applies backpressure.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 120,
+      "reference": "A bounded queue has finite capacity. When full, the producer may block, wait, reject or slow production according to the configured policy, preventing unbounded queued work; bounded capacity alone does not guarantee blocking or lossless delivery.",
+      "criteria": {"task": "In exactly two sentences, connect finite capacity with a concrete producer response to a full queue.", "grounding": "Do not claim all bounded queues automatically block or guarantee lossless delivery.", "clarification": "Answer the specified question directly."}
+    },
+    {
+      "id": "warm_again", "question": "Give exactly three bullet points describing uses for a monotonic clock.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 120,
+      "reference": "Elapsed durations, deadlines/timeouts and scheduling/rate-limiting intervals are valid uses. A monotonic clock avoids wall-clock adjustments but generally does not provide a portable calendar timestamp or a value comparable across machines/restarts.",
+      "criteria": {"task": "Give exactly three bullet points with valid monotonic-clock uses.", "grounding": "Do not recommend monotonic clock values as calendar timestamps or assume they are comparable across machines/restarts.", "clarification": "Answer directly without unnecessary clarification."}
+    },
+    {
+      "id": "expired", "question": "Give exactly two analogies for cache eviction, one sentence each.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 120,
+      "reference": "Two apt analogies for removing selected stored items to reclaim limited cache space, such as clearing a desk or returning a library book to storage. Exactly two sentences; eviction policies vary.",
+      "criteria": {"task": "Give exactly two apt cache-eviction analogies in exactly two sentences, one per analogy.", "grounding": "Do not claim eviction always deletes the authoritative data or always uses one particular policy.", "clarification": "Answer directly without unnecessary clarification."}
+    },
+    {
+      "id": "recovered_warm", "question": "In exactly two sentences, explain why a timed-out request may still have succeeded.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 120,
+      "reference": "The server may finish an operation even if its response is delayed/lost or arrives after the client's deadline. A client timeout alone cannot establish failure; verify the operation status or use appropriate duplicate-prevention before retrying.",
+      "criteria": {"task": "In exactly two sentences, explain ambiguous completion after timeout and an appropriate next check.", "grounding": "Do not equate a client timeout with server cancellation, failure or proof of success.", "clarification": "Answer directly without unnecessary clarification."}
+    },
+    {
+      "id": "bounded_rpc", "question": "In one sentence, explain why a payment retry should reuse the original idempotency key when the provider supports it.",
+      "records": [], "executive_mode": "observe", "executive_observer_mode": "both", "rpc_seconds": 20,
+      "reference": "Reusing a supported idempotency key for the same operation allows the provider to recognize a duplicate retry and avoid a second charge, within the provider's key-retention and request-matching contract. Exactly one sentence.",
+      "criteria": {"task": "In exactly one sentence, explain how the same supported idempotency key prevents a duplicate operation/charge.", "grounding": "Do not claim indefinite universal idempotency, recommend a new key for the same uncertain operation, or change the payment payload.", "clarification": "Answer the conditional question directly."}
+    }
+  ]
+}

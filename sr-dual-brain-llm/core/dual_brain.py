@@ -582,7 +582,14 @@ class DualBrainController:
         remaining = remaining_turn_ms()
         budget = min(float(timeout_ms), remaining) if remaining is not None else float(timeout_ms)
         try:
-            return await asyncio.wait_for(asyncio.shield(task), timeout=max(0., budget) / 1000.)
+            # wait_for() on Python 3.11+ cancels/uncancels the *current* task
+            # when its local timer expires. A turn's cancel-once guard must
+            # remain reserved for actual abandonment and draining. Use a
+            # non-cancelling wait, then explicitly cancel the owned advisor.
+            done, _ = await asyncio.wait({task}, timeout=max(0., budget) / 1000.)
+            if not done:
+                raise asyncio.TimeoutError
+            return task.result()
         except asyncio.TimeoutError:
             self._cancel_advisor(task, 'turn_deadline' if remaining is not None and remaining <= timeout_ms else 'wait_timeout')
             await asyncio.gather(task, return_exceptions=True)

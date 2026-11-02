@@ -259,6 +259,59 @@ async def test_rpc_remaining_budget_is_read_only_and_exhaustion_vetoes_manual_on
 
 
 @pytest.mark.asyncio
+async def test_local_advisor_timeouts_do_not_consume_the_turn_cancellation_guard():
+    c, model, responses = make_stage_controller(), BlockingDirector(), []
+
+    async def delayed():
+        await asyncio.sleep(.06)
+        return DirectorAdvice('Later output.', {}, .9, 60., 'llm')
+
+    async def handle(req):
+        for module in (DIRECTOR, METRICS):
+            task = c._start_advisor(module, model, qid=req['id'], factory=delayed)
+            with pytest.raises(asyncio.TimeoutError):
+                await c._wait_advisor(task, timeout_ms=5.)
+        return {'id':req['id'], 'ok':True}
+
+    dispatcher = TurnDispatcher(handle, responses.append, timeout_seconds=1.)
+    try:
+        dispatcher.submit({'id':'successive-timeouts','method':'process'})
+        while not responses:
+            await asyncio.sleep(.001)
+        assert responses[0]['ok']
+        outcomes = [p['state'] for event,p in c.telemetry.events if event == 'advisor_work' and p['state'] != 'started']
+        assert outcomes == ['timed_out', 'timed_out']
+    finally:
+        await dispatcher.close()
+
+
+@pytest.mark.asyncio
+async def test_rpc_deadline_still_cancels_after_an_optional_advisor_timeout():
+    c, model, responses, continued = make_stage_controller(), BlockingDirector(), [], []
+
+    async def delayed():
+        await asyncio.sleep(.1)
+
+    async def handle(req):
+        task = c._start_advisor(DIRECTOR, model, qid=req['id'], factory=delayed)
+        with pytest.raises(asyncio.TimeoutError):
+            await c._wait_advisor(task, timeout_ms=5.)
+        await asyncio.sleep(.1)
+        continued.append(True)
+        return {'id':req['id'], 'ok':True}
+
+    dispatcher = TurnDispatcher(handle, responses.append, timeout_seconds=.03)
+    try:
+        dispatcher.submit({'id':'deadline-after-timeout','method':'process'})
+        while not responses:
+            await asyncio.sleep(.001)
+        assert responses[0]['error']['type'] == 'DeadlineExceeded'
+        assert not responses[0]['error']['may_have_committed'] and not continued
+    finally:
+        await dispatcher.close()
+
+
+@pytest.mark.asyncio
 async def test_inhibiting_unaffordable_nontrivial_director_does_not_add_replacement_work(monkeypatch):
     results = {}
     for mode in ('on', 'auto'):

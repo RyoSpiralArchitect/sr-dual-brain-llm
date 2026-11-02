@@ -243,6 +243,9 @@ not assert factual correctness. Task start is not proof of an HTTP attempt or
 token receipt: runtime usage is `unknown` for started work and `not_started`
 otherwise. The benchmark HTTP journal separately accounts for real attempts
 and known/unknown billed usage. No diagnostics are added to user answers.
+Local advisor waits expire without cancelling/uncancelling the parent turn.
+The turn's cancel-once guard stays available for actual abandonment and cleanup;
+one advisor timeout cannot disable a later advisor timer or RPC deadline.
 
 ## Validation sequence
 
