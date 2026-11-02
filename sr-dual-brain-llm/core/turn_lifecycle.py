@@ -28,11 +28,18 @@ class _TurnTask(asyncio.Task):
         if self in _cancelling:
             return False
         _cancelling.add(self)
+        callback = getattr(self, '_on_cancel', None)
+        if not self.done() and callable(callback):
+            try:
+                callback()
+            except Exception:  # Optional timing cannot interfere with cancellation.
+                pass
         return super().cancel(*args, **kwargs)
 
 
-def create_turn_task(coroutine):
+def create_turn_task(coroutine, *, on_cancel=None):
     task = _TurnTask(coroutine, loop=asyncio.get_running_loop())
+    task._on_cancel = on_cancel
     state = _current.get()
     if state is not None:
         state.children.add(task)
@@ -97,6 +104,16 @@ def turn_committing():
 def turn_abandoned():
     state = _current.get()
     return bool(state is not None and state.reason)
+
+
+def remaining_turn_ms():
+    """Read the existing monotonic RPC deadline; None outside an RPC turn."""
+    state = _current.get()
+    if state is None:
+        return None
+    if state.reason:
+        return 0.
+    return max(0., (state.deadline - asyncio.get_running_loop().time()) * 1000.)
 
 
 async def drain_turn_tasks():

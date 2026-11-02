@@ -93,7 +93,7 @@ flowchart TD
     C -->|off| F
     C -->|on| E[Admit module under local guards]
     C -->|auto| D{Bounded admission predicate passes?}
-    D -->|No or unknown| F
+    D -->|No| F
     D -->|Yes| E
 ```
 
@@ -136,13 +136,39 @@ low-focus streak, thalamic and predictive suppression veto all modes, including
 `on`. Reflection generation still advances history and cooldown even when prompt
 injection is `off`. Private/debug reflection records remain separate from injection.
 
-Executive advice, director advice and post-turn metrics use a non-empty,
-nontrivial-input AUTO predicate. Caller modes and model availability are hard
+Executive advice, director advice and post-turn metrics use the versioned
+`time_budget_observation_v2` AUTO predicate, requiring non-empty, nontrivial
+input and a feasible known time budget. Caller modes and model availability are hard
 eligibility requirements. Defaults preserve requested `observe`/`assist`/`polish`
 behavior; AUTO may omit the selected function on trivial input and never converts
 one named mode into another. Advice/director admission happens before task creation;
 metrics admission happens after a final answer. Existing timeouts and cancellation
 ownership continue to govern admitted work.
+`Hypothalamus` owns a session-local history of usable external completions and
+censored cancellation bounds, separately for each role and effective model/config.
+It retains at most 32 profiles with 16 samples each; observations expire after
+60 seconds. No prompts, answers, auth keys or headers enter this history. Changes
+to effective provider/model/endpoint/output-limit/timeout/continuation settings
+separate profiles. Non-provider/custom models without a known config stay unknown.
+
+The estimate is the largest recent observation, labeled `completed_max` or
+`censored_bound`, with separate sample counts. A cancellation records elapsed time
+until its first cancellation request, excluding cleanup; it is a lower bound,
+not a completion time. Empty/error outputs and cancellation before work starts
+do not teach a successful fast latency. This conservative heuristic is not a
+guarantee of future completion. Expiry permits a new cold probe after inhibition.
+
+The Director's known local wait is 1,600 ms and post-turn metrics' wait is
+2,500 ms, capped by an existing RPC deadline when present. Executive advice runs
+in parallel with drafting and consultation, so its later wait timeout does not
+describe its whole available window: only a known outer RPC deadline bounds
+admission; outside RPC its window is unknown. AUTO inhibits work when the known
+budget is at most 50 ms or the estimate plus a fixed 50 ms reserve reaches the
+budget. Unknown latency/window preserves the previous nontrivial-input cold probe;
+invalid explicit numeric facts inhibit. Manual `on` ignores the estimate but
+cannot start work after a known deadline/turn abandonment. Defaults remain `on`
+within requested modes; no automatic policy is enabled by default.
+
 The Director's caller-selected deterministic trivial-chat steering is separate
 from its provider task: it keeps consultation skipping, short output and long-term
 memory suppression even when the optional task is off, inhibited or unavailable.
@@ -184,6 +210,11 @@ Its trivial-steering issue was repaired before merge; a
 [separate two-input confirmation](benchmarks/module-gating-steering-2026-11-02.md)
 preserved 2/2 answers per profile with 4 versus 0 post-draft attempts and no
 replacement consultation. Unknown cancellation billing still limits cost claims.
+The [time-budget pilot](benchmarks/advisor-budget-2026-11-02.md) then retained
+3/3 nontrivial answers per profile with 16 versus 8 processing attempts under
+matched observed warm history. Six avoided advisor timeouts explain six of
+those eight requests; differing UDP critic rounds explain the other two.
+Warmup overhead and unknown cancellation usage preclude an exact savings claim.
 
 ## Facts and observability
 
@@ -191,7 +222,8 @@ Policies consume typed, immutable facts: bounded modes/statuses, finite numeric
 signals, counts, and explicit completeness flags. Facts carry no raw questions,
 answers, source values, project names, or record identifiers. Existing components
 derive those facts; admission policies do not retrieve evidence or call providers.
-Missing/unknown facts cannot establish automatic eligibility. A failed admission
+Missing required facts cannot establish automatic eligibility; optional timing
+facts have the explicit cold-probe fallback above. A failed admission
 decision omits the optional module using its registered fallback.
 
 Per-turn `module_gate` telemetry records the module, phase, policy version,
@@ -202,6 +234,15 @@ consulted are different outcomes. Gate telemetry carries no conversation content
 An absent gate event means its owning phase was not reached; it is not evidence
 that the module was disabled. A turn can expose admission for all reached phases
 even when no provider task is created.
+
+`advisor_budget` and `advisor_work` expose bounded time facts and the task
+lifecycle through `metrics.modules.advisor_timing`: admitted, started, completed,
+timed out, cancelled, failed or never started; structurally usable output;
+elapsed time, cleanup time and bounded stop reason. Structural usability does
+not assert factual correctness. Task start is not proof of an HTTP attempt or
+token receipt: runtime usage is `unknown` for started work and `not_started`
+otherwise. The benchmark HTTP journal separately accounts for real attempts
+and known/unknown billed usage. No diagnostics are added to user answers.
 
 ## Validation sequence
 
@@ -234,7 +275,9 @@ Every new registration must define:
 
 Policies are explicit pure deterministic functions in a fixed registry. They
 cannot discover code, call providers, register themselves, depend on other gate
-decisions, form policy cycles, or learn from runtime feedback in this version.
+decisions, form policy cycles, or learn policy weights from runtime feedback.
+Bounded observed resource facts may come from their existing owner, such as the
+Hypothalamus timing history; the admission predicate remains deterministic.
 Keep operational, evidence, persistence, security, and cancellation gates outside
 this optional-module registry. Source approval and lifecycle validation remain
 mandatory. Extending admission requires evidence for the new scope; adding a

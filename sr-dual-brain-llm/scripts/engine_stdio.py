@@ -63,6 +63,7 @@ from core.memory_commits import (
 )
 from core.unconscious_field import UnconsciousField
 from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
+from core.advisor_timing import ADVISORS
 
 
 def _jsonable(value: Any) -> Any:
@@ -104,10 +105,28 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     consultation_ev = _last_event(events, "consultation_route")
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
+    advisor_timing = {}
     for event in events or []:
         module = event.get('module')
         if event.get('event') == 'module_gate' and isinstance(module, str) and module in DEFAULT_REGISTRY:
             module_gates[module] = {key:event.get(key) for key in gate_fields}
+        if isinstance(module, str) and module in ADVISORS:
+            if event.get('event') == 'advisor_budget':
+                advisor_timing.setdefault(module, {}).update({key:event.get(key) for key in (
+                    'remaining_budget_ms', 'budget_source', 'estimated_latency_ms', 'estimate_kind',
+                    'completed_samples', 'censored_samples')})
+            elif event.get('event') == 'advisor_work':
+                target = advisor_timing.setdefault(module, {})
+                if event.get('state') == 'started':
+                    target['started'] = True
+                else:
+                    target.update({key:event.get(key) for key in (
+                        'elapsed_ms', 'cleanup_ms', 'usable_output', 'stop_reason', 'usage_status')})
+                    target['outcome'] = event.get('state')
+    for module, timing in advisor_timing.items():
+        timing['admitted'] = module_gates.get(module, {}).get('enabled', False)
+        timing.setdefault('started', False)
+        timing.setdefault('outcome', 'not_admitted' if not timing['admitted'] else 'pending')
     system2_refine_ev = _last_event(events, "system2_refinement") or {}
     latency_breakdown_ev = _last_event(events, "latency_breakdown") or {}
     policy_state = (
@@ -362,6 +381,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "count": len(active_modules),
             "stages": stage_modules,
             "gates": module_gates,
+            "advisor_timing": advisor_timing,
         },
         "brain": {
             "amygdala": affect_payload,

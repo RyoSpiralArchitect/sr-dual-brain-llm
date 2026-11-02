@@ -67,6 +67,8 @@ class GateFacts:
     critic_confidence: float | None = None
     remaining_issues: int = 0
     memory_pressure: bool = False
+    remaining_budget_ms: float | None = None
+    estimated_latency_ms: float | None = None
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -118,6 +120,7 @@ BLOCKED_REASONS = frozenset({
     "micro_unavailable",
     "caller_mode_off", "no_reflections", "default_mode_suppressed",
     "followup_not_eligible", "signal_unavailable", "adjustment_zero",
+    "turn_deadline_elapsed",
 })
 AUTO_REASONS = frozenset({
     "no_draft", "trivial_turn", "unknown_signal", "risk_or_uncertainty",
@@ -130,6 +133,7 @@ AUTO_REASONS = frozenset({
     "reflection_injection_needed", "conflict_control_needed",
     "critic_signal_uncertain", "stalled_checklist_needed",
     "memory_consultation_needed",
+    "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -238,6 +242,14 @@ def _auto_optional_observation(facts: GateFacts) -> tuple[bool, str]:
         return False, "no_input"
     if facts.is_trivial:
         return False, "trivial_turn"
+    budget, latency = facts.remaining_budget_ms, facts.estimated_latency_ms
+    if any(value is not None and (not _finite(value) or value < 0) for value in (budget, latency)):
+        return False, "invalid_timing_signal"
+    if budget is not None and budget <= 50.:
+        return False, "time_budget_exhausted"
+    if budget is not None and latency is not None and latency + 50. >= budget:
+        return False, "insufficient_time_budget"
+    # Unknown estimate/window preserves v1's nontrivial-input cold probe.
     return True, "optional_observation_needed"
 
 
@@ -325,19 +337,19 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     EXECUTIVE_ADVICE: ModuleSpec(
         module_id=EXECUTIVE_ADVICE,
-        phase="observer_preparation", policy_version="optional_observation_v1",
+        phase="observer_preparation", policy_version="time_budget_observation_v2",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     DIRECTOR_ADVICE: ModuleSpec(
         module_id=DIRECTOR_ADVICE,
-        phase="observer_preparation", policy_version="optional_observation_v1",
+        phase="observer_preparation", policy_version="time_budget_observation_v2",
         mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
         module_id=EXECUTIVE_METRICS_OBSERVATION,
-        phase="post_turn_observation", policy_version="optional_observation_v1",
+        phase="post_turn_observation", policy_version="time_budget_observation_v2",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_metrics_observation,
     ),

@@ -5,8 +5,27 @@ import time
 import pytest
 
 from core.turn_lifecycle import (
-    TurnDispatcher, begin_turn_commit, cancellation_barrier, create_turn_task,
+    TurnDispatcher, begin_turn_commit, cancellation_barrier, create_turn_task, cancel_task,
 )
+
+
+@pytest.mark.asyncio
+async def test_optional_cancel_observer_runs_once_and_cannot_block_cancellation():
+    observed = []
+
+    def observer():
+        observed.append('cancelled')
+        raise RuntimeError('Observer failed')
+
+    async def child():
+        await asyncio.Event().wait()
+
+    task = create_turn_task(child(), on_cancel=observer)
+    cancel_task(task)
+    cancel_task(task)
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert observed == ['cancelled']
 
 
 async def until(predicate):
