@@ -210,6 +210,11 @@ Its trivial-steering issue was repaired before merge; a
 [separate two-input confirmation](benchmarks/module-gating-steering-2026-11-02.md)
 preserved 2/2 answers per profile with 4 versus 0 post-draft attempts and no
 replacement consultation. Unknown cancellation billing still limits cost claims.
+The [time-budget pilot](benchmarks/advisor-budget-2026-11-02.md) then retained
+3/3 nontrivial answers per profile with 16 versus 8 processing attempts under
+matched observed warm history. Six avoided advisor timeouts explain six of
+those eight requests; differing UDP critic rounds explain the other two.
+Warmup overhead and unknown cancellation usage preclude an exact savings claim.
 
 ## Facts and observability
 
