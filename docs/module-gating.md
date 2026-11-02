@@ -215,6 +215,12 @@ The [time-budget pilot](benchmarks/advisor-budget-2026-11-02.md) then retained
 matched observed warm history. Six avoided advisor timeouts explain six of
 those eight requests; differing UDP critic rounds explain the other two.
 Warmup overhead and unknown cancellation usage preclude an exact savings claim.
+The [persistent-session sequence](benchmarks/advisor-sessions-2026-11-03.md)
+then measured 38 versus 30 whole-turn attempts across six serial turns per arm,
+including primary generation and a real 61-second idle. It repaired local-wait
+interference with RPC cancellation and exposed slow-history suppression of newly
+fast roles. A rubric/question mismatch limits its raw 4/6 versus 5/6 grades;
+the report retains original grades and does not claim a quality improvement.
 
 ## Facts and observability
 

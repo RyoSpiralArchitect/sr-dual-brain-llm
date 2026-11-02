@@ -44,6 +44,15 @@ def test_timing_recorder_keeps_real_history_and_replay_requires_exact_read_ident
         recorder.estimate(module, 'b' * 64)
     with pytest.raises(ValueError):
         recorder.finish()
+    # The production budget producer catches ledger errors as unknown. An
+    # empty/corrupt replay must still fail even if all those reads were caught.
+    recorder.begin([])
+    try:
+        recorder.estimate(module, profile)
+    except ValueError:
+        pass
+    with pytest.raises(ValueError):
+        recorder.finish()
 
 
 @pytest.mark.asyncio

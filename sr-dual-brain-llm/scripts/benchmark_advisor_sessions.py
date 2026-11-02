@@ -58,6 +58,7 @@ class ObservedTiming:
 
     def begin(self, frozen=None):
         self.reads, self.frozen, self.position = [], frozen, 0
+        self.invalid = False
 
     def record(self, *args, **kwargs):
         self.ledger.record(*args, **kwargs)
@@ -67,9 +68,11 @@ class ObservedTiming:
             estimate = self.ledger.estimate(module, profile)
         else:
             if self.position >= len(self.frozen):
+                self.invalid = True
                 raise ValueError('Missing recorded timing read')
             row = self.frozen[self.position]
             if row['module'] != module or row['profile'] != profile:
+                self.invalid = True
                 raise ValueError('Recorded timing identity differs')
             values = row['estimate']
             if (set(values) != {'ms', 'kind', 'completed_samples', 'censored_samples'}
@@ -82,6 +85,7 @@ class ObservedTiming:
                     or (values['kind'] == 'unknown' and (values['completed_samples'] or values['censored_samples']))
                     or (values['kind'] == 'completed_max' and not values['completed_samples'])
                     or (values['kind'] == 'censored_bound' and not values['censored_samples'])):
+                self.invalid = True
                 raise ValueError('Invalid recorded timing fact')
             estimate = LatencyEstimate(**values)
         self.position += 1
@@ -89,7 +93,7 @@ class ObservedTiming:
         return estimate
 
     def finish(self):
-        if self.frozen is not None and self.position != len(self.frozen):
+        if self.frozen is not None and (self.invalid or self.position != len(self.frozen)):
             raise ValueError('Recorded timing read coverage differs')
 
 
