@@ -19,6 +19,7 @@ from core.thalamic_reticular_nucleus import (
 )
 from test_dual_brain import (
     InstantExecutiveModel, InstantDirectorModel, make_stage_controller, make_decision,
+    AlwaysConsultPolicy,
 )
 from test_module_gate_integration import route_stage
 
@@ -113,6 +114,74 @@ async def test_all_auto_preserves_requested_advice_and_director_modes(monkeypatc
     for module in (EXECUTIVE, DIRECTOR, METRICS):
         assert gates[module]['enabled'] == expected
     assert captured[EXECUTIVE]['enabled'] == captured[DIRECTOR]['enabled'] == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('mode', ['off', 'on', 'auto'])
+@pytest.mark.parametrize('observer', ['off', 'metrics', 'director', 'both'])
+async def test_inhibited_director_keeps_free_trivial_control_without_inventing_caller_mode(monkeypatch, mode, observer):
+    configure(monkeypatch, DIRECTOR, mode)
+    c = make_stage_controller(prefrontal_cortex=PrefrontalCortex())
+    c.policy = AlwaysConsultPolicy()
+    c.director_model = None  # The deterministic guard also works without a provider.
+    await c.process('hi', leading_brain='left', system2_mode='off', executive_observer_mode=observer)
+    selected = observer in {'director', 'both'}
+    assert bool(c.callosum.payloads) == (not selected)
+    controls = [p for event, p in c.telemetry.events if event == 'director_reasoner']
+    assert bool(controls) == selected
+    if selected:
+        assert controls[0]['source'] == 'fast_path'
+
+
+@pytest.mark.asyncio
+async def test_trivial_guard_preserves_memory_and_length_controls_without_a_task():
+    c = make_stage_controller()
+    parts = {'working_memory': 'Keep this.', 'memory': 'Unrelated long-term fact.'}
+    frame = c._build_context_frame(question='hi', context_parts=parts)
+    result = await c._run_pre_draft_director_stage(
+        question='hi', qid='trivial-control', is_trivial_chat=True, context_frame=frame,
+        context_parts=parts, director_task=None, director_requested=True, phase_add=lambda *_: None)
+    assert result.director_control['consult'] == 'skip'
+    assert result.director_control['max_chars'] == 280
+    assert parts['working_memory'] == 'Keep this.' and not parts['memory']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('system2_mode', ['auto', 'on', 'off'])
+@pytest.mark.parametrize('director_mode', ['off', 'on', 'auto'])
+async def test_auto_director_does_not_replace_trivial_guard_with_detail_work(monkeypatch, system2_mode, director_mode):
+    for module in DEFAULT_REGISTRY:
+        configure(monkeypatch, module, 'auto')
+    configure(monkeypatch, DIRECTOR, director_mode)
+    c = make_stage_controller(prefrontal_cortex=PrefrontalCortex())
+    c.policy = AlwaysConsultPolicy()
+    c.director_model = InstantDirectorModel()
+    c.right_model.uses_external_llm = True
+    await c.process('hi', leading_brain='left', system2_mode=system2_mode, executive_observer_mode='both')
+    # Explicit ON still requires critique. AUTO/OFF retain the requested free skip.
+    assert bool(c.callosum.payloads) == (system2_mode == 'on')
+    if system2_mode == 'on':
+        assert c.callosum.payloads[0]['payload']['type'] == 'ASK_CRITIC'
+
+
+@pytest.mark.asyncio
+async def test_missing_director_does_not_apply_trivial_control_to_a_nontrivial_question():
+    c = make_stage_controller(prefrontal_cortex=PrefrontalCortex())
+    c.policy = AlwaysConsultPolicy()
+    c.director_model = None
+    await c.process('Describe tidal dynamics.', leading_brain='left', system2_mode='off', executive_observer_mode='both')
+    assert c.callosum.payloads
+    assert not any(event == 'director_reasoner' for event, _ in c.telemetry.events)
+
+
+@pytest.mark.asyncio
+async def test_requested_right_lead_survives_inhibited_director_work(monkeypatch):
+    configure(monkeypatch, DIRECTOR, 'auto')
+    c = make_stage_controller(prefrontal_cortex=PrefrontalCortex())
+    c.director_model = InstantDirectorModel()
+    await c.process('hi', qid='explicit-right-control', leading_brain='right',
+                    system2_mode='off', executive_observer_mode='both')
+    assert c.memory.dialogue_flow('explicit-right-control')['leading'] == 'right'
 
 
 class Unconscious:

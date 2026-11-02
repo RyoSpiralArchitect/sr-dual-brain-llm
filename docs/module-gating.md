@@ -143,6 +143,11 @@ behavior; AUTO may omit the selected function on trivial input and never convert
 one named mode into another. Advice/director admission happens before task creation;
 metrics admission happens after a final answer. Existing timeouts and cancellation
 ownership continue to govern admitted work.
+The Director's caller-selected deterministic trivial-chat steering is separate
+from its provider task: it keeps consultation skipping, short output and long-term
+memory suppression even when the optional task is off, inhibited or unavailable.
+An observer mode that does not request Director applies no such control.
+Director consultation skipping cannot suppress an explicitly active System2 `on`.
 
 Pre-routing ACC AUTO requires known micro issues (one to six), finite micro
 confidence `>= 0.86` and finite conflict `>= 0.75`, in addition to existing

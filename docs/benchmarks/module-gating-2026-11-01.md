@@ -11,7 +11,9 @@ committed before calls. Measured revision:
 `514af7aaaad3df0a5ea02cff34b5c58c10f9ffe8`. Production roles used `gpt-6-luna`;
 blind grading used `gpt-6-sol`. The configured output ceiling was 2,048 tokens;
 smaller production substage limits and existing deadlines were preserved.
-No policy, fixture, production threshold or model output was tuned after measurement.
+These results retain the original fixture, gate thresholds and sampled outputs.
+A post-review control-flow repair and separate confirmation follow this pilot;
+the eight-trial measurement was not resampled.
 
 ## Quality and attempts
 
@@ -137,11 +139,14 @@ cancelled attempts and the invalid completion remained in replay; no fallback
 network request was allowed. Replay latency is not a live latency measurement.
 
 ```bash
+# Use an isolated checkout of the measured runtime for the original pilot/replay.
+git worktree add /tmp/trn-original-pilot 514af7aaaad3df0a5ea02cff34b5c58c10f9ffe8
+cd /tmp/trn-original-pilot
 python sr-dual-brain-llm/scripts/benchmark_module_gating.py \
   --model gpt-6-luna --judge-model gpt-6-sol --max-calls 96 \
   --output-dir sr-dual-brain-llm/samples/module-gating-NEW-live
 python sr-dual-brain-llm/scripts/benchmark_module_gating.py \
-  --journal sr-dual-brain-llm/samples/module-gating-NEW-live/journal.json \
+  --journal /absolute/path/to/original/journal.json \
   --judge-model gpt-6-sol --max-calls 96 \
   --output-dir sr-dual-brain-llm/samples/module-gating-NEW-replay
 ```

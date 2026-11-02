@@ -2158,11 +2158,15 @@ class DualBrainController:
         context_frame: ContextFrame,
         context_parts: Dict[str, str],
         director_task: asyncio.Task[DirectorAdvice] | None,
+        director_requested: bool,
         phase_add: Callable[[str, float], None],
     ) -> DirectorStageResult:
         director_payload: Dict[str, Any] | None = None
         director_control: Dict[str, Any] | None = None
-        if director_task is None:
+        # Caller-selected deterministic steering is independent of optional
+        # provider admission. Inhibiting a task must not remove the free guard.
+        trivial_control = is_trivial_chat and director_requested
+        if director_task is None and not trivial_control:
             return DirectorStageResult(
                 context_frame=context_frame,
                 director_task=director_task,
@@ -2171,7 +2175,7 @@ class DualBrainController:
             )
 
         advice: DirectorAdvice | None = None
-        if is_trivial_chat:
+        if trivial_control:
             advice = DirectorAdvice(
                 memo=(
                     "(Director memo / fast-path)\n"
@@ -2188,7 +2192,8 @@ class DualBrainController:
                 latency_ms=0.0,
                 source="fast_path",
             )
-            cancel_task(director_task)
+            if director_task is not None:
+                cancel_task(director_task)
             director_task = None
         else:
             try:
@@ -2704,8 +2709,11 @@ class DualBrainController:
         if director_control is not None:
             consult = str(director_control.get("consult") or "auto").strip().lower()
             if consult == "skip":
-                decision.action = 0
-                decision.state["director_consult"] = "skip"
+                if system2_mode == 'on' and system2_active:
+                    decision.state['director_consult_blocked'] = 'system2_on'
+                else:
+                    decision.action = 0
+                    decision.state["director_consult"] = "skip"
             elif consult == "force" and not is_trivial_chat:
                 decision.action = max(1, decision.action)
                 decision.state["director_consult"] = "force"
@@ -5159,6 +5167,7 @@ class DualBrainController:
             context_frame=context_frame,
             context_parts=context_parts,
             director_task=director_task,
+            director_requested=observer_setup.use_director,
             phase_add=_phase_add,
         )
         context_frame = director_stage.context_frame

@@ -26,6 +26,7 @@ from core.shared_memory import MemoryTrace
 from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
 
 FIXTURE = base.ROOT / 'examples/module_gating_benchmark.json'
+STEERING_FIXTURE = base.ROOT / 'examples/module_gating_steering_confirmation.json'
 ARMS = ('legacy_default', 'all_auto')
 COMMON = {'DUALBRAIN_SYSTEM2_PRIORITY_AUTO': 'balanced', 'REASONING_DIAL': 'evaluative'}
 JUDGE = (
@@ -56,10 +57,14 @@ def environment(case, arm, source=None):
 
 def validate(fixture):
     cases = fixture['cases']
-    if (fixture.get('schema_version') != 1 or fixture.get('origin') != 'prospective_module_gating_pilot'
-            or len(cases) != 8 or len({c['id'] for c in cases}) != 8
-            or Counter(c['origin'] for c in cases) != Counter(model=6, synthetic_clean=1, synthetic_faulty=1)):
-        raise ValueError('Require the complete prospective eight-trial fixture')
+    confirmation = fixture.get('origin') == 'prospective_module_gating_steering_confirmation'
+    count = 2 if confirmation else 8
+    origins = Counter(model=2) if confirmation else Counter(model=6, synthetic_clean=1, synthetic_faulty=1)
+    if (fixture.get('schema_version') != 1
+            or fixture.get('origin') not in {'prospective_module_gating_pilot', 'prospective_module_gating_steering_confirmation'}
+            or len(cases) != count or len({c['id'] for c in cases}) != count
+            or Counter(c['origin'] for c in cases) != origins):
+        raise ValueError('Require a complete prospective fixture')
     for case in cases:
         if (set(case['criteria']) != set(base.CRITERIA) or not case['question'].strip()
                 or not case['problem_id'] or (case['origin'] == 'model') != (case['draft'] is None)
@@ -296,6 +301,7 @@ def main():
     parser.add_argument('--model')
     parser.add_argument('--judge-model', default='gpt-6-sol')
     parser.add_argument('--journal', type=Path)
+    parser.add_argument('--fixture', type=Path, default=FIXTURE)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--max-calls', type=int, required=True)
     args = parser.parse_args()
@@ -303,8 +309,10 @@ def main():
     try:
         if bool(args.model) == bool(args.journal) or not 1 <= args.max_calls <= 96:
             raise ValueError('Choose live or replay, with the prospective 96-call maximum')
-        fixture = read_json(FIXTURE)
+        fixture = read_json(args.fixture)
         validate(fixture)
+        if fixture['origin'] == 'prospective_module_gating_steering_confirmation' and args.max_calls > 24:
+            raise ValueError('Steering confirmation has a prospective 24-attempt cap')
         frozen = read_json(args.journal) if args.journal else None
         model = args.model or frozen['model']
         config = load_llm_config(default_model=model)

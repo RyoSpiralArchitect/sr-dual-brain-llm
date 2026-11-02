@@ -34,6 +34,18 @@ def test_fixture_is_complete_and_separates_injected_controls():
         bench.validate(fixture)
 
 
+def test_steering_confirmation_is_a_distinct_complete_two_trial_fixture():
+    from core.prefrontal_cortex import PrefrontalCortex
+    first = bench.read_json(bench.FIXTURE)
+    confirmation = bench.read_json(bench.STEERING_FIXTURE)
+    bench.validate(confirmation)
+    assert not {c['question'] for c in first['cases']} & {c['question'] for c in confirmation['cases']}
+    assert all(PrefrontalCortex.is_trivial_chat_turn(c['question']) for c in confirmation['cases'])
+    confirmation['cases'].pop()
+    with pytest.raises(ValueError):
+        bench.validate(confirmation)
+
+
 @pytest.mark.asyncio
 async def test_cancelled_attempt_is_retained_unknown_and_replays_without_transport():
     config = LLMConfig('openai', 'test', 'PRIVATE_KEY')
@@ -100,14 +112,15 @@ async def fake_response(url, payload, headers, **kwargs):
 
 
 @pytest.mark.asyncio
-async def test_full_production_pilot_and_exact_replay_are_network_free_with_fake_transport(tmp_path):
-    fixture = bench.read_json(bench.FIXTURE)
+@pytest.mark.parametrize('fixture_path', [bench.FIXTURE, bench.STEERING_FIXTURE])
+async def test_full_production_pilot_and_exact_replay_are_network_free_with_fake_transport(tmp_path, fixture_path):
+    fixture = bench.read_json(fixture_path)
     config = LLMConfig('openai', 'test', 'PRIVATE_KEY', auto_continue=False, max_continuations=0)
     journal = bench.Journal(config, {}, max_calls=96)
     journal.transport._post_json = fake_response
     live = await bench.run(SimpleNamespace(output_dir=tmp_path, judge_model='test'), fixture, config, journal)
     assert live['complete'] and live['summaries']['grader_failures'] == 0
-    assert live['summaries']['jointly_graded_pairs'] == 8
+    assert live['summaries']['jointly_graded_pairs'] == len(fixture['cases'])
     replay_journal = bench.Journal(config, {}, frozen=deepcopy(journal.data), max_calls=96)
     replay_journal.transport = None
     replay = await bench.run(SimpleNamespace(output_dir=tmp_path, judge_model='test'), fixture, config, replay_journal)

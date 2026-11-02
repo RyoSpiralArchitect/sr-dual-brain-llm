@@ -62,3 +62,25 @@ metrics and concise evidence. Attempt full exact-request replay with zero live
 transport after measurement. Report coverage/status/answer/grade differences;
 if task timing prevents exact replay, retain the mismatch rather than claiming
 reproducibility or making fallback live requests.
+
+## Post-review steering confirmation — 2026-11-02 (Asia/Tokyo)
+
+The first pilot exposed coupling between an inhibited Director task and its free
+trivial-chat steering; Codex review requested a fix before merge. Preserve the
+original eight-trial measurement and its frozen revision. Repair the control flow
+so a caller-requested Director keeps deterministic trivial steering without a
+provider task, while explicit System2 ON still takes precedence over consult skip.
+Do not retune gate thresholds or regenerate the first pilot's answers.
+
+Before further live calls, commit that fix and a separate **two-trial natural-draft
+confirmation** (`module_gating_steering_confirmation.json`). Its English `Hello!`
+and Japanese `こんにちは！` inputs were not used in the first pilot. They test this
+specific repair rather than generalization across workloads. Match explicit left
+lead, System2 auto/balanced, Executive observe, observer both and frozen initial
+drafts between the same two profiles. Use the same models, grading/quote rules,
+timing behavior and receipt accounting, with a **24-attempt maximum** including
+generation and judging. The prediction is fewer post-draft attempts without
+replacement right-detail/left-integration work and without changed answer quality.
+No resampling, arm filtering or output edits are allowed. Report this confirmation
+separately from the first pilot, including any contradictory result, and perform
+network-free exact replay against its own frozen source revision.
