@@ -40,6 +40,11 @@ def model_profile(model):
     fields = ('provider', 'model', 'api_base', 'max_output_tokens', 'timeout_seconds',
               'auto_continue', 'max_continuations')
     payload = {key: getattr(config, key, None) for key in fields}
+    contract = getattr(model, 'advisor_contract', None)
+    if contract is not None:
+        if not isinstance(contract, str) or re.fullmatch('[a-z][a-z0-9_]{0,63}', contract) is None:
+            return None
+        payload['advisor_contract'] = contract
     if not payload['provider'] or not payload['model']:
         return None
     try:

@@ -354,13 +354,13 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     DIRECTOR_ADVICE: ModuleSpec(
         module_id=DIRECTOR_ADVICE,
-        phase="observer_preparation", policy_version="confirmed_recovery_v4",
+        phase="observer_preparation", policy_version="compact_delivery_v5",
         mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
         module_id=EXECUTIVE_METRICS_OBSERVATION,
-        phase="post_turn_observation", policy_version="confirmed_recovery_v4",
+        phase="post_turn_observation", policy_version="compact_delivery_v5",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_metrics_observation,
     ),

@@ -20,6 +20,7 @@ from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
 from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task, remaining_turn_ms, turn_abandoned
 from .advisor_timing import AdvisorWork, LatencyEstimate, RecoveryStatus, model_profile
+from .advisor_delivery import compact_model
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -454,6 +455,13 @@ class DualBrainController:
         except Exception:  # Observability must not change admission/execution.
             pass
 
+    def _advisor_model(self, module, model):
+        """Choose the AUTO request contract before reading or claiming history."""
+        config = self.thalamic_reticular_nucleus.configure(module)
+        if config.valid and config.mode == GateMode.AUTO:
+            return compact_model(model, module)
+        return model
+
     def _advisor_budget(self, module, model, *, qid, phase_budget_ms=None):
         remaining = remaining_turn_ms()
         budget = phase_budget_ms
@@ -471,6 +479,7 @@ class DualBrainController:
         except Exception:
             status = RecoveryStatus(reason='unavailable')
         self._advisor_event('advisor_budget', qid=qid, module=module,
+            delivery_contract=getattr(model, 'advisor_contract', 'full'),
             remaining_budget_ms=budget, budget_source=source, estimated_latency_ms=estimate.ms,
             estimate_kind=estimate.kind, completed_samples=estimate.completed_samples,
             censored_samples=estimate.censored_samples, recovery_probe_allowed=status.allowed,
@@ -2275,7 +2284,8 @@ class DualBrainController:
         # wait window is not known here: only an existing RPC deadline is a
         # sound upper bound. Director and post-turn observation have local caps.
         advice_timing, advice_expired = self._advisor_budget(EXECUTIVE_ADVICE, self.executive_model, qid=qid)
-        director_timing, director_expired = self._advisor_budget(DIRECTOR_ADVICE, self.director_model,
+        director_model = self._advisor_model(DIRECTOR_ADVICE, self.director_model)
+        director_timing, director_expired = self._advisor_budget(DIRECTOR_ADVICE, director_model,
                                                                qid=qid, phase_budget_ms=1600.)
 
         advice_gate = self._module_gate(
@@ -2339,10 +2349,10 @@ class DualBrainController:
                                 or context_parts.get("replay")
                             ),
                         })
-                director_task = self._start_advisor(DIRECTOR_ADVICE, self.director_model, qid=qid,
+                director_task = self._start_advisor(DIRECTOR_ADVICE, director_model, qid=qid,
                     recovery_probe=director_gate.reason in {'bounded_recovery_probe', 'bounded_recovery_confirmation'}, phase_budget_ms=1600.,
                     recovery_kind='confirmation' if director_gate.reason == 'bounded_recovery_confirmation' else 'probe',
-                    factory=lambda model=self.director_model: model.advise(**director_kwargs))
+                    factory=lambda model=director_model: model.advise(**director_kwargs))
             except Exception:  # pragma: no cover - defensive guard
                 director_task = None
 
@@ -4922,7 +4932,8 @@ class DualBrainController:
         is_trivial_chat: bool = False,
     ) -> PostTurnObserverStageResult:
         executive_observer_payload: Dict[str, Any] | None = director_payload
-        timing, expired = self._advisor_budget(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
+        metrics_model = self._advisor_model(EXECUTIVE_METRICS_OBSERVATION, self.executive_model)
+        timing, expired = self._advisor_budget(EXECUTIVE_METRICS_OBSERVATION, metrics_model,
                                                qid=decision.qid, phase_budget_ms=2500.)
         observation_gate = self._module_gate(
             EXECUTIVE_METRICS_OBSERVATION, decision=decision,
@@ -4999,10 +5010,10 @@ class DualBrainController:
         ).strip()
 
         try:
-            observer_task = self._start_advisor(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
+            observer_task = self._start_advisor(EXECUTIVE_METRICS_OBSERVATION, metrics_model,
                 qid=decision.qid, recovery_probe=observation_gate.reason in {'bounded_recovery_probe', 'bounded_recovery_confirmation'},
                 recovery_kind='confirmation' if observation_gate.reason == 'bounded_recovery_confirmation' else 'probe',
-                phase_budget_ms=2500., factory=lambda model=self.executive_model: model.advise(
+                phase_budget_ms=2500., factory=lambda model=metrics_model: model.advise(
                     question=question,
                     context=observer_context,
                     focus_keywords=focus_keywords,

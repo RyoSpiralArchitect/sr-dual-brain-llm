@@ -224,6 +224,7 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None):
         for arm in ARMS:
             with patch.dict(os.environ, budget.environment(fixture['cases'][0], arm), clear=True):
                 engines[arm] = await bench.session(fixture['cases'][0], arm, config, journal, clock)
+            engines[arm].controller._advisor_model = lambda _module, model:model
             engine = engines[arm]
             if controlled:
                 engine.controller.policy = bench.base.SkipConsult()

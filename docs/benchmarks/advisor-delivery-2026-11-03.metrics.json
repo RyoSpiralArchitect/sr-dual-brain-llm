@@ -1,0 +1,2216 @@
+{
+  "schema_version": 1,
+  "publication_note": "Safe aggregates and hashes only; raw questions, answers, advice, input facts, judge quotes and credentials excluded. Original model verdicts retained; later qualitative polarity caveat does not rescore them.",
+  "live": {
+    "schema_version": 1,
+    "experiment": "compact_advisor_delivery",
+    "complete": true,
+    "evidence": "live",
+    "frozen_replay": false,
+    "source_revision": "899f156385ac2be14277702999efcd1f5f85d77c",
+    "metadata": {
+      "model": "gpt-6-luna",
+      "judge_model": "gpt-6-sol",
+      "config": {
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "gpt-6-luna",
+          "max_completion_tokens": 2048
+        }
+      },
+      "fixture_sha256": "2b47c8dceb21ee2087afbb4eb5489c22f221f78393b8f64115f5115c62af7905",
+      "code_sha256": "edc9e8bed76c464fda05406525380dba6a73b16a266d18aee19cf9747d6ba66f",
+      "advice_judge_sha256": "ca21b30bd01227f9ce4c3dc3fefd7061a0e574a2742a2d4681d565580e0fb9ca",
+      "call_limit": 96,
+      "arms": [
+        "full_v4",
+        "compact_delivery"
+      ],
+      "advice_judge_max_output_tokens": 4096,
+      "torch_policy": true,
+      "history_policy": "retained_sessions;both_confirmed_v4;recorded_resource_reads_only_in_replay",
+      "delivery_policy": {
+        "baseline": "full",
+        "treatment": "production_auto_compact_view",
+        "compact_max_output_tokens": 256,
+        "executive_preparation": "full_in_both",
+        "classification_calls": 0
+      },
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "confirmed_recovery_v4",
+        "director_advice": "compact_delivery_v5",
+        "executive_metrics_observation": "compact_delivery_v5",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "idle_intervals": [
+      {
+        "before": "opportunity",
+        "requested_seconds": 16,
+        "observed_seconds": 16.016220985000473,
+        "simulated": false,
+        "replay_skipped": false
+      }
+    ],
+    "answer_judge_usage": {
+      "calls": 5,
+      "input_tokens": 5094,
+      "output_tokens": 2788,
+      "known_input_tokens": 5094,
+      "known_output_tokens": 2788,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "advice_judge_usage": {
+      "calls": 5,
+      "input_tokens": 7435,
+      "output_tokens": 2659,
+      "known_input_tokens": 7435,
+      "known_output_tokens": 2659,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "transport_calls": 65,
+    "live_provider_calls": 65,
+    "experiment_usage": {
+      "calls": 65,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 45336,
+      "known_output_tokens": 12924,
+      "unknown_usage_calls": 14,
+      "cancelled_calls": 14,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 10,
+      "input_tokens": 12529,
+      "output_tokens": 5447,
+      "known_input_tokens": 12529,
+      "known_output_tokens": 5447,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "full_v4": {
+          "planned": 5,
+          "available": 5,
+          "graded": 5,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 5,
+            "clarification": 5
+          },
+          "usage": {
+            "calls": 27,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 17124,
+            "known_output_tokens": 3627,
+            "unknown_usage_calls": 6,
+            "cancelled_calls": 6,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 3,
+            "primary": 5,
+            "executive": 5,
+            "right": 6,
+            "left": 1,
+            "executive_metrics": 3,
+            "support": 4
+          },
+          "advisors": {
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "confirmation_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 3,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 3,
+                "not_admitted": 2
+              },
+              "probe_starts": 1,
+              "confirmation_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "cancelled": 1,
+                "unreached": 2
+              }
+            },
+            "director_advice": {
+              "started": 3,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 3,
+                "not_admitted": 2
+              },
+              "probe_starts": 1,
+              "confirmation_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "cancelled": 1,
+                "unreached": 2
+              }
+            }
+          }
+        },
+        "compact_delivery": {
+          "planned": 5,
+          "available": 5,
+          "graded": 5,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 5,
+            "clarification": 5
+          },
+          "usage": {
+            "calls": 28,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 15683,
+            "known_output_tokens": 3850,
+            "unknown_usage_calls": 8,
+            "cancelled_calls": 8,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 4,
+            "executive": 5,
+            "primary": 5,
+            "right": 5,
+            "executive_metrics": 5,
+            "support": 4
+          },
+          "advisors": {
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "confirmation_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 5,
+              "usable_output": 1,
+              "outcomes": {
+                "timed_out": 4,
+                "completed": 1
+              },
+              "probe_starts": 2,
+              "confirmation_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "confirmation_pending": 1,
+                "cancelled": 2
+              }
+            },
+            "director_advice": {
+              "started": 4,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 4,
+                "not_admitted": 1
+              },
+              "probe_starts": 2,
+              "confirmation_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "cancelled": 2,
+                "unreached": 1
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 5,
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "rows": [
+      {
+        "case": "initial",
+        "arm": "full_v4",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 7,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3786,
+          "known_output_tokens": 1051,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 2,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "9ab7da0820bc55589eff83814ff8e47b7216429d8fb5ff3554db55684b0acbc3",
+        "draft_sha256": "174a46ca768d724c200600173b616d57900b623aaefd15cd0b63f2e2a656b72d",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 119998.57662900013,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 6951.866117999998,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.5862330004893,
+            "cleanup_ms": 4.245246999744268,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2503.5434970004644,
+            "cleanup_ms": 2.9825290002918337,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 16524.934790999396,
+        "relative_cell_start_s": 0.0
+      },
+      {
+        "case": "initial",
+        "arm": "compact_delivery",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 1894,
+          "known_output_tokens": 703,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "cdf1d2134064ced6ac9e07e1a9f43d38597af1fa2de2db43e9fc71b51c2eab8d",
+        "draft_sha256": "cdf1d2134064ced6ac9e07e1a9f43d38597af1fa2de2db43e9fc71b51c2eab8d",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 119999.08626900014,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3270.2582239999174,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "director_compact_v1",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.958246000322,
+            "cleanup_ms": 2.9674549996343558,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "metrics_compact_v1",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2503.328177000185,
+            "cleanup_ms": 3.5708289997273823,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 11639.004001999638,
+        "relative_cell_start_s": 0.0
+      },
+      {
+        "case": "opportunity",
+        "arm": "compact_delivery",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3350,
+          "known_output_tokens": 732,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "46b2c70566e55c0724076a317eea8f877c427d7302f8fbdea9e370abe8a5227f",
+        "draft_sha256": "46b2c70566e55c0724076a317eea8f877c427d7302f8fbdea9e370abe8a5227f",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 116869.33313899953,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3270.2582239999174,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2998.2227520004017,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "director_compact_v1",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.958246000322,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.6380860000936,
+            "cleanup_ms": 3.532340000674594,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "metrics_compact_v1",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.328177000185,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2327.0198340005663,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "confirmation_pending",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 1
+        },
+        "cell_elapsed_ms": 12176.930290999735,
+        "relative_cell_start_s": 27.65836524963379
+      },
+      {
+        "case": "opportunity",
+        "arm": "full_v4",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 2791,
+          "known_output_tokens": 552,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "433e096f09beb891122c8e9c9be0d08e76dad435b5b656c25b63dd67fcb49295",
+        "draft_sha256": "433e096f09beb891122c8e9c9be0d08e76dad435b5b656c25b63dd67fcb49295",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 116984.74385999999,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 6951.866117999998,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3475.620584000353,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.5862330004893,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.6692389994205,
+            "cleanup_ms": 5.371989000195754,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.5434970004644,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2502.7496819993758,
+            "cleanup_ms": 5.760236000242003,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 10542.572573000143,
+        "relative_cell_start_s": 56.36607336997986
+      },
+      {
+        "case": "confirmation",
+        "arm": "full_v4",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3201,
+          "known_output_tokens": 462,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "cfe1f6f56381f48358515267040b53ea6b32927f5dd15600cf7f142f7356084f",
+        "draft_sha256": "cfe1f6f56381f48358515267040b53ea6b32927f5dd15600cf7f142f7356084f",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "recovery_unconfirmed",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 117075.90931699997,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3475.620584000353,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3084.845229000166,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.4745029997357,
+            "cleanup_ms": 6.538505999742483,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.5434970004644,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 49607.32186600035,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "unconfirmed",
+            "recovery_confirmation_required": true,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 7880.394642999818,
+        "relative_cell_start_s": 66.91224098205566
+      },
+      {
+        "case": "confirmation",
+        "arm": "compact_delivery",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3154,
+          "known_output_tokens": 521,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "dd8529ccc62df53a7dd36bd18c9965e7571e4bef243f5b9e0b190abac5c8be11",
+        "draft_sha256": "dd8529ccc62df53a7dd36bd18c9965e7571e4bef243f5b9e0b190abac5c8be11",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "recovery_unconfirmed",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_confirmation",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 118449.0740150004,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3270.2582239999174,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3442.7577650003514,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "director_compact_v1",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.958246000322,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 30969.05724499993,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "unconfirmed",
+            "recovery_confirmation_required": true,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "metrics_compact_v1",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.328177000185,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 1,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "confirmation",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "pending",
+            "recovery_confirmation_required": true,
+            "started": true,
+            "elapsed_ms": 2502.609341000607,
+            "cleanup_ms": 9.260088999326399,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": true,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 7803.863627999817,
+        "relative_cell_start_s": 58.269874811172485
+      },
+      {
+        "case": "followup",
+        "arm": "compact_delivery",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3581,
+          "known_output_tokens": 1310,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "42befab68fda3ec22412bff4b7843738eaf6f3943a8cc357fa72811001d179cd",
+        "draft_sha256": "42befab68fda3ec22412bff4b7843738eaf6f3943a8cc357fa72811001d179cd",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 117243.78957999943,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3442.7577650003514,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 7519.295101000353,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "director_compact_v1",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.9264680007836,
+            "cleanup_ms": 13.766967999799817,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "metrics_compact_v1",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2503.486237999823,
+            "cleanup_ms": 9.17496000056417,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 13133.125811000355,
+        "relative_cell_start_s": 66.07867670059204
+      },
+      {
+        "case": "followup",
+        "arm": "full_v4",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3607,
+          "known_output_tokens": 957,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "140d3cd03748aba0ff7e2be4a741d347d46bd42bfbf3d4b227b589dcc8b9382e",
+        "draft_sha256": "140d3cd03748aba0ff7e2be4a741d347d46bd42bfbf3d4b227b589dcc8b9382e",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 113674.53459599984,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3475.620584000353,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 5072.78852699983,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.4745029997357,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 17310.3820489996,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2503.0625139997937,
+            "cleanup_ms": 10.147435999897425,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 15166.526083999997,
+        "relative_cell_start_s": 95.74588060379028
+      },
+      {
+        "case": "release",
+        "arm": "full_v4",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 3739,
+          "output_tokens": 605,
+          "known_input_tokens": 3739,
+          "known_output_tokens": 605,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "right": 1,
+          "executive": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "6688378342551e2c9f45334017334c9a6927a8e75599a06c90f611af53f5de5c",
+        "draft_sha256": "6688378342551e2c9f45334017334c9a6927a8e75599a06c90f611af53f5de5c",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 116631.83371000014,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 5072.78852699983,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3920.5141460006416,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.4745029997357,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 5095.82512399993,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.0625139997937,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "cooldown",
+            "recovery_retry_after_ms": 7700.110503999895,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 7293.784583000161,
+        "relative_cell_start_s": 110.91767764091492
+      },
+      {
+        "case": "release",
+        "arm": "compact_delivery",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3704,
+          "known_output_tokens": 584,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "842ae022a1f13909812c445aae8da2fa4be2b0869bbbb197685dadc7e9dfcaaa",
+        "draft_sha256": "842ae022a1f13909812c445aae8da2fa4be2b0869bbbb197685dadc7e9dfcaaa",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "confirmed_recovery_v4"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "compact_delivery_v5"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "delivery_contract": "full",
+            "remaining_budget_ms": 116378.95378400026,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 7519.295101000353,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "recovery_kind": "normal",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 3589.2147550002846,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "delivery_contract": "director_compact_v1",
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.9264680007836,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 1601.843493999695,
+            "cleanup_ms": 10.868695000681328,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "delivery_contract": "metrics_compact_v1",
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.486237999823,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "recovery_kind": "probe",
+            "recovery_output_blocked": false,
+            "recovery_confidence": "none",
+            "recovery_confirmation_required": false,
+            "started": true,
+            "elapsed_ms": 2503.5729030005314,
+            "cleanup_ms": 13.141759999598435,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_confirmation_started": false,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "advisor_output_counts": {
+          "director": 0,
+          "executive": 1,
+          "metrics": 0
+        },
+        "cell_elapsed_ms": 11121.283567999853,
+        "relative_cell_start_s": 101.69028091430664
+      }
+    ],
+    "advice_summary": {
+      "full_v4": {
+        "director": {
+          "requested": 5,
+          "available": 0,
+          "graded": 0,
+          "missing_exposure": 5,
+          "first_usable_turn": null,
+          "structurally_usable": 0,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 0
+        },
+        "executive": {
+          "requested": 5,
+          "available": 5,
+          "graded": 5,
+          "missing_exposure": 0,
+          "first_usable_turn": 1,
+          "structurally_usable": 5,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 5
+        },
+        "metrics": {
+          "requested": 5,
+          "available": 0,
+          "graded": 0,
+          "missing_exposure": 5,
+          "first_usable_turn": null,
+          "structurally_usable": 0,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 0
+        }
+      },
+      "compact_delivery": {
+        "director": {
+          "requested": 5,
+          "available": 0,
+          "graded": 0,
+          "missing_exposure": 5,
+          "first_usable_turn": null,
+          "structurally_usable": 0,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 0,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 0
+        },
+        "executive": {
+          "requested": 5,
+          "available": 5,
+          "graded": 5,
+          "missing_exposure": 0,
+          "first_usable_turn": 1,
+          "structurally_usable": 5,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 3,
+              "fail": 2,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 4,
+              "fail": 1,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 5,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 3
+        },
+        "metrics": {
+          "requested": 5,
+          "available": 1,
+          "graded": 1,
+          "missing_exposure": 4,
+          "first_usable_turn": 2,
+          "structurally_usable": 1,
+          "criterion_outcomes": {
+            "relevance": {
+              "pass": 1,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "grounding": {
+              "pass": 1,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "potential_use": {
+              "pass": 1,
+              "fail": 0,
+              "uncertain": 0
+            },
+            "critical_coverage": {
+              "pass": 1,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "all_pass": 1
+        }
+      }
+    },
+    "advice_grader_failures": 0,
+    "artifact_sha256": {
+      "report.json": "e6275cfc3661d284b2b5806a22485f2d89b8ebf0e1082d446cc4271cc6b665b1",
+      "journal.json": "69f1ad6ce8b0eb6da2bf0be555952496a04600d7f555a539648cf887b2d008b0"
+    },
+    "advice_grade_verdicts": [
+      {
+        "case": "initial",
+        "arm": "compact_delivery",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "initial",
+        "arm": "full_v4",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "opportunity",
+        "arm": "full_v4",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "opportunity",
+        "arm": "compact_delivery",
+        "role": "metrics",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "opportunity",
+        "arm": "compact_delivery",
+        "role": "executive",
+        "scores": {
+          "relevance": "fail",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "confirmation",
+        "arm": "full_v4",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "confirmation",
+        "arm": "compact_delivery",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "followup",
+        "arm": "full_v4",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "followup",
+        "arm": "compact_delivery",
+        "role": "executive",
+        "scores": {
+          "relevance": "fail",
+          "grounding": "fail",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "release",
+        "arm": "full_v4",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      },
+      {
+        "case": "release",
+        "arm": "compact_delivery",
+        "role": "executive",
+        "scores": {
+          "relevance": "pass",
+          "grounding": "pass",
+          "potential_use": "pass",
+          "critical_coverage": "pass"
+        }
+      }
+    ],
+    "ordinary_work_including_cold": {
+      "full_v4": {
+        "director_advice": {
+          "starts": 2,
+          "usable": 0,
+          "cancellations": 2
+        },
+        "executive_advice": {
+          "starts": 5,
+          "usable": 5,
+          "cancellations": 0
+        },
+        "executive_metrics_observation": {
+          "starts": 2,
+          "usable": 0,
+          "cancellations": 2
+        }
+      },
+      "compact_delivery": {
+        "director_advice": {
+          "starts": 2,
+          "usable": 0,
+          "cancellations": 2
+        },
+        "executive_advice": {
+          "starts": 5,
+          "usable": 5,
+          "cancellations": 0
+        },
+        "executive_metrics_observation": {
+          "starts": 2,
+          "usable": 0,
+          "cancellations": 2
+        }
+      }
+    }
+  },
+  "live_replay_check": {
+    "recorded_attempts": 65,
+    "replayed_attempts": 65,
+    "new_provider_calls": 0,
+    "cells": 10,
+    "status_differences": 0,
+    "answer_differences": 0,
+    "draft_differences": 0,
+    "advisor_outputs_differences": 0,
+    "memory_sources_differences": 0,
+    "pending_advisors_differences": 0,
+    "usage_differences": 0,
+    "calls_by_role_differences": 0,
+    "gate_differences": 0,
+    "resource_read_claim_finish_differences": 0,
+    "answer_grades_equal": true,
+    "advice_grades_equal": true,
+    "advisor_outcome_differences": [
+      {
+        "case": "initial",
+        "arm": "full_v4",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "initial",
+        "arm": "full_v4",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "initial",
+        "arm": "compact_delivery",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "initial",
+        "arm": "compact_delivery",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "opportunity",
+        "arm": "compact_delivery",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "opportunity",
+        "arm": "full_v4",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "opportunity",
+        "arm": "full_v4",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "confirmation",
+        "arm": "full_v4",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "confirmation",
+        "arm": "compact_delivery",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "followup",
+        "arm": "compact_delivery",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "followup",
+        "arm": "compact_delivery",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "followup",
+        "arm": "full_v4",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "release",
+        "arm": "compact_delivery",
+        "module": "director_advice",
+        "live": "timed_out",
+        "replay": "cancelled"
+      },
+      {
+        "case": "release",
+        "arm": "compact_delivery",
+        "module": "executive_metrics_observation",
+        "live": "timed_out",
+        "replay": "cancelled"
+      }
+    ],
+    "limitation": "Recorded inputs/HTTP occurrences match; timer stop reasons, real elapsed time and asynchronous order are not reproduced."
+  }
+}

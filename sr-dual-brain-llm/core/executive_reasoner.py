@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
+from .advisor_delivery import METRICS_COMPACT_INSTRUCTIONS, compact_token_limit, parse_compact_advice
 
 
 _EXECUTIVE_GUARDRAILS = (
@@ -105,8 +106,30 @@ class ExecutiveReasonerModel:
         context: str,
         focus_keywords: Optional[list[str]] = None,
         temperature: float = 0.2,
+        delivery_mode: str = 'full',
     ) -> ExecutiveAdvice:
+        if delivery_mode not in {'full', 'metrics_compact'}:
+            raise ValueError('Unsupported Executive delivery mode')
         start = time.perf_counter()
+
+        if delivery_mode == 'metrics_compact':
+            try:
+                config = self._llm_client.config
+                prompt = (
+                    f"User message:\n{question}\n\n"
+                    f"Context (may be empty):\n{(context or '')[:1600]}\n\n"
+                    f"Focus keywords: {focus_keywords or []}\n\n"
+                    "Return compact monitoring JSON now."
+                )
+                raw = await self._llm_client.complete(prompt, system=METRICS_COMPACT_INSTRUCTIONS,
+                    temperature=temperature, max_output_tokens=compact_token_limit(config),
+                    allow_continuation=False, require_complete=True)
+                payload = parse_compact_advice(raw, director=False)
+                return ExecutiveAdvice(payload['memo'], {}, float(payload['confidence']),
+                    (time.perf_counter() - start) * 1000., 'llm', mix_in='')
+            except Exception:
+                return ExecutiveAdvice('Compact metrics output unavailable.', {}, 0.,
+                    (time.perf_counter() - start) * 1000., 'error', mix_in='')
 
         if self._llm_client:
             prompt = (
