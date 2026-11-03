@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from .llm_client import LLMClient, LLMConfig, load_llm_config
+from .advisor_delivery import DIRECTOR_COMPACT_INSTRUCTIONS, compact_token_limit, parse_compact_advice
 
 
 _DIRECTOR_GUARDRAILS = (
@@ -105,10 +106,31 @@ class DirectorReasonerModel:
         context: str,
         signals: Optional[Dict[str, Any]] = None,
         temperature: float = 0.15,
+        delivery_mode: str = 'full',
     ) -> DirectorAdvice:
+        if delivery_mode not in {'full', 'compact'}:
+            raise ValueError('Unsupported Director delivery mode')
         start = time.perf_counter()
 
         signals_obj = _safe_json_object(signals or {})
+        if delivery_mode == 'compact':
+            try:
+                config = self._llm_client.config
+                prompt = (
+                    f"User message:\n{question}\n\n"
+                    f"Signals (JSON):\n{json.dumps(signals_obj, ensure_ascii=False)[:1200]}\n\n"
+                    f"Context (may be empty):\n{(context or '')[:1600]}\n\n"
+                    "Return compact JSON now."
+                )
+                raw = await self._llm_client.complete(prompt, system=DIRECTOR_COMPACT_INSTRUCTIONS,
+                    temperature=temperature, max_output_tokens=compact_token_limit(config),
+                    allow_continuation=False, require_complete=True)
+                payload = parse_compact_advice(raw, director=True)
+                return DirectorAdvice(payload['memo'], payload['control'], float(payload['confidence']),
+                    (time.perf_counter() - start) * 1000., 'llm')
+            except Exception:
+                return DirectorAdvice('Compact Director output unavailable.', {}, 0.,
+                    (time.perf_counter() - start) * 1000., 'error')
         if self._llm_client:
             prompt = (
                 f"User message:\n{question}\n\n"

@@ -113,7 +113,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         if isinstance(module, str) and module in ADVISORS:
             if event.get('event') == 'advisor_budget':
                 advisor_timing.setdefault(module, {}).update({key:event.get(key) for key in (
-                    'remaining_budget_ms', 'budget_source', 'estimated_latency_ms', 'estimate_kind',
+                    'delivery_contract', 'remaining_budget_ms', 'budget_source', 'estimated_latency_ms', 'estimate_kind',
                     'completed_samples', 'censored_samples', 'recovery_probe_allowed',
                     'recovery_reason', 'recovery_retry_after_ms', 'recovery_kind',
                     'recovery_output_blocked', 'recovery_confidence', 'recovery_confirmation_required')})

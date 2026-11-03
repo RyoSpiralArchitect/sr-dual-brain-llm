@@ -71,6 +71,8 @@ async def execute(case, arm, draft, seed, config, journal, clock, options):
            'arm': arm, 'status': 'unavailable', 'answer': None, 'draft_sha256': bench.digest(draft),
            'history_sha256': bench.digest(seed)}
     engine = await bench.session(case, arm, config, journal, clock)
+    # This historical comparison isolates timing admission, not delivery shape.
+    engine.controller._advisor_model = lambda _module, model:model
     try:
         seed_history(engine, seed)
 

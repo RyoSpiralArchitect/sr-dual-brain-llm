@@ -208,6 +208,7 @@ class SessionExperiment:
     prepare_engine: object = None
     after_cell: object = None
     grade_advice: object = None
+    compact_delivery: bool = False
 
 
 async def run(args, fixture, config, journal, *, transport=None, idle=None, ledger_clock=None, experiment=None):
@@ -229,6 +230,10 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None, ledg
             with patch.dict(os.environ,bench.environment(fixture['cases'][0],'all_auto'),clear=True):
                 engine = await bench.session(fixture['cases'][0],arm,config,journal,clock)
             engines[arm] = engine
+            # Old studies retain their original full request contracts even
+            # when the production AUTO implementation evolves.
+            if not experiment.compact_delivery:
+                engine.controller._advisor_model = lambda _module, model:model
             engine.hypothalamus.advisor_timing = experiment.make_observer(experiment.make_timing(arm,lambda:history_clock()+offset[0]))
             engine._benchmark_advisors = []
             start = engine.controller._start_advisor

@@ -151,6 +151,25 @@ It retains at most 32 profiles with 16 samples each; observations expire after
 to effective provider/model/endpoint/output-limit/timeout/continuation settings
 separate profiles. Non-provider/custom models without a known config stay unknown.
 
+Director and post-answer metrics use `compact_delivery_v5`: within explicitly
+selected AUTO mode, built-in external models use role-specific compact request
+views. Director retains every operational control in a sparse object plus one
+240-character memo; metrics returns only a 240-character monitoring memo and
+confidence, never pre-answer directives or user-facing additions. The full user
+question stays available. Existing context/snippet bounds stay, so monitoring
+must acknowledge partial coverage and cannot certify omitted content or an
+unobserved operation. Executive pre-answer advice keeps its full contract.
+
+Compact requests cap output at the smaller of the configured cap and 256 tokens,
+disable continuation for that request, and require a successful completion status
+and strict typed JSON. Truncated, malformed and error output is unavailable advice,
+with empty controls; it cannot be learned as successful external latency. Shared
+client configuration is never mutated. Effective compact contract/cap enter the
+history fingerprint before admission and again at actual start. Changing that
+contract cannot inherit full-request observations. Manual ON/defaults keep full
+requests; OFF creates no work. Custom models keep their existing API. These are
+request contracts within the registered modules, not additional enable switches.
+
 The estimate is the largest recent observation, labeled `completed_max` or
 `censored_bound`, with separate sample counts. A cancellation records elapsed time
 until its first cancellation request, excluding cleanup; it is a lower bound,

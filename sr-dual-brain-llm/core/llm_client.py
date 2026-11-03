@@ -175,8 +175,13 @@ class LLMClient:
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
         require_complete: bool = False,
+        allow_continuation: bool = True,
     ) -> str:
-        """Return text, optionally requiring a confirmed successful terminal status."""
+        """Return text, optionally requiring a successful terminal status.
+
+        A bounded caller can disable continuation for this request without
+        mutating configuration shared by concurrent requests.
+        """
         require_complete = require_complete or source_completion_required()
         provider = self.provider
         if not isinstance(prompt, str) and provider not in {"openai", "mistral", "xai"}:
@@ -191,6 +196,7 @@ class LLMClient:
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
                 require_complete=require_complete,
+                allow_continuation=allow_continuation,
             )
         if provider == "anthropic":
             return await self._anthropic(
@@ -200,6 +206,7 @@ class LLMClient:
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
                 require_complete=require_complete,
+                allow_continuation=allow_continuation,
             )
         if provider == "google":
             return await self._google(
@@ -530,6 +537,7 @@ class LLMClient:
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
         require_complete: bool = False,
+        allow_continuation: bool = True,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/chat/completions"
@@ -572,7 +580,7 @@ class LLMClient:
         text, finish = await _call(base_messages)
         full_text = text
 
-        if not self.config.auto_continue or not finish:
+        if not allow_continuation or not self.config.auto_continue or not finish:
             return self._completion_text(full_text, finish, require_complete=require_complete)
 
         if finish.lower() not in {"length", "max_tokens"}:
@@ -605,6 +613,7 @@ class LLMClient:
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
         require_complete: bool = False,
+        allow_continuation: bool = True,
     ) -> str:
         base = (self.config.api_base or self._default_base()).rstrip("/")
         url = f"{base}/v1/messages"
@@ -646,7 +655,7 @@ class LLMClient:
         text, stop_reason = await _call(base_messages)
         full_text = text
 
-        if not self.config.auto_continue or not stop_reason:
+        if not allow_continuation or not self.config.auto_continue or not stop_reason:
             return self._completion_text(full_text, stop_reason, require_complete=require_complete)
         if str(stop_reason).lower() not in {"max_tokens"}:
             return self._completion_text(full_text, stop_reason, require_complete=require_complete)
