@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from collections import Counter, defaultdict
-from dataclasses import asdict, replace
+from dataclasses import asdict, dataclass, replace
 import hashlib
 import json
 import os
@@ -43,6 +43,9 @@ class ObservedRecovery:
     No live history is seeded. Replay leases are opaque recorded capabilities;
     cached response time cannot legitimately retrain a latency estimate.
     """
+    LATENCY_KINDS = frozenset({'unknown','completed_max','censored_bound'})
+    FINISH_OUTCOMES = frozenset({'recovered','still_slow','cancelled','unusable','profile_unavailable'})
+
     def __init__(self, ledger):
         self.ledger, self.leases = ledger, {}
 
@@ -79,7 +82,7 @@ class ObservedRecovery:
         try:
             estimate = LatencyEstimate(**value)
             if (estimate.ms is not None and not finite_nonnegative(estimate.ms)
-                    or estimate.kind not in {'unknown','completed_max','censored_bound'}
+                    or estimate.kind not in self.LATENCY_KINDS
                     or any(type(n) is not int or not 0 <= n <= 16 for n in (estimate.completed_samples,estimate.censored_samples))):
                 raise ValueError
             return estimate
@@ -100,30 +103,30 @@ class ObservedRecovery:
             self.invalid = True
             raise ValueError('Invalid recorded recovery fact') from None
 
-    def start_probe(self, module, profile, budget):
+    def start_probe(self, module, profile, budget, *, kind='probe'):
         actual = []
 
         def start():
-            token = self.ledger.start_probe(module,profile,budget)
+            token = self.ledger.start_probe(module,profile,budget,kind=kind)
             actual.append(token)
             return token is not None
 
-        claimed = self._call('claim',module,profile,start)
+        claimed = self._call('claim' if kind == 'probe' else 'confirm',module,profile,start)
         if type(claimed) is not bool:
             self.invalid = True
             raise ValueError('Invalid recorded probe claim')
         token = (actual[0] if self.frozen is None else object()) if claimed else None
         if token is not None:
-            self.leases[token] = (module,profile)
+            self.leases[token] = (module,profile,kind)
         return token
 
     def finish_probe(self, token, elapsed, **kwargs):
         if token not in self.leases:
             self.invalid = True
             raise ValueError('Invalid probe identity')
-        module,profile = self.leases.pop(token)
-        outcome = self._call('finish',module,profile,lambda:self.ledger.finish_probe(token,elapsed,**kwargs))
-        if outcome not in {'recovered','still_slow','cancelled','unusable','profile_unavailable'}:
+        module,profile,kind = self.leases.pop(token)
+        outcome = self._call('finish' if kind == 'probe' else 'confirm_finish',module,profile,lambda:self.ledger.finish_probe(token,elapsed,**kwargs))
+        if outcome not in self.FINISH_OUTCOMES:
             self.invalid = True
             raise ValueError('Invalid recorded probe outcome')
         return outcome
@@ -160,10 +163,10 @@ class ControlledTransport:
                 'model':'controlled','usage':{'prompt_tokens':10,'completion_tokens':5}}
 
 
-def summarize(report):
+def summarize(report, *, arms=ARMS, phases=PHASES):
     grades = {(g['case'],g['arm']):g['scores'] for g in report['grades'] if 'arm' in g}
     summary = {}
-    for arm in ARMS:
+    for arm in arms:
         rows = [r for r in report['rows'] if r['arm']==arm]
         role_counts = Counter()
         for row in rows:
@@ -180,34 +183,53 @@ def summarize(report):
                 'usable_output':sum(bool(e.get('usable_output')) for e in events),
                 'outcomes':dict(Counter(e.get('outcome','unreached') for e in events)),
                 'probe_starts':sum(bool(e.get('recovery_probe_started')) for e in events),
+                'confirmation_starts':sum(bool(e.get('recovery_confirmation_started')) for e in events),
                 'probe_outcomes':dict(Counter(e.get('recovery_outcome','unreached') for e in events))}
-    paired = [c for c in PHASES if all((c,arm) in grades for arm in ARMS)]
+    paired = [c for c in phases if all((c,arm) in grades for arm in arms)]
     return {'by_arm':summary,'jointly_graded_pairs':len(paired),
-        'criterion_regressions':{criterion:[c for c in paired if grades[(c,ARMS[0])][criterion]['verdict']=='pass'
-            and grades[(c,ARMS[1])][criterion]['verdict']!='pass'] for criterion in bench.base.CRITERIA},
+        'criterion_regressions':{criterion:[c for c in paired if grades[(c,arms[0])][criterion]['verdict']=='pass'
+            and grades[(c,arms[1])][criterion]['verdict']!='pass'] for criterion in bench.base.CRITERIA},
         'grader_failures':sum('error_type' in g for g in report['grades'])}
 
 
-async def run(args, fixture, config, journal, *, transport=None, idle=None, ledger_clock=None):
-    validate(fixture)
+def _v3_timing(arm, clock):
+    return AdvisorTiming(clock=clock,recovery_enabled=arm=='recovery_auto',confirmation_enabled=False)
+
+
+@dataclass(frozen=True)
+class SessionExperiment:
+    """Explicit benchmark configuration; production gates are not reconfigured."""
+    name: str = 'bounded_advisor_recovery'
+    arms: tuple = ARMS
+    phases: tuple = PHASES
+    validate_fixture: object = validate
+    make_timing: object = _v3_timing
+    make_observer: object = ObservedRecovery
+    prepare_engine: object = None
+    after_cell: object = None
+    grade_advice: object = None
+
+
+async def run(args, fixture, config, journal, *, transport=None, idle=None, ledger_clock=None, experiment=None):
+    experiment = experiment or SessionExperiment()
+    experiment.validate_fixture(fixture)
     bench.base.enforce_runtime()
-    report = {'schema_version':1,'experiment':'bounded_advisor_recovery','complete':False,
+    report = {'schema_version':1,'experiment':experiment.name,'complete':False,
         'evidence':'controlled_'+transport.regime if transport else 'live','frozen_replay':journal.frozen is not None,
         'source_revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=bench.base.ROOT.parent,text=True).strip(),
         'metadata':{k:v for k,v in journal.data.items() if k not in {'responses','complete'}},
-        'rows':[],'grades':[],'idle_intervals':[]}
+        'rows':[],'grades':[],'advice_grades':[],'idle_intervals':[]}
     save = lambda:bench.checkpoint(args.output_dir/'report.partial.json',report)
     engines,clock,offset = {},[time.time()],[0.]
     history_clock = ledger_clock or time.monotonic
     options = dict(blob_root=args.output_dir,blob_index={},vision_cache={},vision_cache_limit=0)
     journal.data['cell_inputs'] = {}
     try:
-        for arm in ARMS:
+        for arm in experiment.arms:
             with patch.dict(os.environ,bench.environment(fixture['cases'][0],'all_auto'),clear=True):
                 engine = await bench.session(fixture['cases'][0],arm,config,journal,clock)
             engines[arm] = engine
-            engine.hypothalamus.advisor_timing = ObservedRecovery(AdvisorTiming(
-                clock=(lambda:history_clock()+offset[0]),recovery_enabled=arm=='recovery_auto'))
+            engine.hypothalamus.advisor_timing = experiment.make_observer(experiment.make_timing(arm,lambda:history_clock()+offset[0]))
             engine._benchmark_advisors = []
             start = engine.controller._start_advisor
 
@@ -227,6 +249,8 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None, ledg
                     return result
 
                 engine.controller._run_routing_stage = left_only
+            if experiment.prepare_engine:
+                experiment.prepare_engine(engine,arm)
         for index,case in enumerate(fixture['cases']):
             if case['id']=='opportunity':
                 before = time.monotonic()
@@ -239,7 +263,9 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None, ledg
                     'observed_seconds':time.monotonic()-before,'simulated':bool(transport),'replay_skipped':journal.frozen is not None})
             if transport:
                 transport.phase = case['id']
-            for arm in (ARMS if index%2==0 else ARMS[::-1]):
+            for arm in (experiment.arms if index%2==0 else experiment.arms[::-1]):
+                if transport and hasattr(transport,'prepare_cell'):
+                    transport.prepare_cell(arm,case,index)
                 key = case['id']+':'+arm
                 inputs = journal.frozen['cell_inputs'][key] if journal.frozen else {'wall_time':time.time(),'timing_reads':[]}
                 journal.data['cell_inputs'][key] = inputs
@@ -249,6 +275,10 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None, ledg
                      patch('time.time',lambda:clock[0]), \
                      patch('uuid.uuid4',lambda:uuid.UUID(int=bench.base.UUID_RNG.getrandbits(128))):
                     row = await sessions.execute(engines[arm],case,arm,index,inputs,journal,options,controlled=bool(transport))
+                if experiment.after_cell:
+                    experiment.after_cell(row,engines[arm])
+                if transport and hasattr(transport,'decorate_row'):
+                    transport.decorate_row(row,arm,case,index)
                 report['rows'].append(row)
                 save()
                 print(json.dumps({'case':case['id'],'arm':arm,'status':row['status'],'usage':row['usage']}),flush=True)
@@ -258,9 +288,16 @@ async def run(args, fixture, config, journal, *, transport=None, idle=None, ledg
             for case in fixture['cases']:
                 report['grades'].extend(await bench.grade(case,candidates,replace(config,model=args.judge_model),journal))
                 save()
+        report['answer_judge_usage'] = bench.usage(journal.events[before:])
+        advice_before = len(journal.events)
+        if not transport and experiment.grade_advice:
+            await experiment.grade_advice(report,fixture['cases'],replace(config,model=args.judge_model),journal)
+            save()
+        report['advice_judge_usage'] = bench.usage(journal.events[advice_before:])
         journal.finish()
         report.update(complete=True,transport_calls=journal.calls,live_provider_calls=0 if transport else journal.calls,
-            experiment_usage=bench.usage(journal.events),judge_usage=bench.usage(journal.events[before:]),summaries=summarize(report))
+            experiment_usage=bench.usage(journal.events),judge_usage=bench.usage(journal.events[before:]),
+            summaries=summarize(report,arms=experiment.arms,phases=experiment.phases))
         save()
         return report
     finally:
@@ -279,7 +316,7 @@ def public_summary(report):
             'advisor_timing':modules['advisor_timing'],
             'scores':{k:v['verdict'] for k,v in grades.get((row['case'],row['arm']),{}).items()},
             'draft_scores':{k:v['verdict'] for k,v in grades.get((row['case'],row['arm']+'_draft'),{}).items()}})
-    return {k:v for k,v in report.items() if k not in {'rows','grades'}} | {'rows':rows}
+    return {k:v for k,v in report.items() if k not in {'rows','grades','advice_grades'}} | {'rows':rows}
 
 
 def main():

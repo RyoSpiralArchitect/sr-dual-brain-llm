@@ -70,6 +70,9 @@ class GateFacts:
     remaining_budget_ms: float | None = None
     estimated_latency_ms: float | None = None
     recovery_probe_allowed: bool = False
+    recovery_kind: str = 'probe'
+    recovery_output_blocked: bool = False
+    recovery_confirmation_required: bool = False
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -135,6 +138,7 @@ AUTO_REASONS = frozenset({
     "critic_signal_uncertain", "stalled_checklist_needed",
     "memory_consultation_needed",
     "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal", "bounded_recovery_probe",
+    "bounded_recovery_confirmation", "unusable_recovery_output", "invalid_recovery_signal", "recovery_unconfirmed",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -248,10 +252,14 @@ def _auto_optional_observation(facts: GateFacts) -> tuple[bool, str]:
         return False, "invalid_timing_signal"
     if budget is not None and budget <= 50.:
         return False, "time_budget_exhausted"
-    if budget is not None and latency is not None and latency + 50. >= budget:
+    if (facts.recovery_output_blocked is True or facts.recovery_confirmation_required is True
+            or budget is not None and latency is not None and latency + 50. >= budget):
         if facts.recovery_probe_allowed is True:
-            return True, "bounded_recovery_probe"
-        return False, "insufficient_time_budget"
+            if facts.recovery_kind not in {'probe', 'confirmation'}:
+                return False, "invalid_recovery_signal"
+            return True, "bounded_recovery_confirmation" if facts.recovery_kind == 'confirmation' else "bounded_recovery_probe"
+        return False, ("unusable_recovery_output" if facts.recovery_output_blocked is True
+                       else "recovery_unconfirmed" if facts.recovery_confirmation_required is True else "insufficient_time_budget")
     # Unknown estimate/window preserves v1's nontrivial-input cold probe.
     return True, "optional_observation_needed"
 
@@ -340,19 +348,19 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     EXECUTIVE_ADVICE: ModuleSpec(
         module_id=EXECUTIVE_ADVICE,
-        phase="observer_preparation", policy_version="time_budget_recovery_v3",
+        phase="observer_preparation", policy_version="confirmed_recovery_v4",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     DIRECTOR_ADVICE: ModuleSpec(
         module_id=DIRECTOR_ADVICE,
-        phase="observer_preparation", policy_version="time_budget_recovery_v3",
+        phase="observer_preparation", policy_version="confirmed_recovery_v4",
         mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
         module_id=EXECUTIVE_METRICS_OBSERVATION,
-        phase="post_turn_observation", policy_version="time_budget_recovery_v3",
+        phase="post_turn_observation", policy_version="confirmed_recovery_v4",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_metrics_observation,
     ),

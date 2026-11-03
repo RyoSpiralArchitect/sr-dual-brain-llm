@@ -1,0 +1,35 @@
+{
+  "schema_version": 1, "origin": "prospective_confirmed_advisor_recovery", "idle_before_opportunity_seconds": 16,
+  "cases": [
+    {
+      "id": "initial", "question": "In exactly two sentences, explain why wall-clock adjustments can break elapsed-time measurements and name a suitable alternative clock.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Wall clocks can move forward/backward under corrections, producing incorrect elapsed durations. A monotonic clock is appropriate for elapsed intervals; it does not provide a universal calendar timestamp.",
+      "criteria": {"task": "In exactly two sentences, explain the adjustment problem and name a suitable alternative clock.", "grounding": "Do not assert that wall-clock differences are immune to clock corrections or that monotonic values are universal calendar timestamps.", "clarification": "Answer the specified question directly."}
+    },
+    {
+      "id": "opportunity", "question": "Give exactly three bullet points: one benefit of bulkheads, one benefit of a circuit breaker, and one limitation shared by both.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Bulkheads isolate resources/failure impact; circuit breakers avoid repeatedly calling a failing dependency; neither by itself repairs the dependency or guarantees successful requests. Three bullets, one requested item each.",
+      "criteria": {"task": "Use exactly three bullets covering the two named benefits and one shared limitation.", "grounding": "Do not claim either pattern guarantees success or repairs an unavailable dependency.", "clarification": "Answer the three requested items directly."}
+    },
+    {
+      "id": "confirmation", "question": "In exactly two sentences, distinguish a cache miss from cache invalidation and give one cause of each.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A miss is a requested item being absent/unavailable in the cache, for example on first access or after eviction. Invalidation marks/removes a cached value as unusable, for example after a source update or expiry; invalidation can cause a later miss.",
+      "criteria": {"task": "In exactly two sentences, distinguish the two concepts and provide one cause of each.", "grounding": "Do not claim misses and invalidation are identical or mutually exclusive events.", "clarification": "Answer both specified concepts and causes directly."}
+    },
+    {
+      "id": "followup", "question": "Give exactly two analogies for pacing outgoing requests, one sentence per analogy.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Two apt analogies for regulating request rate/timing, such as a metronome or timed release through a gate. Exactly two sentences, one analogy each; pacing does not guarantee remote success.",
+      "criteria": {"task": "Give exactly two apt pacing analogies in exactly two sentences, one per analogy.", "grounding": "Do not make false claims about request rate, concurrency or guaranteed downstream success.", "clarification": "Provide the analogies directly."}
+    },
+    {
+      "id": "release", "question": "In exactly two sentences, explain why retrying at several service layers can multiply total attempts and name one way to limit that amplification.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Each upstream retry can trigger a fresh set of downstream retries, multiplying attempts across layers. A shared retry budget, a single designated retry layer or another concrete bound can limit amplification.",
+      "criteria": {"task": "In exactly two sentences, explain the multiplicative effect and name one concrete mitigation.", "grounding": "Do not assert that independent retry loops automatically coordinate or guarantee bounded total attempts without a bound.", "clarification": "Answer both specified parts directly."}
+    }
+  ]
+}
