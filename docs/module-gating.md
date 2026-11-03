@@ -137,7 +137,7 @@ low-focus streak, thalamic and predictive suppression veto all modes, including
 injection is `off`. Private/debug reflection records remain separate from injection.
 
 Executive advice, director advice and post-turn metrics use the versioned
-`time_budget_recovery_v3` AUTO predicate, requiring non-empty, nontrivial
+`confirmed_recovery_v4` AUTO predicate, requiring non-empty, nontrivial
 input and a feasible known time budget. Caller modes and model availability are hard
 eligibility requirements. Defaults preserve requested `observe`/`assist`/`polish`
 behavior; AUTO may omit the selected function on trivial input and never converts
@@ -158,7 +158,7 @@ not a completion time. Empty/error outputs and cancellation before work starts
 do not teach a successful fast latency. This conservative heuristic is not a
 guarantee of future completion. Expiry permits a new cold probe after inhibition.
 
-AUTO v3 additionally permits a bounded recovery probe before expiry. Hypothalamus
+AUTO additionally permits a bounded recovery probe before expiry. Hypothalamus
 produces a content-free status after 15 seconds since the latest observation;
 each retained role/model profile can start at most one recovery probe in a rolling
 60 seconds. A known budget must allow at least the full 1,600 ms Director window,
@@ -168,14 +168,25 @@ not consume this separate allowance. TRN remains a pure admission function.
 An opaque lease is claimed at actual work start, after rechecking the current
 profile, remaining deadline and allowance. Cancellation before start consumes
 nothing; competing claims cannot multiply probes. A structurally usable external
-completion whose elapsed time plus 50 ms fits its claimed budget replaces only
-older observations. Newer concurrent observations remain. Slow, cancelled, empty
-or failed probes spend the allowance without clearing old slow evidence. Sample
+completion whose elapsed time plus 50 ms fits its claimed budget becomes provisional.
+V4 permits at most one confirmation on a subsequent requested phase; normal
+admission resumes only after two fresh usable completions fit the window with
+`max(latencies) + range(latencies) + 50 ms`. Only older evidence is superseded;
+newer concurrent observations also have to fit and remain in history. Confirmed
+profiles continue to include observed completed-latency range in their estimate.
+This is a conservative allowance, not a statistical confidence guarantee.
+Slow, cancelled, empty or failed exploratory work spends its allowance. Its
+observation time stays accurate, but its expiry cannot exceed the original
+blocking evidence, preserving the original cold opportunity. A separate hold
+prevents sample-ring eviction from bypassing confirmation. Sample
 expiry alone cannot reset a recent probe allowance. The bounded 32-profile LRU
 store may discard a profile; it subsequently has ordinary unknown/cold behavior.
 No classifier, recursive gate, user-facing recovery flag or default-mode change
 is introduced. The internal recovery-disabled ledger is a v2-equivalent
-comparison fixture, not an additional deployment switch.
+comparison fixture, not an additional deployment switch. The confirmation-disabled
+ledger similarly supplies a v3-equivalent comparison. Unusable ordinary output
+after promotion suspends ordinary AUTO work until existing evidence expires or
+bounded recovery succeeds, without treating failure as a fast latency.
 
 The Director's known local wait is 1,600 ms and post-turn metrics' wait is
 2,500 ms, capped by an existing RPC deadline when present. Executive advice runs
@@ -183,11 +194,12 @@ in parallel with drafting and consultation, so its later wait timeout does not
 describe its whole available window: only a known outer RPC deadline bounds
 admission; outside RPC its window is unknown. AUTO inhibits work when the known
 budget is at most 50 ms or the estimate plus a fixed 50 ms reserve reaches the
-budget. Unknown latency/window preserves the previous nontrivial-input cold probe;
-invalid explicit numeric facts inhibit. Manual `on` ignores the estimate but
+budget. Outside pending confirmation and unusable-output quarantine, unknown
+latency/window preserves the previous nontrivial-input cold probe; invalid explicit
+numeric facts inhibit. Manual `on` ignores the estimate but
 cannot start work after a known deadline/turn abandonment. Defaults remain `on`
 within requested modes; no automatic policy is enabled by default.
-When the estimate does not fit, AUTO v3 may admit only the explicit bounded
+When the estimate does not fit, AUTO may admit only the explicit bounded
 recovery permission described above; otherwise it preserves v2 inhibition.
 
 The Director's caller-selected deterministic trivial-chat steering is separate
@@ -277,7 +289,7 @@ token receipt: runtime usage is `unknown` for started work and `not_started`
 otherwise. The benchmark HTTP journal separately accounts for real attempts
 and known/unknown billed usage. No diagnostics are added to user answers.
 Timing diagnostics also expose recovery readiness/reason, retry delay, requested
-probe, actual lease start and bounded outcome. Admission can precede a failed
+probe/confirmation, actual starts, confidence state and bounded outcome. Admission can precede a failed
 claim if another task consumed the allowance or the profile/window changed;
 that task reports `not_started`, with no provider factory invoked.
 Local advisor waits expire without cancelling/uncancelling the parent turn.

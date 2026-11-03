@@ -115,7 +115,8 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
                 advisor_timing.setdefault(module, {}).update({key:event.get(key) for key in (
                     'remaining_budget_ms', 'budget_source', 'estimated_latency_ms', 'estimate_kind',
                     'completed_samples', 'censored_samples', 'recovery_probe_allowed',
-                    'recovery_reason', 'recovery_retry_after_ms')})
+                    'recovery_reason', 'recovery_retry_after_ms', 'recovery_kind',
+                    'recovery_output_blocked', 'recovery_confidence', 'recovery_confirmation_required')})
             elif event.get('event') == 'advisor_work':
                 target = advisor_timing.setdefault(module, {})
                 if event.get('state') == 'started':
@@ -123,7 +124,8 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
                 else:
                     target.update({key:event.get(key) for key in (
                         'elapsed_ms', 'cleanup_ms', 'usable_output', 'stop_reason', 'usage_status',
-                        'recovery_probe', 'recovery_probe_started', 'recovery_outcome')})
+                        'recovery_probe', 'recovery_probe_started', 'recovery_confirmation_started',
+                        'recovery_kind', 'recovery_outcome')})
                     target['outcome'] = event.get('state')
     for module, timing in advisor_timing.items():
         timing['admitted'] = module_gates.get(module, {}).get('enabled', False)

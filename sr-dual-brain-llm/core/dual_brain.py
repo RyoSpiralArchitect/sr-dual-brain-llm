@@ -474,9 +474,13 @@ class DualBrainController:
             remaining_budget_ms=budget, budget_source=source, estimated_latency_ms=estimate.ms,
             estimate_kind=estimate.kind, completed_samples=estimate.completed_samples,
             censored_samples=estimate.censored_samples, recovery_probe_allowed=status.allowed,
-            recovery_reason=status.reason, recovery_retry_after_ms=status.retry_after_ms)
+            recovery_reason=status.reason, recovery_retry_after_ms=status.retry_after_ms,
+            recovery_kind=status.kind, recovery_output_blocked=status.output_blocked,
+            recovery_confidence=status.confidence, recovery_confirmation_required=status.confirmation_required)
         return dict(remaining_budget_ms=budget, estimated_latency_ms=estimate.ms,
-                    recovery_probe_allowed=status.allowed), remaining is not None and remaining <= 0
+                    recovery_probe_allowed=status.allowed, recovery_kind=status.kind,
+                    recovery_output_blocked=status.output_blocked,
+                    recovery_confirmation_required=status.confirmation_required), remaining is not None and remaining <= 0
 
     @staticmethod
     def _advisor_usable(result):
@@ -509,6 +513,10 @@ class DualBrainController:
                     probe_outcome = ledger.finish_probe(work.probe_lease, elapsed,
                         usable=usable and getattr(result, 'source', '') == 'llm',
                         censored=state in {'timed_out', 'cancelled'})
+                elif hasattr(ledger, 'record_work'):
+                    ledger.record_work(work.module, work.profile, elapsed,
+                        usable=usable and getattr(result, 'source', '') == 'llm',
+                        censored=state in {'timed_out', 'cancelled'})
                 elif state in {'timed_out', 'cancelled'} or (usable and getattr(result, 'source', '') == 'llm'):
                     ledger.record(work.module, work.profile, elapsed, censored=state != 'completed')
             except Exception:
@@ -516,11 +524,15 @@ class DualBrainController:
         self._advisor_event('advisor_work', qid=work.qid, module=work.module, state=state,
             elapsed_ms=elapsed, cleanup_ms=max(0., total - elapsed) if started else 0.,
             usable_output=usable, stop_reason=work.stop_reason,
-            usage_status='unknown' if started else 'not_started', recovery_probe=work.recovery_probe,
-            recovery_probe_started=work.probe_lease is not None, recovery_outcome=probe_outcome)
+            usage_status='unknown' if started else 'not_started',
+            recovery_kind=work.recovery_kind if work.recovery_probe else 'normal',
+            recovery_probe=work.recovery_probe and work.recovery_kind == 'probe',
+            recovery_probe_started=work.probe_lease is not None and work.recovery_kind == 'probe',
+            recovery_confirmation_started=work.probe_lease is not None and work.recovery_kind == 'confirmation',
+            recovery_outcome=probe_outcome)
 
-    def _start_advisor(self, module, model, *, qid, factory, recovery_probe=False, phase_budget_ms=None):
-        work = AdvisorWork(module, model_profile(model), qid, recovery_probe=recovery_probe)
+    def _start_advisor(self, module, model, *, qid, factory, recovery_probe=False, phase_budget_ms=None, recovery_kind='probe'):
+        work = AdvisorWork(module, model_profile(model), qid, recovery_probe=recovery_probe, recovery_kind=recovery_kind)
 
         async def run():
             remaining = remaining_turn_ms()
@@ -539,7 +551,7 @@ class DualBrainController:
                     budget = remaining
                 ledger = getattr(self.hypothalamus, 'advisor_timing', None)
                 try:
-                    work.probe_lease = ledger.start_probe(module, work.profile, budget)
+                    work.probe_lease = ledger.start_probe(module, work.profile, budget, kind=work.recovery_kind)
                 except Exception:
                     work.probe_lease = None
                 if work.probe_lease is None:
@@ -2291,7 +2303,8 @@ class DualBrainController:
         if advice_gate.enabled:
             try:
                 executive_task = self._start_advisor(EXECUTIVE_ADVICE, self.executive_model, qid=qid,
-                    recovery_probe=advice_gate.reason == 'bounded_recovery_probe',
+                    recovery_probe=advice_gate.reason in {'bounded_recovery_probe', 'bounded_recovery_confirmation'},
+                    recovery_kind='confirmation' if advice_gate.reason == 'bounded_recovery_confirmation' else 'probe',
                     factory=lambda model=self.executive_model: model.advise(
                         question=question,
                         context=context,
@@ -2327,7 +2340,8 @@ class DualBrainController:
                             ),
                         })
                 director_task = self._start_advisor(DIRECTOR_ADVICE, self.director_model, qid=qid,
-                    recovery_probe=director_gate.reason == 'bounded_recovery_probe', phase_budget_ms=1600.,
+                    recovery_probe=director_gate.reason in {'bounded_recovery_probe', 'bounded_recovery_confirmation'}, phase_budget_ms=1600.,
+                    recovery_kind='confirmation' if director_gate.reason == 'bounded_recovery_confirmation' else 'probe',
                     factory=lambda model=self.director_model: model.advise(**director_kwargs))
             except Exception:  # pragma: no cover - defensive guard
                 director_task = None
@@ -4986,7 +5000,8 @@ class DualBrainController:
 
         try:
             observer_task = self._start_advisor(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
-                qid=decision.qid, recovery_probe=observation_gate.reason == 'bounded_recovery_probe',
+                qid=decision.qid, recovery_probe=observation_gate.reason in {'bounded_recovery_probe', 'bounded_recovery_confirmation'},
+                recovery_kind='confirmation' if observation_gate.reason == 'bounded_recovery_confirmation' else 'probe',
                 phase_budget_ms=2500., factory=lambda model=self.executive_model: model.advise(
                     question=question,
                     context=observer_context,

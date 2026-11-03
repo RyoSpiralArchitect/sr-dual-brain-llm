@@ -31,7 +31,7 @@ def test_probe_requires_known_ample_budget_and_quiet_history_without_spending_on
 
 def test_fast_probe_replaces_old_bounds_then_relapse_obeys_the_rolling_start_limit():
     now = [0.]
-    ledger = AdvisorTiming(clock=lambda:now[0])
+    ledger = AdvisorTiming(clock=lambda:now[0], confirmation_enabled=False)
     ledger.record(DIRECTOR, PROFILE, 2000., censored=True)
     now[0] = 16.
     token = ledger.start_probe(DIRECTOR, PROFILE, 1600.)
@@ -83,7 +83,7 @@ def test_expiry_cannot_reset_a_recent_probe_allowance_and_profiles_remain_bounde
 
 def test_fast_probe_preserves_observations_that_arrive_after_its_claim():
     now = [0.]
-    ledger = AdvisorTiming(clock=lambda:now[0])
+    ledger = AdvisorTiming(clock=lambda:now[0], confirmation_enabled=False)
     ledger.record(DIRECTOR, PROFILE, 3000., censored=True)
     now[0] = 16.
     token = ledger.start_probe(DIRECTOR, PROFILE, 1600.)
@@ -141,7 +141,7 @@ async def test_usable_probe_restores_admission_without_waiting_for_ttl(monkeypat
     monkeypatch.setattr('core.dual_brain.time.perf_counter',lambda:elapsed[0])
     c,model = make_stage_controller(),BlockingDirector()
     c.director_model = model
-    c.hypothalamus.advisor_timing = ledger = AdvisorTiming(clock=lambda:age[0])
+    c.hypothalamus.advisor_timing = ledger = AdvisorTiming(clock=lambda:age[0], confirmation_enabled=False)
     profile = model_profile(model)
     ledger.record(DIRECTOR,profile,2000.,censored=True)
     age[0] = 16.
@@ -223,7 +223,7 @@ async def test_known_ample_rpc_allows_one_executive_recovery_probe(monkeypatch):
     age = [0.]
     c,model,responses = make_stage_controller(),BlockingDirector(),[]
     c.executive_model = model
-    c.hypothalamus.advisor_timing = ledger = AdvisorTiming(clock=lambda:age[0])
+    c.hypothalamus.advisor_timing = ledger = AdvisorTiming(clock=lambda:age[0], confirmation_enabled=False)
     profile = model_profile(model)
     ledger.record(EXECUTIVE,profile,5000.)
     age[0] = 16.
