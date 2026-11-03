@@ -136,6 +136,9 @@ async def session(case, arm, config, journal, clock):
         torch.manual_seed(int(digest(case['id'])[:8], 16))
     engine, _ = await base.session_for(case['id'] + ':' + arm, None, config, journal,
                                       'left' if arm == 'draft' else arm, clock)
+    # Historical studies keep their request/control policy. New local-control
+    # experiments explicitly restore the production method in their treatment.
+    engine.controller._local_director_plan = lambda **_kwargs:None
     for model, role in ((engine.left, 'draft' if arm == 'draft' else 'left'),
                         (engine.right, 'right'), (engine.executive, 'executive'), (engine.director, 'director')):
         model._llm_client = RecordedClient(config, journal, role)

@@ -386,6 +386,8 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "stages": stage_modules,
             "gates": module_gates,
             "advisor_timing": advisor_timing,
+            "director_local": {key:(_last_event(events, 'director_local_controls') or {}).get(key)
+                for key in ('source', 'version', 'reasons', 'controls', 'applied_before_draft', 'latency_ms')},
         },
         "brain": {
             "amygdala": affect_payload,

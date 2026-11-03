@@ -156,6 +156,7 @@ class ObserverSetup:
     executive_task: asyncio.Task[ExecutiveAdvice] | None
     director_task: asyncio.Task[DirectorAdvice] | None
     module_gates: Dict[str, Dict[str, Any]]
+    local_director_plan: Any = None
 
 
 @dataclass
@@ -461,6 +462,24 @@ class DualBrainController:
         if config.valid and config.mode == GateMode.AUTO:
             return compact_model(model, module)
         return model
+
+    def _local_director_plan(self, *, system2_mode='auto', system2_capable=False,
+                             system2_active=False, thalamic_relay=None):
+        config = self.thalamic_reticular_nucleus.configure(DIRECTOR_ADVICE)
+        if not config.valid or config.mode != GateMode.AUTO:
+            return None
+        # Relay absence and absent memory do not establish a restriction. Only
+        # an explicit existing all-stream suppression may become an LT drop.
+        notes = getattr(thalamic_relay, 'notes', ())
+        restricted = (thalamic_relay is not None and
+            all(getattr(thalamic_relay, field, None) is False for field in (
+                'keep_long_term_memory', 'keep_schema_memory',
+                'keep_pitfall_memory', 'keep_hippocampal_memory')) and
+            ('memory_gate:suppress_long_term' in notes or
+             'memory_gate:working_only' in notes and 'fallback_long_term' not in notes))
+        owner = getattr(self.hypothalamus, 'local_director_plan', None)
+        return owner(system2_mode=system2_mode, system2_capable=system2_capable,
+                     system2_active=system2_active, long_term_restricted=restricted) if callable(owner) else None
 
     def _advisor_budget(self, module, model, *, qid, phase_budget_ms=None):
         remaining = remaining_turn_ms()
@@ -2270,6 +2289,10 @@ class DualBrainController:
         executive_mode: str,
         executive_observer_mode: str,
         qid: str | None = None,
+        system2_mode: str = 'auto',
+        system2_capable: bool = False,
+        system2_active: bool = False,
+        thalamic_relay: ThalamicRelay | None = None,
     ) -> ObserverSetup:
         executive_mode_norm = str(executive_mode or "off").strip().lower()
         if executive_mode_norm not in {"off", "observe", "assist", "polish"}:
@@ -2279,6 +2302,10 @@ class DualBrainController:
             executive_observer_mode_norm = "off"
         use_director = executive_observer_mode_norm in {"director", "both"}
         use_metrics_observer = executive_observer_mode_norm in {"metrics", "both"}
+        local_plan = (self._local_director_plan(system2_mode=system2_mode,
+            system2_capable=system2_capable, system2_active=system2_active,
+            thalamic_relay=thalamic_relay) if use_director and not is_trivial_chat else None)
+        local_ready = bool(local_plan is not None and local_plan.nonneutral)
 
         # Executive advice overlaps later drafting/consultation. Its eventual
         # wait window is not known here: only an existing RPC deadline is a
@@ -2301,10 +2328,11 @@ class DualBrainController:
         director_gate = self._module_gate(
             DIRECTOR_ADVICE, qid=qid,
             facts=GateFacts(
-                eligible=self.director_model is not None and use_director and not director_expired,
+                eligible=(self.director_model is not None or local_ready) and use_director and not director_expired,
                 blocked_reason=('turn_deadline_elapsed' if director_expired else
                                 'caller_mode_off' if not use_director else 'model_unavailable'),
                 has_input=bool(question.strip()), is_trivial=is_trivial_chat,
+                local_controls_ready=local_ready,
                 **director_timing,
             ),
         )
@@ -2364,6 +2392,8 @@ class DualBrainController:
             executive_task=executive_task,
             director_task=director_task,
             module_gates={gate.module: gate.to_payload() for gate in (advice_gate, director_gate)},
+            local_director_plan=(local_plan if local_ready and director_gate.eligible
+                                 and director_gate.reason == 'local_controls_ready' else None),
         )
 
     async def _run_pre_draft_director_stage(
@@ -2377,13 +2407,17 @@ class DualBrainController:
         director_task: asyncio.Task[DirectorAdvice] | None,
         director_requested: bool,
         phase_add: Callable[[str, float], None],
+        local_director_plan: Any = None,
     ) -> DirectorStageResult:
         director_payload: Dict[str, Any] | None = None
         director_control: Dict[str, Any] | None = None
         # Caller-selected deterministic steering is independent of optional
         # provider admission. Inhibiting a task must not remove the free guard.
         trivial_control = is_trivial_chat and director_requested
-        if director_task is None and not trivial_control:
+        local_ready = bool(director_requested and local_director_plan is not None
+                           and local_director_plan.nonneutral and not turn_abandoned()
+                           and (remaining_turn_ms() is None or remaining_turn_ms() > 0))
+        if director_task is None and not trivial_control and not local_ready:
             return DirectorStageResult(
                 context_frame=context_frame,
                 director_task=director_task,
@@ -2392,7 +2426,13 @@ class DualBrainController:
             )
 
         advice: DirectorAdvice | None = None
-        if trivial_control:
+        if local_ready:
+            started = time.perf_counter()
+            advice = DirectorAdvice(
+                memo='Preserve the explicit consultation requirement and existing memory restrictions where supplied; other controls remain neutral.',
+                control=local_director_plan.controls, confidence=1.,
+                latency_ms=max(0., (time.perf_counter() - started) * 1000.), source='local_facts')
+        elif trivial_control:
             advice = DirectorAdvice(
                 memo=(
                     "(Director memo / fast-path)\n"
@@ -2460,6 +2500,11 @@ class DualBrainController:
             context_parts=context_parts,
             control=director_control,
         )
+        if local_ready:
+            director_payload['local_plan'] = local_director_plan.to_payload()
+            self.telemetry.log('director_local_controls', qid=qid,
+                **local_director_plan.to_payload(), applied_before_draft=True,
+                latency_ms=float(advice.latency_ms))
         return DirectorStageResult(
             context_frame=context_frame,
             director_task=director_task,
@@ -5358,6 +5403,8 @@ class DualBrainController:
             collaboration_profile=collaboration_profile,
             executive_mode=executive_mode,
             executive_observer_mode=executive_observer_mode,
+            system2_mode=system2_norm, system2_capable=system2_capable,
+            system2_active=system2_active, thalamic_relay=thalamic_relay,
         )
         executive_mode_norm = observer_setup.executive_mode
         use_metrics_observer = observer_setup.use_metrics_observer
@@ -5388,6 +5435,7 @@ class DualBrainController:
             director_task=director_task,
             director_requested=observer_setup.use_director,
             phase_add=_phase_add,
+            local_director_plan=observer_setup.local_director_plan,
         )
         context_frame = director_stage.context_frame
         context = context_frame.context
@@ -5425,10 +5473,19 @@ class DualBrainController:
             hard_timeout_s = max(0.35, float(timeout_ms) / 1000.0 + 0.2)
             try:
                 self.callosum.slot_ms = decision.slot_ms
-                return await asyncio.wait_for(
-                    self.callosum.ask_detail(payload_obj, timeout_ms=timeout_ms),
-                    timeout=hard_timeout_s,
-                )
+                ask_task = create_turn_task(
+                    self.callosum.ask_detail(payload_obj, timeout_ms=timeout_ms))
+                try:
+                    done, _ = await asyncio.wait({ask_task}, timeout=hard_timeout_s)
+                    if not done:
+                        cancel_task(ask_task)
+                        await asyncio.gather(ask_task, return_exceptions=True)
+                        raise asyncio.TimeoutError
+                    return ask_task.result()
+                except asyncio.CancelledError:
+                    cancel_task(ask_task)
+                    await asyncio.gather(ask_task, return_exceptions=True)
+                    raise
             finally:
                 self.callosum.slot_ms = original_slot
 

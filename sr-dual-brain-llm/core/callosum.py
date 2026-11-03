@@ -104,11 +104,13 @@ class Callosum:
         packet.update(qid=qid, request_id=request_id, deadline_at=end)
         pending = _Pending(qid, end, loop.create_future())
         self._pending[request_id] = pending
-        async def dispatch():
-            # Waiting on a future does not propagate cancellation into model
-            # work. The outer waiter exclusively owns the end-to-end timer.
+        try:
+            # Observe the response without cancelling/uncancelling the caller.
+            # A local asyncio.wait_for() timer can consume an RPC turn's
+            # cancel-once guard on Python 3.11+, disabling later abandonment.
             if slot:
-                done, _ = await asyncio.wait({pending.future}, timeout=slot)
+                done, _ = await asyncio.wait(
+                    {pending.future}, timeout=min(slot, max(0., end-loop.time())))
                 if done:
                     return pending.future.result()
             if pending.future.done():
@@ -117,9 +119,10 @@ class Callosum:
                 raise TimeoutError("Consultation deadline elapsed before dispatch")
             self._queued[request_id] = packet
             self._available.set()
-            return await pending.future
-        try:
-            return await asyncio.wait_for(dispatch(), timeout=max(0., end-loop.time()))
+            done, _ = await asyncio.wait({pending.future}, timeout=max(0., end-loop.time()))
+            if not done:
+                raise TimeoutError("Consultation deadline elapsed before response")
+            return pending.future.result()
         except TimeoutError:
             self._expired += 1
             raise
