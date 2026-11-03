@@ -1,0 +1,4081 @@
+{
+  "schema_version": 1,
+  "publication_note": "Controlled timing/receipts are synthetic. Live history is not seeded; raw prompts, answers and HTTP bodies are excluded.",
+  "controlled_recovery": {
+    "schema_version": 1,
+    "experiment": "bounded_advisor_recovery",
+    "complete": true,
+    "evidence": "controlled_recovery",
+    "frozen_replay": false,
+    "source_revision": "34cb1ce44c25a3f44e546edd4af1ef022e94f132",
+    "metadata": {
+      "model": "controlled-recovery",
+      "judge_model": "gpt-6-sol",
+      "config": {
+        "provider": "openai",
+        "model": "controlled-recovery",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "controlled-recovery",
+          "temperature": 0.2,
+          "max_tokens": 2048
+        }
+      },
+      "fixture_sha256": "125b60c570c32ecfc274e2b05900c84c389c387961ed830dacac2dc65ab1b2dc",
+      "code_sha256": "cb3303f8b36c5834ee1c0073e6566a96e1aede04a3d7ab58e80b45fc7a501e24",
+      "call_limit": 96,
+      "controlled": "recovery",
+      "arms": [
+        "ttl_only_auto",
+        "recovery_auto"
+      ],
+      "torch_policy": true,
+      "history_policy": "same_sessions;no_seeding;v2_equivalent_baseline;recorded_resource_reads_and_claims_only_in_replay",
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "time_budget_recovery_v3",
+        "director_advice": "time_budget_recovery_v3",
+        "executive_metrics_observation": "time_budget_recovery_v3",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "idle_intervals": [
+      {
+        "before": "opportunity",
+        "requested_seconds": 16,
+        "observed_seconds": 2.942979335784912e-06,
+        "simulated": true,
+        "replay_skipped": false
+      }
+    ],
+    "transport_calls": 38,
+    "live_provider_calls": 0,
+    "experiment_usage": {
+      "calls": 38,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 320,
+      "known_output_tokens": 160,
+      "unknown_usage_calls": 6,
+      "cancelled_calls": 6,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "ttl_only_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 16,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 140,
+            "known_output_tokens": 70,
+            "unknown_usage_calls": 2,
+            "cancelled_calls": 2,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 5,
+            "director": 1,
+            "primary": 5,
+            "executive_metrics": 1,
+            "support": 4
+          },
+          "advisors": {
+            "executive_metrics_observation": {
+              "started": 1,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 4
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "unreached": 4
+              }
+            },
+            "director_advice": {
+              "started": 1,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 4
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "unreached": 4
+              }
+            },
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            }
+          }
+        },
+        "recovery_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 22,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 180,
+            "known_output_tokens": 90,
+            "unknown_usage_calls": 4,
+            "cancelled_calls": 4,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 5,
+            "director": 4,
+            "primary": 5,
+            "executive_metrics": 4,
+            "support": 4
+          },
+          "advisors": {
+            "executive_metrics_observation": {
+              "started": 4,
+              "usable_output": 2,
+              "outcomes": {
+                "timed_out": 2,
+                "completed": 2,
+                "not_admitted": 1
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 3,
+                "recovered": 1,
+                "unreached": 1
+              }
+            },
+            "director_advice": {
+              "started": 4,
+              "usable_output": 2,
+              "outcomes": {
+                "timed_out": 2,
+                "completed": 2,
+                "not_admitted": 1
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 3,
+                "recovered": 1,
+                "unreached": 1
+              }
+            },
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 0,
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "rows": [
+      {
+        "case": "initial",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119998.1519530993,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 10.748101049102843,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1601.032410049811,
+            "cleanup_ms": 1.8103009788319468,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2502.773738000542,
+            "cleanup_ms": 1.6077079344540834,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "initial",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119999.28374704905,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.08391594607383,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1601.7363530118018,
+            "cleanup_ms": 1.7025789711624384,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2501.812172937207,
+            "cleanup_ms": 2.16762803029269,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "opportunity",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119995.44573796447,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.08391594607383,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 12.153950985521078,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.7363530118018,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 6.226917961612344,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "recovered",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2501.812172937207,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 6.465419894084334,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "recovered",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "opportunity",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119995.47435389832,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 10.748101049102843,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.411109939217567,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.032410049811,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.773738000542,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "followup",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.82788599562,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.411109939217567,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.722049908712506,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.032410049811,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.773738000542,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "followup",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "known_input_tokens": 50,
+          "known_output_tokens": 25,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119991.56784196384,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 12.153950985521078,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.787584982812405,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 6.226917961612344,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 6.529147969558835,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 6.465419894084334,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 7.145696901716292,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "relapse",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.5956170559,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 12.153950985521078,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.982263065874577,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 6.529147969558835,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1602.021511993371,
+            "cleanup_ms": 5.471055977977812,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 7.145696901716292,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2502.8002760373056,
+            "cleanup_ms": 7.561738952063024,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "relapse",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119993.04382305127,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.722049908712506,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 12.8907379694283,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.032410049811,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.773738000542,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "capped",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119990.93201290816,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 12.8907379694283,
+            "estimate_kind": "completed_max",
+            "completed_samples": 4,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 13.52552801836282,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.032410049811,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.773738000542,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "capped",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119990.89743604418,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 12.153950985521078,
+            "estimate_kind": "completed_max",
+            "completed_samples": 4,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 13.577534002251923,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.021511993371,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 2,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 55498.91367694363,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.8002760373056,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 2,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 55500.949789071456,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      }
+    ],
+    "primary_draft_scores": {
+      "ttl_only_auto": {
+        "available": 5,
+        "graded": 0,
+        "all_pass": 0
+      },
+      "recovery_auto": {
+        "available": 5,
+        "graded": 0,
+        "all_pass": 0
+      }
+    }
+  },
+  "controlled_slow": {
+    "schema_version": 1,
+    "experiment": "bounded_advisor_recovery",
+    "complete": true,
+    "evidence": "controlled_slow",
+    "frozen_replay": false,
+    "source_revision": "34cb1ce44c25a3f44e546edd4af1ef022e94f132",
+    "metadata": {
+      "model": "controlled-recovery",
+      "judge_model": "gpt-6-sol",
+      "config": {
+        "provider": "openai",
+        "model": "controlled-recovery",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "controlled-recovery",
+          "temperature": 0.2,
+          "max_tokens": 2048
+        }
+      },
+      "fixture_sha256": "125b60c570c32ecfc274e2b05900c84c389c387961ed830dacac2dc65ab1b2dc",
+      "code_sha256": "cb3303f8b36c5834ee1c0073e6566a96e1aede04a3d7ab58e80b45fc7a501e24",
+      "call_limit": 96,
+      "controlled": "slow",
+      "arms": [
+        "ttl_only_auto",
+        "recovery_auto"
+      ],
+      "torch_policy": true,
+      "history_policy": "same_sessions;no_seeding;v2_equivalent_baseline;recorded_resource_reads_and_claims_only_in_replay",
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "time_budget_recovery_v3",
+        "director_advice": "time_budget_recovery_v3",
+        "executive_metrics_observation": "time_budget_recovery_v3",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "idle_intervals": [
+      {
+        "before": "opportunity",
+        "requested_seconds": 16,
+        "observed_seconds": 2.399901859462261e-06,
+        "simulated": true,
+        "replay_skipped": false
+      }
+    ],
+    "transport_calls": 34,
+    "live_provider_calls": 0,
+    "experiment_usage": {
+      "calls": 34,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 280,
+      "known_output_tokens": 140,
+      "unknown_usage_calls": 6,
+      "cancelled_calls": 6,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "ttl_only_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 16,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 140,
+            "known_output_tokens": 70,
+            "unknown_usage_calls": 2,
+            "cancelled_calls": 2,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 5,
+            "director": 1,
+            "primary": 5,
+            "executive_metrics": 1,
+            "support": 4
+          },
+          "advisors": {
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            },
+            "director_advice": {
+              "started": 1,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 4
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "unreached": 4
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 1,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 1,
+                "not_admitted": 4
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "unreached": 4
+              }
+            }
+          }
+        },
+        "recovery_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 0,
+          "all_pass": 0,
+          "criterion_pass": {
+            "task": 0,
+            "grounding": 0,
+            "clarification": 0
+          },
+          "usage": {
+            "calls": 18,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 140,
+            "known_output_tokens": 70,
+            "unknown_usage_calls": 4,
+            "cancelled_calls": 4,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "executive": 5,
+            "director": 2,
+            "primary": 5,
+            "executive_metrics": 2,
+            "support": 4
+          },
+          "advisors": {
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            },
+            "director_advice": {
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 3
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "cancelled": 1,
+                "unreached": 3
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 3
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "cancelled": 1,
+                "unreached": 3
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 0,
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "rows": [
+      {
+        "case": "initial",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119997.3543320084,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.224773013964295,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1601.8388100201264,
+            "cleanup_ms": 1.4041549293324351,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2502.7929010102525,
+            "cleanup_ms": 1.4612409286201,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "initial",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 20,
+          "known_output_tokens": 10,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119999.30309399497,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.351994937285781,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1602.0325800636783,
+            "cleanup_ms": 2.0986140007153153,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2501.9071419956163,
+            "cleanup_ms": 1.8649650737643242,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "opportunity",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "director": 1,
+          "primary": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119995.6080209231,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.351994937285781,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.119137983769178,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.0325800636783,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 1608.0632481025532,
+            "cleanup_ms": 10.00811590347439,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2501.9071419956163,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 2502.7864429866895,
+            "cleanup_ms": 2.4589119711890817,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "opportunity",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119995.01452897675,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.224773013964295,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.409420985728502,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8388100201264,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7929010102525,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "followup",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.69890806358,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.409420985728502,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.350056971423328,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8388100201264,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7929010102525,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "followup",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119995.09621807374,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.351994937285781,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.59529690630734,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1608.0632481025532,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 55732.69925895147,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7864429866895,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 57357.772705028765,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "relapse",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.73709997255,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.59529690630734,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.798891006037593,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1608.0632481025532,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 55686.35735299904,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7864429866895,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 57311.62807694636,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "relapse",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.445390068,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.409420985728502,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 11.787665076553822,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8388100201264,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7929010102525,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "capped",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119993.27637895476,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.787665076553822,
+            "estimate_kind": "completed_max",
+            "completed_samples": 4,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 12.116061989217997,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.8388100201264,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7929010102525,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      },
+      {
+        "case": "capped",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 3,
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "known_input_tokens": 30,
+          "known_output_tokens": 15,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "executive": 1,
+          "primary": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "draft_sha256": "29d7bc11bc0def8b880cdb5e5fb4dc0a7716300bc199888b1444ee0d7c1aaba5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119994.2660810193,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 11.798891006037593,
+            "estimate_kind": "completed_max",
+            "completed_samples": 4,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 12.509663007222116,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1608.0632481025532,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 55542.84353705589,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7864429866895,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 57167.033890029415,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {},
+        "draft_scores": {}
+      }
+    ],
+    "primary_draft_scores": {
+      "ttl_only_auto": {
+        "available": 5,
+        "graded": 0,
+        "all_pass": 0
+      },
+      "recovery_auto": {
+        "available": 5,
+        "graded": 0,
+        "all_pass": 0
+      }
+    }
+  },
+  "live": {
+    "schema_version": 1,
+    "experiment": "bounded_advisor_recovery",
+    "complete": true,
+    "evidence": "live",
+    "frozen_replay": false,
+    "source_revision": "34cb1ce44c25a3f44e546edd4af1ef022e94f132",
+    "metadata": {
+      "model": "gpt-6-luna",
+      "judge_model": "gpt-6-sol",
+      "config": {
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "max_output_tokens": 2048,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "gpt-6-luna",
+          "max_completion_tokens": 2048
+        }
+      },
+      "fixture_sha256": "125b60c570c32ecfc274e2b05900c84c389c387961ed830dacac2dc65ab1b2dc",
+      "code_sha256": "cb3303f8b36c5834ee1c0073e6566a96e1aede04a3d7ab58e80b45fc7a501e24",
+      "call_limit": 96,
+      "controlled": null,
+      "arms": [
+        "ttl_only_auto",
+        "recovery_auto"
+      ],
+      "torch_policy": true,
+      "history_policy": "same_sessions;no_seeding;v2_equivalent_baseline;recorded_resource_reads_and_claims_only_in_replay",
+      "gate_policies": {
+        "conversation_selective_consultation": "literal_replay_v1",
+        "acc_monitor": "acc_observation_v1",
+        "cerebellar_correction": "cerebellar_micro_v1",
+        "default_mode_reflection_injection": "reflection_injection_v1",
+        "system2_stalled_followup": "stalled_checklist_v1",
+        "executive_advice": "time_budget_recovery_v3",
+        "director_advice": "time_budget_recovery_v3",
+        "executive_metrics_observation": "time_budget_recovery_v3",
+        "acc_consult_promotion": "acc_conflict_control_v1",
+        "acc_system2_promotion": "acc_conflict_control_v1",
+        "acc_temperature_adjustment": "acc_conflict_control_v1",
+        "basal_consult_promotion": "basal_consult_promotion_v1"
+      }
+    },
+    "idle_intervals": [
+      {
+        "before": "opportunity",
+        "requested_seconds": 16,
+        "observed_seconds": 16.016223030979745,
+        "simulated": false,
+        "replay_skipped": false
+      }
+    ],
+    "transport_calls": 56,
+    "live_provider_calls": 56,
+    "experiment_usage": {
+      "calls": 56,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 36117,
+      "known_output_tokens": 9627,
+      "unknown_usage_calls": 7,
+      "cancelled_calls": 7,
+      "failed_calls": 0
+    },
+    "judge_usage": {
+      "calls": 5,
+      "input_tokens": 4672,
+      "output_tokens": 2896,
+      "known_input_tokens": 4672,
+      "known_output_tokens": 2896,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summaries": {
+      "by_arm": {
+        "ttl_only_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 5,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 5,
+            "clarification": 5
+          },
+          "usage": {
+            "calls": 26,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 16182,
+            "known_output_tokens": 3454,
+            "unknown_usage_calls": 3,
+            "cancelled_calls": 3,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 2,
+            "primary": 5,
+            "executive": 5,
+            "right": 5,
+            "left": 1,
+            "executive_metrics": 4,
+            "support": 4
+          },
+          "advisors": {
+            "director_advice": {
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 3
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "unreached": 3
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 4,
+              "usable_output": 3,
+              "outcomes": {
+                "completed": 3,
+                "timed_out": 1,
+                "not_admitted": 1
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 4,
+                "unreached": 1
+              }
+            },
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            }
+          }
+        },
+        "recovery_auto": {
+          "planned": 5,
+          "available": 5,
+          "graded": 5,
+          "all_pass": 5,
+          "criterion_pass": {
+            "task": 5,
+            "grounding": 5,
+            "clarification": 5
+          },
+          "usage": {
+            "calls": 25,
+            "input_tokens": null,
+            "output_tokens": null,
+            "known_input_tokens": 15263,
+            "known_output_tokens": 3277,
+            "unknown_usage_calls": 4,
+            "cancelled_calls": 4,
+            "failed_calls": 0
+          },
+          "calls_by_role": {
+            "director": 2,
+            "executive": 5,
+            "primary": 5,
+            "right": 5,
+            "left": 1,
+            "executive_metrics": 3,
+            "support": 4
+          },
+          "advisors": {
+            "director_advice": {
+              "started": 2,
+              "usable_output": 0,
+              "outcomes": {
+                "timed_out": 2,
+                "not_admitted": 3
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 1,
+                "cancelled": 1,
+                "unreached": 3
+              }
+            },
+            "executive_metrics_observation": {
+              "started": 3,
+              "usable_output": 1,
+              "outcomes": {
+                "timed_out": 2,
+                "completed": 1,
+                "not_admitted": 2
+              },
+              "probe_starts": 1,
+              "probe_outcomes": {
+                "not_attempted": 2,
+                "recovered": 1,
+                "unreached": 2
+              }
+            },
+            "executive_advice": {
+              "started": 5,
+              "usable_output": 5,
+              "outcomes": {
+                "completed": 5
+              },
+              "probe_starts": 0,
+              "probe_outcomes": {
+                "not_attempted": 5
+              }
+            }
+          }
+        }
+      },
+      "jointly_graded_pairs": 5,
+      "criterion_regressions": {
+        "task": [],
+        "grounding": [],
+        "clarification": []
+      },
+      "grader_failures": 0
+    },
+    "rows": [
+      {
+        "case": "initial",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 2573,
+          "known_output_tokens": 667,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "36cb871bde4004b7343fe3865790403a207a371fc444a6268b67c1839c6c65a1",
+        "draft_sha256": "c8f31095626be7173666e4e4ec8666b89f9a9ad1613a9500ddadafd27b7eff62",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119998.1218619505,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 3430.396302952431,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1601.36426507961,
+            "cleanup_ms": 2.32054793741554,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2392.278507933952,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "initial",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 1,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 2030,
+          "known_output_tokens": 690,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "left": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 1,
+        "answer_sha256": "577af1694f17f02785323765fe44a58257f4e7dc509a0bb8d756d00c37fe0fbb",
+        "draft_sha256": "cd1f5df18677d57217b720bcd9161842b18f0b22e18be092dbf4c178a4a4a702",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 119999.2425229866,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2966.978707932867,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1602.5684969499707,
+            "cleanup_ms": 3.6205450305715203,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "no_history",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2502.8636179631576,
+            "cleanup_ms": 3.8252450758591294,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "opportunity",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3338,
+          "known_output_tokens": 653,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "cee75c208838b414f0c8e53f81a2ee7782b5c71f12cd7aae430f359997cb1e6c",
+        "draft_sha256": "cee75c208838b414f0c8e53f81a2ee7782b5c71f12cd7aae430f359997cb1e6c",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "bounded_recovery_probe",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118749.61788195651,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2966.978707932867,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2614.1822750214487,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.5684969499707,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 1602.3327190196142,
+            "cleanup_ms": 3.9370119338855147,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "cancelled",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.8636179631576,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": true,
+            "recovery_reason": "ready",
+            "recovery_retry_after_ms": 0.0,
+            "started": true,
+            "elapsed_ms": 2259.835886070505,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": true,
+            "recovery_probe_started": true,
+            "recovery_outcome": "recovered",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "opportunity",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 2,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 3320,
+          "output_tokens": 660,
+          "known_input_tokens": 3320,
+          "known_output_tokens": 660,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "right": 1,
+          "executive": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 2,
+        "answer_sha256": "70720943d22e85999476fa159819849e48b74d0c0672d79229ef937ea63d87c5",
+        "draft_sha256": "70720943d22e85999476fa159819849e48b74d0c0672d79229ef937ea63d87c5",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118987.16744303238,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3430.396302952431,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2678.0317820375785,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.36426507961,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2392.278507933952,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2210.9030609717593,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "followup",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": 3659,
+          "output_tokens": 798,
+          "known_input_tokens": 3659,
+          "known_output_tokens": 798,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "f2e56add177a79cb769600cc57c1b20054bc9c4cd51a6f37c2dd5b46ba444bf4",
+        "draft_sha256": "f2e56add177a79cb769600cc57c1b20054bc9c4cd51a6f37c2dd5b46ba444bf4",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118421.26615799498,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 3430.396302952431,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2787.754097022116,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.36426507961,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2392.278507933952,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2140.343170030974,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "followup",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 3,
+        "error_type": null,
+        "usage": {
+          "calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3031,
+          "known_output_tokens": 525,
+          "unknown_usage_calls": 1,
+          "cancelled_calls": 1,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 3,
+        "answer_sha256": "5e5dd20d94bd7deebe0f9997a7ebcb132710ed7afbd62a7178e1da9fb079093a",
+        "draft_sha256": "5e5dd20d94bd7deebe0f9997a7ebcb132710ed7afbd62a7178e1da9fb079093a",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118891.89003198408,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2966.978707932867,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2967.0491099823266,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.5684969499707,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 37795.48218497075,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2259.835886070505,
+            "estimate_kind": "completed_max",
+            "completed_samples": 1,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2502.7969209477305,
+            "cleanup_ms": 8.735203999094665,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "relapse",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 3293,
+          "output_tokens": 560,
+          "known_input_tokens": 3293,
+          "known_output_tokens": 560,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "3fa1ce4b87ac359a9ceb62c88f82ec7581045958853e0db7d1b29e364260cdd8",
+        "draft_sha256": "3fa1ce4b87ac359a9ceb62c88f82ec7581045958853e0db7d1b29e364260cdd8",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118266.39540097676,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2967.0491099823266,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2654.9403950339183,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.5684969499707,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 2,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 30358.8100039633,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7969209477305,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 1,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 32472.775862086564,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "relapse",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 4,
+        "error_type": null,
+        "usage": {
+          "calls": 6,
+          "input_tokens": null,
+          "output_tokens": null,
+          "known_input_tokens": 3254,
+          "known_output_tokens": 553,
+          "unknown_usage_calls": 2,
+          "cancelled_calls": 2,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "director": 1,
+          "executive": 1,
+          "primary": 1,
+          "right": 1,
+          "executive_metrics": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 4,
+        "answer_sha256": "20236ee9f8c36416f10f55c8f075ae1af4cac2fe5e580f6456f3ccb0d2b24e66",
+        "draft_sha256": "20236ee9f8c36416f10f55c8f075ae1af4cac2fe5e580f6456f3ccb0d2b24e66",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 118962.90573396254,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2787.754097022116,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2792.8956679534167,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": null,
+            "estimate_kind": "unknown",
+            "completed_samples": 0,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 1601.6421080566943,
+            "cleanup_ms": 9.36105998698622,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2210.9030609717593,
+            "estimate_kind": "completed_max",
+            "completed_samples": 2,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2503.503724001348,
+            "cleanup_ms": 9.409663965925574,
+            "usable_output": false,
+            "stop_reason": "wait_timeout",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "timed_out",
+            "admitted": true
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "capped",
+        "arm": "ttl_only_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 3376,
+          "output_tokens": 776,
+          "known_input_tokens": 3376,
+          "known_output_tokens": 776,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "d5d07ddb9dbb7105ed18e097a4a1e995489033f7eaec5c658f11960fc7916514",
+        "draft_sha256": "d5d07ddb9dbb7105ed18e097a4a1e995489033f7eaec5c658f11960fc7916514",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 116323.8479050342,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2792.8956679534167,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 3218.4425350278616,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1601.6421080566943,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2503.503724001348,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 2,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "disabled",
+            "recovery_retry_after_ms": null,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      },
+      {
+        "case": "capped",
+        "arm": "recovery_auto",
+        "status": "ok",
+        "session_turn": 5,
+        "error_type": null,
+        "usage": {
+          "calls": 4,
+          "input_tokens": 3571,
+          "output_tokens": 849,
+          "known_input_tokens": 3571,
+          "known_output_tokens": 849,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "calls_by_role": {
+          "support": 1,
+          "primary": 1,
+          "executive": 1,
+          "right": 1
+        },
+        "pending_advisors": 0,
+        "memory_sources": 5,
+        "answer_sha256": "75913997858900825311df557cda63fd5e5c422911c730be42dea5ad27046020",
+        "draft_sha256": "75913997858900825311df557cda63fd5e5c422911c730be42dea5ad27046020",
+        "advisor_gates": {
+          "executive_advice": {
+            "mode": "auto",
+            "enabled": true,
+            "reason": "optional_observation_needed",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "director_advice": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          },
+          "executive_metrics_observation": {
+            "mode": "auto",
+            "enabled": false,
+            "reason": "insufficient_time_budget",
+            "policy_version": "time_budget_recovery_v3"
+          }
+        },
+        "advisor_timing": {
+          "executive_advice": {
+            "remaining_budget_ms": 116060.7790609356,
+            "budget_source": "turn_deadline",
+            "estimated_latency_ms": 2967.0491099823266,
+            "estimate_kind": "completed_max",
+            "completed_samples": 3,
+            "censored_samples": 0,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "estimate_fits",
+            "recovery_retry_after_ms": null,
+            "started": true,
+            "elapsed_ms": 2968.7778749503195,
+            "cleanup_ms": 0.0,
+            "usable_output": true,
+            "stop_reason": "none",
+            "usage_status": "unknown",
+            "recovery_probe": false,
+            "recovery_probe_started": false,
+            "recovery_outcome": "not_attempted",
+            "outcome": "completed",
+            "admitted": true
+          },
+          "director_advice": {
+            "remaining_budget_ms": 1600.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 1602.3327190196142,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 0,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 7236.128815915436,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          },
+          "executive_metrics_observation": {
+            "remaining_budget_ms": 2500.0,
+            "budget_source": "phase_wait",
+            "estimated_latency_ms": 2502.7969209477305,
+            "estimate_kind": "censored_bound",
+            "completed_samples": 1,
+            "censored_samples": 1,
+            "recovery_probe_allowed": false,
+            "recovery_reason": "rate_limited",
+            "recovery_retry_after_ms": 9441.564862034284,
+            "admitted": false,
+            "started": false,
+            "outcome": "not_admitted"
+          }
+        },
+        "scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        },
+        "draft_scores": {
+          "task": "pass",
+          "grounding": "pass",
+          "clarification": "pass"
+        }
+      }
+    ],
+    "primary_draft_scores": {
+      "ttl_only_auto": {
+        "available": 5,
+        "graded": 5,
+        "all_pass": 5
+      },
+      "recovery_auto": {
+        "available": 5,
+        "graded": 5,
+        "all_pass": 5
+      }
+    }
+  },
+  "live_replay_check": {
+    "recorded_attempts": 56,
+    "replayed_attempts": 56,
+    "new_provider_calls": 0,
+    "cells": 10,
+    "status_differences": 0,
+    "answer_differences": 0,
+    "draft_differences": 0,
+    "memory_sources_differences": 0,
+    "pending_advisors_differences": 0,
+    "resource_read_claim_differences": 0,
+    "gate_differences": 0,
+    "grades_equal": true,
+    "lifecycle_differences": 7
+  }
+}

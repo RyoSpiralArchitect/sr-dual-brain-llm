@@ -242,6 +242,12 @@ including primary generation and a real 61-second idle. It repaired local-wait
 interference with RPC cancellation and exposed slow-history suppression of newly
 fast roles. A rubric/question mismatch limits its raw 4/6 versus 5/6 grades;
 the report retains original grades and does not claim a quality improvement.
+The [bounded-recovery study](benchmarks/advisor-recovery-2026-11-03.md) then
+demonstrated a real metrics recovery before TTL expiry and 5/5 graded tasks in
+both profiles. Whole-turn attempts were 26 versus 25, but usable advisor outputs
+were 8 versus 6. A successful probe was followed by an ordinary timeout; bounded
+recovery works mechanically, while stable utility under latency jitter remains
+an open evaluation target. No cost or quality improvement is established.
 
 ## Facts and observability
 
