@@ -69,6 +69,7 @@ class GateFacts:
     memory_pressure: bool = False
     remaining_budget_ms: float | None = None
     estimated_latency_ms: float | None = None
+    recovery_probe_allowed: bool = False
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -133,7 +134,7 @@ AUTO_REASONS = frozenset({
     "reflection_injection_needed", "conflict_control_needed",
     "critic_signal_uncertain", "stalled_checklist_needed",
     "memory_consultation_needed",
-    "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal",
+    "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal", "bounded_recovery_probe",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -248,6 +249,8 @@ def _auto_optional_observation(facts: GateFacts) -> tuple[bool, str]:
     if budget is not None and budget <= 50.:
         return False, "time_budget_exhausted"
     if budget is not None and latency is not None and latency + 50. >= budget:
+        if facts.recovery_probe_allowed is True:
+            return True, "bounded_recovery_probe"
         return False, "insufficient_time_budget"
     # Unknown estimate/window preserves v1's nontrivial-input cold probe.
     return True, "optional_observation_needed"
@@ -337,19 +340,19 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     EXECUTIVE_ADVICE: ModuleSpec(
         module_id=EXECUTIVE_ADVICE,
-        phase="observer_preparation", policy_version="time_budget_observation_v2",
+        phase="observer_preparation", policy_version="time_budget_recovery_v3",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     DIRECTOR_ADVICE: ModuleSpec(
         module_id=DIRECTOR_ADVICE,
-        phase="observer_preparation", policy_version="time_budget_observation_v2",
+        phase="observer_preparation", policy_version="time_budget_recovery_v3",
         mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
     ),
     EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
         module_id=EXECUTIVE_METRICS_OBSERVATION,
-        phase="post_turn_observation", policy_version="time_budget_observation_v2",
+        phase="post_turn_observation", policy_version="time_budget_recovery_v3",
         mode_env="DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE", legacy_env=None,
         default_mode=GateMode.ON, auto_policy=_auto_metrics_observation,
     ),

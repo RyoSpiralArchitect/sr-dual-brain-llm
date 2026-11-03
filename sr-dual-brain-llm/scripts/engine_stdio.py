@@ -114,14 +114,16 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             if event.get('event') == 'advisor_budget':
                 advisor_timing.setdefault(module, {}).update({key:event.get(key) for key in (
                     'remaining_budget_ms', 'budget_source', 'estimated_latency_ms', 'estimate_kind',
-                    'completed_samples', 'censored_samples')})
+                    'completed_samples', 'censored_samples', 'recovery_probe_allowed',
+                    'recovery_reason', 'recovery_retry_after_ms')})
             elif event.get('event') == 'advisor_work':
                 target = advisor_timing.setdefault(module, {})
                 if event.get('state') == 'started':
                     target['started'] = True
                 else:
                     target.update({key:event.get(key) for key in (
-                        'elapsed_ms', 'cleanup_ms', 'usable_output', 'stop_reason', 'usage_status')})
+                        'elapsed_ms', 'cleanup_ms', 'usable_output', 'stop_reason', 'usage_status',
+                        'recovery_probe', 'recovery_probe_started', 'recovery_outcome')})
                     target['outcome'] = event.get('state')
     for module, timing in advisor_timing.items():
         timing['admitted'] = module_gates.get(module, {}).get('enabled', False)
