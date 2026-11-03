@@ -137,7 +137,7 @@ low-focus streak, thalamic and predictive suppression veto all modes, including
 injection is `off`. Private/debug reflection records remain separate from injection.
 
 Executive advice, director advice and post-turn metrics use the versioned
-`time_budget_observation_v2` AUTO predicate, requiring non-empty, nontrivial
+`time_budget_recovery_v3` AUTO predicate, requiring non-empty, nontrivial
 input and a feasible known time budget. Caller modes and model availability are hard
 eligibility requirements. Defaults preserve requested `observe`/`assist`/`polish`
 behavior; AUTO may omit the selected function on trivial input and never converts
@@ -158,6 +158,25 @@ not a completion time. Empty/error outputs and cancellation before work starts
 do not teach a successful fast latency. This conservative heuristic is not a
 guarantee of future completion. Expiry permits a new cold probe after inhibition.
 
+AUTO v3 additionally permits a bounded recovery probe before expiry. Hypothalamus
+produces a content-free status after 15 seconds since the latest observation;
+each retained role/model profile can start at most one recovery probe in a rolling
+60 seconds. A known budget must allow at least the full 1,600 ms Director window,
+2,500 ms metrics window or 2,000 ms for Executive. ON/OFF and normal cold work do
+not consume this separate allowance. TRN remains a pure admission function.
+
+An opaque lease is claimed at actual work start, after rechecking the current
+profile, remaining deadline and allowance. Cancellation before start consumes
+nothing; competing claims cannot multiply probes. A structurally usable external
+completion whose elapsed time plus 50 ms fits its claimed budget replaces only
+older observations. Newer concurrent observations remain. Slow, cancelled, empty
+or failed probes spend the allowance without clearing old slow evidence. Sample
+expiry alone cannot reset a recent probe allowance. The bounded 32-profile LRU
+store may discard a profile; it subsequently has ordinary unknown/cold behavior.
+No classifier, recursive gate, user-facing recovery flag or default-mode change
+is introduced. The internal recovery-disabled ledger is a v2-equivalent
+comparison fixture, not an additional deployment switch.
+
 The Director's known local wait is 1,600 ms and post-turn metrics' wait is
 2,500 ms, capped by an existing RPC deadline when present. Executive advice runs
 in parallel with drafting and consultation, so its later wait timeout does not
@@ -168,6 +187,8 @@ budget. Unknown latency/window preserves the previous nontrivial-input cold prob
 invalid explicit numeric facts inhibit. Manual `on` ignores the estimate but
 cannot start work after a known deadline/turn abandonment. Defaults remain `on`
 within requested modes; no automatic policy is enabled by default.
+When the estimate does not fit, AUTO v3 may admit only the explicit bounded
+recovery permission described above; otherwise it preserves v2 inhibition.
 
 The Director's caller-selected deterministic trivial-chat steering is separate
 from its provider task: it keeps consultation skipping, short output and long-term
@@ -249,6 +270,10 @@ not assert factual correctness. Task start is not proof of an HTTP attempt or
 token receipt: runtime usage is `unknown` for started work and `not_started`
 otherwise. The benchmark HTTP journal separately accounts for real attempts
 and known/unknown billed usage. No diagnostics are added to user answers.
+Timing diagnostics also expose recovery readiness/reason, retry delay, requested
+probe, actual lease start and bounded outcome. Admission can precede a failed
+claim if another task consumed the allowance or the profile/window changed;
+that task reports `not_started`, with no provider factory invoked.
 Local advisor waits expire without cancelling/uncancelling the parent turn.
 The turn's cancel-once guard stays available for actual abandonment and cleanup;
 one advisor timeout cannot disable a later advisor timer or RPC deadline.

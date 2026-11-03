@@ -19,7 +19,7 @@ from .executive_reasoner import ExecutiveAdvice, ExecutiveReasonerModel
 from .temporal_hippocampal_indexing import TemporalHippocampalIndexing
 from .memory_evidence import request_memory_context
 from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task, remaining_turn_ms, turn_abandoned
-from .advisor_timing import AdvisorWork, LatencyEstimate, model_profile
+from .advisor_timing import AdvisorWork, LatencyEstimate, RecoveryStatus, model_profile
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -461,15 +461,22 @@ class DualBrainController:
         if remaining is not None and (budget is None or remaining < budget):
             budget, source = remaining, 'turn_deadline'
         ledger = getattr(self.hypothalamus, 'advisor_timing', None)
+        profile = model_profile(model)
         try:
-            estimate = ledger.estimate(module, model_profile(model)) if ledger is not None else LatencyEstimate()
+            estimate = ledger.estimate(module, profile) if ledger is not None else LatencyEstimate()
         except Exception:
             estimate = LatencyEstimate()
+        try:
+            status = ledger.recovery_status(module, profile, budget) if hasattr(ledger, 'recovery_status') else RecoveryStatus()
+        except Exception:
+            status = RecoveryStatus(reason='unavailable')
         self._advisor_event('advisor_budget', qid=qid, module=module,
             remaining_budget_ms=budget, budget_source=source, estimated_latency_ms=estimate.ms,
             estimate_kind=estimate.kind, completed_samples=estimate.completed_samples,
-            censored_samples=estimate.censored_samples)
-        return dict(remaining_budget_ms=budget, estimated_latency_ms=estimate.ms), remaining is not None and remaining <= 0
+            censored_samples=estimate.censored_samples, recovery_probe_allowed=status.allowed,
+            recovery_reason=status.reason, recovery_retry_after_ms=status.retry_after_ms)
+        return dict(remaining_budget_ms=budget, estimated_latency_ms=estimate.ms,
+                    recovery_probe_allowed=status.allowed), remaining is not None and remaining <= 0
 
     @staticmethod
     def _advisor_usable(result):
@@ -494,21 +501,26 @@ class DualBrainController:
         usable = state == 'completed' and self._advisor_usable(result)
         if started and state == 'cancelled' and work.stop_reason == 'wait_timeout':
             state = 'timed_out'
-        if started and (state in {'timed_out', 'cancelled'} or
-                        (usable and getattr(result, 'source', '') == 'llm')):
-            ledger = getattr(self.hypothalamus, 'advisor_timing', None)
-            if ledger is not None:
-                try:
+        probe_outcome = 'not_attempted'
+        ledger = getattr(self.hypothalamus, 'advisor_timing', None)
+        if started and ledger is not None:
+            try:
+                if work.probe_lease is not None:
+                    probe_outcome = ledger.finish_probe(work.probe_lease, elapsed,
+                        usable=usable and getattr(result, 'source', '') == 'llm',
+                        censored=state in {'timed_out', 'cancelled'})
+                elif state in {'timed_out', 'cancelled'} or (usable and getattr(result, 'source', '') == 'llm'):
                     ledger.record(work.module, work.profile, elapsed, censored=state != 'completed')
-                except Exception:
-                    pass
+            except Exception:
+                probe_outcome = 'unavailable' if work.probe_lease is not None else 'not_attempted'
         self._advisor_event('advisor_work', qid=work.qid, module=work.module, state=state,
             elapsed_ms=elapsed, cleanup_ms=max(0., total - elapsed) if started else 0.,
             usable_output=usable, stop_reason=work.stop_reason,
-            usage_status='unknown' if started else 'not_started')
+            usage_status='unknown' if started else 'not_started', recovery_probe=work.recovery_probe,
+            recovery_probe_started=work.probe_lease is not None, recovery_outcome=probe_outcome)
 
-    def _start_advisor(self, module, model, *, qid, factory):
-        work = AdvisorWork(module, model_profile(model), qid)
+    def _start_advisor(self, module, model, *, qid, factory, recovery_probe=False, phase_budget_ms=None):
+        work = AdvisorWork(module, model_profile(model), qid, recovery_probe=recovery_probe)
 
         async def run():
             remaining = remaining_turn_ms()
@@ -516,6 +528,26 @@ class DualBrainController:
                 work.stop_reason = 'turn_abandoned' if turn_abandoned() else 'turn_deadline'
                 self._finish_advisor(work, 'not_started')
                 return None
+            actual_profile = model_profile(model)
+            if recovery_probe:
+                if actual_profile != work.profile:
+                    work.stop_reason = 'profile_changed'
+                    self._finish_advisor(work, 'not_started')
+                    return None
+                budget = phase_budget_ms
+                if remaining is not None and (budget is None or remaining < budget):
+                    budget = remaining
+                ledger = getattr(self.hypothalamus, 'advisor_timing', None)
+                try:
+                    work.probe_lease = ledger.start_probe(module, work.profile, budget)
+                except Exception:
+                    work.probe_lease = None
+                if work.probe_lease is None:
+                    work.stop_reason = 'probe_unavailable'
+                    self._finish_advisor(work, 'not_started')
+                    return None
+            else:
+                work.profile = actual_profile
             work.started_at = time.perf_counter()
             self._advisor_event('advisor_work', qid=qid, module=module, state='started')
             try:
@@ -2259,7 +2291,8 @@ class DualBrainController:
         if advice_gate.enabled:
             try:
                 executive_task = self._start_advisor(EXECUTIVE_ADVICE, self.executive_model, qid=qid,
-                    factory=lambda: self.executive_model.advise(
+                    recovery_probe=advice_gate.reason == 'bounded_recovery_probe',
+                    factory=lambda model=self.executive_model: model.advise(
                         question=question,
                         context=context,
                         focus_keywords=focus_keywords,
@@ -2294,7 +2327,8 @@ class DualBrainController:
                             ),
                         })
                 director_task = self._start_advisor(DIRECTOR_ADVICE, self.director_model, qid=qid,
-                    factory=lambda: self.director_model.advise(**director_kwargs))
+                    recovery_probe=director_gate.reason == 'bounded_recovery_probe', phase_budget_ms=1600.,
+                    factory=lambda model=self.director_model: model.advise(**director_kwargs))
             except Exception:  # pragma: no cover - defensive guard
                 director_task = None
 
@@ -4952,7 +4986,8 @@ class DualBrainController:
 
         try:
             observer_task = self._start_advisor(EXECUTIVE_METRICS_OBSERVATION, self.executive_model,
-                qid=decision.qid, factory=lambda: self.executive_model.advise(
+                qid=decision.qid, recovery_probe=observation_gate.reason == 'bounded_recovery_probe',
+                phase_budget_ms=2500., factory=lambda model=self.executive_model: model.advise(
                     question=question,
                     context=observer_context,
                     focus_keywords=focus_keywords,

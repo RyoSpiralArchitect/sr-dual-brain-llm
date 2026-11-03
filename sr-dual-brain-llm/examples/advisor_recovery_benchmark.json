@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_bounded_advisor_recovery",
+  "idle_before_opportunity_seconds": 16,
+  "cases": [
+    {
+      "id": "initial", "question": "In exactly two sentences, explain what an LRU cache evicts and give one limitation of using recency alone.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "LRU evicts the least recently used item among eligible cached items. A recency-only policy can discard frequently used items during a scan or fail to account for access frequency, retrieval cost or size; name one such limitation in the second sentence.",
+      "criteria": {"task": "In exactly two sentences, identify the least recently used item as the eviction choice and state one limitation of recency alone.", "grounding": "Assert no false cache guarantees or false definition of LRU.", "clarification": "Answer directly without requesting unnecessary details."}
+    },
+    {
+      "id": "opportunity", "question": "List exactly three bullet points: one benefit of jitter in retries, one benefit of a retry limit, and one reason to reuse an idempotency key when supported.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Jitter spreads synchronized retries; a retry limit bounds repeated attempts/load; reusing the same supported idempotency key for the same operation helps prevent duplicate effects within the provider's contract. Three bullets, one benefit for each named mechanism.",
+      "criteria": {"task": "Use exactly three bullets, covering one benefit each of retry jitter, a retry limit and reusing a supported idempotency key.", "grounding": "Do not claim jitter guarantees success, retries should continue indefinitely, or all APIs provide unlimited idempotency.", "clarification": "Answer the three specified points directly."}
+    },
+    {
+      "id": "followup", "question": "In exactly two sentences, explain why a lease can expire while its former holder is still running and name one mechanism that can reject that holder's stale writes.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "The holder may be paused or partitioned and miss renewal while the lease authority expires its lease. Storage-validated monotonically increasing fencing tokens, or another authority-enforced lease/version check, can reject stale writes; local belief alone cannot guarantee rejection.",
+      "criteria": {"task": "In exactly two sentences, explain how a running holder can lose its lease and name a concrete stale-write rejection mechanism.", "grounding": "Do not claim that lease expiry necessarily terminates the old process or that an unchecked local token alone prevents stale writes.", "clarification": "Answer both specified parts without unnecessary clarification."}
+    },
+    {
+      "id": "relapse", "question": "Give exactly two analogies for limiting concurrent database queries, one sentence per analogy.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Two apt analogies for limiting the number of simultaneously active queries, such as a fixed number of parking spaces or staffed service counters. Exactly two sentences, one analogy per sentence.",
+      "criteria": {"task": "Give exactly two apt concurrency-limit analogies in exactly two sentences, one per analogy.", "grounding": "Do not make false claims about query concurrency, execution order or guaranteed performance.", "clarification": "Provide the requested analogies directly."}
+    },
+    {
+      "id": "capped", "question": "In exactly two sentences, explain why a client retry budget can prevent a retry storm and name one signal that should stop retries.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A retry budget bounds additional attempts/load, limiting amplification during failure. Budget exhaustion, a non-retryable permanent error, an expired operation deadline or another concrete stopping signal is acceptable; exactly two sentences.",
+      "criteria": {"task": "In exactly two sentences, connect a retry budget to bounded amplification and name one concrete signal to stop retries.", "grounding": "Do not claim that retry budgets guarantee successful service recovery or permit unlimited repeated attempts.", "clarification": "Answer both requested parts directly."}
+    }
+  ]
+}
