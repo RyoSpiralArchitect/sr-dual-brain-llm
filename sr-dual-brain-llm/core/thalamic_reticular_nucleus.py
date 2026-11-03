@@ -73,6 +73,7 @@ class GateFacts:
     recovery_kind: str = 'probe'
     recovery_output_blocked: bool = False
     recovery_confirmation_required: bool = False
+    local_controls_ready: bool = False
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -139,6 +140,7 @@ AUTO_REASONS = frozenset({
     "memory_consultation_needed",
     "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal", "bounded_recovery_probe",
     "bounded_recovery_confirmation", "unusable_recovery_output", "invalid_recovery_signal", "recovery_unconfirmed",
+    "local_controls_ready",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -264,6 +266,12 @@ def _auto_optional_observation(facts: GateFacts) -> tuple[bool, str]:
     return True, "optional_observation_needed"
 
 
+def _auto_director_advice(facts: GateFacts) -> tuple[bool, str]:
+    if facts.local_controls_ready is True and facts.has_input and not facts.is_trivial:
+        return False, "local_controls_ready"
+    return _auto_optional_observation(facts)
+
+
 def _auto_metrics_observation(facts: GateFacts) -> tuple[bool, str]:
     if not facts.has_draft:
         return False, "no_draft"
@@ -354,9 +362,9 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     DIRECTOR_ADVICE: ModuleSpec(
         module_id=DIRECTOR_ADVICE,
-        phase="observer_preparation", policy_version="compact_delivery_v5",
+        phase="observer_preparation", policy_version="local_controls_v6",
         mode_env="DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE", legacy_env=None,
-        default_mode=GateMode.ON, auto_policy=_auto_optional_observation,
+        default_mode=GateMode.ON, auto_policy=_auto_director_advice,
     ),
     EXECUTIVE_METRICS_OBSERVATION: ModuleSpec(
         module_id=EXECUTIVE_METRICS_OBSERVATION,

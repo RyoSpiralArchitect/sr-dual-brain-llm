@@ -151,7 +151,7 @@ It retains at most 32 profiles with 16 samples each; observations expire after
 to effective provider/model/endpoint/output-limit/timeout/continuation settings
 separate profiles. Non-provider/custom models without a known config stay unknown.
 
-Director and post-answer metrics use `compact_delivery_v5`: within explicitly
+Director and post-answer metrics use compact request contracts: within explicitly
 selected AUTO mode, built-in external models use role-specific compact request
 views. Director retains every operational control in a sparse object plus one
 240-character memo; metrics returns only a 240-character monitoring memo and
@@ -169,6 +169,23 @@ history fingerprint before admission and again at actual start. Changing that
 contract cannot inherit full-request observations. Manual ON/defaults keep full
 requests; OFF creates no work. Custom models keep their existing API. These are
 request contracts within the registered modules, not additional enable switches.
+
+Director's `local_controls_v6` adds a bounded fact projection owned by Hypothalamus.
+Explicit normalized System2 ON with an active, capable subsystem supplies
+consultation preservation; an existing explicit whole-stream memory restriction
+can supply long-term context suppression. Absent memory and mixed relay decisions
+do not establish such a restriction. Unknown answer length, clarification,
+temperature and memory intent remain absent controls. System2 OFF does not mean
+ordinary consultation is skipped. No new text classifier or source-write intent
+inference is introduced.
+
+Within requested Director AUTO, TRN declines the remote task with
+`local_controls_ready` when these sparse constraints are ready, and they are
+applied before drafting with `local_facts` provenance. Both whole pre-draft-stage
+duration and actual routed control use are evaluated. Local output is not a model
+completion or external latency sample. ON/default requests keep their remote
+contract; OFF creates no new local plan. The independent trivial-turn fast path
+and mandatory caller/source/evidence rules retain their existing authority.
 
 The estimate is the largest recent observation, labeled `completed_max` or
 `censored_bound`, with separate sample counts. A cancellation records elapsed time

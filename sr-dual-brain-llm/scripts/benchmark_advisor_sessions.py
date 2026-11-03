@@ -178,7 +178,7 @@ async def execute(engine, case, arm, index, inputs, journal, options, *, control
     timing = engine.hypothalamus.advisor_timing
     timing.begin(inputs['timing_reads'] if journal.frozen else None)
     params = {'qid': 'advisor-sequence:' + case['id'], 'question': case['question'],
-              'leading_brain': 'left', 'system2_mode': 'off' if controlled else 'auto',
+              'leading_brain': 'left', 'system2_mode': 'off' if controlled else case.get('system2_mode', 'auto'),
               'executive_mode': case['executive_mode'], 'executive_observer_mode': case['executive_observer_mode']}
     try:
         response = await rpc(engine, params, options, case['rpc_seconds'])

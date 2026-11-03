@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_local_director",
+  "idle_before_opportunity_seconds": 16,
+  "cases": [
+    {
+      "id": "initial", "system2_mode": "on",
+      "question": "Independently cross-check this claim: matching checksums for every backup archive prove that the application can be restored. No restore exercise has been run. In exactly two sentences, distinguish what the checksums establish from what remains unverified, and name one concrete restoration check without claiming it was performed.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Matching checksums support byte integrity of the checked backup archives, not successful application restoration. A bounded restore exercise in an isolated environment can check restoration; no successful exercise is established by the supplied facts.",
+      "criteria": {
+        "task": "Use exactly two sentences, distinguish archive integrity from application restorability, and name one concrete restoration check while addressing the requested independent cross-check.",
+        "grounding": "Do not claim that checksums prove application restoration, that a restore exercise occurred, or that the unverified application can certainly be restored.",
+        "clarification": "Assess the stated inference and propose the check directly without requiring unavailable restore results."
+      },
+      "advice_obligations": {
+        "director": "Preserve the explicitly selected capable System2 ON consultation. Trusted local controls need not repeat the technical answer, invent a memory policy, or claim that the restoration check occurred.",
+        "executive": "Keep checked byte integrity distinct from unverified restoration and preserve one concrete restoration check; no operation has been performed.",
+        "metrics": "Inspect only the supplied answer snippet and observed report for integrity-versus-restoration uncertainty. Do not certify omitted answer text or invent a completed restore exercise."
+      }
+    },
+    {
+      "id": "opportunity", "system2_mode": "auto",
+      "question": "A background job submission returned a timeout, but its request identifier is available and the queue has not yet been queried. In exactly two sentences, explain why acceptance is unknown and name one next step that avoids submitting an independent duplicate job; do not describe the query or another submission as completed.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A client timeout alone does not establish whether the queue accepted the job. Query status with the request identifier, or use a supported idempotent mechanism, instead of sending a fresh independent duplicate; no status query or resubmission has occurred.",
+      "criteria": {
+        "task": "Use exactly two sentences, preserve unknown job acceptance, and give one concrete duplicate-safe next step as a proposal.",
+        "grounding": "Do not treat timeout as success or failure, assert a status-query result, or recommend an independent new submission without duplicate protection.",
+        "clarification": "Explain uncertainty and the next step directly without asking the user to supply the currently unknown outcome."
+      },
+      "advice_obligations": {
+        "director": "Preserve unknown acceptance and duplicate protection if giving semantic guidance. AUTO alone does not establish an explicit force/skip consultation instruction or permission to invent memory, length or clarification controls; neutral output is acceptable when trusted local facts are insufficient.",
+        "executive": "Keep acceptance unknown and preserve one proposed duplicate-safe status or idempotency step, without claiming execution.",
+        "metrics": "Check the visible snippet for unknown acceptance or duplicate-safe next action. Do not claim that the queue accepted a job or that a query was executed."
+      }
+    },
+    {
+      "id": "confirmation", "system2_mode": "on",
+      "question": "Independently evaluate this reasoning: two healthy sensors prove independent protection even though both use the same power supply. In exactly two sentences, identify the shared failure risk and name one check or design change that addresses that dependence; do not claim any test has been run.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "Both sensors can lose protection together if their shared power supply fails, so healthy readings alone do not establish independent protection. Independent power paths or a controlled shared-power failure test can address or evaluate the dependency; no test outcome is known.",
+      "criteria": {
+        "task": "Use exactly two sentences, identify the shared-power failure risk, and name one relevant check or design change while addressing the requested independent evaluation.",
+        "grounding": "Do not equate healthy readings with independent protection, invent independent power paths that were not stated, or claim a failure test succeeded or occurred.",
+        "clarification": "Evaluate the stated dependency directly without requiring an unprovided test result."
+      },
+      "advice_obligations": {
+        "director": "Preserve the explicitly selected capable System2 ON consultation. Local consultation preservation alone is a valid bounded control; it must not imply a performed test or invent memory/format controls.",
+        "executive": "Preserve the shared-power dependency, the distinction between healthy readings and independence, and one proposed mitigation/check.",
+        "metrics": "Assess only the visible answer snippet for the shared dependency or unverified check. Do not certify whole-answer completeness or claim that a test was executed."
+      }
+    },
+    {
+      "id": "followup", "system2_mode": "auto",
+      "question": "A test-environment note permits batches of 12 items, while the current production requirement permits batches of 8 items. For this production run, use only these supplied facts. In exactly two sentences, state the applicable batch cap and explain why the test-environment value does not override it; do not claim a configuration change or turn either value into a general preference.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "The current production batch cap is eight items. The test-environment allowance of twelve belongs to a different scope and does not override the production requirement; no configuration change or general preference has been established.",
+      "criteria": {
+        "task": "Use exactly two sentences, state the eight-item production cap, and explain the environment-scope distinction using only supplied facts.",
+        "grounding": "Do not apply twelve as the production cap, merge distinct environment scopes, assert an applied configuration change, or generalize either setting into a durable preference.",
+        "clarification": "Resolve the explicitly scoped requirements directly without asking which environment the question concerns."
+      },
+      "advice_obligations": {
+        "director": "Preserve the production scope and avoid inventing a general preference or performed configuration change. Local neutral fields are acceptable unless an existing trusted policy establishes a restraint; memory presence/absence by itself is not user intent.",
+        "executive": "Keep the production cap at eight and distinguish the test-only twelve allowance; avoid unrelated earlier jobs and assertions that a setting was changed.",
+        "metrics": "Check visible production-versus-test scope in the supplied snippet. Do not infer actual configuration, deletion or persistence from contextual memory sections."
+      }
+    },
+    {
+      "id": "release", "system2_mode": "on",
+      "question": "Independently cross-check a resilience plan with two replicas in the same rack. Give exactly three bullets: identify one shared failure risk, propose one physical-separation strategy, and propose one failure-injection test. Keep both proposals hypothetical and do not claim that separation or testing has been implemented.",
+      "records": [], "rpc_seconds": 120, "executive_mode": "observe", "executive_observer_mode": "both",
+      "reference": "A rack-level failure such as shared power or networking can affect both replicas. A proposal can place replicas in distinct racks or fault domains, and a proposed rack/power/network fault-injection test can check behavior. Exactly three bullets cover risk, separation strategy and test; neither proposal has been executed.",
+      "criteria": {
+        "task": "Use exactly three bullets covering one common rack-level failure risk, one physical-separation proposal and one failure-injection test proposal, with independent cross-check intent preserved.",
+        "grounding": "Do not claim independence from same-rack replication alone, claim that physical separation already exists, or invent an executed test or successful test outcome.",
+        "clarification": "Give the requested bounded critique and hypothetical proposals without requiring infrastructure details unnecessary to identify the shared rack dependency."
+      },
+      "advice_obligations": {
+        "director": "Preserve the explicitly selected capable System2 ON consultation. Local controls need not produce the three-bullet technical answer or invent extra constraints; never claim physical work or testing was done.",
+        "executive": "Preserve all three requested items and the hypothetical status of separation and testing, without additional requested-count drift or claims of execution.",
+        "metrics": "Check the visible snippet for common-failure risk, separation or test proposal, respecting snippet limits. No implemented separation or completed test is observed."
+      }
+    }
+  ]
+}

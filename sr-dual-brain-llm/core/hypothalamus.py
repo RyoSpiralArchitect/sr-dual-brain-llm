@@ -17,6 +17,7 @@
 # ============================================================================
 
 from .advisor_timing import AdvisorTiming
+from .director_controls import build_local_director_plan
 
 
 class Hypothalamus:
@@ -26,6 +27,13 @@ class Hypothalamus:
         self._reward_avg = 0.5
         self._latency_avg_ms = 1000.0
         self.advisor_timing = AdvisorTiming()
+
+    def local_director_plan(self, *, system2_mode='auto', system2_capable=False,
+                            system2_active=False, long_term_restricted=False):
+        return build_local_director_plan(system2_mode=system2_mode,
+            system2_capable=system2_capable, system2_active=system2_active,
+            long_term_restricted=long_term_restricted)
+
     def update_feedback(self, reward: float, latency_ms: float):
         self._reward_avg = self.ema_beta * self._reward_avg + (1 - self.ema_beta) * max(0.0, min(1.0, reward))
         self._latency_avg_ms = self.ema_beta * self._latency_avg_ms + (1 - self.ema_beta) * max(0.0, latency_ms)
