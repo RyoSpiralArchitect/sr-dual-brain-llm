@@ -83,7 +83,7 @@ output; that loss remains visible. The result is not a broad advisor reliability
 improvement. No remote Director completes, so general semantic Director control
 quality remains unexposed.
 
-Recovery probes are one per role in each arm. Baseline metrics returns a
+Recovery probes are one per Director/metrics role in each arm. Baseline metrics returns a
 2,212.0 ms probe and a 2,379.3 ms confirmation, but their range plus reserve
 predicts about 2,596.6 ms, beyond the unchanged 2,500 ms window. Confirmation is
 `unstable`; neither arm promotes a recovered profile. Natural expiry later permits
