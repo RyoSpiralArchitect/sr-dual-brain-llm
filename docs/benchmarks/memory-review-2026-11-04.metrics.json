@@ -1,0 +1,1106 @@
+{
+  "schema_version": 1,
+  "experiment": "memory_review_bridge",
+  "complete": true,
+  "source_revision": "a600e702b847f442a8c739b9474eb97fc73fc0fb",
+  "live_provider_calls": 65,
+  "usage": {
+    "calls": 65,
+    "input_tokens": 67960,
+    "output_tokens": 17539,
+    "known_input_tokens": 67960,
+    "known_output_tokens": 17539,
+    "unknown_usage_calls": 0,
+    "cancelled_calls": 0,
+    "failed_calls": 2
+  },
+  "calibration_summary": {
+    "by_arm": {
+      "criterion_v2": {
+        "planned": 8,
+        "valid": 8,
+        "invalid": 0,
+        "attempted": 8,
+        "unattempted": 0,
+        "usage": {
+          "calls": 8,
+          "input_tokens": 18534,
+          "output_tokens": 5285,
+          "known_input_tokens": 18534,
+          "known_output_tokens": 5285,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "criteria": {
+          "relevance": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 23,
+            "verdict_counts": {
+              "pass": 19,
+              "fail": 5,
+              "uncertain": 0
+            }
+          },
+          "grounding": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10,
+              "uncertain": 0
+            }
+          },
+          "potential_use": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 24,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "critical_coverage": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 10,
+              "fail": 14,
+              "uncertain": 0
+            }
+          }
+        },
+        "order_disagreements": [
+          {
+            "case": "monitor_attestation",
+            "variant": "false_access",
+            "criterion": "relevance"
+          }
+        ],
+        "fully_matched_presentations": 23,
+        "fully_matched_variants_both_orders": 11
+      },
+      "obligation_v3": {
+        "planned": 8,
+        "valid": 8,
+        "invalid": 0,
+        "attempted": 8,
+        "unattempted": 0,
+        "usage": {
+          "calls": 8,
+          "input_tokens": 21794,
+          "output_tokens": 5632,
+          "known_input_tokens": 21794,
+          "known_output_tokens": 5632,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "criteria": {
+          "relevance": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 20,
+              "fail": 4,
+              "uncertain": 0
+            }
+          },
+          "grounding": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10,
+              "uncertain": 0
+            }
+          },
+          "potential_use": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 24,
+              "fail": 0,
+              "uncertain": 0
+            }
+          },
+          "critical_coverage": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 10,
+              "fail": 14,
+              "uncertain": 0
+            }
+          }
+        },
+        "order_disagreements": [],
+        "fully_matched_presentations": 24,
+        "fully_matched_variants_both_orders": 12
+      }
+    },
+    "corrections": [
+      {
+        "case": "monitor_attestation",
+        "order": 1,
+        "variant": "false_access",
+        "criterion": "relevance"
+      }
+    ],
+    "regressions": [],
+    "errors": [],
+    "obligation_checks": {
+      "available": 60,
+      "agreements": 60
+    }
+  },
+  "dialogue_summary": {
+    "draft": {
+      "planned": 6,
+      "available": 6,
+      "graded": 6,
+      "all_pass": 3,
+      "criterion_pass": {
+        "task": 5,
+        "grounding": 6,
+        "clarification": 4
+      },
+      "right_calls": 0,
+      "optional_lookup_right_calls": 0,
+      "elapsed_ms": [
+        4243.565921991831,
+        3453.1287450081436,
+        6899.496235011611,
+        2323.052004998317,
+        3070.1899840059923,
+        4056.003078992944
+      ]
+    },
+    "baseline": {
+      "planned": 6,
+      "available": 5,
+      "graded": 5,
+      "all_pass": 1,
+      "criterion_pass": {
+        "task": 3,
+        "grounding": 5,
+        "clarification": 2
+      },
+      "right_calls": 4,
+      "optional_lookup_right_calls": 2,
+      "elapsed_ms": [
+        2520.2621620119317,
+        1564.9798259983072,
+        12531.300881993957,
+        3779.6867419965565,
+        6211.834659989108,
+        5523.859951994382
+      ]
+    },
+    "memory_bridge": {
+      "planned": 6,
+      "available": 5,
+      "graded": 5,
+      "all_pass": 2,
+      "criterion_pass": {
+        "task": 3,
+        "grounding": 5,
+        "clarification": 3
+      },
+      "right_calls": 6,
+      "optional_lookup_right_calls": 2,
+      "elapsed_ms": [
+        1428.827256007935,
+        10409.863395005232,
+        9663.00306499761,
+        4172.030122994329,
+        4615.929535997566,
+        6610.020281004836
+      ]
+    }
+  },
+  "metadata": {
+    "model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "config": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 2048
+      }
+    },
+    "call_limit": 128,
+    "calibration_sha256": "a66c57ecf25d2868fe60fd3426f6f5571ccb1aeb7704039d7bb6bdba882b6267",
+    "dialogue_sha256": "40b5dfd0d84fda0f6ff065b261054f7881d11f01b203a4db133569c4f0a3c4af",
+    "code_sha256": "599f08c9281bad4bbbfb8592f0ad190be184260e7bacbd73ebf553290e5d9f52",
+    "rubric_sha256": {
+      "v2": "14d46a5f938da5f1bff24da8fc5352fa68e88dd08886d2d97d3dfecf35acf0b0",
+      "v3": "b8775437e854cde0b92d307ced535e02274e16e75efecf7a47e51a8a5c950f54"
+    },
+    "arms": [
+      "baseline",
+      "memory_bridge"
+    ],
+    "calibration_arms": [
+      "criterion_v2",
+      "obligation_v3"
+    ],
+    "runtime": {
+      "DUALBRAIN_SYSTEM2_PRIORITY_AUTO": "balanced",
+      "REASONING_DIAL": "evaluative",
+      "DUALBRAIN_MEMORY_CONVERSATION_CONTEXT": "1",
+      "DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_MONITOR_MODE": "auto",
+      "DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_DEFAULT_MODE_REFLECTION_INJECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE": "auto",
+      "DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE": "off",
+      "DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_TEMPERATURE_ADJUSTMENT_MODE": "auto",
+      "DUALBRAIN_MODULE_BASAL_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN": "0"
+    }
+  },
+  "rows": [
+    {
+      "case": "lookup",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "optional",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-old"
+      ],
+      "evidence_sha256": "5b416e36f460a6770a5de785927e2d2f1615cebb1187d79c68583bf2ad797f8d",
+      "elapsed_ms": 4243.565921991831,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 668,
+        "output_tokens": 157,
+        "known_input_tokens": 668,
+        "known_output_tokens": 157,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "lookup",
+      "arm": "baseline",
+      "status": "ok",
+      "draft_sha256": "e72d50261052009f5cbd8aa91631d3b5094997e6fcaaf45a736f4b8a966bae62",
+      "review_need": "optional",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "selective_supported_lookup",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": {
+          "version": "conversation_lookup_v1",
+          "action": "skip",
+          "reason": "supported_lookup",
+          "prior_action": 2,
+          "prior_system2": false,
+          "final_action": 0,
+          "final_system2": false,
+          "approved_records": 1,
+          "activation_mode": "auto",
+          "applied": true
+        }
+      },
+      "source_qids": [
+        "cedar-old"
+      ],
+      "evidence_sha256": "5b416e36f460a6770a5de785927e2d2f1615cebb1187d79c68583bf2ad797f8d",
+      "elapsed_ms": 2520.2621620119317,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 284,
+        "output_tokens": 149,
+        "known_input_tokens": 284,
+        "known_output_tokens": 149,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1
+      }
+    },
+    {
+      "case": "lookup",
+      "arm": "memory_bridge",
+      "status": "ok",
+      "draft_sha256": "e72d50261052009f5cbd8aa91631d3b5094997e6fcaaf45a736f4b8a966bae62",
+      "review_need": "optional",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "selective_supported_lookup",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": {
+          "version": "conversation_lookup_v1",
+          "action": "skip",
+          "reason": "supported_lookup",
+          "prior_action": 2,
+          "prior_system2": false,
+          "final_action": 0,
+          "final_system2": false,
+          "approved_records": 1,
+          "activation_mode": "auto",
+          "applied": true
+        }
+      },
+      "source_qids": [
+        "cedar-old"
+      ],
+      "evidence_sha256": "5b416e36f460a6770a5de785927e2d2f1615cebb1187d79c68583bf2ad797f8d",
+      "elapsed_ms": 1428.827256007935,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 284,
+        "output_tokens": 95,
+        "known_input_tokens": 284,
+        "known_output_tokens": 95,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "required",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-other",
+        "cedar-old"
+      ],
+      "evidence_sha256": "f556dd70d26e5880c743398ee8af7e2c4470766afd1130fb0387bbb8b5bbcc46",
+      "elapsed_ms": 3453.1287450081436,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 700,
+        "output_tokens": 159,
+        "known_input_tokens": 700,
+        "known_output_tokens": 159,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "memory_bridge",
+      "status": "ok",
+      "draft_sha256": "dee8100a8c1d89b141807cf1e3b03eee07a7f26f0fc710613f62f310ae1fc030",
+      "review_need": "required",
+      "route": {
+        "action": 1,
+        "system2": true,
+        "reason": "acc_bump",
+        "competition_groups": 1,
+        "acc_sources": [
+          "heuristic",
+          "memory"
+        ],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-other",
+        "cedar-old"
+      ],
+      "evidence_sha256": "f556dd70d26e5880c743398ee8af7e2c4470766afd1130fb0387bbb8b5bbcc46",
+      "elapsed_ms": 10409.863395005232,
+      "usage": {
+        "calls": 4,
+        "input_tokens": 3876,
+        "output_tokens": 524,
+        "known_input_tokens": 3876,
+        "known_output_tokens": 524,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 2,
+        "left": 1
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "baseline",
+      "status": "ok",
+      "draft_sha256": "dee8100a8c1d89b141807cf1e3b03eee07a7f26f0fc710613f62f310ae1fc030",
+      "review_need": "required",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-other",
+        "cedar-old"
+      ],
+      "evidence_sha256": "f556dd70d26e5880c743398ee8af7e2c4470766afd1130fb0387bbb8b5bbcc46",
+      "elapsed_ms": 1564.9798259983072,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 306,
+        "output_tokens": 73,
+        "known_input_tokens": 306,
+        "known_output_tokens": 73,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "optional",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-current"
+      ],
+      "evidence_sha256": "6c0762c5f0d5dc05898d9b426cb6cae71b4e55e5c53dc1ededa46e7d8b2209db",
+      "elapsed_ms": 6899.496235011611,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 696,
+        "output_tokens": 491,
+        "known_input_tokens": 696,
+        "known_output_tokens": 491,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "baseline",
+      "status": "ok",
+      "draft_sha256": "6057c97a1f66aaa148a13b055e3c5041be79dee024651ffc642d7aa34343a62d",
+      "review_need": "optional",
+      "route": {
+        "action": 1,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [],
+      "evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "elapsed_ms": 12531.300881993957,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1815,
+        "output_tokens": 806,
+        "known_input_tokens": 1815,
+        "known_output_tokens": 806,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "memory_bridge",
+      "status": "ok",
+      "draft_sha256": "6057c97a1f66aaa148a13b055e3c5041be79dee024651ffc642d7aa34343a62d",
+      "review_need": "optional",
+      "route": {
+        "action": 1,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [],
+      "evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "elapsed_ms": 9663.00306499761,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1815,
+        "output_tokens": 649,
+        "known_input_tokens": 1815,
+        "known_output_tokens": 649,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "optional",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "larch"
+      ],
+      "evidence_sha256": "3250b2f360c57605cd5813177093769b63e0ad55f7065a64a91d35174996f69e",
+      "elapsed_ms": 2323.052004998317,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 664,
+        "output_tokens": 61,
+        "known_input_tokens": 664,
+        "known_output_tokens": 61,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "memory_bridge",
+      "status": "ok",
+      "draft_sha256": "6a04da4e457201bca706af19deff615a98c65c92b70abc46d2e9f8a83566f491",
+      "review_need": "optional",
+      "route": {
+        "action": 2,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "larch"
+      ],
+      "evidence_sha256": "3250b2f360c57605cd5813177093769b63e0ad55f7065a64a91d35174996f69e",
+      "elapsed_ms": 4172.030122994329,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1872,
+        "output_tokens": 76,
+        "known_input_tokens": 1872,
+        "known_output_tokens": 76,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "baseline",
+      "status": "ok",
+      "draft_sha256": "6a04da4e457201bca706af19deff615a98c65c92b70abc46d2e9f8a83566f491",
+      "review_need": "optional",
+      "route": {
+        "action": 2,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "larch"
+      ],
+      "evidence_sha256": "3250b2f360c57605cd5813177093769b63e0ad55f7065a64a91d35174996f69e",
+      "elapsed_ms": 3779.6867419965565,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1872,
+        "output_tokens": 79,
+        "known_input_tokens": 1872,
+        "known_output_tokens": 79,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "comparison",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "required",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-current",
+        "larch"
+      ],
+      "evidence_sha256": "9f92f97a73d2f3f0c67057699a8d572548a23e4e24e167a49e829f64f2e0f28d",
+      "elapsed_ms": 3070.1899840059923,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 710,
+        "output_tokens": 170,
+        "known_input_tokens": 710,
+        "known_output_tokens": 170,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "comparison",
+      "arm": "baseline",
+      "status": "unavailable",
+      "draft_sha256": "8d4590359407a670f62bab9a4de834a10ba7b780dca56c3565d781b10900b9c1",
+      "review_need": "required",
+      "error_type": "ValueError",
+      "route": {
+        "action": 1,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-current",
+        "larch"
+      ],
+      "evidence_sha256": "9f92f97a73d2f3f0c67057699a8d572548a23e4e24e167a49e829f64f2e0f28d",
+      "elapsed_ms": 6211.834659989108,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1999,
+        "output_tokens": 128,
+        "known_input_tokens": 1999,
+        "known_output_tokens": 128,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 1
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "comparison",
+      "arm": "memory_bridge",
+      "status": "unavailable",
+      "draft_sha256": "8d4590359407a670f62bab9a4de834a10ba7b780dca56c3565d781b10900b9c1",
+      "review_need": "required",
+      "error_type": "ValueError",
+      "route": {
+        "action": 1,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [
+        "cedar-current",
+        "larch"
+      ],
+      "evidence_sha256": "9f92f97a73d2f3f0c67057699a8d572548a23e4e24e167a49e829f64f2e0f28d",
+      "elapsed_ms": 4615.929535997566,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1999,
+        "output_tokens": 120,
+        "known_input_tokens": 1999,
+        "known_output_tokens": 120,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 1
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "draft",
+      "status": "ok",
+      "draft_sha256": null,
+      "review_need": "missing_evidence",
+      "route": {
+        "action": 0,
+        "system2": false,
+        "reason": "forced_off",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [],
+      "evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "elapsed_ms": 4056.003078992944,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 576,
+        "output_tokens": 130,
+        "known_input_tokens": 576,
+        "known_output_tokens": 130,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "memory_bridge",
+      "status": "ok",
+      "draft_sha256": "b51de25cbbdb43829af620ac0427a60a3d2d03cc4fb261ff2ffbf11fd98ec09d",
+      "review_need": "missing_evidence",
+      "route": {
+        "action": 2,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [],
+      "evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "elapsed_ms": 6610.020281004836,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1794,
+        "output_tokens": 202,
+        "known_input_tokens": 1794,
+        "known_output_tokens": 202,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "baseline",
+      "status": "ok",
+      "draft_sha256": "b51de25cbbdb43829af620ac0427a60a3d2d03cc4fb261ff2ffbf11fd98ec09d",
+      "review_need": "missing_evidence",
+      "route": {
+        "action": 2,
+        "system2": false,
+        "reason": "disabled",
+        "competition_groups": 0,
+        "acc_sources": [],
+        "selective": null
+      },
+      "source_qids": [],
+      "evidence_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "elapsed_ms": 5523.859951994382,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 1803,
+        "output_tokens": 228,
+        "known_input_tokens": 1803,
+        "known_output_tokens": 228,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "right": 1,
+        "left": 1
+      }
+    }
+  ],
+  "grades": [
+    {
+      "case": "lookup",
+      "arm": "draft",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "lookup",
+      "arm": "memory_bridge",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "lookup",
+      "arm": "baseline",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "memory_bridge",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "baseline",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "competing",
+      "arm": "draft",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "baseline",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "draft",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "corrected",
+      "arm": "memory_bridge",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "baseline",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "draft",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "memory_bridge",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "comparison",
+      "arm": "draft",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "memory_bridge",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "baseline",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "draft",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    }
+  ],
+  "verification": {
+    "exact_replay": {
+      "calibration": true,
+      "calibration_summary": true,
+      "answers_routes_evidence_status": true,
+      "grades": true,
+      "usage": true,
+      "zero_live_calls": true
+    },
+    "paired_evidence_equal": {
+      "lookup": true,
+      "competing": true,
+      "corrected": true,
+      "scope_switch": true,
+      "comparison": true,
+      "expired": true
+    },
+    "lookup_literal_source_equal": {
+      "draft": true,
+      "baseline": true,
+      "memory_bridge": true
+    }
+  },
+  "artifact_sha256": {
+    "report.json": "622386620d87f54c41888815e4ae86de54fc413da0bbe56dd89f132691dd91bf",
+    "journal.json": "aa690453ffa00b3ba48706b7ff767b9a3df5131beea84c4788150c66a8938ef9",
+    "summary.json": "ab18d39c86daaa776b59c22d15604a4459e59000cc7bce774a8ed636ce67c121"
+  },
+  "limitations": [
+    "One authored trajectory; six non-independent turns.",
+    "Same initial drafts and paired evidence, but support decisions differ between draft and paired sessions after correction.",
+    "Two empty stop critic responses retained as unavailable cells, not resampled.",
+    "Lookup task grades conflict with exact source equality; all original grades retained.",
+    "Advice calibration does not calibrate the separate final-answer judge.",
+    "Latency observations are not repeated-measure estimates."
+  ]
+}

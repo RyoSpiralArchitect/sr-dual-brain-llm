@@ -22,8 +22,9 @@ This module provides a lightweight "conflict signal" that can be logged to
 telemetry and used for gating additional control (e.g., cerebellar correction
 or System2 engagement).
 
-The implementation is intentionally conservative: it relies only on
-high-confidence signals (currently the deterministic micro-critic).
+The implementation uses the deterministic micro-critic and a bounded cue for
+different answers to the same scoped memory question. The latter requests
+reconciliation; it is not a semantic contradiction verdict or truth ranking.
 """
 
 from __future__ import annotations
@@ -97,6 +98,7 @@ class AnteriorCingulateCortex:
             draft: Candidate answer text (unused for now; kept for future heuristics).
             left_confidence: Confidence estimate from the draft generator.
             micro: Optional deterministic micro-critic result.
+            memory_competition: Caller-checked competing approved source records.
         """
 
         _ = question
