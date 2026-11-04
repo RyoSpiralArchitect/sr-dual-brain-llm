@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 import math
 import time
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from dataclasses import dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
@@ -546,6 +546,25 @@ class SharedMemory:
             return [trace for trace in self.answerability_candidates(question)
                     if self.answerability_gate.allows(question, self._answerability_source(trace))][:max(0, n)]
         return self._retrieve_related_traces(question, n)
+
+    def competing_answer_groups(self, question: str) -> tuple[tuple[str, ...], ...]:
+        """Different complete answers to the exact same scoped source question.
+
+        This is a bounded review cue, not a semantic contradiction detector or
+        an authority ranking. Inspect only the three approved records actually
+        exposed by retrieve_related; no extra retrieval or provider call.
+        """
+        if not self.conversation_context or self.answerability_gate is None:
+            return ()
+        groups = {}
+        identities = Counter(t.qid for t in self.past_qas if t.qid)
+        for trace in self.retrieve_related_traces(question):
+            if (not trace.retrieval_scope or not trace.qid or identities[trace.qid] != 1
+                    or trace.recalled_answer):
+                continue
+            groups.setdefault((trace.retrieval_scope, trace.question), []).append(trace)
+        return tuple(tuple(sorted(t.qid for t in group)) for group in groups.values()
+                     if len({t.answer.strip() for t in group}) > 1)
 
     def _retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
 

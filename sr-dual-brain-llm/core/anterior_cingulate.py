@@ -88,6 +88,7 @@ class AnteriorCingulateCortex:
         draft: str,
         left_confidence: float,
         micro: Optional[MicroCriticResult] = None,
+        memory_competition: bool = False,
     ) -> ConflictSignal:
         """Generate a conflict signal from available error detectors.
 
@@ -148,11 +149,20 @@ class AnteriorCingulateCortex:
             sources.append("heuristic")
             effort = _clamp01(0.06 + 0.10 * min(1.0, q_len / 260.0))
 
+        if memory_competition is True:
+            # Exact source-question/declared-scope identity and different answer
+            # text establish a need to reconcile, not which answer is true.
+            sources.append("memory")
+            notes.append("competing_memory_answers")
+            conflict = max(conflict, 0.9)
+            effort = max(effort, 0.6)
+            uncertainty = max(uncertainty, 0.8)
+
         adaptation_signal = _clamp01(
             0.58 * conflict + 0.24 * effort + 0.18 * uncertainty
         )
         recommended_control = "monitor"
-        if conflict >= 0.72 and (micro is None or len(micro.issues or []) >= 2):
+        if conflict >= 0.72 and (memory_competition is True or micro is None or len(micro.issues or []) >= 2):
             recommended_control = "system2"
         elif conflict >= 0.52 or adaptation_signal >= 0.58:
             recommended_control = "consult"

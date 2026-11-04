@@ -1168,6 +1168,15 @@ class DualBrainController:
             rebuilt.append(_format_section("Working memory", wm_ctx.splitlines()))
         if mem_ctx:
             rebuilt.append(mem_ctx)
+            competition = getattr(self.memory, 'competing_answer_groups', None)
+            if guarded_memory and callable(competition) and competition(question):
+                rebuilt.append(
+                    'Memory review cue (text difference, not a truth verdict): supplied historical records '
+                    'contain different answers to the exact same question in the same declared scope. '
+                    'Do not choose by recency or treat support approval as conflict resolution. '
+                    'Preserve the alternatives and their conditions; request an authoritative correction '
+                    'if they cannot be reconciled from the supplied evidence.'
+                )
         if schema_ctx:
             rebuilt.append(f"[Schema memory] {schema_ctx}")
         if pitfall_ctx:
@@ -2722,22 +2731,30 @@ class DualBrainController:
         )
         micro_pre = None
         eligible = False
+        micro_eligible = False
+        competition = getattr(self.memory, 'competing_answer_groups', None)
+        memory_groups = (competition(question) if context_parts.get('memory') and callable(competition)
+                         and system2_mode == 'auto' and system2_capable
+                         and (control_requested[ACC_CONSULT_PROMOTION] or control_requested[ACC_SYSTEM2_PROMOTION])
+                         and leading_brain == 'left' and not force_right_lead else ())
+        memory_competition = bool(memory_groups)
         if acc_control_enabled:
             try:
                 micro_pre = micro_criticise_reasoning(question, draft)
             except Exception:
                 micro_pre = None
-            if micro_pre is not None:
+            if micro_pre is not None or memory_competition:
                 try:
                     acc_signal_pre = self.anterior_cingulate_cortex.monitor(
                         question=question,
                         draft=draft,
                         left_confidence=float(confidence or 0.0),
                         micro=micro_pre,
+                        **({'memory_competition': True} if memory_competition else {}),
                     )
                 except Exception:  # pragma: no cover - best-effort
                     acc_signal_pre = None
-            if acc_signal_pre is not None and micro_pre is not None:
+            if acc_signal_pre is not None and (micro_pre is not None or memory_competition):
                 acc_payload_pre = acc_signal_pre.to_payload()
                 decision.state["acc_conflict_pre"] = acc_payload_pre
                 try:
@@ -2767,18 +2784,23 @@ class DualBrainController:
                     minimum=1,
                     maximum=12,
                 )
-                eligible = bool(
-                    micro_pre.verdict == "issues"
+                micro_eligible = bool(
+                    micro_pre is not None and micro_pre.verdict == "issues"
                     and float(micro_pre.confidence_r) >= float(min_micro_conf)
                     and len(micro_pre.issues or []) <= int(max_micro_issues)
                     and float(acc_signal_pre.conflict_level) >= float(threshold)
                 )
+                eligible = micro_eligible or bool(memory_competition
+                    and float(acc_signal_pre.conflict_level) >= float(threshold))
+                if memory_competition:
+                    decision.state['acc_memory_competition'] = len(memory_groups)
         control_facts = dict(
             has_draft=bool(str(draft or '').strip()), is_trivial=is_trivial_chat,
             micro_known=micro_pre is not None and micro_pre.domain not in {'', 'unknown'},
             micro_issues=len(micro_pre.issues or []) if micro_pre is not None else 0,
             micro_confidence=micro_pre.confidence_r if micro_pre is not None else None,
             conflict_level=acc_signal_pre.conflict_level if acc_signal_pre is not None else None,
+            memory_competition=memory_competition,
         )
         consult_gate = self._module_gate(
             ACC_CONSULT_PROMOTION, decision=decision, config=control_configs[ACC_CONSULT_PROMOTION],
@@ -2793,8 +2815,9 @@ class DualBrainController:
         )
         temperature_gate = self._module_gate(
             ACC_TEMPERATURE_ADJUSTMENT, decision=decision, config=control_configs[ACC_TEMPERATURE_ADJUSTMENT],
-            facts=GateFacts(eligible=eligible and acc_temp_drop > 0,
-                blocked_reason='adjustment_zero' if acc_temp_drop <= 0 else 'signal_unavailable', **control_facts),
+            facts=GateFacts(eligible=micro_eligible and acc_temp_drop > 0,
+                blocked_reason='adjustment_zero' if acc_temp_drop <= 0 else 'signal_unavailable',
+                **{**control_facts, 'memory_competition': False}),
         )
         if eligible:
             if temperature_gate.enabled:
@@ -2805,7 +2828,8 @@ class DualBrainController:
                     decision.temperature = new_temp
                     decision.state['acc_temperature'] = {
                         'base': base_temp, 'adjusted': new_temp, 'drop': base_temp - new_temp,
-                        'conflict': float(acc_signal_pre.conflict_level), 'domain': str(micro_pre.domain),
+                        'conflict': float(acc_signal_pre.conflict_level),
+                        'domain': str(micro_pre.domain) if micro_pre else 'memory',
                     }
             if consult_gate.enabled and decision.action == 0 and self.right_model is not None:
                 decision.action = 1
@@ -2816,8 +2840,10 @@ class DualBrainController:
                 decision.state['acc_system2_bump'] = True
                 try:
                     self.telemetry.log('acc_system2_bump', qid=decision.qid,
-                        conflict=float(acc_signal_pre.conflict_level), micro_domain=str(micro_pre.domain),
-                        micro_confidence=float(micro_pre.confidence_r), micro_issues=len(micro_pre.issues or []))
+                        conflict=float(acc_signal_pre.conflict_level),
+                        micro_domain=str(micro_pre.domain) if micro_pre else 'memory',
+                        micro_confidence=float(micro_pre.confidence_r) if micro_pre else 0.,
+                        micro_issues=len(micro_pre.issues or []) if micro_pre else 0)
                 except Exception:  # pragma: no cover - telemetry best-effort
                     pass
 
@@ -2860,9 +2886,9 @@ class DualBrainController:
             facts=GateFacts(
                 eligible=bool(basal_loop_signal is not None and basal_loop_signal.recommended_action == 1
                     and decision.action == 0 and self.right_model is not None
-                    and (memory_pressure or (acc_signal_pre is not None
+                    and (memory_pressure or (not memory_competition and acc_signal_pre is not None
                         and str(acc_signal_pre.recommended_control or '').lower() in {'consult', 'system2'}))),
-                memory_pressure=memory_pressure, **control_facts,
+                memory_pressure=memory_pressure, **{**control_facts, 'memory_competition': False},
             ))
         if basal_gate.enabled:
             decision.action = 1
