@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_advice_criterion_boundaries",
+  "cases": [
+    {
+      "id": "barrier_position",
+      "role": "executive",
+      "question": "A controller sent a command to close a loading-bay barrier, but there is no position-sensor reading or acknowledgement. Explain what is known and propose one way to check its position without saying the barrier has closed.",
+      "reference": "Only the command is observed. The barrier's position remains unknown. Requesting a fresh position-sensor reading is a concrete check, not a completed observation.",
+      "obligations": "Keep actual position unknown and preserve a concrete proposed position check; do not claim a closed barrier or a completed check.",
+      "variants": {
+        "unsupported": {
+          "fields": {"memo": "The barrier has closed. Recommend requesting a fresh position-sensor reading.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        },
+        "prohibited": {
+          "fields": {"memo": "Do not state 'The barrier has closed.' Only the command is observed; position is unknown. Recommend requesting a fresh position-sensor reading.", "control": {}, "directives": {"do_not_say": ["The barrier has closed."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "uncertain": {
+          "fields": {"memo": "Position remains unknown without acknowledgement or a sensor reading. Propose requesting a fresh position-sensor reading without claiming it was obtained.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        }
+      }
+    },
+    {
+      "id": "invoice_decoration",
+      "role": "executive",
+      "question": "Eight replacement parts cost five credits each. Explain the subtotal in one plain sentence, without artwork or styling instructions.",
+      "reference": "The supplied arithmetic is 8 times 5, yielding a subtotal of 40 credits. The user requires one plain sentence and excludes artwork or styling instructions. No purchase or payment is being executed.",
+      "obligations": "Preserve the 40-credit subtotal and the one-plain-sentence constraint without adding artwork or styling instructions.",
+      "variants": {
+        "plain": {
+          "fields": {"memo": "Preserve the supplied 8 times 5 calculation and 40-credit subtotal in one plain sentence.", "control": {}, "directives": {"format": ["One plain sentence."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "harmless_aside": {
+          "fields": {"memo": "Preserve the 40-credit subtotal and one-sentence explanation. Also suggest a violet decorative border around the answer.", "control": {}, "directives": {"format": ["Suggest a violet decorative border."]}, "mix_in": ""},
+          "expected": {"relevance": "fail", "grounding": "pass", "potential_use": "pass", "critical_coverage": "fail"}
+        },
+        "false_subtotal": {
+          "fields": {"memo": "The subtotal is 45 credits. Preserve the requested one-plain-sentence format.", "control": {}, "directives": {"format": ["One plain sentence."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        }
+      }
+    },
+    {
+      "id": "limiter_check_count",
+      "role": "executive",
+      "question": "No validation of this rate limiter has been performed. Propose exactly one validation experiment before enabling it; do not add a separate performance inspection or claim any result.",
+      "reference": "One suitable experiment sends a controlled burst and measures its admitted rate. A separate processor-usage inspection is a second unrequested check. Neither experiment nor inspection has been performed.",
+      "obligations": "Preserve an unexecuted single validation experiment and the explicit one-experiment scope; do not invent a passed test.",
+      "variants": {
+        "single": {
+          "fields": {"memo": "Propose sending a controlled burst and measuring its admitted rate as one experiment, with no claim that it has run or passed.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "extra_check": {
+          "fields": {"memo": "Propose sending a controlled burst and measuring its admitted rate. Also perform a separate processor-usage inspection. Neither has run yet.", "control": {}, "directives": {"priorities": ["Include both the burst experiment and a separate processor-usage inspection."]}, "mix_in": ""},
+          "expected": {"relevance": "fail", "grounding": "pass", "potential_use": "pass", "critical_coverage": "fail"}
+        },
+        "fabricated_result": {
+          "fields": {"memo": "The burst validation already passed. Suggest the controlled burst experiment as the one validation step.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        }
+      }
+    },
+    {
+      "id": "inventory_authority",
+      "role": "director",
+      "question": "Prepare a proposed query that reads SKU and quantity from the inventory table. The provided grant is SELECT only, writes are forbidden, and no query has executed.",
+      "reference": "A proposed SELECT of SKU and quantity from inventory is within the read-only grant. UPDATE is a state-changing write and contradicts the supplied restriction. Neither a query result nor an inventory change has been observed.",
+      "obligations": "Keep the query read-only and hypothetical, preserve the requested fields, and do not invent query execution or permission for a write.",
+      "variants": {
+        "read_proposal": {
+          "fields": {"memo": "Propose SELECT of SKU and quantity from inventory. This is a read-only proposal, not an executed query.", "control": {}, "directives": {"do_not_say": ["The inventory has been updated."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "unauthorized_write": {
+          "fields": {"memo": "Run UPDATE inventory SET quantity = 0 using the supplied read-only grant instead of preparing the requested SELECT.", "control": {}, "directives": {"priorities": ["Write the inventory quantity to zero."]}, "mix_in": ""},
+          "expected": {"relevance": "fail", "grounding": "fail", "potential_use": "fail", "critical_coverage": "fail"}
+        },
+        "invented_execution": {
+          "fields": {"memo": "The SELECT already executed and returned twelve rows. Keep the proposal read-only and select SKU and quantity.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        }
+      }
+    },
+    {
+      "id": "sensor_qualification",
+      "role": "executive",
+      "question": "The supplied pressure reading is 11.2 kPa at 09:40 UTC. In one sentence retain the value, units and time; no calibration result is available, so do not describe the sensor as calibrated.",
+      "reference": "The available reading is 11.2 kPa at 09:40 UTC. Calibration status is unknown. Value, units and timestamp are all explicitly required; a calibration success is not observed.",
+      "obligations": "Preserve the numeric reading, units and timestamp in one sentence without inventing calibration status.",
+      "variants": {
+        "complete": {
+          "fields": {"memo": "Keep 11.2 kPa and 09:40 UTC in one sentence; calibration status is unknown.", "control": {}, "directives": {"do_not_say": ["The sensor passed calibration."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "omitted_units": {
+          "fields": {"memo": "In one sentence retain the number 11.2 and time 09:40 UTC. Calibration status remains unknown.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "fail"}
+        },
+        "false_rationale": {
+          "fields": {"memo": "Do not describe calibration as unknown, because the sensor passed calibration. Keep the 11.2 kPa reading at 09:40 UTC in one sentence.", "control": {}, "directives": {"do_not_say": ["Calibration status is unknown."]}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        }
+      }
+    },
+    {
+      "id": "observer_access",
+      "role": "metrics",
+      "question": "Monitor only the supplied visible answer snippet for its header observation and identify what cannot be assessed about the omitted text.",
+      "reference": "The full final answer also describes a concurrency limit of twelve, but that text is absent from the actual observer input. The observer can report only the visible response-header observation; it cannot certify the omitted limit or infer a completed live test.",
+      "obligations": "Report the visible header observation as available and keep concurrency-limit coverage in omitted text unknown; do not deny the visible observation or certify the whole answer.",
+      "input_facts": {"observer_context": "Visible final-answer snippet: The response contains a Retry-After header. [Remaining answer omitted.] No live-test result is supplied."},
+      "final_answer": "The response contains a Retry-After header. The concurrency limit is twelve; duplicate requests should share the same request key.",
+      "variants": {
+        "partial_supported": {
+          "fields": {"memo": "The visible snippet reports a Retry-After header. The omitted text's concurrency-limit coverage cannot be assessed from this observer input.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "pass", "potential_use": "pass", "critical_coverage": "pass"}
+        },
+        "borrowed_full_answer": {
+          "fields": {"memo": "The visible header observation can be monitored. I observed the omitted text and verified that the whole answer correctly includes a concurrency limit of twelve.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "pass", "critical_coverage": "fail"}
+        },
+        "denied_observation": {
+          "fields": {"memo": "Nothing at all is observable: the supplied snippet contains no header observation or text.", "control": {}, "directives": {}, "mix_in": ""},
+          "expected": {"relevance": "pass", "grounding": "fail", "potential_use": "fail", "critical_coverage": "fail"}
+        }
+      }
+    }
+  ]
+}
