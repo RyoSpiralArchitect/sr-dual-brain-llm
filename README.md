@@ -252,6 +252,13 @@ or
 ### 6) ACC + Cerebellum controls (optional)
 This repo includes an ACC-like conflict monitor + cerebellum-like micro-correction loop.
 
+With conversation memory and answerability enabled, the opt-in ACC consultation
+and System2 promotions can also review different recorded answers to the exact
+same question in one declared scope. This cue preserves unresolved alternatives;
+it does not select a true answer, infer corrections, or adjust temperature.
+See [module gating](docs/module-gating.md) and the
+[memory review protocol](docs/benchmarks/memory-review-protocol.md).
+
 When the deterministic micro-critic finds a high-confidence inconsistency, ACC can:
 - force a right-brain consult (even if policy would skip)
 - lower temperature (bias toward precision)

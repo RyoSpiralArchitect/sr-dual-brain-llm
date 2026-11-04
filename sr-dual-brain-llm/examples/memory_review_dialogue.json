@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_memory_review_dialogue",
+  "clock_start": 1793150000.0,
+  "seconds_per_turn": 90,
+  "records": [
+    {
+      "question": "Project Cedar retention?",
+      "answer": "Retention is 13 days.",
+      "qid": "cedar-old",
+      "retrieval_scope": "cedar",
+      "scope_aliases": [
+        "Cedar"
+      ],
+      "timestamp": 1793150000.0
+    },
+    {
+      "question": "Project Larch retention?",
+      "answer": "Retention is 29 days.",
+      "qid": "larch",
+      "retrieval_scope": "larch",
+      "scope_aliases": [
+        "Larch"
+      ],
+      "timestamp": 1793150000.0
+    },
+    {
+      "question": "Project Moss retention?",
+      "answer": "Retention is 17 days.",
+      "qid": "moss",
+      "retrieval_scope": "moss",
+      "scope_aliases": [
+        "Moss"
+      ],
+      "timestamp": 1793150000.0,
+      "valid_until": 1793150300.0
+    },
+    {
+      "question": "Project Moss owner?",
+      "answer": "The recorded owner is Keiko.",
+      "qid": "moss-owner",
+      "retrieval_scope": "moss",
+      "scope_aliases": [
+        "Moss"
+      ],
+      "timestamp": 1793150000.0
+    }
+  ],
+  "turns": [
+    {
+      "id": "lookup",
+      "question": "Repeat Project Cedar recorded answer verbatim.",
+      "reference": "Retention is 13 days. This is recorded information, not independently verified.",
+      "criteria": {
+        "task": "Reproduce the recorded answer exactly, with no additional requested work.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "No clarification needed."
+      },
+      "review_need": "optional"
+    },
+    {
+      "id": "competing",
+      "question": "Project Cedar retention?",
+      "reference": "Two current records answer the exact same scoped question with 13 days and 6 days. Neither supersedes the other. State both as unresolved alternatives and seek authoritative clarification; recency is not authority.",
+      "criteria": {
+        "task": "Retain both 13 and 6 days and their unresolved status; do not pick one.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "Ask which record is authoritative; do not re-identify Cedar."
+      },
+      "review_need": "required",
+      "add_record": {
+        "question": "Project Cedar retention?",
+        "answer": "Retention is 6 days.",
+        "qid": "cedar-other",
+        "retrieval_scope": "cedar",
+        "scope_aliases": [
+          "Cedar"
+        ],
+        "timestamp": 1793150060.0
+      }
+    },
+    {
+      "id": "corrected",
+      "question": "その記録をそのまま再掲して",
+      "reference": "Retention is 9 days. Explicit caller correction supersedes both previous Cedar records. The previous focus is Cedar.",
+      "criteria": {
+        "task": "Reproduce the current recorded answer, 9 days, without reviving 13/6 days.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "Cedar is resolved by the preceding turn; no project clarification needed."
+      },
+      "review_need": "optional",
+      "correction": {
+        "question": "Project Cedar retention?",
+        "answer": "Retention is 9 days.",
+        "qid": "cedar-current",
+        "id": "cedar",
+        "aliases": [
+          "Cedar"
+        ],
+        "supersedes": [
+          "cedar-old",
+          "cedar-other"
+        ]
+      }
+    },
+    {
+      "id": "scope_switch",
+      "question": "Project Larch retention?",
+      "reference": "The recorded Larch retention is 29 days, unrelated to Cedar values.",
+      "criteria": {
+        "task": "Report Larch 29 days with attribution.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "No clarification needed."
+      },
+      "review_need": "optional"
+    },
+    {
+      "id": "comparison",
+      "question": "Compare Cedar and Larch retention.",
+      "reference": "Current Cedar retention is 9 days and Larch is 29 days; Larch is 20 days longer. These are recorded values, not independently verified.",
+      "criteria": {
+        "task": "Preserve correct project bindings and the 20-day difference.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "Both projects are explicitly named; no project clarification needed."
+      },
+      "review_need": "required"
+    },
+    {
+      "id": "expired",
+      "question": "Project Moss retention?",
+      "reference": "The sole Moss retention source is expired at the current turn. The current Moss owner record does not supply retention. Retention cannot be confirmed; request a current retention source.",
+      "criteria": {
+        "task": "Acknowledge absent current retention evidence. Do not assert 17 days or borrow Cedar/Larch values.",
+        "grounding": "Assert only supplied current scoped evidence; attribute recorded facts without claiming independent verification. Do not silently select a competing answer, revive superseded/expired values or borrow a different project value.",
+        "clarification": "Ask for a current Moss retention source, not project identity or owner."
+      },
+      "review_need": "missing_evidence"
+    }
+  ]
+}

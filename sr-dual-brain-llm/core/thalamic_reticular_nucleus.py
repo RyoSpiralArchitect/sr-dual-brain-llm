@@ -67,6 +67,7 @@ class GateFacts:
     critic_confidence: float | None = None
     remaining_issues: int = 0
     memory_pressure: bool = False
+    memory_competition: bool = False
     remaining_budget_ms: float | None = None
     estimated_latency_ms: float | None = None
     recovery_probe_allowed: bool = False
@@ -292,6 +293,8 @@ def _auto_reflection_injection(facts: GateFacts) -> tuple[bool, str]:
 
 
 def _auto_conflict_control(facts: GateFacts) -> tuple[bool, str]:
+    if facts.memory_competition is True and _finite(facts.conflict_level) and facts.conflict_level >= 0.75:
+        return True, "conflict_control_needed"
     if not facts.micro_known:
         return False, "micro_unknown"
     if not all(_finite(value) for value in (facts.micro_confidence, facts.conflict_level)):
@@ -374,14 +377,14 @@ DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     ),
     ACC_CONSULT_PROMOTION: ModuleSpec(
         module_id=ACC_CONSULT_PROMOTION,
-        phase="routing", policy_version="acc_conflict_control_v1",
+        phase="routing", policy_version="acc_memory_review_v2",
         mode_env="DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE",
         legacy_env="DUALBRAIN_ACC_OVERRIDE_CONSULT",
         default_mode=GateMode.OFF, auto_policy=_auto_conflict_control,
     ),
     ACC_SYSTEM2_PROMOTION: ModuleSpec(
         module_id=ACC_SYSTEM2_PROMOTION,
-        phase="routing", policy_version="acc_conflict_control_v1",
+        phase="routing", policy_version="acc_memory_review_v2",
         mode_env="DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE",
         legacy_env="DUALBRAIN_ACC_SYSTEM2_BUMP",
         default_mode=GateMode.OFF, auto_policy=_auto_conflict_control,

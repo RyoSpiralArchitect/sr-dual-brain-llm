@@ -22,8 +22,9 @@ This module provides a lightweight "conflict signal" that can be logged to
 telemetry and used for gating additional control (e.g., cerebellar correction
 or System2 engagement).
 
-The implementation is intentionally conservative: it relies only on
-high-confidence signals (currently the deterministic micro-critic).
+The implementation uses the deterministic micro-critic and a bounded cue for
+different answers to the same scoped memory question. The latter requests
+reconciliation; it is not a semantic contradiction verdict or truth ranking.
 """
 
 from __future__ import annotations
@@ -56,6 +57,7 @@ class ConflictSignal:
     micro_issues: int = 0
     sources: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
+    micro_conflict_level: Optional[float] = None
 
     def to_payload(self) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
@@ -72,6 +74,8 @@ class ConflictSignal:
             payload["micro_issues"] = int(self.micro_issues)
         if self.notes:
             payload["notes"] = list(self.notes)
+        if self.micro_conflict_level is not None:
+            payload["micro_conflict_level"] = float(_clamp01(self.micro_conflict_level))
         return payload
 
 
@@ -88,6 +92,7 @@ class AnteriorCingulateCortex:
         draft: str,
         left_confidence: float,
         micro: Optional[MicroCriticResult] = None,
+        memory_competition: bool = False,
     ) -> ConflictSignal:
         """Generate a conflict signal from available error detectors.
 
@@ -96,6 +101,7 @@ class AnteriorCingulateCortex:
             draft: Candidate answer text (unused for now; kept for future heuristics).
             left_confidence: Confidence estimate from the draft generator.
             micro: Optional deterministic micro-critic result.
+            memory_competition: Caller-checked competing approved source records.
         """
 
         _ = question
@@ -148,11 +154,21 @@ class AnteriorCingulateCortex:
             sources.append("heuristic")
             effort = _clamp01(0.06 + 0.10 * min(1.0, q_len / 260.0))
 
+        micro_conflict_level = conflict
+        if memory_competition is True:
+            # Exact source-question/declared-scope identity and different answer
+            # text establish a need to reconcile, not which answer is true.
+            sources.append("memory")
+            notes.append("competing_memory_answers")
+            conflict = max(conflict, 0.9)
+            effort = max(effort, 0.6)
+            uncertainty = max(uncertainty, 0.8)
+
         adaptation_signal = _clamp01(
             0.58 * conflict + 0.24 * effort + 0.18 * uncertainty
         )
         recommended_control = "monitor"
-        if conflict >= 0.72 and (micro is None or len(micro.issues or []) >= 2):
+        if conflict >= 0.72 and (memory_competition is True or micro is None or len(micro.issues or []) >= 2):
             recommended_control = "system2"
         elif conflict >= 0.52 or adaptation_signal >= 0.58:
             recommended_control = "consult"
@@ -170,4 +186,5 @@ class AnteriorCingulateCortex:
             micro_issues=(int(len(micro.issues or [])) if micro is not None else 0),
             sources=tuple(sources),
             notes=tuple(notes),
+            micro_conflict_level=micro_conflict_level if memory_competition is True else None,
         )

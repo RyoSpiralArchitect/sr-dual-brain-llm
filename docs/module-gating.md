@@ -244,12 +244,24 @@ memory suppression even when the optional task is off, inhibited or unavailable.
 An observer mode that does not request Director applies no such control.
 Director consultation skipping cannot suppress an explicitly active System2 `on`.
 
-Pre-routing ACC AUTO requires known micro issues (one to six), finite micro
+Pre-routing ACC AUTO normally requires known micro issues (one to six), finite micro
 confidence `>= 0.86` and finite conflict `>= 0.75`, in addition to existing
 configured thresholds. The three interventions are independent; System2 promotion
 also requires inactive, capable System2 in caller `auto` mode. Lowering the local
 threshold cannot lower these versioned AUTO floors. Disabling all interventions
 avoids their shared micro/monitor preparation.
+
+The opt-in consult/System2 promotions also accept a bounded memory review cue
+(`acc_memory_review_v2`): different answer text for the exact same source question
+and declared scope among complete, current, uniquely identified, approved QA
+records actually supplied in context. It requests reconciliation, not a verdict
+about truth or inferred supersession. This branch requires capable, left-led
+System2 AUTO; it respects context suppression, explicit OFF and each promotion's
+gate. Both promotion defaults remain OFF. Memory competition does not authorize
+temperature adjustment or basal-loop promotion; existing independent salience
+pressure keeps its own authority. Equivalent answer wording can cause a review;
+different questions/languages can conceal real conflicts. See the
+[prospective protocol](benchmarks/memory-review-protocol.md) for this limited scope.
 
 The basal loop's consultation promotion is a separate admission site: computing
 ACC facts must not silently bypass a declined AUTO intervention through that loop.
