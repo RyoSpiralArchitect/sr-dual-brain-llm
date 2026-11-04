@@ -134,6 +134,16 @@ Existing PostgreSQL tests run against the private local PostgreSQL 16 instance.
 The live pilot seeds authored in-process records; it does not measure durable
 primary writes, PostgreSQL transactions or process-restart retrieval.
 
+Final review also reproduces a mixed-signal boundary: a memory-boosted ACC level
+could raise otherwise ineligible micro evidence above the temperature threshold.
+The final implementation retains the independent micro-only conflict level for
+temperature admission and magnitude; two additional deterministic cases cover
+weak evidence remaining ineligible and eligible micro evidence keeping its
+original strength. No paid requests or old scores are replaced. The measured
+competition turn has no micro-critic result, so the mixed-signal correction is
+validated by regression tests rather than claimed as a separately measured gain.
+The frozen commit above remains the reference for the exact live replay.
+
 Private artifacts remain under ignored
 `samples/module-gating-memory-review-2026-11-04-{live,replay}/`.
 

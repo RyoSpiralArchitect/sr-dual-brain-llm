@@ -5,6 +5,7 @@ import pytest
 
 from core.anterior_cingulate import AnteriorCingulateCortex
 from core.memory_answerability import AnswerabilityGate
+from core.micro_critic import MicroCriticResult
 from core.shared_memory import MemoryTrace, SharedMemory
 from test_memory_answerability import Checks
 from test_dual_brain import make_stage_controller, make_decision
@@ -102,3 +103,18 @@ def test_configured_conflict_threshold_cannot_be_bypassed_by_basal(monkeypatch):
     monkeypatch.setenv('DUALBRAIN_ACC_CONFLICT_THRESHOLD', '1.0')
     result, _, _ = asyncio.run(routing(monkeypatch))
     assert result.decision.action == 0 and not result.system2_active
+
+
+@pytest.mark.parametrize('threshold,adjusts', [('.89', False), ('.75', True)])
+def test_memory_signal_cannot_raise_weak_micro_evidence_into_temperature_authority(monkeypatch, threshold, adjusts):
+    import core.dual_brain as dual
+    monkeypatch.setenv('DUALBRAIN_ACC_CONFLICT_THRESHOLD', threshold)
+    monkeypatch.setenv('DUALBRAIN_ACC_TEMPERATURE_DROP', '.1')
+    micro = MicroCriticResult('issues', ['one issue'], [], 'issue', .9, 'arithmetic')
+    monkeypatch.setattr(dual, 'micro_criticise_reasoning', lambda *_: micro)
+    result, _, _ = asyncio.run(routing(monkeypatch))
+    assert result.system2_active  # the independently eligible memory review still works
+    assert ('acc_temperature' in result.decision.state) is adjusts
+    if adjusts:
+        independent = AnteriorCingulateCortex().monitor(question='', draft='', left_confidence=.99, micro=micro)
+        assert result.decision.state['acc_temperature']['conflict'] == pytest.approx(independent.conflict_level)

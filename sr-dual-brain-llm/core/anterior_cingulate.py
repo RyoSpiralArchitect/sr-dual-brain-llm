@@ -57,6 +57,7 @@ class ConflictSignal:
     micro_issues: int = 0
     sources: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
+    micro_conflict_level: Optional[float] = None
 
     def to_payload(self) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
@@ -73,6 +74,8 @@ class ConflictSignal:
             payload["micro_issues"] = int(self.micro_issues)
         if self.notes:
             payload["notes"] = list(self.notes)
+        if self.micro_conflict_level is not None:
+            payload["micro_conflict_level"] = float(_clamp01(self.micro_conflict_level))
         return payload
 
 
@@ -151,6 +154,7 @@ class AnteriorCingulateCortex:
             sources.append("heuristic")
             effort = _clamp01(0.06 + 0.10 * min(1.0, q_len / 260.0))
 
+        micro_conflict_level = conflict
         if memory_competition is True:
             # Exact source-question/declared-scope identity and different answer
             # text establish a need to reconcile, not which answer is true.
@@ -182,4 +186,5 @@ class AnteriorCingulateCortex:
             micro_issues=(int(len(micro.issues or [])) if micro is not None else 0),
             sources=tuple(sources),
             notes=tuple(notes),
+            micro_conflict_level=micro_conflict_level if memory_competition is True else None,
         )

@@ -2732,6 +2732,7 @@ class DualBrainController:
         micro_pre = None
         eligible = False
         micro_eligible = False
+        micro_conflict_level = None
         competition = getattr(self.memory, 'competing_answer_groups', None)
         memory_groups = (competition(question) if context_parts.get('memory') and callable(competition)
                          and system2_mode == 'auto' and system2_capable
@@ -2784,11 +2785,13 @@ class DualBrainController:
                     minimum=1,
                     maximum=12,
                 )
+                micro_conflict_level = (getattr(acc_signal_pre, 'micro_conflict_level', None)
+                    if memory_competition else acc_signal_pre.conflict_level)
                 micro_eligible = bool(
                     micro_pre is not None and micro_pre.verdict == "issues"
                     and float(micro_pre.confidence_r) >= float(min_micro_conf)
                     and len(micro_pre.issues or []) <= int(max_micro_issues)
-                    and float(acc_signal_pre.conflict_level) >= float(threshold)
+                    and micro_conflict_level is not None and float(micro_conflict_level) >= float(threshold)
                 )
                 eligible = micro_eligible or bool(memory_competition
                     and float(acc_signal_pre.conflict_level) >= float(threshold))
@@ -2817,18 +2820,18 @@ class DualBrainController:
             ACC_TEMPERATURE_ADJUSTMENT, decision=decision, config=control_configs[ACC_TEMPERATURE_ADJUSTMENT],
             facts=GateFacts(eligible=micro_eligible and acc_temp_drop > 0,
                 blocked_reason='adjustment_zero' if acc_temp_drop <= 0 else 'signal_unavailable',
-                **{**control_facts, 'memory_competition': False}),
+                **{**control_facts, 'memory_competition': False, 'conflict_level': micro_conflict_level}),
         )
         if eligible:
             if temperature_gate.enabled:
                 base_temp = float(decision.temperature)
                 new_temp = max(0.1, min(0.95,
-                    base_temp - float(acc_temp_drop) * float(acc_signal_pre.conflict_level)))
+                    base_temp - float(acc_temp_drop) * float(micro_conflict_level)))
                 if new_temp < base_temp:
                     decision.temperature = new_temp
                     decision.state['acc_temperature'] = {
                         'base': base_temp, 'adjusted': new_temp, 'drop': base_temp - new_temp,
-                        'conflict': float(acc_signal_pre.conflict_level),
+                        'conflict': float(micro_conflict_level),
                         'domain': str(micro_pre.domain) if micro_pre else 'memory',
                     }
             if consult_gate.enabled and decision.action == 0 and self.right_model is not None:
