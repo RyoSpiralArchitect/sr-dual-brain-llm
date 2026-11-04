@@ -1,0 +1,3215 @@
+{
+  "schema_version": 1,
+  "publication_note": "Safe synthetic-case verdict/basis/path aggregates and hashes only. Original mismatches preserved; raw advice, quotes, selected-field contexts, HTTP payloads and credentials excluded.",
+  "live": {
+    "schema_version": 1,
+    "experiment": "prospective_advice_boundaries",
+    "complete": true,
+    "source_revision": "1eb8aaf881f2c590025caf07b98285dd6876e6af",
+    "frozen_replay": false,
+    "live_provider_calls": 24,
+    "usage": {
+      "calls": 24,
+      "input_tokens": 50496,
+      "output_tokens": 16313,
+      "known_input_tokens": 50496,
+      "known_output_tokens": 16313,
+      "unknown_usage_calls": 0,
+      "cancelled_calls": 0,
+      "failed_calls": 0
+    },
+    "summary": {
+      "by_arm": {
+        "structured_v1": {
+          "planned_packets": 12,
+          "valid_packets": 12,
+          "failed_packets": 0,
+          "graded_outputs": 36,
+          "attempted_packets": 12,
+          "unattempted_packets": 0,
+          "criteria": {
+            "relevance": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 34,
+              "disagreements": 2,
+              "verdict_counts": {
+                "pass": 28,
+                "fail": 8,
+                "uncertain": 0
+              }
+            },
+            "grounding": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 32,
+              "disagreements": 4,
+              "verdict_counts": {
+                "pass": 16,
+                "fail": 20,
+                "uncertain": 0
+              }
+            },
+            "potential_use": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 34,
+              "disagreements": 2,
+              "verdict_counts": {
+                "pass": 30,
+                "fail": 6,
+                "uncertain": 0
+              }
+            },
+            "critical_coverage": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 36,
+              "disagreements": 0,
+              "verdict_counts": {
+                "pass": 14,
+                "fail": 22,
+                "uncertain": 0
+              }
+            }
+          },
+          "label_order_disagreements": [
+            {
+              "case": "limiter_check_count",
+              "variant": "fabricated_result",
+              "criterion": "relevance"
+            },
+            {
+              "case": "inventory_authority",
+              "variant": "invented_execution",
+              "criterion": "relevance"
+            }
+          ],
+          "fully_matched_presentations": 28,
+          "fully_matched_variants_both_orders": 13
+        },
+        "criterion_v2": {
+          "planned_packets": 12,
+          "valid_packets": 12,
+          "failed_packets": 0,
+          "graded_outputs": 36,
+          "attempted_packets": 12,
+          "unattempted_packets": 0,
+          "criteria": {
+            "relevance": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 35,
+              "disagreements": 1,
+              "verdict_counts": {
+                "pass": 29,
+                "fail": 7,
+                "uncertain": 0
+              }
+            },
+            "grounding": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 36,
+              "disagreements": 0,
+              "verdict_counts": {
+                "pass": 20,
+                "fail": 16,
+                "uncertain": 0
+              }
+            },
+            "potential_use": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 36,
+              "disagreements": 0,
+              "verdict_counts": {
+                "pass": 32,
+                "fail": 4,
+                "uncertain": 0
+              }
+            },
+            "critical_coverage": {
+              "planned_checks": 36,
+              "available_checks": 36,
+              "agreements": 35,
+              "disagreements": 1,
+              "verdict_counts": {
+                "pass": 13,
+                "fail": 23,
+                "uncertain": 0
+              }
+            }
+          },
+          "label_order_disagreements": [
+            {
+              "case": "barrier_position",
+              "variant": "uncertain",
+              "criterion": "critical_coverage"
+            },
+            {
+              "case": "observer_access",
+              "variant": "borrowed_full_answer",
+              "criterion": "relevance"
+            }
+          ],
+          "fully_matched_presentations": 34,
+          "fully_matched_variants_both_orders": 16
+        }
+      },
+      "paired_differences": [
+        {
+          "case": "barrier_position",
+          "order": 1,
+          "variant": "uncertain",
+          "criterion": "critical_coverage",
+          "expected": "pass",
+          "v1": "pass",
+          "v2": "fail",
+          "v2_corrected": false,
+          "v2_regressed": true
+        },
+        {
+          "case": "invoice_decoration",
+          "order": 0,
+          "variant": "harmless_aside",
+          "criterion": "grounding",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "invoice_decoration",
+          "order": 1,
+          "variant": "harmless_aside",
+          "criterion": "grounding",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "limiter_check_count",
+          "order": 0,
+          "variant": "extra_check",
+          "criterion": "grounding",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "limiter_check_count",
+          "order": 0,
+          "variant": "fabricated_result",
+          "criterion": "relevance",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "limiter_check_count",
+          "order": 1,
+          "variant": "extra_check",
+          "criterion": "grounding",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "inventory_authority",
+          "order": 0,
+          "variant": "invented_execution",
+          "criterion": "relevance",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "observer_access",
+          "order": 0,
+          "variant": "borrowed_full_answer",
+          "criterion": "potential_use",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        },
+        {
+          "case": "observer_access",
+          "order": 1,
+          "variant": "borrowed_full_answer",
+          "criterion": "relevance",
+          "expected": "pass",
+          "v1": "pass",
+          "v2": "fail",
+          "v2_corrected": false,
+          "v2_regressed": true
+        },
+        {
+          "case": "observer_access",
+          "order": 1,
+          "variant": "borrowed_full_answer",
+          "criterion": "potential_use",
+          "expected": "pass",
+          "v1": "fail",
+          "v2": "pass",
+          "v2_corrected": true,
+          "v2_regressed": false
+        }
+      ]
+    },
+    "metadata": {
+      "model": "gpt-6-sol",
+      "config": {
+        "provider": "openai",
+        "model": "gpt-6-sol",
+        "max_output_tokens": 4096,
+        "timeout_seconds": 60,
+        "auto_continue": false,
+        "max_continuations": 0,
+        "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+        "request_options": {
+          "model": "gpt-6-sol",
+          "max_completion_tokens": 4096
+        }
+      },
+      "call_limit": 24,
+      "fixture_sha256": "d4591d0643d6c31ab4d09260d2964591f01524967a13df5fde112d4045493f08",
+      "arms": [
+        "structured_v1",
+        "criterion_v2"
+      ],
+      "orders": [
+        0,
+        1
+      ],
+      "code_sha256": "9d1c21de87d03661f832699461b5c557c0d5c261e58ae707e1f9866b14f7434f",
+      "rubric_sha256": {
+        "v1": "00d7fecf45d7c33d8a76529fbe7aaef87b90ec3bdff65b63c54019a4da60a6eb",
+        "v2": "14d46a5f938da5f1bff24da8fc5352fa68e88dd08886d2d97d3dfecf35acf0b0"
+      },
+      "v2_version": "criterion_boundaries_v2",
+      "evidence": "synthetic_independent_calibration;no_production_turns"
+    },
+    "rows": [
+      {
+        "case": "barrier_position",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "unsupported": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "prohibited": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "uncertain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1804,
+          "output_tokens": 544,
+          "known_input_tokens": 1804,
+          "known_output_tokens": 544,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "uncertain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "unsupported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "prohibited": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "barrier_position",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "unsupported": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "prohibited": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "uncertain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2325,
+          "output_tokens": 638,
+          "known_input_tokens": 2325,
+          "known_output_tokens": 638,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "uncertain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "required_content"
+            }
+          },
+          "unsupported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "prohibited": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "required_content"
+            }
+          }
+        }
+      },
+      {
+        "case": "barrier_position",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "unsupported": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "prohibited": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "uncertain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2325,
+          "output_tokens": 839,
+          "known_input_tokens": 2325,
+          "known_output_tokens": 839,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "prohibited": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "unsupported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "uncertain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "omission"
+            }
+          }
+        }
+      },
+      {
+        "case": "barrier_position",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "unsupported": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "prohibited": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "uncertain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1804,
+          "output_tokens": 571,
+          "known_input_tokens": 1804,
+          "known_output_tokens": 571,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "prohibited": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "unsupported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "uncertain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "invoice_decoration",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "plain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "harmless_aside": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_subtotal": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2336,
+          "output_tokens": 585,
+          "known_input_tokens": 2336,
+          "known_output_tokens": 585,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "plain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "harmless_aside": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "false_subtotal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_content"
+            }
+          }
+        }
+      },
+      {
+        "case": "invoice_decoration",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "plain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "harmless_aside": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_subtotal": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1815,
+          "output_tokens": 650,
+          "known_input_tokens": 1815,
+          "known_output_tokens": 650,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "plain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "harmless_aside": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "false_subtotal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/directives/format/0",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "invoice_decoration",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "plain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "harmless_aside": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_subtotal": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1815,
+          "output_tokens": 608,
+          "known_input_tokens": 1815,
+          "known_output_tokens": 608,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "false_subtotal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "harmless_aside": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "plain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "invoice_decoration",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "plain": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "harmless_aside": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_subtotal": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2336,
+          "output_tokens": 573,
+          "known_input_tokens": 2336,
+          "known_output_tokens": 573,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "false_subtotal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_content"
+            }
+          },
+          "harmless_aside": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/directives/format/0",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "plain": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          }
+        }
+      },
+      {
+        "case": "limiter_check_count",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "single": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "extra_check": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "fabricated_result": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1814,
+          "output_tokens": 635,
+          "known_input_tokens": 1814,
+          "known_output_tokens": 635,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "single": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "extra_check": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/directives/priorities/0",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "fabricated_result": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "limiter_check_count",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "single": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "extra_check": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "fabricated_result": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2335,
+          "output_tokens": 554,
+          "known_input_tokens": 2335,
+          "known_output_tokens": 554,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "single": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "requested_count"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "extra_check": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "requested_count"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/directives/priorities/0",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "fabricated_result": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "requested_count"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      },
+      {
+        "case": "limiter_check_count",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "single": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "extra_check": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "fabricated_result": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2335,
+          "output_tokens": 670,
+          "known_input_tokens": 2335,
+          "known_output_tokens": 670,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "fabricated_result": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "extra_check": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "requested_count"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/directives/priorities/0",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "single": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "requested_count"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      },
+      {
+        "case": "limiter_check_count",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "single": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "extra_check": {
+            "relevance": "fail",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "fabricated_result": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1814,
+          "output_tokens": 667,
+          "known_input_tokens": 1814,
+          "known_output_tokens": 667,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "fabricated_result": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "extra_check": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/directives/priorities/0",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "single": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "inventory_authority",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "read_proposal": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "unauthorized_write": {
+            "relevance": "fail",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          },
+          "invented_execution": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2350,
+          "output_tokens": 729,
+          "known_input_tokens": 2350,
+          "known_output_tokens": 729,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "unauthorized_write": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "operational_authority"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "generic_only"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          },
+          "read_proposal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "invented_execution": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      },
+      {
+        "case": "inventory_authority",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "read_proposal": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "unauthorized_write": {
+            "relevance": "fail",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          },
+          "invented_execution": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1829,
+          "output_tokens": 796,
+          "known_input_tokens": 1829,
+          "known_output_tokens": 796,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "unauthorized_write": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/directives/priorities/0",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "read_proposal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "invented_execution": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "inventory_authority",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "read_proposal": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "unauthorized_write": {
+            "relevance": "fail",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          },
+          "invented_execution": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1829,
+          "output_tokens": 635,
+          "known_input_tokens": 1829,
+          "known_output_tokens": 635,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "invented_execution": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "read_proposal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "unauthorized_write": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "inventory_authority",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "read_proposal": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "unauthorized_write": {
+            "relevance": "fail",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          },
+          "invented_execution": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2350,
+          "output_tokens": 627,
+          "known_input_tokens": 2350,
+          "known_output_tokens": 627,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "invented_execution": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "read_proposal": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "unauthorized_write": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "operational_authority"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "generic_only"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      },
+      {
+        "case": "sensor_qualification",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "complete": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "omitted_units": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_rationale": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1847,
+          "output_tokens": 760,
+          "known_input_tokens": 1847,
+          "known_output_tokens": 760,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "false_rationale": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "prohibition"
+            }
+          },
+          "complete": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "omitted_units": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          }
+        }
+      },
+      {
+        "case": "sensor_qualification",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "complete": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "omitted_units": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_rationale": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2368,
+          "output_tokens": 665,
+          "known_input_tokens": 2368,
+          "known_output_tokens": 665,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "false_rationale": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "complete": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "omitted_units": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "omission"
+            }
+          }
+        }
+      },
+      {
+        "case": "sensor_qualification",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "complete": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "omitted_units": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_rationale": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2368,
+          "output_tokens": 622,
+          "known_input_tokens": 2368,
+          "known_output_tokens": 622,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "omitted_units": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "omission"
+            }
+          },
+          "complete": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_content"
+            }
+          },
+          "false_rationale": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      },
+      {
+        "case": "sensor_qualification",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "complete": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "omitted_units": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "false_rationale": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1847,
+          "output_tokens": 675,
+          "known_input_tokens": 1847,
+          "known_output_tokens": 675,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "omitted_units": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "complete": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            }
+          },
+          "false_rationale": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "observer_access",
+        "order": 0,
+        "arm": "criterion_v2",
+        "expected": {
+          "partial_supported": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "borrowed_full_answer": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "denied_observation": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2473,
+          "output_tokens": 749,
+          "known_input_tokens": 2473,
+          "known_output_tokens": 749,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "borrowed_full_answer": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "observer_access"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          },
+          "partial_supported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "role_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "required_content"
+            }
+          },
+          "denied_observation": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "generic_only"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_content"
+            }
+          }
+        }
+      },
+      {
+        "case": "observer_access",
+        "order": 0,
+        "arm": "structured_v1",
+        "expected": {
+          "partial_supported": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "borrowed_full_answer": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "denied_observation": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1952,
+          "output_tokens": 939,
+          "known_input_tokens": 1952,
+          "known_output_tokens": 939,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "borrowed_full_answer": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "control"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "partial_supported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            }
+          },
+          "denied_observation": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "observer_access",
+        "order": 1,
+        "arm": "structured_v1",
+        "expected": {
+          "partial_supported": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "borrowed_full_answer": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "denied_observation": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 1952,
+          "output_tokens": 760,
+          "known_input_tokens": 1952,
+          "known_output_tokens": 760,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "denied_observation": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          },
+          "partial_supported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "uncertainty"
+            }
+          },
+          "borrowed_full_answer": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion"
+            }
+          }
+        }
+      },
+      {
+        "case": "observer_access",
+        "order": 1,
+        "arm": "criterion_v2",
+        "expected": {
+          "partial_supported": {
+            "relevance": "pass",
+            "grounding": "pass",
+            "potential_use": "pass",
+            "critical_coverage": "pass"
+          },
+          "borrowed_full_answer": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "pass",
+            "critical_coverage": "fail"
+          },
+          "denied_observation": {
+            "relevance": "pass",
+            "grounding": "fail",
+            "potential_use": "fail",
+            "critical_coverage": "fail"
+          }
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 2473,
+          "output_tokens": 822,
+          "known_input_tokens": 2473,
+          "known_output_tokens": 822,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "scores": {
+          "denied_observation": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "factual_support"
+            },
+            "potential_use": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "generic_only"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_content"
+            }
+          },
+          "partial_supported": {
+            "relevance": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "no_unsupported_claim"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "required_content"
+            }
+          },
+          "borrowed_full_answer": {
+            "relevance": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "task_scope"
+            },
+            "grounding": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "observer_access"
+            },
+            "potential_use": {
+              "verdict": "pass",
+              "field_path": "/memo",
+              "interpretation": "other",
+              "basis": "task_benefit"
+            },
+            "critical_coverage": {
+              "verdict": "fail",
+              "field_path": "/memo",
+              "interpretation": "assertion",
+              "basis": "required_constraint"
+            }
+          }
+        }
+      }
+    ],
+    "predeclared_focus": {
+      "checks": [
+        {
+          "case": "invoice_decoration",
+          "variant": "harmless_aside",
+          "order": 0,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": false
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "invoice_decoration",
+          "variant": "harmless_aside",
+          "order": 1,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": false
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "limiter_check_count",
+          "variant": "extra_check",
+          "order": 0,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": false
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "limiter_check_count",
+          "variant": "extra_check",
+          "order": 1,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": false
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "sensor_qualification",
+          "variant": "omitted_units",
+          "order": 0,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "sensor_qualification",
+          "variant": "omitted_units",
+          "order": 1,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "inventory_authority",
+          "variant": "unauthorized_write",
+          "order": 0,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "inventory_authority",
+          "variant": "unauthorized_write",
+          "order": 1,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "sensor_qualification",
+          "variant": "false_rationale",
+          "order": 0,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "sensor_qualification",
+          "variant": "false_rationale",
+          "order": 1,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "observer_access",
+          "variant": "borrowed_full_answer",
+          "order": 0,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "observer_access",
+          "variant": "borrowed_full_answer",
+          "order": 1,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "unsupported",
+          "order": 0,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "unsupported",
+          "order": 1,
+          "expected": "fail",
+          "structured_v1": {
+            "actual": "fail",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "fail",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "prohibited",
+          "order": 0,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "prohibited",
+          "order": 1,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "uncertain",
+          "order": 0,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        },
+        {
+          "case": "barrier_position",
+          "variant": "uncertain",
+          "order": 1,
+          "expected": "pass",
+          "structured_v1": {
+            "actual": "pass",
+            "matched": true
+          },
+          "criterion_v2": {
+            "actual": "pass",
+            "matched": true
+          }
+        }
+      ],
+      "planned_grounding_checks": 18,
+      "agreements": {
+        "structured_v1": 14,
+        "criterion_v2": 18
+      },
+      "v2_boundary_success": true
+    },
+    "usage_by_arm": {
+      "structured_v1": {
+        "calls": 12,
+        "known_input_tokens": 22122,
+        "known_output_tokens": 8240,
+        "unknown_usage_calls": 0
+      },
+      "criterion_v2": {
+        "calls": 12,
+        "known_input_tokens": 28374,
+        "known_output_tokens": 8073,
+        "unknown_usage_calls": 0
+      }
+    },
+    "artifact_sha256": {
+      "report.json": "f988951645ec30611274a4366910849aa6b228010a29a16f42912add03fbf139",
+      "journal.json": "b4287725d2f0c2928259771173cf33ea66f234b93550e0069ede7162d6c5f7c9"
+    }
+  },
+  "replay_check": {
+    "recorded_attempts": 24,
+    "replayed_attempts": 24,
+    "new_provider_calls": 0,
+    "packet_rows": 24,
+    "scores_context_expected_errors_usage_equal": true,
+    "summary_equal": true,
+    "recorded_usage_equal": true,
+    "limitation": "Replays recorded request and grading occurrences, not independent model reasoning or real service latency."
+  }
+}
