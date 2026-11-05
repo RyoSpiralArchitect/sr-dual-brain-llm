@@ -180,8 +180,9 @@ Adversarial cases also exit a child process immediately after a real commit,
 recover that unacknowledged operation after a newer correction, race different
 operations against one source, and reject a later target after an earlier status
 update to verify transaction rollback.
-They passed locally on PostgreSQL 16.2 without pgvector, using a private Unix
-socket with TCP disabled. CI runs the same suite against an isolated PostgreSQL 16
+Earlier commit-recovery validation used PostgreSQL 16.2 without pgvector and a
+private Unix socket with TCP disabled. CI runs the suite, including the new target
+isolation cases, against an isolated PostgreSQL 16
 service. Fresh schema creation exposed an existing unquoted `leading` column;
 its SQL references are now quoted. pgvector, production databases, power loss and
 distributed failover have not been exercised by these tests.
