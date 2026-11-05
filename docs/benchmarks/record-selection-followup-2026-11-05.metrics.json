@@ -1,0 +1,224 @@
+{
+  "version": "record_selection_comparison_v1",
+  "date": "2026-11-05",
+  "scope": "Deterministic memory selection and existing generation-input contracts; no new live answer-quality assessment",
+  "baseline_commit": "53498ef57e6ed41ec5f885154391b6e66e0ae16b",
+  "published_implementation_commit": "27e37f1f10485c3179699e2a219174f7dfdc0a1a",
+  "verified_implementation_tree_sha": "fef72b3bf4f97cfc88b886a5634adf7b05886d61",
+  "test_file": "tests/test_ambiguous_replay_contract.py",
+  "test_sha256": "8e4f6e0d0a1082348b0537d7bc6d4e7eb50778aee41486aa208a7d6833eae2cf",
+  "controls": {
+    "identical_test_bytes": true,
+    "identical_case_set": true,
+    "support": "Fixed Fake responses; ordinary approvals primed explicitly for both arms",
+    "real_provider_calls": 0,
+    "real_database_calls": 0,
+    "legacy_model_grades_changed": false,
+    "new_model_judge_calls": 0
+  },
+  "baseline": {
+    "passed": 7,
+    "failed": 16,
+    "errors": 0,
+    "skipped": 0,
+    "pytest_exit": 1,
+    "unexpected_blocked_http_attempts": 0,
+    "shared_memory_sha256": "123a1cca6de94b26703dc6206781c0d9f3b503c95260be973c6986e15cd80a0c"
+  },
+  "patched": {
+    "passed": 23,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "pytest_exit": 0,
+    "unexpected_blocked_http_attempts": 0,
+    "shared_memory_sha256": "ebf31080c344a9376bfd8eb34744be10a75a74fb7642d73eaab898ddf5d03264"
+  },
+  "cases": [
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[both-named]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[both-english_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[both-japanese_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[both-caller_declared]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_denied-named]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_denied-english_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_denied-japanese_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_denied-caller_declared]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_unknown-named]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_unknown-english_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_unknown-japanese_followup]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_support_never_selects_the_target_of_a_whole_record_request[one_unknown-caller_declared]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_records_omitted_from_support_candidates_still_prevent_selection[candidate_limit]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_records_omitted_from_support_candidates_still_prevent_selection[ineligible_record]",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_becoming_unique_requires_a_new_complete_replay_approval[expired]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_becoming_unique_requires_a_new_complete_replay_approval[superseded]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_becoming_unique_requires_a_new_complete_replay_approval[recalled]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_a_second_current_record_revokes_exposure_despite_old_replay_and_ordinary_approvals",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_semantic_requests_keep_their_approved_source_path[single_fact]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_semantic_requests_keep_their_approved_source_path[compound_facts]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_ordinary_semantic_requests_keep_their_approved_source_path[extra_clause]",
+      "baseline": "passed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_disabled_checker_does_not_turn_lexical_relevance_into_record_selection",
+      "baseline": "failed",
+      "patched": "passed"
+    },
+    {
+      "id": "tests.test_ambiguous_replay_contract::test_legacy_memory_retains_its_ordinary_approved_qa_behavior",
+      "baseline": "passed",
+      "patched": "passed"
+    }
+  ],
+  "additional_worker_comparison": {
+    "scope": "Same 12-case file and patched memory implementation, with saved pre-fix versus fixed worker",
+    "test_sha256": "b2e2ddfd96fa31d05c7d61d967e56b5d2129796df38d3939ad499571f122849f",
+    "previous_worker_sha256": "02a19ca6f876e65a2a9d3fa73de3033c97e53d3faa149cb706da19cb9ff34ad7",
+    "fixed_worker_sha256": "6dbc97580fa4fc11c78cc3fad11acf6177dbb2369e149c8570ee9cc51c481e5c",
+    "previous_worker": {
+      "passed": 6,
+      "failed": 6,
+      "unexpected_blocked_http_attempts": 0
+    },
+    "fixed_worker": {
+      "passed": 12,
+      "failed": 0,
+      "unexpected_blocked_http_attempts": 0
+    }
+  },
+  "local_verification": {
+    "full_python": {
+      "passed": 1770,
+      "skipped": 18,
+      "deselected": 1,
+      "skip_reasons": {
+        "Requires an isolated PostgreSQL test DSN": 1,
+        "isolated PostgreSQL DSN not configured": 16,
+        "torch not available": 1
+      },
+      "deselection": "Intentional local-HTTP human-review test, run separately and passed",
+      "unexpected_blocked_http_attempts": 0
+    },
+    "new_regression_cases": {
+      "test_ambiguous_replay_contract": 23,
+      "test_replay_resolution": 37,
+      "test_replay_clarification_context": 17,
+      "test_replay_worker_context": 12
+    },
+    "local_http": {
+      "passed": 1
+    },
+    "gateway": {
+      "passed": 2,
+      "skipped": 17,
+      "skip_reason": ".NET SDK unavailable locally; configured CI runs the contract suite"
+    },
+    "node_trace_history": {
+      "passed": 13
+    }
+  },
+  "changed_code_and_test_sha256": {
+    "sr-dual-brain-llm/core/dual_brain.py": "5c545b954295b487ad1e913d9cbfb497308477ef858b5f4862bdb4ef53b79efa",
+    "sr-dual-brain-llm/core/memory_clarification.py": "fab6c44e6e0bb9f6b5209e8b9b7962fc457e9eaf07378b01d12e2c6080d6eb06",
+    "sr-dual-brain-llm/core/memory_intent.py": "7b93c4b816103f0bcc6c6b4b57e93da47fdaf02fd7928f0742fda285786376f1",
+    "sr-dual-brain-llm/core/prefrontal_cortex.py": "4c6018aaf0e2b8cc21ee34d51ba135003773ecb670f7037750ca93aac8dbe9b0",
+    "sr-dual-brain-llm/core/right_worker.py": "6dbc97580fa4fc11c78cc3fad11acf6177dbb2369e149c8570ee9cc51c481e5c",
+    "sr-dual-brain-llm/core/shared_memory.py": "ebf31080c344a9376bfd8eb34744be10a75a74fb7642d73eaab898ddf5d03264",
+    "tests/test_ambiguous_replay_contract.py": "8e4f6e0d0a1082348b0537d7bc6d4e7eb50778aee41486aa208a7d6833eae2cf",
+    "tests/test_replay_clarification_context.py": "cce4712b14d8ba2dd433810c8349d177047519c19ae3e44cb6750b75dbb7bb86",
+    "tests/test_replay_resolution.py": "be613b05b40fa8473461368ec0964dd709cb501f2c40ad08d205380198e496e9",
+    "tests/test_replay_worker_context.py": "b2e2ddfd96fa31d05c7d61d967e56b5d2129796df38d3939ad499571f122849f"
+  },
+  "limits": [
+    "Fake responses demonstrate deterministic routing, evidence and packet delivery, not natural model compliance or semantic quality.",
+    "Revalidation governs the next existing generation call; no new call rewrites an already completed final draft after a late source change.",
+    "Current records means the existing resident working set, not an unlimited durable archive search.",
+    "PR #92 real responses, measurements, fixtures and historical grades are unchanged."
+  ],
+  "comparison_environment": {
+    "python": "3.12.14",
+    "pytest": "9.2.0",
+    "pytest_asyncio": "1.4.1.post1"
+  }
+}
