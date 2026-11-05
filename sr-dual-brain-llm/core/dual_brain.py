@@ -1193,23 +1193,26 @@ class DualBrainController:
             # Keep reference identity separate from approved QA evidence and its
             # salience/gating counts. This carries no source text, values or IDs.
             rebuilt.append(
-                "Conversation reference metadata (identity only, not factual evidence): "
-                + json.dumps({"reference": resolution, "approved_qa_supplied": bool(mem_ctx)})
-                + ". A resolved reference or multiple explicitly named projects must not be re-identified. "
-                "Missing approved evidence means requested facts cannot be confirmed from this context, "
-                "not that the project name is ambiguous. Acknowledge missing facts or request their source; "
-                "do not guess values. For an ambiguous reference, ask which project is intended. "
-                "This metadata does not verify any project fact."
+                PrefrontalCortex.reference_context(resolution, approved_qa_supplied=bool(mem_ctx))
             )
 
         missing = getattr(self.memory, "missing_evidence", None)
-        if guarded_memory and not mem_ctx and callable(missing):
+        if guarded_memory and callable(missing):
             clarification = PrefrontalCortex.clarification_context(missing(question))
             if clarification:
                 rebuilt.append(clarification)
 
         context = "\n".join(rebuilt)
         return context, focus
+
+    def _refresh_record_replay_context(
+        self,
+        question: str,
+        context: str | None,
+        *,
+        request: Dict[str, Any] | None = None,
+    ) -> str | None:
+        return PrefrontalCortex.refresh_record_replay_context(self.memory, question, context, request=request)
 
     def _integration_with_missing_evidence(self, question: str, info: str) -> str:
         """Keep the same explicit missing condition through final revision."""
@@ -2630,6 +2633,7 @@ class DualBrainController:
         phase_add: Callable[[str, float], None],
     ) -> DraftStageResult:
         steps: List[InnerDialogueStep] = []
+        context = self._refresh_record_replay_context(question, context)
         generator = self.left_model.generate_answer
         if getattr(self.memory, "primary_write_pending", False):
             generator = getattr(self.left_model, "generate_source_answer", None)
@@ -2638,10 +2642,13 @@ class DualBrainController:
         right_lead_notes: Optional[str] = None
         right_preview_task: asyncio.Task[str] | None = None
         if (leading == "right" or collaborative_lead) and not system2_active:
-            try:
-                right_preview_task = create_turn_task(
-                    self.right_model.generate_lead(question, context, on_delta=None)
+            async def generate_preview() -> str:
+                return await self.right_model.generate_lead(
+                    question, self._refresh_record_replay_context(question, context), on_delta=None,
                 )
+
+            try:
+                right_preview_task = create_turn_task(generate_preview())
             except Exception:  # pragma: no cover - defensive guard
                 right_preview_task = None
 
@@ -3277,6 +3284,7 @@ class DualBrainController:
         allow_memory_recall: bool = True,
     ) -> ConsultRequestPlan:
         payload_type = "ASK_CRITIC" if system2_active else "ASK_DETAIL"
+        context = self._refresh_record_replay_context(question, context)
         payload: Dict[str, Any] = {
             "type": payload_type,
             "qid": decision.qid,
@@ -3506,7 +3514,7 @@ class DualBrainController:
                             question,
                             payload.get("draft") or draft,
                             temperature=max(0.1, min(0.35, decision.temperature)),
-                            context=context,
+                            context=self._refresh_record_replay_context(question, context, request=payload),
                             psychoid_projection=(
                                 psychoid_projection.to_payload()
                                 if psychoid_projection
@@ -3522,7 +3530,7 @@ class DualBrainController:
                         self.memory,
                         temperature=decision.temperature,
                         budget=payload["budget"],
-                        context=context,
+                        context=self._refresh_record_replay_context(question, context, request=payload),
                         psychoid_projection=(
                             psychoid_projection.to_payload()
                             if psychoid_projection
@@ -3888,7 +3896,7 @@ class DualBrainController:
                             question,
                             verify_payload.get("draft") or final_answer,
                             temperature=max(0.1, min(0.3, decision.temperature)),
-                            context=context,
+                            context=self._refresh_record_replay_context(question, context, request=verify_payload),
                             psychoid_projection=(
                                 psychoid_projection.to_payload()
                                 if psychoid_projection
@@ -4181,7 +4189,7 @@ class DualBrainController:
                                 question,
                                 round3_payload.get("draft") or final_answer,
                                 temperature=max(0.1, min(0.25, decision.temperature)),
-                                context=context,
+                                context=self._refresh_record_replay_context(question, context, request=round3_payload),
                                 psychoid_projection=(
                                     psychoid_projection.to_payload()
                                     if psychoid_projection
@@ -5632,6 +5640,10 @@ class DualBrainController:
             *,
             timeout_ms: int,
         ) -> Dict[str, Any]:
+            payload_obj["context"] = self._refresh_record_replay_context(
+                question, payload_obj.get("context"), request=payload_obj,
+            )
+
             async def ask() -> Dict[str, Any]:
                 original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
                 hard_timeout_s = max(0.35, float(timeout_ms) / 1000.0 + 0.2)
