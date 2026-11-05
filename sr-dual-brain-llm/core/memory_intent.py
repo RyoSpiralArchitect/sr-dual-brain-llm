@@ -31,6 +31,29 @@ def literal_record_replay_requested(reference_content: str) -> bool:
     }
 
 
+def scoped_record_replay_requested(question, resolver):
+    """One identity in an allowed slot; other aliases cannot hide instructions."""
+    parts = resolver.single_alias_parts(question)
+    if parts is None:
+        return False
+    before, after = parts
+    prefix = before.strip()
+    if prefix in {'', 'project', 'プロジェクト'}:
+        # Prefix identity, Japanese possessive, or synthesized focus header.
+        if not after.strip() or after.lstrip()[0] in '.。!?？;；':
+            return False
+        return literal_record_replay_requested(re.sub(r'^\s*[:：]\s*', '', after))
+    marked_project = re.search(r'\bproject\s*$', before) is not None
+    before = re.sub(r'\bproject\s*$', '', before).strip()
+    if re.fullmatch(r'(?:please )?(?:repeat|reproduce|quote)', before):
+        if not marked_project and re.match(r"^[’']s\s+", after.strip()) is None:
+            return False
+        return literal_record_replay_requested(before + ' ' + re.sub(r"^[’']s\s+", '', after.strip()))
+    if re.search(r'\b(?:for|of)$', before):
+        return literal_record_replay_requested(before + ' ' + after)
+    return False
+
+
 @dataclass(frozen=True)
 class RecordReplayIntent:
     """Trusted caller binding, recomputed from the current query/complete source."""

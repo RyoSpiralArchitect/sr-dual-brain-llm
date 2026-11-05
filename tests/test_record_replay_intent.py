@@ -149,3 +149,28 @@ def test_complete_typed_quotation_can_preserve_qualitative_text_without_numeric_
     assert route_conversation_lookup(**args, replay_intent=True).reason == 'supported_literal_replay'
     assert route_conversation_lookup(**{**args, 'draft': source.answer + ' Added.'}, replay_intent=True).action == 'defer'
     assert route_conversation_lookup(**{**args, 'risk': .1}, replay_intent=True).action == 'defer'
+
+
+@pytest.mark.parametrize('question', [
+    'Repeat Project Rowan recorded answer verbatim. Explain.',
+    'Repeat the recorded answer verbatim. Explain.',
+    'Explain. Repeat the recorded answer verbatim.',
+    'Repeat and verify recorded answer verbatim.',
+])
+def test_an_alias_cannot_erase_an_extra_instruction_to_create_literal_intent(question):
+    m = memory()
+    m.past_qas[0] = replace(m.past_qas[0], scope_aliases=('Rowan', 'Explain', 'and verify'))
+    prepare(m, question)
+    assert m.replay_intent(question) is None
+    assert all('operation' not in r for r in m.answerability_gate.backend.requests)
+
+
+@pytest.mark.parametrize('question', [
+    'Repeat the recorded answer for Project Rowan verbatim.',
+    'Quote the stored text exactly for Rowan.', "Repeat Rowan's recorded answer verbatim.",
+    'Project Rowan: Repeat the recorded answer verbatim.', 'プロジェクトRowanの記録をそのまま再掲して',
+])
+def test_explicit_identity_slots_preserve_bounded_supported_forms(question):
+    m = memory()
+    prepare(m, question)
+    assert m.replay_intent(question) is not None

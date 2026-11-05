@@ -28,7 +28,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
-from .memory_intent import RecordReplayIntent, literal_record_replay_requested
+from .memory_intent import RecordReplayIntent, literal_record_replay_requested, scoped_record_replay_requested
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -324,7 +324,7 @@ class SharedMemory:
             return None
         query = self.retrieval_question(question)
         cue = self.scope_resolver().query(query)
-        if not literal_record_replay_requested(cue.content):
+        if not scoped_record_replay_requested(query, self.scope_resolver()):
             return None
         traces = [t for t in self.past_qas if self._available(t, time.time())
                   and t.retrieval_scope in cue.scopes and not t.recalled_answer]

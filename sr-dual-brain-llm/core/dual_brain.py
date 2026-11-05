@@ -3068,7 +3068,7 @@ class DualBrainController:
         source_replayed = False
         replay_intent = None
         intent_resolver = getattr(self.memory, 'replay_intent', None)
-        if blocked is None and callable(intent_resolver):
+        if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF and callable(intent_resolver):
             replay_intent = intent_resolver(question)
         if gate_config.mode == GateMode.AUTO and blocked is None and len(approved) == 1:
             cue = self.memory.scope_resolver().query(self.memory.retrieval_question(question))
