@@ -1,5 +1,6 @@
 """Independent availability/receipts through production failure boundaries."""
 from copy import deepcopy
+import json
 from pathlib import Path
 import sys
 
@@ -15,6 +16,7 @@ async def test_fixed_failure_matrix_and_zero_transport_replay(tmp_path):
     assert report['complete'] and report['expectation_failures'] == []
     assert len(report['rows']) == len(pilot.CASES) == 18
     assert report['provider_network_calls'] == 0
+    assert report['blocked_provider_requests'] == 0
     assert report['transport_attempts'] == len(journal['responses']) == report['usage']['calls']
     assert report['transport_attempts'] <= pilot.CALL_LIMIT
     rows = {row['case']: row for row in report['rows']}
@@ -70,8 +72,59 @@ def test_changed_contract_or_incomplete_journal_is_rejected():
 
 @pytest.mark.asyncio
 async def test_replay_occurrence_mismatch_stays_fatal_when_caller_catches_error():
-    journal = pilot.RawJournal(frozen={'metadata': pilot.metadata(), 'complete': True, 'responses': []})
+    journal = pilot.RawJournal(frozen={'metadata': pilot.metadata(), 'complete': True, 'responses': [],
+                                     'responses_sha256': pilot.digest([])})
     with pytest.raises(ValueError, match='occurrence'):
         await journal.post(pilot.CASES[0], 'support', 'https://fake.invalid', {}, {})
     with pytest.raises(ValueError, match='Unconsumed'):
         journal.finish()
+
+
+@pytest.mark.parametrize('row', [
+    {'request': {}, 'error_type': 'UnsupportedError'},
+    {'request': {}, 'response': {}, 'error_type': 'OSError'},
+    {'request': {}},
+])
+def test_malformed_frozen_receipts_fail_before_any_production_fallback(row):
+    responses = [row]
+    frozen = {'metadata': pilot.metadata(), 'complete': True, 'responses': responses,
+              'responses_sha256': pilot.digest(responses)}
+    with pytest.raises(ValueError, match='receipt envelope'):
+        pilot.RawJournal(frozen=frozen)
+
+
+def test_response_checksum_is_checked_independently_of_request_metadata():
+    frozen = {'metadata': pilot.metadata(), 'complete': True,
+              'responses': [{'request': {}, 'response': {'changed': True}}],
+              'responses_sha256': pilot.digest([])}
+    with pytest.raises(ValueError, match='integrity'):
+        pilot.RawJournal(frozen=frozen)
+
+
+@pytest.mark.asyncio
+async def test_unreplayable_recording_error_stays_fatal_with_partial_receipt():
+    saved = []
+    journal = pilot.RawJournal(save=lambda data: saved.append(deepcopy(data)))
+    with pytest.raises(json.JSONDecodeError):
+        await journal.post(pilot.CASES[0], 'support', 'https://fake.invalid',
+                           {'messages': [{'content': 'invalid JSON'}]}, {})
+    assert saved[-1]['complete'] is False
+    assert saved[-1]['responses'][0]['error_type'] == 'JSONDecodeError'
+    with pytest.raises(ValueError, match='Unconsumed'):
+        journal.finish()
+
+
+@pytest.mark.asyncio
+async def test_partial_receipts_survive_a_fatal_later_case(tmp_path, monkeypatch):
+    original = pilot.run_cell
+    async def fail_later(case, journal, output_dir):
+        if case[0] == pilot.CASES[1][0]:
+            raise RuntimeError('Deliberate later failure')
+        return await original(case, journal, output_dir)
+    monkeypatch.setattr(pilot, 'run_cell', fail_later)
+    with pytest.raises(RuntimeError, match='Deliberate'):
+        await pilot.run(tmp_path)
+    partial = pilot.read_json(tmp_path / 'journal.partial.json')
+    assert partial['complete'] is False and len(partial['responses']) == 3
+    assert partial['responses_sha256'] == pilot.digest(partial['responses'])
+    assert len(pilot.read_json(tmp_path / 'report.partial.json')['rows']) == 1

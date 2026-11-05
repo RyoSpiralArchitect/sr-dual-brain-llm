@@ -29,6 +29,9 @@ these external-critic controls. The existing one-shot unstructured-text repair i
 enabled. Auto-continuation is disabled. The total cap is 128 scripted transport
 attempts, including support, drafts, repair, integration, verification, and recovery
 turns. The runner has no live mode, model argument, or credential lookup.
+The shared `offline_provider_guard` surrounds the run and task draining. It blocks
+the real aiohttp request boundary for JSON/SSE and standard-library HTTP fallbacks;
+an attempted request fails the run even if a model fallback catches its exception.
 
 ## Independent observations
 
@@ -61,6 +64,8 @@ rejecting a malformed completion in the harness would hide which production
 boundary accepted or rejected it. It binds the fixture, code, runtime controls,
 and every ordered case/role/endpoint/payload occurrence. A mismatch remains fatal
 even if a production fallback catches the immediate exception.
+Frozen receipt envelopes and error categories are validated before execution;
+a separate response checksum detects changes independently of request metadata.
 
 Replay serves only the recorded responses and error categories. Cancellation is
 re-enacted at the same blocked boundary, then drained by the caller. Every receipt
@@ -78,6 +83,7 @@ pytest -q tests/test_critic_contract.py tests/test_benchmark_critic_failures.py
 
 Raw artifacts are ignored private files. The report contains case IDs, status,
 hashes, and receipt counts; the journal additionally contains scripted requests
-and responses. These controls establish deterministic contracts and recovery
+and responses. Atomic partial checkpoints retain completed receipts/cases if a
+later step fails. These controls establish deterministic contracts and recovery
 behavior. Any later live-provider confirmation requires a separately frozen
 protocol and budget.

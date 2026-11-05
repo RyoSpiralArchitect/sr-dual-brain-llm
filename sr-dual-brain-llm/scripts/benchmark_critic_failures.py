@@ -30,9 +30,12 @@ from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
 from engine_stdio import EngineSession, _handle_process
 from benchmark_frozen_drafts import digest, read_json, write_private
 from benchmark_module_gating import usage
+from benchmark_controlled_memory import checkpoint
+from offline_provider_guard import forbid_provider_network
 
 CLOCK = 1793836800.
 CALL_LIMIT = 128
+REPLAYABLE_ERRORS = frozenset({'OSError', 'CancelledError', 'ValueError'})
 QUESTION = 'What does the Project Cedar record say about retention?'
 SOURCE = 'Recorded policy: normal retention is 11 days; urgent retention is 2 days.'
 CLEAN = {'verdict': 'ok', 'issues': [], 'fixes': []}
@@ -85,16 +88,31 @@ def metadata():
         'fixture_sha256': digest([QUESTION, SOURCE, CLEAN, ISSUES, CASES]),
         'code_sha256': digest([(str(p.relative_to(ROOT)), hashlib.sha256(p.read_bytes()).hexdigest()) for p in files]),
         'runtime': environment(), 'model': configuration().model,
+        'dependencies': {'python': list(sys.version_info[:3]), 'numpy': np.__version__,
+                         'torch': str(__import__('torch').__version__) if TORCH_AVAILABLE else None},
         'usage_kind': 'synthetic_receipts', 'provider_kind': 'deterministic_fake'}
 
 
 class RawJournal:
     """Ordered raw responses/errors; never sanitize a failed response into success."""
-    def __init__(self, *, frozen=None):
+    def __init__(self, *, frozen=None, save=None):
         self.metadata = metadata()
-        if frozen is not None and (frozen.get('metadata') != self.metadata or frozen.get('complete') is not True):
-            raise ValueError('Frozen critic journal differs or is incomplete')
+        if frozen is not None:
+            if (not isinstance(frozen, dict) or frozen.get('metadata') != self.metadata
+                    or frozen.get('complete') is not True):
+                raise ValueError('Frozen critic journal differs or is incomplete')
+            responses = frozen.get('responses')
+            if (not isinstance(responses, list) or len(responses) > CALL_LIMIT
+                    or frozen.get('responses_sha256') != digest(responses)):
+                raise ValueError('Frozen response integrity differs')
+            for row in responses:
+                if (not isinstance(row, dict) or not isinstance(row.get('request'), dict)
+                        or set(row) not in ({'request', 'response'}, {'request', 'error_type'})
+                        or 'error_type' in row and (not isinstance(row['error_type'], str)
+                            or row['error_type'] not in REPLAYABLE_ERRORS)):
+                    raise ValueError('Unsupported frozen receipt envelope or failure category')
         self.frozen, self.rows, self.events = frozen, [], []
+        self.save = save
         self.position = self.transport_attempts = 0
         self.mismatch = False
         self.recovering = False
@@ -104,7 +122,11 @@ class RawJournal:
         request = {'case': case[0], 'phase': 'recovery' if self.recovering else 'primary',
                    'role': role, 'endpoint_sha256': digest(url), 'payload': payload}
         if self.position >= CALL_LIMIT:
+            self.mismatch = True
             raise ValueError('Fixed attempt budget exceeded')
+        if role not in {'support', 'draft', 'integration', 'critic_initial', 'critic_repair', 'critic_verify', 'detail'}:
+            self.mismatch = True
+            raise ValueError('Untracked production call')
         position = self.position
         self.position += 1
         if self.frozen is not None:
@@ -123,19 +145,31 @@ class RawJournal:
                 await asyncio.Event().wait()  # The same caller cancellation ends this occurrence.
             elif row.get('error_type') == 'OSError':
                 raise OSError('Recorded scripted transport failure')
+            elif row.get('error_type') == 'ValueError':
+                raise ValueError('Recorded scripted input failure')
             elif row.get('error_type'):
+                self.mismatch = True
                 raise ValueError('Unsupported recorded failure category')
             return deepcopy(row['response'])
         except BaseException as exc:
             if self.frozen is None:
                 row['error_type'] = type(exc).__name__
+                if row['error_type'] not in REPLAYABLE_ERRORS:
+                    # A production fallback may catch this harness failure, but
+                    # it must not turn an unreplayable journal into a complete run.
+                    self.mismatch = True
             raise
         finally:
             self.rows.append(row)
-            receipt = (row.get('response') or {}).get('usage') or {}
+            response = row.get('response')
+            receipt = response.get('usage') if isinstance(response, dict) else None
+            receipt = receipt if isinstance(receipt, dict) else {}
             tokens = lambda key: receipt[key] if type(receipt.get(key)) is int and receipt[key] >= 0 else None
             self.events.append({'role': role, 'error_type': row.get('error_type'),
                 'input_tokens': tokens('prompt_tokens'), 'output_tokens': tokens('completion_tokens')})
+            if self.save:
+                self.save({'metadata': self.metadata, 'complete': False, 'responses': self.rows,
+                           'responses_sha256': digest(self.rows)})
 
     async def fake_response(self, case, role, payload):
         _, target, fault, _ = case
@@ -173,9 +207,10 @@ class RawJournal:
         return response
 
     def finish(self):
-        if self.frozen is not None and (self.mismatch or self.position != len(self.frozen['responses'])):
+        if self.mismatch or self.frozen is not None and self.position != len(self.frozen['responses']):
             raise ValueError('Unconsumed response occurrences')
-        return {'metadata': self.metadata, 'complete': True, 'responses': self.rows}
+        return {'metadata': self.metadata, 'complete': True, 'responses': self.rows,
+                'responses_sha256': digest(self.rows)}
 
 
 class RecordedClient:
@@ -327,13 +362,19 @@ async def run_cell(case, journal, output_dir):
 
 
 async def run(output_dir, *, frozen=None):
-    journal = RawJournal(frozen=frozen)
+    journal = RawJournal(frozen=frozen,
+        save=lambda data: checkpoint(output_dir / 'journal.partial.json', data))
+    rows = []
     with patch.dict(os.environ, environment(), clear=True), patch('time.time', lambda: CLOCK), \
-            patch('core.llm_client.aiohttp.ClientSession', side_effect=AssertionError('Uninstrumented provider transport')):
-        rows = [await run_cell(case, journal, output_dir) for case in CASES]
+            forbid_provider_network() as transport_audit:
+        for case in CASES:
+            rows.append(await run_cell(case, journal, output_dir))
+            checkpoint(output_dir / 'report.partial.json', {'metadata': journal.metadata,
+                'complete': False, 'rows': rows, 'usage': usage(journal.events)})
     recorded = journal.finish()
     report = {'metadata': journal.metadata, 'complete': True, 'rows': rows,
         'transport_attempts': journal.transport_attempts, 'provider_network_calls': 0,
+        'blocked_provider_requests': transport_audit.blocked_requests,
         'usage': usage(journal.events),
         'expectation_failures': [{'case': row['case'], 'failures': row['expectation_failures']}
                                  for row in rows if row['expectation_failures']]}
@@ -350,11 +391,15 @@ def main():
     parser.add_argument('--journal', type=Path)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=False)
-    report, journal = asyncio.run(run(args.output_dir, frozen=read_json(args.journal) if args.journal else None))
+    try:
+        report, journal = asyncio.run(run(args.output_dir, frozen=read_json(args.journal) if args.journal else None))
+    except BaseException as exc:
+        checkpoint(args.output_dir / 'failure.json', {'complete': False, 'error_type': type(exc).__name__})
+        raise SystemExit(1) from None
     write_private(args.output_dir / 'report.json', report)
     write_private(args.output_dir / 'journal.json', journal)
     print(json.dumps({key: report[key] for key in ('complete', 'transport_attempts', 'provider_network_calls',
-                                                  'usage', 'expectation_failures')}))
+                                                  'blocked_provider_requests', 'usage', 'expectation_failures')}))
     if report['expectation_failures']:
         raise SystemExit(1)
 

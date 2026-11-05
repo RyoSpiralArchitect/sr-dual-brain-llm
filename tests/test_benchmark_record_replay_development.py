@@ -27,6 +27,7 @@ async def test_production_controls_keep_three_support_occurrences_and_replay_exa
     assert len(report['support']) == 66 and len(report['rows']) == len(report['assessments']) == 22
     assert provider.calls == report['transport_attempts'] == report['usage']['calls'] <= pilot.CALL_LIMIT
     assert report['provider_network_calls'] == 0
+    assert report['blocked_provider_requests'] == 0
     assert report['calls_by_role']['answer_judge_v3'] == 22
     for row in report['rows']:
         assert not any(role.startswith('support') for role in row['calls_by_role'])
