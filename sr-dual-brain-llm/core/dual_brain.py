@@ -7,6 +7,7 @@ import json
 import re
 import time
 import uuid
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
@@ -1201,8 +1202,22 @@ class DualBrainController:
                 "This metadata does not verify any project fact."
             )
 
+        missing = getattr(self.memory, "missing_evidence", None)
+        if guarded_memory and not mem_ctx and callable(missing):
+            clarification = PrefrontalCortex.clarification_context(missing(question))
+            if clarification:
+                rebuilt.append(clarification)
+
         context = "\n".join(rebuilt)
         return context, focus
+
+    def _integration_with_missing_evidence(self, question: str, info: str) -> str:
+        """Keep the same explicit missing condition through final revision."""
+        missing = getattr(self.memory, "missing_evidence", None)
+        if not getattr(self.memory, "conversation_context", False) or not callable(missing):
+            return info
+        clarification = PrefrontalCortex.clarification_context(missing(question))
+        return info + "\n\n" + clarification if clarification else info
 
     @staticmethod
     def _infer_question_type(
@@ -2123,6 +2138,7 @@ class DualBrainController:
             self.telemetry.log(
                 "system2_mode",
                 qid=qid,
+                phase="initial",
                 mode=settings.mode,
                 enabled=bool(status.active),
                 reason=status.reason,
@@ -2138,6 +2154,79 @@ class DualBrainController:
             )
         except Exception:  # pragma: no cover - telemetry is best-effort
             pass
+
+    @staticmethod
+    def _system2_execution_payload(decision: DecisionOutcome) -> Dict[str, Any]:
+        """Describe controller requests separately from routing and review validity.
+
+        Requests include failed dispatches and direct fallbacks, not the model's
+        internal HTTP attempts or token usage. Completion describes the latest
+        request, so a failed verification cannot inherit an earlier valid review.
+        """
+        attempts = decision.state.setdefault("system2_attempts", [])
+        latest = attempts[-1] if attempts else None
+        returned = latest is not None and latest["outcome"] == "returned"
+        return {
+            "used": bool(attempts),
+            "critic_attempts": len(attempts),
+            "critic_responses": sum(item["outcome"] == "returned" for item in attempts),
+            "attempted_rounds": sorted({item["round"] for item in attempts}),
+            "review_completed": latest.get("review_valid") if returned else False,
+            "external_review_completed": latest.get("external_review_valid") if returned else False,
+            "attempts": deepcopy(attempts),
+            "local_recovery": {
+                "source": decision.state.get("system2_timeout_recovery_source"),
+                "resolved": decision.state.get("system2_resolved"),
+            } if decision.state.get("system2_timeout_recovered") else None,
+        }
+
+    async def _track_system2_request(
+        self, decision: DecisionOutcome, *, round_index: int, source: str,
+        request: Callable[[], Any],
+    ) -> Dict[str, Any]:
+        attempt: Dict[str, Any] = {
+            "round": round_index, "source": source, "outcome": "pending",
+            "review_valid": None, "external_review_valid": None,
+        }
+        decision.state.setdefault("system2_attempts", []).append(attempt)
+        decision.state["system2_used"] = True
+        prefix = {1: "critic", 2: "system2_verify_critic", 3: "system2_round3_critic"}[round_index]
+        self._retain_critic_validation(decision, {}, prefix=prefix)
+        try:
+            response = await request()
+        except BaseException as exc:
+            attempt.update(outcome="cancelled" if isinstance(exc, asyncio.CancelledError) else "failed",
+                           error_type=type(exc).__name__)
+            decision.state[prefix + "_review_valid"] = False
+            decision.state[prefix + "_external_review_valid"] = False
+            raise
+        else:
+            attempt["outcome"] = "returned"
+            if isinstance(response, dict):
+                self._retain_critic_validation(decision, response, prefix=prefix)
+                for source_key, key in (("critic_review_valid", "review_valid"),
+                                        ("critic_external_review_valid", "external_review_valid")):
+                    value = response.get(source_key)
+                    attempt[key] = value if type(value) is bool else None
+                for key in ("critic_status", "critic_kind"):
+                    if isinstance(response.get(key), str):
+                        attempt[key] = response[key]
+                if isinstance(response.get("critic_validation"), dict):
+                    attempt["validation"] = deepcopy(response["critic_validation"])
+            return response
+
+    @staticmethod
+    def _retain_critic_validation(
+        decision: DecisionOutcome, response: Dict[str, Any], *, prefix: str = "critic",
+    ) -> None:
+        for suffix in ("review_valid", "external_review_valid", "validation"):
+            key = "critic_" + suffix
+            value = response.get(key)
+            if suffix == "validation":
+                value = deepcopy(value) if isinstance(value, dict) else None
+            elif type(value) is not bool:
+                value = None
+            decision.state[prefix + "_" + suffix] = value
 
     def _select_leading_stage(
         self,
@@ -3000,6 +3089,11 @@ class DualBrainController:
                 else:
                     decision.action = 0
                     decision.state["director_consult"] = "skip"
+                    if system2_active:
+                        decision.state["director_system2_suppressed"] = True
+                        system2_active = False
+                        system2_reason = "director_skip"
+                        system2_round_target = 0
             elif consult == "force" and not is_trivial_chat:
                 decision.action = max(1, decision.action)
                 decision.state["director_consult"] = "force"
@@ -3115,15 +3209,23 @@ class DualBrainController:
                 "approved_records": len(approved),
                 "activation_mode": gate_config.mode.value, "applied": bool(apply_route),
             }
-            decision.state.update(system2_enabled=bool(system2_active), system2_reason=system2_reason,
-                                  system2_round_target=system2_round_target)
             self.telemetry.log("consultation_route", qid=decision.qid, **decision.state["selective_consultation"])
-            # Expose the final post-draft decision, rather than the earlier
-            # perception-only activation, through existing metrics extraction.
+
+        # Every routing branch shares one final admission snapshot. Execution is
+        # observed separately; a selected route has not yet made a critic call.
+        if not system2_active:
+            system2_round_target = 0
+        decision.state.update(system2_enabled=bool(system2_active), system2_reason=system2_reason,
+                              system2_round_target=system2_round_target, system2_used=False,
+                              system2_attempts=[], system2_rounds=0)
+        try:
             self.telemetry.log("system2_mode", qid=decision.qid, mode=system2_mode,
+                               phase="routing",
                                enabled=bool(system2_active), capable=bool(system2_capable),
                                reason=system2_reason, priority=system2_priority,
                                low_signal_filter=bool(system2_low_signal_filter))
+        except Exception:  # pragma: no cover - telemetry is best-effort
+            pass
 
         return RoutingStageResult(
             context_frame=context_frame,
@@ -3356,6 +3458,7 @@ class DualBrainController:
         critic_fixes: List[str] = []
         system2_initial_issue_count = 0
         if system2_active:
+            self._retain_critic_validation(decision, response)
             critic_verdict = str(response.get("verdict") or "").strip().lower() or None
             critic_issues_raw = _normalise_issue_list(response.get("issues"), limit=12)
             critic_issues = _filter_system2_issues(
@@ -3396,16 +3499,19 @@ class DualBrainController:
             fallback_used = True
             try:
                 if system2_active:
-                    fallback = await self.right_model.criticise_reasoning(
-                        decision.qid,
-                        question,
-                        payload.get("draft") or draft,
-                        temperature=max(0.1, min(0.35, decision.temperature)),
-                        context=context,
-                        psychoid_projection=(
-                            psychoid_projection.to_payload()
-                            if psychoid_projection
-                            else None
+                    fallback = await self._track_system2_request(
+                        decision, round_index=1, source="direct_fallback",
+                        request=lambda: self.right_model.criticise_reasoning(
+                            decision.qid,
+                            question,
+                            payload.get("draft") or draft,
+                            temperature=max(0.1, min(0.35, decision.temperature)),
+                            context=context,
+                            psychoid_projection=(
+                                psychoid_projection.to_payload()
+                                if psychoid_projection
+                                else None
+                            ),
                         ),
                     )
                 else:
@@ -3428,6 +3534,7 @@ class DualBrainController:
                 final_answer = draft
             else:
                 if system2_active:
+                    self._retain_critic_validation(decision, fallback)
                     decision.state["right_role"] = "critic"
                     critic_verdict = str(fallback.get("verdict") or "").strip().lower() or None
                     critic_kind = fallback.get("critic_kind")
@@ -3625,7 +3732,7 @@ class DualBrainController:
             final_answer = await self.left_model.integrate_info_async(
                 question=question,
                 draft=final_answer,
-                info="\n\n".join(integration_parts),
+                info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
                 temperature=max(0.2, min(0.6, decision.temperature)),
                 on_delta=None if stream_final_only else delta_cb,
             )
@@ -3748,6 +3855,8 @@ class DualBrainController:
                 verify_call_error = True
                 verify_response = {}
 
+            self._retain_critic_validation(decision, verify_response, prefix="system2_verify_critic")
+
             verify_verdict = str(
                 verify_response.get("verdict") or ""
             ).strip().lower()
@@ -3772,21 +3881,25 @@ class DualBrainController:
                 and verify_verdict not in {"ok", "issues"}
             ):
                 try:
-                    verify_fallback = await self.right_model.criticise_reasoning(
-                        decision.qid,
-                        question,
-                        verify_payload.get("draft") or final_answer,
-                        temperature=max(0.1, min(0.3, decision.temperature)),
-                        context=context,
-                        psychoid_projection=(
-                            psychoid_projection.to_payload()
-                            if psychoid_projection
-                            else None
+                    verify_fallback = await self._track_system2_request(
+                        decision, round_index=2, source="direct_fallback",
+                        request=lambda: self.right_model.criticise_reasoning(
+                            decision.qid,
+                            question,
+                            verify_payload.get("draft") or final_answer,
+                            temperature=max(0.1, min(0.3, decision.temperature)),
+                            context=context,
+                            psychoid_projection=(
+                                psychoid_projection.to_payload()
+                                if psychoid_projection
+                                else None
+                            ),
                         ),
                     )
                 except Exception:
                     verify_fallback = {}
                 else:
+                    self._retain_critic_validation(decision, verify_fallback, prefix="system2_verify_critic")
                     verify_verdict = str(
                         verify_fallback.get("verdict") or ""
                     ).strip().lower()
@@ -3979,7 +4092,7 @@ class DualBrainController:
                 final_answer = await self.left_model.integrate_info_async(
                     question=question,
                     draft=final_answer,
-                    info=followup_info,
+                    info=self._integration_with_missing_evidence(question, followup_info),
                     temperature=followup_temperature,
                     on_delta=None if stream_final_only else delta_cb,
                 )
@@ -4036,6 +4149,8 @@ class DualBrainController:
                     round3_call_error = True
                     round3_response = {}
 
+                self._retain_critic_validation(decision, round3_response, prefix="system2_round3_critic")
+
                 round3_verdict = str(
                     round3_response.get("verdict") or ""
                 ).strip().lower()
@@ -4059,21 +4174,25 @@ class DualBrainController:
                     and round3_verdict not in {"ok", "issues"}
                 ):
                     try:
-                        round3_fallback = await self.right_model.criticise_reasoning(
-                            decision.qid,
-                            question,
-                            round3_payload.get("draft") or final_answer,
-                            temperature=max(0.1, min(0.25, decision.temperature)),
-                            context=context,
-                            psychoid_projection=(
-                                psychoid_projection.to_payload()
-                                if psychoid_projection
-                                else None
+                        round3_fallback = await self._track_system2_request(
+                            decision, round_index=3, source="direct_fallback",
+                            request=lambda: self.right_model.criticise_reasoning(
+                                decision.qid,
+                                question,
+                                round3_payload.get("draft") or final_answer,
+                                temperature=max(0.1, min(0.25, decision.temperature)),
+                                context=context,
+                                psychoid_projection=(
+                                    psychoid_projection.to_payload()
+                                    if psychoid_projection
+                                    else None
+                                ),
                             ),
                         )
                     except Exception:
                         round3_fallback = {}
                     else:
+                        self._retain_critic_validation(decision, round3_fallback, prefix="system2_round3_critic")
                         round3_verdict = str(
                             round3_fallback.get("verdict") or ""
                         ).strip().lower()
@@ -4197,6 +4316,12 @@ class DualBrainController:
                 critic_status=decision.state.get("critic_status"),
                 verify_critic_status=decision.state.get("system2_verify_critic_status"),
                 round3_critic_status=decision.state.get("system2_round3_critic_status"),
+                **{
+                    stage + "critic_" + suffix: decision.state.get(prefix + "critic_" + suffix)
+                    for stage, prefix in (("", ""), ("verify_", "system2_verify_"),
+                                          ("round3_", "system2_round3_"))
+                    for suffix in ("review_valid", "external_review_valid", "validation")
+                },
                 verify_issues_raw=decision.state.get(
                     "system2_issue_count_verify_raw"
                 ),
@@ -4330,12 +4455,16 @@ class DualBrainController:
         # - and only when the left model can do safe integration (external LLM available).
         if not (
             not system2_active
+            # Final routing can suppress a previously active System2 plan.
+            # Preserve its prior inhibition of extra post-answer correction.
+            and not decision.state.get("director_system2_suppressed")
             and system2_mode == "auto"
             and not is_trivial_chat
             and final_answer
             and str(final_answer).strip()
         ):
             blocked = ('system2_active' if system2_active else
+                       'director_override' if decision.state.get("director_system2_suppressed") else
                        'explicit_system2_mode' if system2_mode != 'auto' else 'outside_scope')
             for module_id in (ACC_MONITOR, CEREBELLAR_CORRECTION):
                 self._module_gate(module_id, decision=decision,
@@ -4444,10 +4573,8 @@ class DualBrainController:
                     revised = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
-                        info=self.cerebellum.build_internal_notes(
-                            micro_result,
-                            forecast=cerebellar_forecast,
-                        ),
+                        info=self._integration_with_missing_evidence(question,
+                            self.cerebellum.build_internal_notes(micro_result, forecast=cerebellar_forecast)),
                         temperature=max(
                             0.15, min(0.35, float(decision.temperature))
                         ),
@@ -4912,7 +5039,7 @@ class DualBrainController:
                     "reward": reward,
                     "success": success,
                     "conflict_resolved": conflict_resolved,
-                    "system2_used": bool(decision.state.get("system2_enabled")),
+                    "system2_used": bool(decision.state.get("system2_used")),
                     "salience_level": (
                         float(salience_signal.level)
                         if salience_signal is not None
@@ -4925,7 +5052,7 @@ class DualBrainController:
                 reward=reward,
                 success=success,
                 conflict_resolved=conflict_resolved,
-                system2_used=bool(decision.state.get("system2_enabled")),
+                system2_used=bool(decision.state.get("system2_used")),
                 salience_level=(
                     float(salience_signal.level)
                     if salience_signal is not None
@@ -5222,7 +5349,7 @@ class DualBrainController:
                         and decision.state.get("cerebellum_micro", {}).get("resolved")
                     )
                 ),
-                system2_used=bool(decision.state.get("system2_enabled")),
+                system2_used=bool(decision.state.get("system2_used")),
             )
         if self.unconscious_field is not None:
             outcome_meta = self.unconscious_field.integrate_outcome(
@@ -5505,25 +5632,32 @@ class DualBrainController:
             *,
             timeout_ms: int,
         ) -> Dict[str, Any]:
-            original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
-            hard_timeout_s = max(0.35, float(timeout_ms) / 1000.0 + 0.2)
-            try:
-                self.callosum.slot_ms = decision.slot_ms
-                ask_task = create_turn_task(
-                    self.callosum.ask_detail(payload_obj, timeout_ms=timeout_ms))
+            async def ask() -> Dict[str, Any]:
+                original_slot = getattr(self.callosum, "slot_ms", decision.slot_ms)
+                hard_timeout_s = max(0.35, float(timeout_ms) / 1000.0 + 0.2)
                 try:
-                    done, _ = await asyncio.wait({ask_task}, timeout=hard_timeout_s)
-                    if not done:
+                    self.callosum.slot_ms = decision.slot_ms
+                    ask_task = create_turn_task(
+                        self.callosum.ask_detail(payload_obj, timeout_ms=timeout_ms))
+                    try:
+                        done, _ = await asyncio.wait({ask_task}, timeout=hard_timeout_s)
+                        if not done:
+                            cancel_task(ask_task)
+                            await asyncio.gather(ask_task, return_exceptions=True)
+                            raise asyncio.TimeoutError
+                        return ask_task.result()
+                    except asyncio.CancelledError:
                         cancel_task(ask_task)
                         await asyncio.gather(ask_task, return_exceptions=True)
-                        raise asyncio.TimeoutError
-                    return ask_task.result()
-                except asyncio.CancelledError:
-                    cancel_task(ask_task)
-                    await asyncio.gather(ask_task, return_exceptions=True)
-                    raise
-            finally:
-                self.callosum.slot_ms = original_slot
+                        raise
+                finally:
+                    self.callosum.slot_ms = original_slot
+
+            if payload_obj.get("type") == "ASK_CRITIC":
+                return await self._track_system2_request(
+                    decision, round_index=int(payload_obj.get("round") or 1),
+                    source="callosum", request=ask)
+            return await ask()
 
         delta_cb = _emit_delta if on_delta else None
         memory_block = context_parts.get("memory", "")
@@ -5999,7 +6133,7 @@ class DualBrainController:
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
-                            info="\n\n".join(integration_parts),
+                            info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
                             temperature=integration_temperature,
                             on_delta=None if stream_final_only else delta_cb,
                         )
@@ -6145,7 +6279,7 @@ class DualBrainController:
                             final_answer = await self.left_model.integrate_info_async(
                                 question=question,
                                 draft=draft,
-                                info=(
+                                info=self._integration_with_missing_evidence(question,
                                     "Reasoning critic notes (internal; do not output directly). "
                                     "Revise the draft to address issues and improve correctness. "
                                     "Apply minimal precise edits and avoid introducing new assumptions:\n"
@@ -6255,6 +6389,11 @@ class DualBrainController:
             # Preserve the adaptive feedback signal while fixing reported wall time.
             latency_ms = consult_latency_ms
             self.orchestrator.clear(decision.qid)
+            try:
+                self.telemetry.log("system2_execution", qid=decision.qid,
+                                   **self._system2_execution_payload(decision))
+            except Exception:  # pragma: no cover - telemetry is best-effort
+                pass
 
         if executive_payload is None and executive_task is not None:
             advice: ExecutiveAdvice | None = None

@@ -143,11 +143,11 @@ class MemoryScopeResolver:
         content = " ".join(content.split()).strip(" ?？:：,、。")
         return ScopeCue(scopes, any(len(group) != 1 for group in groups), content)
 
-    def single_alias_parts(self, question: str) -> tuple[str, str] | None:
-        """Keep identity position; deleting all aliases can erase a user clause."""
+    def single_alias_parts(self, question: str, *, allow_ambiguous: bool = False) -> tuple[str, str] | None:
+        """Keep identity position; optional ambiguity is for diagnostics only."""
         text = normalize_name(question)
         matches = self._matches(text)
-        if len(matches) != 1 or len(self.aliases[matches[0][2]]) != 1:
+        if len(matches) != 1 or (not allow_ambiguous and len(self.aliases[matches[0][2]]) != 1):
             return None
         start, stop, _ = matches[0]
         return text[:start], text[stop:]

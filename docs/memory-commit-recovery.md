@@ -77,11 +77,48 @@ conversation data. It is retained after acknowledgement to support response repl
 No provider credentials are journaled. Custom paths should be excluded from version
 control and included in the application's private backup/retention policy.
 
-Outbox entries are namespaced by non-secret DSN target fields and table prefix;
-password rotation does not change the namespace. Keep the same explicit target
-configuration on restart. Moving to another host requires moving the outbox too.
-Changing database routing through environment variables, service definitions or
-DNS is outside this identity guarantee. The outbox is not a distributed job queue.
+Outbox entries are namespaced by explicit DSN target fields, table prefix and,
+when present, the exact parsed DSN `options` string. For example,
+`options='-c search_path=alpha'` and `options='-c search_path=beta'` have separate
+namespaces even for the same database, user and table prefix. The connection uses
+that same DSN. Only the fingerprint is stored; raw DSN/options and passwords are
+absent from outbox identity fields and conflict errors. Password rotation does
+not change the namespace. An absent or empty `options` value preserves the
+previous namespace hash.
+
+This is a conservative binding to explicit configuration: even equivalent option
+spellings or a non-routing option change produce a different namespace. Keep the
+same explicit target configuration on restart. SQL table references still use
+the connection's search path. Changes to resolved routing through environment
+variables, service definitions, DNS or database-side defaults remain outside
+this identity guarantee. Moving to another host requires moving the outbox too.
+The outbox is not a distributed job queue.
+
+### Upgrading an outbox created before options were bound
+
+Older entries did not record DSN options, so their original schema cannot be
+recovered from their namespace. With explicit nonempty options, the engine
+checks the older namespace for the requested session before reading, preparing
+or acknowledging an operation. Any older row raises `MemoryCommitConflict`,
+including an acknowledged row that retains a saved response. This prevents an
+upgrade from silently losing pending operations or regenerating a saved answer
+under the new namespace. Checks and writes share the same SQLite transaction;
+the original rows are retained without migration or deletion. Entries belonging
+to other sessions and newly bound target namespaces can coexist in the file.
+
+Keep the original outbox and verify its database/schema before deciding how to
+recover legacy operations. Durable receipts can be inspected read-only through
+`memory_commit_receipt` against the verified target. Automatic legacy migration
+is disabled because the old rows cannot establish that target. Existing
+configurations without explicit options retain their previous hash and response
+replay; operators changing an older configuration must account for that historical
+ambiguity. Direct callers constructing an outbox for a store should supply
+`legacy_namespaces=store.memory_legacy_namespaces` when the store exposes it.
+This protects reads and preparation even before reconciliation. Reconciliation
+also installs the store's legacy guards before any lookup or backend call,
+including for an outbox made with the original two-argument constructor. The
+guards remain attached to that object for later reads/writes. An outbox whose
+namespace differs from its store is rejected.
 
 If the process dies before the outbox commit, no PostgreSQL attempt has occurred;
 that generated text is not recoverable. After preparation the ID and exact payload
@@ -105,6 +142,7 @@ sessions and legacy append APIs retain their behavior. Existing rows require no
 new uniqueness rules or backfill. Custom persistence adapters for this path must
 implement `memory_namespace`, `commit_memory_operation`, `memory_commit_receipt`
 and `load_session` with the same contract. Adapters may also implement
+`memory_legacy_namespaces` to block ambiguous older identities for a session, or
 `load_conversation_sources(session_id, limit=...)` to restore active primary
 sources before applying the working-set limit. PostgreSQL provides this indexed
 path; other adapters retain their previous history load. The ordinary history
@@ -119,6 +157,10 @@ success still does not establish factual truth or semantic completeness.
 `tests/test_memory_commits.py` exercises engine integration with deterministic
 fault injection, immutable outbox payloads, restart recovery, source completion
 gating and conflicting requests. Fake-store tests do not establish database atomicity.
+`tests/test_memory_namespace.py` adds exact target/password/URI binding, same-file
+target isolation and pending/acknowledged legacy guards using a local connection
+string parser and fake stores. When psycopg is unavailable it adapts the real
+libpq parser without opening a connection.
 
 `tests/test_memory_commit_postgres.py` uses real PostgreSQL and unique disposable
 table prefixes. Set `DUALBRAIN_TEST_PG_DSN` to an **isolated test database**, install
@@ -131,12 +173,16 @@ pytest -q tests/test_memory_commit_postgres.py
 The database tests cover rollback before commit, commit success followed by lost
 acknowledgement, outbox reopening, immutable payload conflicts, concurrent retries,
 legitimate corrections sharing qids, stale receipt replay and legacy episode SQL.
+Disposable schemas also exercise `search_path` isolation with the same session
+and operation IDs, restart recovery in the original target, password-independent
+identity and rejection of ambiguous legacy entries.
 Adversarial cases also exit a child process immediately after a real commit,
 recover that unacknowledged operation after a newer correction, race different
 operations against one source, and reject a later target after an earlier status
 update to verify transaction rollback.
-They passed locally on PostgreSQL 16.2 without pgvector, using a private Unix
-socket with TCP disabled. CI runs the same suite against an isolated PostgreSQL 16
+Earlier commit-recovery validation used PostgreSQL 16.2 without pgvector and a
+private Unix socket with TCP disabled. CI runs the suite, including the new target
+isolation cases, against an isolated PostgreSQL 16
 service. Fresh schema creation exposed an existing unquoted `leading` column;
 its SQL references are now quoted. pgvector, production databases, power loss and
 distributed failover have not been exercised by these tests.

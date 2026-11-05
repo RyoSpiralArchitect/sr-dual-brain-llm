@@ -115,13 +115,28 @@ class PostgresStateStore:
         validate_operation_id(operation_id)
         return await asyncio.to_thread(self._memory_commit_receipt_sync, session_id, operation_id)
 
-    @property
-    def memory_namespace(self):
+    def _memory_target_identity(self):
         # Do not store credentials in the local outbox or bind it to password rotation.
         info = self._require_psycopg().conninfo.conninfo_to_dict(self.dsn)
         identity = {key: info.get(key) for key in ("host", "hostaddr", "port", "dbname", "user", "service")}
         identity["table_prefix"] = self.table_prefix
+        return identity, info.get("options")
+
+    @property
+    def memory_namespace(self):
+        identity, options = self._memory_target_identity()
+        # The same explicit options reach psycopg.connect(), including schema
+        # routing through search_path. Preserve the old hash without options.
+        if options:
+            identity["options"] = options
         return payload_fingerprint(identity)
+
+    @property
+    def memory_legacy_namespaces(self):
+        identity, options = self._memory_target_identity()
+        # Old entries did not retain options, so their schema cannot be inferred
+        # or migrated safely. The outbox guards them before exposing a session.
+        return (payload_fingerprint(identity),) if options else ()
 
     async def reset_session(self, session_id: str) -> None:
         await asyncio.to_thread(self._reset_session_sync, session_id)

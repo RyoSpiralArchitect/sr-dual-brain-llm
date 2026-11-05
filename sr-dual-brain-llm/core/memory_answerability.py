@@ -160,13 +160,18 @@ class AnswerabilityGate:
                 and not source.get("truncated", False)
                 and isinstance(source.get("recorded_at"), (int, float)) and math.isfinite(source["recorded_at"]))
 
-    def allows(self, question, source, *, intent=None):
+    def decision(self, question, source, *, intent=None):
+        """Return an exact cached approval/denial, or None when it is unknown."""
         if (not isinstance(question, str) or len(question.encode()) > 6000
                 or str(self.backend.identity) != self.identity or not self.eligible(source)):
-            return False
+            return None
         if intent is not None and not _valid_intent(intent, question, [source]):
-            return False
-        return self.cache.get(self._key(question, source, intent)) is True
+            return None
+        value = self.cache.get(self._key(question, source, intent))
+        return value if type(value) is bool else None
+
+    def allows(self, question, source, *, intent=None):
+        return self.decision(question, source, intent=intent) is True
 
     async def prepare(self, question, sources, *, intent=None):
         if str(self.backend.identity) != self.identity:

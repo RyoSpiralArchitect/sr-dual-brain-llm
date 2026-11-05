@@ -257,6 +257,40 @@ memory suppression even when the optional task is off, inhibited or unavailable.
 An observer mode that does not request Director applies no such control.
 Director consultation skipping cannot suppress an explicitly active System2 `on`.
 
+### Final System2 routing and observed execution
+
+The early `system2_mode` event is labeled `phase: initial`. A common
+`phase: routing` event records the final decision after ACC, Director and selective
+consultation. `metrics.system2.enabled` and `reason` use this final routing state.
+An ACC promotion is therefore visible as `enabled: true, reason: acc_bump`.
+When Director suppresses an active AUTO route, the final state is disabled with
+`reason: director_skip` and a zero round target. That bookkeeping change preserves
+the previous inhibition of post-answer micro-correction; it creates no replacement
+model call. Explicit System2 ON continues to block Director skipping.
+
+Routing admission does not establish that a critic ran. The separate
+`system2_execution` event and metrics record:
+
+| Field | Meaning |
+| --- | --- |
+| `used` | A critic request was actually invoked, including a failed or cancelled attempt. Ordinary `ASK_DETAIL` requests do not count. |
+| `critic_attempts`, `critic_responses` | Controller-level critic requests and returned responses, including direct fallbacks. Internal provider retries, repair calls, tokens and billing retain their own receipts. |
+| `attempted_rounds` | Distinct requested rounds; fallback attempts share their original round. |
+| `review_completed`, `external_review_completed` | Explicit review-validity flags from the **latest** returned attempt. A failed/cancelled latest attempt is false. An adapter without validity metadata is unknown (`null`). |
+| `attempts` | Per-attempt round, source, outcome, safe error category and review validity. Earlier valid reviews remain inspectable after failed verification. |
+| `local_recovery` | Independent local micro-critic recovery after timeout, when present. It does not certify the failed external request. |
+
+Initial, verification and third-round validation metadata also flow through the
+refinement event and metrics. Existing `rounds` retains its established attempted
+round semantics, including timeout and cancellation. Metrics derive it from distinct
+`attempted_rounds` when execution metadata is present; same-round fallback requests
+count once. Events without execution metadata retain the previous refinement/policy
+round projection and unknown execution/completion values. Use the explicit completion
+fields to inspect review availability. Hippocampal storage, consolidation and Basal
+Ganglia feedback now derive `system2_used` from observed critic invocation rather
+than admission. The deterministic full-process regressions are in
+`tests/test_system2_execution_state.py`.
+
 Pre-routing ACC AUTO normally requires known micro issues (one to six), finite micro
 confidence `>= 0.86` and finite conflict `>= 0.75`, in addition to existing
 configured thresholds. The three interventions are independent; System2 promotion

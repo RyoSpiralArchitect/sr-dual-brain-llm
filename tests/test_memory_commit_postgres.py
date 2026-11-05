@@ -50,6 +50,71 @@ def count_receipts(store):
         return cur.fetchone()[0]
 
 
+def test_explicit_search_path_isolates_outbox_recovery_and_rejects_legacy_target(pg_store, tmp_path, monkeypatch):
+    import psycopg
+    from psycopg import sql
+    from engine_stdio import _outbox_for_store
+
+    schema_names = ["outbox_" + uuid.uuid4().hex[:12] + suffix for suffix in ("_a", "_b")]
+    with pg_store._connect() as conn:
+        for schema in schema_names:
+            conn.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    try:
+        existing_options = psycopg.conninfo.conninfo_to_dict(pg_store.dsn).get("options", "")
+        targets = [PostgresStateStore(psycopg.conninfo.make_conninfo(pg_store.dsn,
+            options=(existing_options + " " if existing_options else "") + f"-c search_path={schema}"),
+            table_prefix=pg_store.table_prefix) for schema in schema_names]
+        for target in targets:
+            asyncio.run(target.ensure_schema())
+        a, b = targets
+        assert a.memory_namespace != b.memory_namespace
+        rotated = PostgresStateStore(psycopg.conninfo.make_conninfo(a.dsn, password="identity-only-rotation"),
+                                     table_prefix=a.table_prefix)
+        # Hash comparison only; actual connections keep the fixture credentials.
+        assert rotated.memory_namespace == a.memory_namespace
+        path = tmp_path / "outbox.sqlite3"
+        monkeypatch.setenv("DUALBRAIN_MEMORY_OUTBOX_PATH", str(path))
+        first = _outbox_for_store(a)
+        first.prepare("s", "same-operation", memory_payload([source("Source A", 1)], []),
+                      result={"answer": "Source A"})
+        other = _outbox_for_store(b)
+        assert other.entries("s", pending_only=True) == []
+        assert asyncio.run(reconcile_memory(other, b, "s")) == []
+        with pytest.raises(MemoryCommitConflict, match="target does not match"):
+            asyncio.run(reconcile_memory(first, b, "s"))
+        assert not load(b) and count_receipts(b) == 0
+
+        # The same session and operation ID in B is an independent operation.
+        other.prepare("s", "same-operation", memory_payload([source("Source B", 1)], []))
+        asyncio.run(reconcile_memory(other, b, "s"))
+        restarted_store = PostgresStateStore(a.dsn, table_prefix=a.table_prefix)
+        restarted = _outbox_for_store(restarted_store)
+        receipt = asyncio.run(reconcile_memory(restarted, restarted_store, "s"))[0]
+        assert [trace.answer for trace in load(a)] == ["Source A"]
+        assert [trace.answer for trace in load(b)] == ["Source B"]
+        assert count_receipts(a) == count_receipts(b) == 1
+        assert restarted.get("s", "same-operation")["result"] == {"answer": "Source A"}
+        assert asyncio.run(reconcile_memory(_outbox_for_store(a), a, "s", operation_id="same-operation")) == [receipt]
+        assert count_receipts(a) == 1
+
+        legacy = MemoryOutbox(path, a.memory_legacy_namespaces[0])
+        for acknowledged in (False, True):
+            sid = "legacy-acknowledged" if acknowledged else "legacy-pending"
+            entry = legacy.prepare(sid, "old", memory_payload([source("Original", 1)], []))
+            if acknowledged:
+                legacy.acknowledge(sid, "old", {"operation_id": "old", "state": "committed",
+                                               "payload_sha256": entry["payload_sha256"]})
+            before = legacy.entries(sid)
+            with pytest.raises(MemoryCommitConflict, match="Legacy outbox target is ambiguous"):
+                # The original two-argument API also inherits the store guard.
+                asyncio.run(reconcile_memory(MemoryOutbox(path, a.memory_namespace), a, sid))
+            assert legacy.entries(sid) == before and count_receipts(a) == 1
+    finally:
+        with pg_store._connect() as conn:
+            for schema in schema_names:
+                conn.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
+
+
 @pytest.mark.parametrize("fault", ["before", "after"])
 def test_real_commit_fault_restart_and_old_receipt_replay(pg_store, tmp_path, monkeypatch, fault):
     store = pg_store

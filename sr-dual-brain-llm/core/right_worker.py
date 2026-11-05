@@ -19,7 +19,9 @@ async def _respond(req, memory, model):
             temperature=req.get("temperature", .2), context=req.get("context"),
             psychoid_projection=req.get("psychoid_attention_bias"))
         return {key: critique.get(key) for key in ("verdict", "issues", "fixes", "critic_sum",
-                                                  "confidence_r", "critic_kind", "critic_status")}
+                                                  "confidence_r", "critic_kind", "critic_status",
+                                                  "critic_review_valid", "critic_external_review_valid",
+                                                  "critic_validation")}
     if kind == "ASK_LEAD":
         notes = await model.generate_lead(req.get("question", ""), req.get("context", ""),
                                          temperature=float(req.get("temperature", .85)))

@@ -19,6 +19,7 @@ from unittest.mock import patch
 
 import answer_assessment_v3 as assessment
 import benchmark_record_replay as previous
+from offline_provider_guard import forbid_provider_network
 from core.memory_answerability import AnswerabilityGate, OpenAIAnswerability
 from core.shared_memory import SharedMemory
 
@@ -201,11 +202,11 @@ async def run(output_dir, fixture, config, journal, provider=None):
     save = lambda: bench.checkpoint(output_dir / 'report.partial.json', report)
     clock = [fixture['clock']]
     options = dict(blob_root=output_dir, blob_index={}, vision_cache={}, vision_cache_limit=0)
-    # Any uninstrumented production HTTP client fails locally. Journal transport
-    # is the FakeProvider object, or None in exact replay.
+    # JSON and streaming HTTP entries fail locally, including swallowed errors.
+    # Journal transport is the FakeProvider object, or None in exact replay.
     with patch.dict(os.environ, previous.previous.environment(), clear=True), \
             patch('time.time', lambda: clock[0]), \
-            patch.object(bench.LLMClient, '_post_json', side_effect=AssertionError('Unexpected HTTP transport')):
+            forbid_provider_network() as transport_audit:
         for index, case in enumerate(fixture['cases']):
             for repeat in range(3):
                 for arm in ARMS if (index + repeat) % 2 == 0 else ARMS[::-1]:
@@ -247,6 +248,7 @@ async def run(output_dir, fixture, config, journal, provider=None):
                 save()
     journal.finish()
     report.update(complete=True, transport_attempts=journal.calls, provider_network_calls=0,
+        blocked_provider_requests=transport_audit.blocked_requests,
         usage=bench.usage(journal.events), calls_by_role=dict(Counter(e['role'] for e in journal.events)))
     report['expectation_failures'] = expectation_failures(report, fixture)
     save()
@@ -263,7 +265,7 @@ def comparable(report):
 
 def public_summary(report):
     return {key: report[key] for key in ('schema_version', 'complete', 'metadata', 'transport_attempts',
-        'provider_network_calls', 'usage', 'calls_by_role', 'expectation_failures')} | {
+        'provider_network_calls', 'blocked_provider_requests', 'usage', 'calls_by_role', 'expectation_failures')} | {
         'support': [{key: value for key, value in row.items() if key != 'receipt'} for row in report['support']],
         'rows': [{key: value for key, value in row.items()
                   if key not in {'answer', 'available_context', 'receipt_keys'}} | {

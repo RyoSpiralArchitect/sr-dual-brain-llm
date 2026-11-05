@@ -102,6 +102,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
+    system2_execution_ev = _last_event(events, "system2_execution") or {}
     consultation_ev = _last_event(events, "consultation_route")
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
@@ -247,9 +248,18 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         critic_kind = system2_refine_ev.get("critic_kind")
         if critic_kind is None:
             critic_kind = policy_state.get("critic_kind")
-        rounds = system2_refine_ev.get("rounds")
-        if rounds is None:
-            rounds = policy_state.get("system2_rounds")
+        if system2_execution_ev:
+            # Cancellation may prevent refinement from publishing its final
+            # round count. Fallback requests share a round and must not inflate it.
+            attempted_rounds = system2_execution_ev.get("attempted_rounds")
+            rounds = (len(set(attempted_rounds))
+                      if isinstance(attempted_rounds, list)
+                      and all(type(item) is int and item > 0 for item in attempted_rounds)
+                      else None)
+        else:
+            rounds = system2_refine_ev.get("rounds")
+            if rounds is None:
+                rounds = policy_state.get("system2_rounds")
         round_target = system2_refine_ev.get("round_target")
         if round_target is None:
             round_target = policy_state.get("system2_round_target")
@@ -310,13 +320,24 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         if low_signal_filter is None:
             low_signal_filter = policy_state.get("system2_low_signal_filter")
         system2_payload = {
-            "mode": system2_ev.get("mode"),
-            "enabled": system2_ev.get("enabled"),
-            "reason": system2_ev.get("reason"),
+            "mode": policy_state.get("system2_mode", system2_ev.get("mode")),
+            "enabled": policy_state.get("system2_enabled", system2_ev.get("enabled")),
+            "reason": policy_state.get("system2_reason", system2_ev.get("reason")),
+            "used": system2_execution_ev.get("used", policy_state.get("system2_used")),
+            **{key: system2_execution_ev.get(key) for key in (
+                "critic_attempts", "critic_responses", "attempted_rounds",
+                "review_completed", "external_review_completed", "attempts", "local_recovery")},
             "critic_kind": critic_kind,
             "critic_status": system2_refine_ev.get("critic_status"),
             "verify_critic_status": system2_refine_ev.get("verify_critic_status"),
             "round3_critic_status": system2_refine_ev.get("round3_critic_status"),
+            **{
+                stage + "critic_" + suffix: system2_refine_ev.get(
+                    stage + "critic_" + suffix, policy_state.get(prefix + "critic_" + suffix))
+                for stage, prefix in (("", ""), ("verify_", "system2_verify_"),
+                                      ("round3_", "system2_round3_"))
+                for suffix in ("review_valid", "external_review_valid", "validation")
+            },
             "low_signal_filter": low_signal_filter,
             "rounds": rounds,
             "round_target": round_target,
@@ -856,7 +877,8 @@ def _outbox_for_store(store):
     path = os.environ.get("DUALBRAIN_MEMORY_OUTBOX_PATH")
     if not path:
         path = Path.home() / ".local" / "state" / "sr-dual-brain" / "memory-outbox.sqlite3"
-    return MemoryOutbox(path, store.memory_namespace)
+    return MemoryOutbox(path, store.memory_namespace,
+                        legacy_namespaces=getattr(store, "memory_legacy_namespaces", ()))
 
 
 async def _load_session_memory(store, session_id, memory, *, episode_limit=None):
