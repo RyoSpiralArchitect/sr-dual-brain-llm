@@ -1,0 +1,1577 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "experiment": "record_replay_intent",
+  "source_revision": "23ad3146916b604d2dbe49cb0271dc4928786144",
+  "live_provider_calls": 65,
+  "usage": {
+    "calls": 65,
+    "input_tokens": 35815,
+    "output_tokens": 11677,
+    "known_input_tokens": 35815,
+    "known_output_tokens": 11677,
+    "unknown_usage_calls": 0,
+    "cancelled_calls": 0,
+    "failed_calls": 0
+  },
+  "calibration_summary": {
+    "by_arm": {
+      "answer_v1": {
+        "planned": 8,
+        "valid": 8,
+        "attempted": 8,
+        "criteria": {
+          "task": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 22,
+            "verdict_counts": {
+              "fail": 18,
+              "pass": 6
+            }
+          },
+          "grounding": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10
+            }
+          },
+          "clarification": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10
+            }
+          }
+        },
+        "order_disagreements": [],
+        "usage": {
+          "calls": 8,
+          "input_tokens": 5502,
+          "output_tokens": 2155,
+          "known_input_tokens": 5502,
+          "known_output_tokens": 2155,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "unattempted": 0,
+        "invalid": 0,
+        "fully_matched_presentations": 22
+      },
+      "quotation_v2": {
+        "planned": 8,
+        "valid": 8,
+        "attempted": 8,
+        "criteria": {
+          "task": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "fail": 16,
+              "pass": 8
+            }
+          },
+          "grounding": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10
+            }
+          },
+          "clarification": {
+            "planned": 24,
+            "available": 24,
+            "agreements": 24,
+            "verdict_counts": {
+              "pass": 14,
+              "fail": 10
+            }
+          }
+        },
+        "order_disagreements": [],
+        "usage": {
+          "calls": 8,
+          "input_tokens": 7782,
+          "output_tokens": 2250,
+          "known_input_tokens": 7782,
+          "known_output_tokens": 2250,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        },
+        "unattempted": 0,
+        "invalid": 0,
+        "fully_matched_presentations": 24
+      }
+    },
+    "paired_differences": [
+      {
+        "case": "corrected_quote",
+        "order": 0,
+        "variant": "exact",
+        "criterion": "task",
+        "v1": "fail",
+        "v2": "pass",
+        "expected": "pass",
+        "corrected": true,
+        "regressed": false
+      },
+      {
+        "case": "corrected_quote",
+        "order": 1,
+        "variant": "exact",
+        "criterion": "task",
+        "v1": "fail",
+        "v2": "pass",
+        "expected": "pass",
+        "corrected": true,
+        "regressed": false
+      }
+    ],
+    "errors": []
+  },
+  "metadata": {
+    "model": "gpt-6-luna",
+    "judge_model": "gpt-6-sol",
+    "config": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 2048
+      }
+    },
+    "call_limit": 96,
+    "calibration_sha256": "60d209382d93bf26323d76fccdf011a4778dffa65afd25fca11372382ca3db65",
+    "fixture_sha256": "315818e0045a71223784c8013a233acf75cf52edf46758550f6d4e5a0f018857",
+    "arms": [
+      "generic_contract",
+      "replay_contract"
+    ],
+    "rubrics": [
+      "answer_v1",
+      "quotation_v2"
+    ],
+    "support_repeats": 3,
+    "code_sha256": "f8b4833d43704959e0c18792352874a82cd22025282dab0b0562599fa01989f8",
+    "answer_rubric_sha256": "746755f28ae92a2bf69d93afc1a93e4e1dbeb2bc7099a7e46c22b01747726043",
+    "runtime": {
+      "DUALBRAIN_SYSTEM2_PRIORITY_AUTO": "balanced",
+      "REASONING_DIAL": "evaluative",
+      "DUALBRAIN_MEMORY_CONVERSATION_CONTEXT": "1",
+      "DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_MONITOR_MODE": "auto",
+      "DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_DEFAULT_MODE_REFLECTION_INJECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE": "auto",
+      "DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE": "off",
+      "DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_TEMPERATURE_ADJUSTMENT_MODE": "auto",
+      "DUALBRAIN_MODULE_BASAL_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN": "0"
+    }
+  },
+  "support": [
+    {
+      "case": "explicit_quote",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 2466.6073200060055,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 288,
+        "output_tokens": 173,
+        "known_input_tokens": 288,
+        "known_output_tokens": 173,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": true,
+      "elapsed_ms": 1261.9799859821796,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 451,
+        "output_tokens": 51,
+        "known_input_tokens": 451,
+        "known_output_tokens": 51,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": true,
+      "elapsed_ms": 1274.1011950129177,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 451,
+        "output_tokens": 52,
+        "known_input_tokens": 451,
+        "known_output_tokens": 52,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 4358.94530499354,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 288,
+        "output_tokens": 427,
+        "known_input_tokens": 288,
+        "known_output_tokens": 427,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 4451.050964999013,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 288,
+        "output_tokens": 309,
+        "known_input_tokens": 288,
+        "known_output_tokens": 309,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": true,
+      "elapsed_ms": 1475.8008960052393,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 451,
+        "output_tokens": 69,
+        "known_input_tokens": 451,
+        "known_output_tokens": 69,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "alder-current"
+      ],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": true,
+      "elapsed_ms": 1813.2204369758256,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 454,
+        "output_tokens": 92,
+        "known_input_tokens": 454,
+        "known_output_tokens": 92,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": false,
+      "elapsed_ms": 2571.6576350096148,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 291,
+        "output_tokens": 204,
+        "known_input_tokens": 291,
+        "known_output_tokens": 204,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": false,
+      "elapsed_ms": 2506.744198995875,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 291,
+        "output_tokens": 197,
+        "known_input_tokens": 291,
+        "known_output_tokens": 197,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "alder-current"
+      ],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": true,
+      "elapsed_ms": 1473.32244401332,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 454,
+        "output_tokens": 78,
+        "known_input_tokens": 454,
+        "known_output_tokens": 78,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "alder-current"
+      ],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": true,
+      "elapsed_ms": 1301.9577469967771,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 454,
+        "output_tokens": 69,
+        "known_input_tokens": 454,
+        "known_output_tokens": 69,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "intent": false,
+      "elapsed_ms": 3372.6055810111575,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 291,
+        "output_tokens": 271,
+        "known_input_tokens": 291,
+        "known_output_tokens": 271,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": false,
+      "elapsed_ms": 3092.375901993364,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 286,
+        "output_tokens": 214,
+        "known_input_tokens": 286,
+        "known_output_tokens": 214,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": true,
+      "elapsed_ms": 1198.3797900029458,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 449,
+        "output_tokens": 51,
+        "known_input_tokens": 449,
+        "known_output_tokens": 51,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": true,
+      "elapsed_ms": 1475.0097770011052,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 449,
+        "output_tokens": 64,
+        "known_input_tokens": 449,
+        "known_output_tokens": 64,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": false,
+      "elapsed_ms": 1499.4215070037171,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 286,
+        "output_tokens": 84,
+        "known_input_tokens": 286,
+        "known_output_tokens": 84,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": false,
+      "elapsed_ms": 1971.1821299861185,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 286,
+        "output_tokens": 155,
+        "known_input_tokens": 286,
+        "known_output_tokens": 155,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "cypress"
+      ],
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "intent": true,
+      "elapsed_ms": 1377.8160130023025,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 449,
+        "output_tokens": 67,
+        "known_input_tokens": 449,
+        "known_output_tokens": 67,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 980.488544999389,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 45,
+        "known_input_tokens": 280,
+        "known_output_tokens": 45,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 1087.7104090177454,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 47,
+        "known_input_tokens": 280,
+        "known_output_tokens": 47,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 1068.8081819971558,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 46,
+        "known_input_tokens": 280,
+        "known_output_tokens": 46,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 1556.094158993801,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 45,
+        "known_input_tokens": 280,
+        "known_output_tokens": 45,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 1122.4021679954603,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 45,
+        "known_input_tokens": 280,
+        "known_output_tokens": 45,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 1364.0447189973202,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 280,
+        "output_tokens": 47,
+        "known_input_tokens": 280,
+        "known_output_tokens": 47,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 2311.9960940093733,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 126,
+        "known_input_tokens": 294,
+        "known_output_tokens": 126,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 2480.710859003011,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 186,
+        "known_input_tokens": 294,
+        "known_output_tokens": 186,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 3087.5620500009973,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 254,
+        "known_input_tokens": 294,
+        "known_output_tokens": 254,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 5126.350847014692,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 548,
+        "known_input_tokens": 294,
+        "known_output_tokens": 548,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 2111.0515399777796,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 181,
+        "known_input_tokens": 294,
+        "known_output_tokens": 181,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "extra_clause",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "ready",
+        "candidates": 1,
+        "cached_candidates": 0,
+        "checked_candidates": 1,
+        "approved": 1
+      },
+      "source_qids": [
+        "juniper"
+      ],
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "intent": false,
+      "elapsed_ms": 2615.191763994517,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 294,
+        "output_tokens": 221,
+        "known_input_tokens": 294,
+        "known_output_tokens": 221,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "replay_contract",
+      "repeat": 0,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.18609201651997864,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "generic_contract",
+      "repeat": 0,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.09692099411040545,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "generic_contract",
+      "repeat": 1,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.06626901449635625,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "replay_contract",
+      "repeat": 1,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.22634901688434184,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "replay_contract",
+      "repeat": 2,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.21428000763989985,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    },
+    {
+      "case": "incomplete",
+      "arm": "generic_contract",
+      "repeat": 2,
+      "result": {
+        "status": "empty",
+        "candidates": 0
+      },
+      "source_qids": [],
+      "expected_source_qids": [],
+      "intent": false,
+      "elapsed_ms": 0.08835701737552881,
+      "usage": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "known_input_tokens": 0,
+        "known_output_tokens": 0,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      }
+    }
+  ],
+  "rows": [
+    {
+      "case": "explicit_quote",
+      "arm": "generic_contract",
+      "status": "ok",
+      "source_qids": [
+        "juniper"
+      ],
+      "route": {
+        "action": 1,
+        "system2": false,
+        "selective": null
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": true,
+      "exact_stored_answer": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1615,
+        "output_tokens": 500,
+        "known_input_tokens": 1615,
+        "known_output_tokens": 500,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1,
+        "right": 1
+      },
+      "elapsed_ms": 8170.4824790067505,
+      "receipt_keys_sha256": "7ab06330e55439f80b22797f13bfedd6332bb9e5fcf2e7c7be559ef7bea7312c"
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "replay_contract",
+      "status": "ok",
+      "source_qids": [
+        "juniper"
+      ],
+      "route": {
+        "action": 0,
+        "system2": false,
+        "selective": {
+          "version": "conversation_lookup_v2",
+          "action": "skip",
+          "reason": "supported_literal_replay",
+          "prior_action": 1,
+          "prior_system2": false,
+          "final_action": 0,
+          "final_system2": false,
+          "approved_records": 1,
+          "activation_mode": "auto",
+          "applied": true
+        }
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": true,
+      "exact_stored_answer": true,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 378,
+        "output_tokens": 11,
+        "known_input_tokens": 378,
+        "known_output_tokens": 11,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1
+      },
+      "elapsed_ms": 645.4181050066836,
+      "receipt_keys_sha256": "f1f89f89c0633f04e1a5a2784a87a72c20094aaa86a475c2ad1dac0cdda76502"
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "replay_contract",
+      "status": "ok",
+      "source_qids": [
+        "alder-current"
+      ],
+      "route": {
+        "action": 0,
+        "system2": false,
+        "selective": {
+          "version": "conversation_lookup_v2",
+          "action": "skip",
+          "reason": "supported_literal_replay",
+          "prior_action": 1,
+          "prior_system2": false,
+          "final_action": 0,
+          "final_system2": false,
+          "approved_records": 1,
+          "activation_mode": "auto",
+          "applied": true
+        }
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": true,
+      "exact_stored_answer": true,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 376,
+        "output_tokens": 43,
+        "known_input_tokens": 376,
+        "known_output_tokens": 43,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1
+      },
+      "elapsed_ms": 1039.9455970036797,
+      "receipt_keys_sha256": "adb655364d8a07cf71822bbdd44e6eb9b40b9c4be3a2864201c5969d34d60a32"
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "generic_contract",
+      "status": "ok",
+      "source_qids": [],
+      "route": {
+        "action": 1,
+        "system2": false,
+        "selective": null
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": null,
+      "exact_stored_answer": false,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1460,
+        "output_tokens": 516,
+        "known_input_tokens": 1460,
+        "known_output_tokens": 516,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1,
+        "right": 1
+      },
+      "elapsed_ms": 6136.438400979387,
+      "receipt_keys_sha256": "2b66ec136018916cd6a0fb5d57265391792bbcff40881ad1493f0694060cba59"
+    },
+    {
+      "case": "scope_switch",
+      "arm": "generic_contract",
+      "status": "ok",
+      "source_qids": [
+        "cypress"
+      ],
+      "route": {
+        "action": 1,
+        "system2": false,
+        "selective": null
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": true,
+      "exact_stored_answer": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1580,
+        "output_tokens": 184,
+        "known_input_tokens": 1580,
+        "known_output_tokens": 184,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1,
+        "right": 1
+      },
+      "elapsed_ms": 2869.356623996282,
+      "receipt_keys_sha256": "f548e012a67f8207d71379eea933a2c703303f195a2fadb509dc13847c92b4b3"
+    },
+    {
+      "case": "scope_switch",
+      "arm": "replay_contract",
+      "status": "ok",
+      "source_qids": [
+        "cypress"
+      ],
+      "route": {
+        "action": 0,
+        "system2": false,
+        "selective": {
+          "version": "conversation_lookup_v2",
+          "action": "skip",
+          "reason": "supported_literal_replay",
+          "prior_action": 1,
+          "prior_system2": false,
+          "final_action": 0,
+          "final_system2": false,
+          "approved_records": 1,
+          "activation_mode": "auto",
+          "applied": true
+        }
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": true,
+      "exact_stored_answer": true,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 376,
+        "output_tokens": 11,
+        "known_input_tokens": 376,
+        "known_output_tokens": 11,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1
+      },
+      "elapsed_ms": 819.4943180133123,
+      "receipt_keys_sha256": "177740e6cf40725d53c171a6fd904c21a5b7a1952ffcfc06304d11d1219e75ef"
+    },
+    {
+      "case": "expired",
+      "arm": "replay_contract",
+      "status": "ok",
+      "source_qids": [],
+      "route": {
+        "action": 0,
+        "system2": false,
+        "selective": null
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": null,
+      "exact_stored_answer": null,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 295,
+        "output_tokens": 86,
+        "known_input_tokens": 295,
+        "known_output_tokens": 86,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1
+      },
+      "elapsed_ms": 1744.420832983451,
+      "receipt_keys_sha256": "f35ae9b3ffcd6abf8ad242ee258cf9bcc7e76ced2e04756a69cc663bcea3754d"
+    },
+    {
+      "case": "expired",
+      "arm": "generic_contract",
+      "status": "ok",
+      "source_qids": [],
+      "route": {
+        "action": 0,
+        "system2": false,
+        "selective": null
+      },
+      "system2_mode": "auto",
+      "exact_approved_answer": null,
+      "exact_stored_answer": null,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 295,
+        "output_tokens": 109,
+        "known_input_tokens": 295,
+        "known_output_tokens": 109,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "left": 1
+      },
+      "elapsed_ms": 2339.449979015626,
+      "receipt_keys_sha256": "f35ae9b3ffcd6abf8ad242ee258cf9bcc7e76ced2e04756a69cc663bcea3754d"
+    }
+  ],
+  "grades": [
+    {
+      "case": "explicit_quote",
+      "arm": "generic_contract",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "explicit_quote",
+      "arm": "replay_contract",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "replay_contract",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "corrected_followup",
+      "arm": "generic_contract",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "generic_contract",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "scope_switch",
+      "arm": "replay_contract",
+      "verdicts": {
+        "task": "pass",
+        "grounding": "pass",
+        "clarification": "pass"
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "replay_contract",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    },
+    {
+      "case": "expired",
+      "arm": "generic_contract",
+      "verdicts": {
+        "task": "fail",
+        "grounding": "pass",
+        "clarification": "fail"
+      }
+    }
+  ],
+  "verification": {
+    "calibration": true,
+    "support": true,
+    "rows": true,
+    "grades": true,
+    "summary": true,
+    "usage": true,
+    "zero_calls": true
+  },
+  "artifact_sha256": {
+    "report.json": "5d8251348785066a9daa532b6399d0b1742365953aeb1a7614b8d7b5bb52766b",
+    "journal.json": "945261752ccbe74705e4de4257ce3e72bf38828a51bab8e45776c74911ec6e4c",
+    "summary.json": "fd79734e4c5bd69e6e64876e6b6b666a8e6c3b30180c8024fd973ec1ff39694c"
+  },
+  "limitations": [
+    "Feature ablation in the proposed stricter runtime, not a historical-release performance comparison.",
+    "Three distinct quotation scenarios, with repeated support preparations, not independent population trials.",
+    "Runtime reuses only predeclared repeat zero support receipts; handler timing excludes their original network time.",
+    "Natural initial drafts differ across arms; this is the combined intent/support/context handoff.",
+    "Expired-case retention wording can be semantically ambiguous; original failed grades remain unchanged.",
+    "OFF and alias-position regressions were hardened after the frozen live run; exact replay uses its frozen source."
+  ]
+}

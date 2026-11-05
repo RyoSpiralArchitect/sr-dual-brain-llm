@@ -109,12 +109,24 @@ selective routing still requires an explicit non-precision choice, such as
 
 Its automatic predicate accepts only a positively recognized single literal
 record-repeat request, a resolved reference, one currently approved record,
-exact complete draft/source-answer equality (ignoring outer whitespace),
+exact complete draft/source-answer equality,
 high finite confidence (`>= 0.85`), and zero
 risk. These facts supplement the existing support and source-lifecycle checks.
 Recognized requests include “Repeat the recorded answer for Project Amber verbatim”
 and “Amberの記録をそのまま再掲して”; identity aliases are removed by the existing
 scope resolver before whole-request matching. Other phrasing falls back normally.
+
+`literal_replay_v2` binds that request to one live primary source in the whole
+scope before retrieval ranking. The support checker receives a typed quotation
+operation and must quote the entire recorded answer; approvals bind exact query,
+source, scope and policy. A correction plus “その記録をそのまま再掲して” or a bounded
+“Repeat that recorded answer verbatim” can carry the existing unambiguous focus.
+The approved context exposes a complete JSON `recorded_answer` for normal
+generation, without framing or new verification claims. A supported exact
+quotation may be qualitative; no arithmetic inference is required. Incomplete,
+inactive, ambiguous, multi-record or extra-clause requests keep ordinary handling.
+The [prospective record-replay protocol](benchmarks/record-replay-protocol.md)
+separates support decisions, exact text reproduction and final-answer grading.
 Unknown coverage, reasoning, review, calculations, or multiple requested
 conditions retain legacy routing. In `auto`, only a child router's `skip` proposal
 may change routing; `consult` and `defer` preserve the legacy decision. Manual

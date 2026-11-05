@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_record_replay_answer_contract",
+  "cases": [
+    {
+      "id": "literal_unverified",
+      "question": "Repeat Project Juniper recorded answer verbatim.",
+      "reference": "The requested recorded answer is exactly: The recorded port is 7559.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      },
+      "requested_operation": "recorded_answer_replay",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [
+          {
+            "question": "Project Juniper port?",
+            "answer": "The recorded port is 7559.",
+            "qid": "current",
+            "retrieval_scope": "juniper",
+            "scope_aliases": [
+              "Juniper"
+            ],
+            "timestamp": 1793836800.0,
+            "status": "unverified"
+          }
+        ]
+      },
+      "variants": {
+        "exact": {
+          "answer": "The recorded port is 7559.",
+          "expected": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        "framing": {
+          "answer": "Recorded answer: The recorded port is 7559.",
+          "expected": {
+            "task": "fail",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        "drift": {
+          "answer": "The recorded port is 7558.",
+          "expected": {
+            "task": "fail",
+            "grounding": "fail",
+            "clarification": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "corrected_quote",
+      "question": "その記録をそのまま再掲して",
+      "reference": "The focus is Alder. The current recorded answer is exactly: Retention is 4 days. A 15-day record is superseded and unavailable.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      },
+      "requested_operation": "recorded_answer_replay",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [
+          {
+            "question": "Project Alder retention?",
+            "answer": "Retention is 4 days.",
+            "qid": "corrected",
+            "retrieval_scope": "alder",
+            "scope_aliases": [
+              "Alder"
+            ],
+            "timestamp": 1793836800.0,
+            "status": "unverified"
+          }
+        ]
+      },
+      "variants": {
+        "exact": {
+          "answer": "Retention is 4 days.",
+          "expected": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        "stale": {
+          "answer": "Retention is 15 days.",
+          "expected": {
+            "task": "fail",
+            "grounding": "fail",
+            "clarification": "pass"
+          }
+        },
+        "false_absence": {
+          "answer": "No record is available. Please provide the record.",
+          "expected": {
+            "task": "fail",
+            "grounding": "fail",
+            "clarification": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "missing_current",
+      "question": "Project Birch retention?",
+      "reference": "Birch is resolved, but no current approved retention record is available. Ask for a current retention source; do not guess a value.",
+      "criteria": {
+        "task": "Acknowledge unavailable current retention and request a current retention source.",
+        "grounding": "Do not invent a retention value or deny an explicitly supplied observation.",
+        "clarification": "Ask for the current retention source, not Birch identity or unrelated information."
+      },
+      "requested_operation": "fact_lookup",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": []
+      },
+      "variants": {
+        "qualified": {
+          "answer": "Current Birch retention is unavailable here. Please provide a current retention source.",
+          "expected": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        "invented": {
+          "answer": "Birch retention is 22 days.",
+          "expected": {
+            "task": "fail",
+            "grounding": "fail",
+            "clarification": "fail"
+          }
+        },
+        "omission": {
+          "answer": "Current Birch retention is unavailable here.",
+          "expected": {
+            "task": "fail",
+            "grounding": "pass",
+            "clarification": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "ambiguous_record",
+      "question": "Repeat Blue recorded answer verbatim.",
+      "reference": "Blue names two different projects and no record has been selected. Ask which project or record is intended.",
+      "criteria": {
+        "task": "Ask which Blue project or record is intended; do not choose one.",
+        "grounding": "Do not assert a selected identity or value without evidence.",
+        "clarification": "Ask to resolve the ambiguous project/record, not unrelated attributes."
+      },
+      "requested_operation": "recorded_answer_replay",
+      "available_context": {
+        "reference": "ambiguous",
+        "approved_records": []
+      },
+      "variants": {
+        "targeted": {
+          "answer": "Which Blue project or record should I quote?",
+          "expected": {
+            "task": "pass",
+            "grounding": "pass",
+            "clarification": "pass"
+          }
+        },
+        "guessed": {
+          "answer": "Blue retention is 12 days.",
+          "expected": {
+            "task": "fail",
+            "grounding": "fail",
+            "clarification": "fail"
+          }
+        },
+        "unrelated": {
+          "answer": "What is your favorite meal?",
+          "expected": {
+            "task": "fail",
+            "grounding": "pass",
+            "clarification": "fail"
+          }
+        }
+      }
+    }
+  ]
+}

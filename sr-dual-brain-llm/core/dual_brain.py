@@ -3066,10 +3066,16 @@ class DualBrainController:
                      if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF else None)
         literal_requested = False
         source_replayed = False
+        replay_intent = None
+        intent_resolver = getattr(self.memory, 'replay_intent', None)
+        if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF and callable(intent_resolver):
+            replay_intent = intent_resolver(question)
         if gate_config.mode == GateMode.AUTO and blocked is None and len(approved) == 1:
             cue = self.memory.scope_resolver().query(self.memory.retrieval_question(question))
-            literal_requested = literal_record_replay_requested(cue.content)
-            source_replayed = str(draft).strip() == approved[0].answer.strip()
+            literal_requested = (replay_intent is not None if callable(intent_resolver)
+                                 else literal_record_replay_requested(cue.content))
+            source_replayed = (str(draft) == approved[0].answer if replay_intent is not None
+                               else str(draft).strip() == approved[0].answer.strip())
         gate = self._module_gate(CONVERSATION_SELECTIVE_CONSULTATION, decision=decision, config=gate_config,
             facts=GateFacts(eligible=blocked is None, blocked_reason=blocked or 'outside_scope',
                 has_draft=bool(str(draft).strip()), is_trivial=is_trivial_chat,
@@ -3081,6 +3087,7 @@ class DualBrainController:
                 question=question, draft=draft, confidence=confidence,
                 risk=float(affect.get("risk", 0.0)), q_type=decision.state.get("q_type"),
                 reference=reference, approved_records=approved,
+                replay_intent=replay_intent is not None,
             )
             before_action, before_system2 = decision.action, system2_active
             apply_route = route.action in {'skip', 'consult'} and (

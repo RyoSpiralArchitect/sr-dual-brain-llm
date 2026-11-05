@@ -325,7 +325,7 @@ def _auto_basal_consult_promotion(facts: GateFacts) -> tuple[bool, str]:
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     CONVERSATION_SELECTIVE_CONSULTATION: ModuleSpec(
         module_id=CONVERSATION_SELECTIVE_CONSULTATION,
-        phase="routing", policy_version="literal_replay_v1",
+        phase="routing", policy_version="literal_replay_v2",
         mode_env="DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE",
         legacy_env="DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT",
         default_mode=GateMode.OFF, auto_policy=_auto_selective_consultation,
