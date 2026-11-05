@@ -255,3 +255,35 @@ def test_ambiguous_identity_bindings_cannot_assign_a_latent_scope():
     resolver = memory.scope_resolver()
     assert resolver.source_for_seed("Same question", "one", "duplicate").ambiguous
     assert resolver.source_for_seed("Changed question", "one", "duplicate").ambiguous
+
+
+@pytest.mark.parametrize('question,expected', [
+    ('Project Blue Rowan retention?', 'resolved'),
+    ('Ｐｒｏｊｅｃｔ　Ｂｌｕｅ　Ｒｏｗａｎ retention?', 'resolved'),
+    ('Project "Blue Rowan" retention?', 'resolved'),
+    ('Project Blue Rowans retention?', None),
+    ('Project Blue Rowan\u200dation retention?', None),
+    ('Project Unknown and Blue Rowan retention?', None),
+    ('Project Unknown/Blue Rowan retention?', None),
+    ('Project Blue Rowan and Project Unknown retention?', None),
+    ('Project Blue Rowan and Ｐｒｏｊｅｃｔ Unknown retention?', None),
+])
+def test_project_markers_resolve_complete_aliases_without_borrowing_a_later_name(question, expected):
+    memory = SharedMemory(conversation_context=True)
+    memory.store(trace('rowan', ('Blue Rowan',), qid='rowan'))
+    memory.begin_turn(question, 'probe')
+    assert memory.reference_resolution(question) == expected
+    assert memory._focus_scope == ('rowan' if expected == 'resolved' else None)
+
+
+@pytest.mark.parametrize('alias', ['Blue Project Rowan', 'Project X Project Y'])
+def test_declared_alias_owns_its_internal_markers_but_not_a_following_unknown_name(alias):
+    memory = SharedMemory(conversation_context=True)
+    memory.store(trace('rowan', (alias,), qid='rowan'))
+    question = f'Project {alias} retention?'
+    memory.begin_turn(question, 'probe')
+    assert memory.reference_resolution(question) == 'resolved'
+    mixed = f'Project {alias} and Project Unknown retention?'
+    memory.begin_turn(mixed, 'mixed')
+    assert memory.reference_resolution(mixed) is None
+    assert memory._focus_scope is None

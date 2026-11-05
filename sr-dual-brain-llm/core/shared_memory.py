@@ -28,7 +28,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
-from .memory_intent import RecordReplayIntent, literal_record_replay_requested, scoped_record_replay_requested
+from .memory_intent import RecordReplayIntent, literal_record_replay_followup_requested, scoped_record_replay_requested
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -205,14 +205,6 @@ class SharedMemory:
                 and not (self.conversation_context and trace.qid in self._pending_supersedes)
                 and trace.evidence_status != "superseded" and (trace.valid_until is None or trace.valid_until > now))
 
-    @staticmethod
-    def _mentions_unknown_project(question, resolver):
-        for marker in re.finditer(r"\bproject\s+|プロジェクト\s*", question, re.I):
-            name = re.match(r"[^\s:：?？,、。]+", question[marker.end():])
-            if not resolver.query(f"Project {name.group() if name else ''}").scopes:
-                return True
-        return False
-
     def begin_turn(self, question, qid, metadata=None):
         """Caller-declared scope/write intent; never infer a correction from recency."""
         self._turn_question = self._turn_query = None
@@ -254,7 +246,7 @@ class SharedMemory:
         query = question
         # A known project plus an explicit unknown project must not leave a
         # deceptively unique focus for the next pronoun-only turn.
-        unknown_project = self._mentions_unknown_project(question, resolver)
+        unknown_project = resolver.mentions_unknown_project(question)
         if unknown_project:
             focus = None
         elif not cue.ambiguous and len(cue.scopes) == 1:
@@ -263,8 +255,7 @@ class SharedMemory:
             focus = declaration.retrieval_scope
         elif (not cue.scopes and not cue.ambiguous and self._focus_scope
               and (re.match(r"^(その|それ|前の件|続き|that\b|it\b|the previous\b)", question.strip(), re.I)
-                   or (literal_record_replay_requested(question)
-                       and re.match(r'^(?:please )?(?:repeat|reproduce|quote) that\b', question.strip(), re.I)))
+                   or literal_record_replay_followup_requested(question))
               and not re.search(r"\bproject\b|プロジェクト", question, re.I)):
             aliases = sorted(alias for alias, scopes in resolver.aliases.items() if scopes == {self._focus_scope})
             focus = self._focus_scope if aliases else None
@@ -292,7 +283,7 @@ class SharedMemory:
         if not self.conversation_context:
             return None
         resolver = self.scope_resolver()
-        if self._mentions_unknown_project(question, resolver):
+        if resolver.mentions_unknown_project(question):
             return None
         cue = resolver.query(self.retrieval_question(question))
         if cue.ambiguous:

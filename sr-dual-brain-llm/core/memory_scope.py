@@ -152,6 +152,26 @@ class MemoryScopeResolver:
         start, stop, _ = matches[0]
         return text[:start], text[stop:]
 
+    def mentions_unknown_project(self, question: str) -> bool:
+        """Resolve each explicit marker against whole, boundary-checked aliases.
+
+        A declared name may contain spaces. A later known name cannot stand in
+        for an unknown name immediately after a marker. Keep quote/bracket
+        wrappers permissible without deleting any other question text.
+        """
+        text = normalize_name(question)
+        matches = self._matches(text)
+        opening = frozenset('\"\'‘“「『([{【〈《')
+        for marker in re.finditer(r'\bproject\s+|プロジェクト\s*', text):
+            if not any(
+                # A complete declared alias can include one or more markers.
+                start <= marker.start() and stop > marker.end()
+                or start >= marker.end() and all(c in opening for c in text[marker.end():start])
+                for start, stop, _ in matches
+            ):
+                return True
+        return False
+
     def source(self, question: str, scope: str | None = None) -> ScopeCue:
         cue = self.query(question)
         scopes = frozenset({scope}) if scope else self.sources.get(question, cue.scopes)
