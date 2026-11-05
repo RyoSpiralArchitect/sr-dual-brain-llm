@@ -165,3 +165,57 @@ def test_binding_is_revalidated_when_support_await_adds_another_current_record()
     assert not m.evidence_for_seeds(["seed-first", "seed-second"], question=QUESTION)
     assert m.missing_evidence(QUESTION).action == "clarify_record"
     assert len(gate.backend.requests) == 1
+
+
+@pytest.mark.parametrize("lifecycle", ["expired", "superseded", "recalled"])
+@pytest.mark.parametrize("caller_declared", [False, True])
+def test_current_turn_request_survives_loss_of_its_only_live_alias(lifecycle, caller_declared):
+    m = memory(source())
+    m.begin_turn(QUESTION, "probe", DECLARATION if caller_declared else None)
+    asyncio.run(m.prepare_retrieval(QUESTION))
+    assert m.retrieve_related_traces(QUESTION)
+    updates = {"expired": {"valid_until": 0}, "superseded": {"evidence_status": "superseded"},
+               "recalled": {"recalled_answer": True}}[lifecycle]
+    m.past_qas[0] = replace(m.past_qas[0], **updates)
+    resolution = m.replay_resolution(QUESTION)
+    assert resolution.requested and resolution.intent is None
+    assert resolution.binding_status == ("missing_record" if caller_declared else "unresolved_reference")
+    condition = m.missing_evidence(QUESTION)
+    assert condition.operation == "recorded_answer_replay"
+    assert condition.action == ("request_current_record" if caller_declared else "clarify_reference")
+    assert condition.source_availability == ("none_current" if caller_declared else "unknown")
+    assert not m.retrieve_related(QUESTION) and not m.evidence_for_seeds(["seed-first"], question=QUESTION)
+    assert len(m.answerability_gate.backend.requests) == 1
+
+
+@pytest.mark.parametrize("reset", ["other_question", "next_turn", "abort", "reload"])
+def test_request_recognition_is_owned_only_by_its_exact_turn_and_question(reset):
+    m = memory(source())
+    m.begin_turn(QUESTION, "probe")
+    m.past_qas[0] = replace(m.past_qas[0], valid_until=0)
+    assert m.replay_resolution(QUESTION).requested
+    question = QUESTION
+    if reset == "other_question":
+        question += " Explain."
+    elif reset == "next_turn":
+        m.begin_turn(question, "next")
+    elif reset == "abort":
+        m.abort_turn(None)
+    else:
+        m.restore_committed_traces(m.past_qas)
+    assert not m.replay_resolution(question).requested
+    assert not m.replay_intent(question)
+
+
+def test_request_recognition_also_covers_the_exact_focus_rewritten_query():
+    m = memory(source())
+    m.begin_turn("Project Rowan retention?", "focus")
+    question = "その記録をそのまま再掲して"
+    m.begin_turn(question, "followup")
+    query = m.retrieval_question(question)
+    assert query != question and m.replay_resolution(query).binding_status == "bound"
+    m.past_qas[0] = replace(m.past_qas[0], valid_until=0)
+    for supplied_question in (question, query):
+        resolution = m.replay_resolution(supplied_question)
+        assert resolution.requested and resolution.binding_status == "unresolved_reference"
+        assert resolution.intent is None and m.missing_evidence(supplied_question).action == "clarify_reference"

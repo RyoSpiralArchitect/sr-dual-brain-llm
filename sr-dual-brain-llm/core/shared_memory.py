@@ -31,7 +31,8 @@ from .memory_scope import MemoryScopeResolver, normalize_name
 from .memory_intent import (RecordReplayIntent, RecordReplayResolution, literal_record_replay_requested,
                             literal_record_replay_followup_requested, record_replay_requested,
                             scoped_record_replay_requested)
-from .memory_clarification import MissingEvidenceCondition, declared_reference_followup, explicit_memory_request
+from .memory_clarification import (MemoryRequest, MissingEvidenceCondition, declared_reference_followup,
+                                   explicit_memory_request)
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -194,6 +195,7 @@ class SharedMemory:
         self.conversation_context = bool(conversation_context)
         self.track_persistence = bool(track_persistence)
         self._turn_question = self._turn_query = None
+        self._turn_replay_requested = False
         self._turn_qid = None
         self._turn_metadata = None
         self._pending_supersedes = frozenset()
@@ -211,6 +213,7 @@ class SharedMemory:
     def begin_turn(self, question, qid, metadata=None):
         """Caller-declared scope/write intent; never infer a correction from recency."""
         self._turn_question = self._turn_query = None
+        self._turn_replay_requested = False
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
         if not self.conversation_context:
@@ -272,11 +275,16 @@ class SharedMemory:
         self._turn_question, self._turn_query, self._turn_qid = question, query, qid
         self._turn_metadata = (declaration, tuple(metadata.get("supersedes", ())), metadata.get("remember", False)) if declaration else None
         self._pending_supersedes = frozenset(metadata.get("supersedes", ())) if declaration else frozenset()
+        # Remember only this exact input's bounded operation, never its scope,
+        # source or binding. Otherwise losing the last live alias after an
+        # await could turn a quotation into ordinary recall of stale context.
+        self._turn_replay_requested = not self.primary_write_pending and record_replay_requested(query, resolver)
 
     def abort_turn(self, previous_focus):
         """Discard an uncommitted turn's scope and correction intent."""
         self._focus_scope = previous_focus
         self._turn_question = self._turn_query = None
+        self._turn_replay_requested = False
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
 
@@ -351,8 +359,9 @@ class SharedMemory:
         if not unbound_replay and self.retrieve_related_traces(question):
             return None
         reference, basis, scopes, resolver, declaration = self._reference_state(question)
-        request = explicit_memory_request(self.retrieval_question(question), resolver,
-                                          caller_declared=declaration is not None)
+        request = (MemoryRequest("recorded_answer_replay", None, "not_applicable") if replay.requested else
+                   explicit_memory_request(self.retrieval_question(question), resolver,
+                                           caller_declared=declaration is not None))
         # Multiple explicitly named projects remain explicit, not ambiguous.
         # Unsupported shapes (including extra clauses) get no targeted advice.
         if request is None or reference == "multiple_explicit":
@@ -400,6 +409,7 @@ class SharedMemory:
         self.pending_memory_writes.clear()
         self.pending_memory_updates.clear()
         self._turn_question = self._turn_query = None
+        self._turn_replay_requested = False
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
         self._trim_history()
@@ -416,7 +426,8 @@ class SharedMemory:
             return RecordReplayResolution('not_requested')
         query = self.retrieval_question(question)
         reference, _, scopes, resolver, declaration = self._reference_state(question)
-        if not record_replay_requested(query, resolver):
+        turn_request = self._turn_replay_requested and question in (self._turn_question, self._turn_query)
+        if not turn_request and not record_replay_requested(query, resolver):
             return RecordReplayResolution('not_requested')
         if reference != 'resolved':
             return RecordReplayResolution('unresolved_reference')
