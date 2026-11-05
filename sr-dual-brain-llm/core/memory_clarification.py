@@ -10,7 +10,7 @@ import re
 from .memory_intent import (
     _normalized_literal_request,
     literal_record_replay_requested,
-    scoped_record_replay_requested,
+    record_replay_requested,
 )
 
 
@@ -103,9 +103,7 @@ def explicit_memory_request(question, resolver, *, caller_declared=False):
     """
     if not isinstance(question, str) or len(question) > 6000 or _SLOT in question:
         return None
-    if scoped_record_replay_requested(question, resolver):
-        return MemoryRequest("recorded_answer_replay", None, "not_applicable")
-    if caller_declared and literal_record_replay_requested(question):
+    if record_replay_requested(question, resolver):
         return MemoryRequest("recorded_answer_replay", None, "not_applicable")
 
     parts = resolver.single_alias_parts(question, allow_ambiguous=True)

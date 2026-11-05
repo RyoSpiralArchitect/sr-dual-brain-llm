@@ -43,9 +43,9 @@ def literal_record_replay_followup_requested(question: str) -> bool:
                          _normalized_literal_request(question)) is not None)
 
 
-def scoped_record_replay_requested(question, resolver):
-    """One identity in an allowed slot; other aliases cannot hide instructions."""
-    parts = resolver.single_alias_parts(question)
+def scoped_record_replay_requested(question, resolver, *, allow_ambiguous=False):
+    """One identity slot; optional ambiguity preserves a request, never a binding."""
+    parts = resolver.single_alias_parts(question, allow_ambiguous=allow_ambiguous)
     if parts is None:
         return False
     before, after = parts
@@ -64,6 +64,14 @@ def scoped_record_replay_requested(question, resolver):
     if re.search(r'\b(?:for|of)$', before):
         return literal_record_replay_requested(before + ' ' + after)
     return False
+
+
+def record_replay_requested(question, resolver):
+    """Recognize the existing whole-record grammar independently of resolution."""
+    if not isinstance(question, str) or len(question) > 6000 or '\x00' in question:
+        return False
+    return (literal_record_replay_requested(question)
+            or scoped_record_replay_requested(question, resolver, allow_ambiguous=True))
 
 
 @dataclass(frozen=True)
@@ -91,3 +99,26 @@ class RecordReplayIntent:
 
     def identity(self):
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class RecordReplayResolution:
+    """A fresh local request/binding result, never a source support approval.
+
+    ``bound`` means one current eligible exact source can be named. Delivery
+    still requires that binding's separate complete replay-policy approval.
+    """
+    binding_status: str
+    intent: RecordReplayIntent | None = None
+
+    def __post_init__(self):
+        if (type(self.binding_status) is not str or self.binding_status not in {
+                'not_requested', 'unresolved_reference', 'missing_record',
+                'ambiguous_record', 'unavailable_binding', 'bound'}
+                or (self.binding_status == 'bound' and type(self.intent) is not RecordReplayIntent)
+                or (self.binding_status != 'bound' and self.intent is not None)):
+            raise ValueError('Replay resolution requires a consistent exact binding state')
+
+    @property
+    def requested(self):
+        return self.binding_status != 'not_requested'

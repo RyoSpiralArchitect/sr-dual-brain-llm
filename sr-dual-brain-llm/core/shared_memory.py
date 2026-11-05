@@ -28,8 +28,9 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
-from .memory_intent import (RecordReplayIntent, literal_record_replay_requested,
-                            literal_record_replay_followup_requested, scoped_record_replay_requested)
+from .memory_intent import (RecordReplayIntent, RecordReplayResolution, literal_record_replay_requested,
+                            literal_record_replay_followup_requested, record_replay_requested,
+                            scoped_record_replay_requested)
 from .memory_clarification import MissingEvidenceCondition, declared_reference_followup, explicit_memory_request
 
 
@@ -342,8 +343,12 @@ class SharedMemory:
     def missing_evidence(self, question):
         """A bounded request's missing conditions, without unavailable record text."""
         if (not self.conversation_context or self.primary_write_pending
-                or question not in (self._turn_question, self._turn_query)
-                or self.retrieve_related_traces(question)):
+                or question not in (self._turn_question, self._turn_query)):
+            return None
+        replay = self.replay_resolution(question)
+        unbound_replay = replay.requested and replay.intent is None
+        # Ordinary approvals cannot select which complete record was requested.
+        if not unbound_replay and self.retrieve_related_traces(question):
             return None
         reference, basis, scopes, resolver, declaration = self._reference_state(question)
         request = explicit_memory_request(self.retrieval_question(question), resolver,
@@ -355,13 +360,17 @@ class SharedMemory:
         current = [t for t in self.past_qas if self._available(t, time.time())
                    and not t.recalled_answer and t.retrieval_scope in scopes]
         availability = ("current_unapproved" if current else "none_current") if reference == "resolved" else "unknown"
+        if replay.binding_status == "ambiguous_record":
+            # Resident records may already have ordinary factual approvals.
+            # This state reports unresolved selection, not denial or absence.
+            availability = "current_unselected"
         approval = "not_applicable"
         if current and reference == "resolved":
             approval = "unknown"
             decide = getattr(self.answerability_gate, "decision", None)
-            if callable(decide):
+            if callable(decide) and not unbound_replay:
                 query = self.retrieval_question(question)
-                intent = self.replay_intent(question)
+                intent = replay.intent
                 # A capped or eligibility-filtered subset cannot establish a
                 # denial for every resident current source. Omitted/ineligible
                 # records retain an unknown exact decision without new calls.
@@ -372,7 +381,7 @@ class SharedMemory:
                     approval = "denied"
         if reference != "resolved":
             action = "clarify_reference"
-        elif request.operation == "recorded_answer_replay" and len(current) > 1:
+        elif replay.binding_status == "ambiguous_record":
             action = "clarify_record"
         elif request.parameter_status == "underspecified":
             action = "clarify_parameter"
@@ -395,30 +404,45 @@ class SharedMemory:
         self._pending_supersedes = frozenset()
         self._trim_history()
 
-    def replay_intent(self, question):
-        """Bind a quotation request to one current complete scoped source.
+    def replay_resolution(self, question):
+        """Resolve a bounded quotation request before ranking or approval.
 
-        Check uniqueness before candidate ranking/limits across all live primary
-        records in the scope. This binding still needs a complete support approval.
+        Recognition survives an unavailable/ambiguous binding. Count all live
+        primary records in the scope, including ineligible or unranked ones;
+        neither the candidate cap nor support decisions can choose the target.
+        Recompute each call, including after awaits that may change residency.
         """
-        if (not self.conversation_context or self.answerability_gate is None or self.primary_write_pending
-                or self.reference_resolution(question) != 'resolved'):
-            return None
+        if not self.conversation_context or self.primary_write_pending or not isinstance(question, str):
+            return RecordReplayResolution('not_requested')
         query = self.retrieval_question(question)
-        resolver, cue = self._retrieval_scope_cue(query)
-        declaration = self._reference_state(question)[4]
-        if not (scoped_record_replay_requested(query, resolver)
-                or declaration is not None and literal_record_replay_requested(query)):
-            return None
+        reference, _, scopes, resolver, declaration = self._reference_state(question)
+        if not record_replay_requested(query, resolver):
+            return RecordReplayResolution('not_requested')
+        if reference != 'resolved':
+            return RecordReplayResolution('unresolved_reference')
         traces = [t for t in self.past_qas if self._available(t, time.time())
-                  and t.retrieval_scope in cue.scopes and not t.recalled_answer]
-        if (len(traces) != 1 or not traces[0].qid
+                  and t.retrieval_scope in scopes and not t.recalled_answer]
+        if not traces:
+            return RecordReplayResolution('missing_record')
+        if len(traces) > 1:
+            return RecordReplayResolution('ambiguous_record')
+        if (self.answerability_gate is None or not traces[0].qid
+                or not (scoped_record_replay_requested(query, resolver)
+                        or declaration is not None and literal_record_replay_requested(query))
                 or sum(t.qid == traces[0].qid for t in self.past_qas) != 1):
-            return None
+            return RecordReplayResolution('unavailable_binding')
         source = self._answerability_source(traces[0])
         if not self.answerability_gate.eligible(source):
-            return None
-        return RecordReplayIntent.bind(query, source)
+            return RecordReplayResolution('unavailable_binding')
+        return RecordReplayResolution('bound', RecordReplayIntent.bind(query, source))
+
+    def replay_intent(self, question):
+        """Compatibility projection of the fresh exact binding, not approval."""
+        return self.replay_resolution(question).intent
+
+    def _unbound_record_replay(self, question):
+        resolution = self.replay_resolution(question)
+        return resolution.requested and resolution.intent is None
 
     def _trim_history(self):
         """Bound residency without letting derived answers evict active sources."""
@@ -479,7 +503,7 @@ class SharedMemory:
 
     def answerability_candidates(self, question):
         question = self.retrieval_question(question)
-        if self._unresolved_caller_reference(question):
+        if self._unresolved_caller_reference(question) or self._unbound_record_replay(question):
             return []
         limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
         resolver, query = self._retrieval_scope_cue(question)
@@ -507,6 +531,9 @@ class SharedMemory:
         """Resolve exact, unambiguous identities to final QA text, never a seed draft."""
         entries = []
         if self.answerability_gate is not None and question is None:
+            return entries
+        active_question = question if question is not None else self._turn_question
+        if active_question is not None and self._unbound_record_replay(active_question):
             return entries
         now = time.time()
         # A seed's hash trigger is not sufficient to establish scoped QA relevance.
@@ -576,7 +603,8 @@ class SharedMemory:
 
     # ------------------------------------------------------------------
     def get_context(self, n: int = 5) -> str:
-        if n <= 0 or self.answerability_gate is not None:
+        if (n <= 0 or self.answerability_gate is not None
+                or self._turn_question is not None and self._unbound_record_replay(self._turn_question)):
             return ""
         available = [trace for trace in self.past_qas if self._available(trace, time.time())]
         return "\n".join(
@@ -696,7 +724,8 @@ class SharedMemory:
 
     def _retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
 
-        if not self.past_qas or n <= 0 or self._unresolved_caller_reference(question):
+        if (not self.past_qas or n <= 0 or self._unresolved_caller_reference(question)
+                or self._unbound_record_replay(question)):
             return []
 
         resolver, query = self._retrieval_scope_cue(question)
