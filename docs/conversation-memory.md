@@ -106,6 +106,47 @@ its own exact query/source/policy support approval. The quotation operation asks
 for the recorded text, without certifying its claims as true. Ordinary semantic
 questions retain their existing support policy.
 
+`replay_resolution(question)` keeps request recognition separate from binding
+to an exact source. Its immutable result is recomputed at each lookup:
+
+| Binding status | Meaning |
+| --- | --- |
+| `not_requested` | This question is outside the bounded whole-record operation |
+| `unresolved_reference` | The operation is recognized, but its current reference is unresolved |
+| `missing_record` | The reference resolves, but its scope has no current primary record |
+| `ambiguous_record` | The scope has more than one current primary record |
+| `unavailable_binding` | A unique record exists, but the complete-source binding requirements cannot be met |
+| `bound` | One current eligible complete source is bound; its exact replay support approval is still required |
+
+`replay_intent(question)` remains the compatibility projection of that binding.
+All current primary records in the resolved resident scope count before
+eligibility filtering, relevance ranking, candidate limits or support decisions.
+If two records remain, neither an ordinary positive decision for one nor a
+negative/unknown decision for the other selects the intended record. Recognized
+unbound replay withholds source bodies from direct retrieval, support candidates
+and latent seed evidence, and preserves the appropriate clarification condition.
+The disabled-checker path also withholds an unapproved complete-record replay.
+
+Within an active turn, only the fact that its exact original/rewritten question
+matched the existing bounded grammar is retained. This permits revalidation
+after the last source and alias expire; it does not retain source identity,
+scope, content, eligibility or approval. That request flag is cleared on the
+next turn, abort or committed-memory reload. No historical alias registry,
+unknown-name grammar expansion or semantic classifier is added.
+
+Before existing draft and consultation generation boundaries, the controller
+rechecks the current binding and retains only an already admitted, still-approved
+exact memory block. Copied seed evidence is revalidated as well. Final revision
+receives the current clarification condition, including when an earlier draft
+contained a now-unavailable quote. Drafts and reviewer notes do not establish a
+new selection or approval. The right-worker consumer uses the same check after
+queue/admission waits, immediately before its existing generation call. This
+adds no model calls or forced review rounds. It checks inputs to the next
+existing generation; it does not revoke an already emitted answer or regenerate
+a completed draft when no further generation is scheduled.
+See the [record-selection followup protocol](benchmarks/record-selection-followup-protocol.md)
+for the frozen approval-positive regression comparison and Fake Provider checks.
+
 The [reference and assessment followup](benchmarks/record-replay-followup-protocol.md)
 defines a separate development comparison and an additive answer-assessment
 contract. Exact UTF-8 equality, source validity, attribution and handling of
@@ -164,15 +205,18 @@ ambiguous; the surviving caller declaration cannot silently change identity.
 Unresolved or conflicting declarations withhold factual candidates and cached approvals for
 that turn without requesting another support decision.
 
-When no approved source is available, a bounded request can carry a
+When no approved source is available or a whole-record target is unbound, a bounded request can carry a
 `missing_evidence_v1` condition through prefrontal context, both brains and final
 integration. The packet contains enum values only: reference state and basis,
 operation, explicit parameter (if any), parameter status, source availability/approval and
 the requested clarification action. It contains no project/source IDs, historical
 questions, answers, units or values. `none_current` describes the resident source
 view for a resolved scope; `current_unapproved` means resident current sources
-exist but none is approved for this exact request; `unknown` is retained when the
-reference cannot be resolved. None of these states establishes factual truth or
+exist but none is approved for this exact request; `current_unselected` means
+several current primary records remain for a whole-record operation, regardless
+of ordinary support decisions. Its exact replay approval is `unknown` because
+no target is bound. `unknown` availability is retained when the reference cannot
+be resolved. None of these states establishes factual truth or
 the absence of a fact outside that view.
 
 The exact cached source decision distinguishes approval, explicit denial and
@@ -191,7 +235,7 @@ request is made to construct a clarification condition.
 | Resolved project, bare `retention` | Ask which measure is intended |
 | Resolved project and explicit parameter/literal request, current records with unknown approval | Preserve uncertainty about support; do not claim the stored value is absent |
 | Unknown or ambiguous reference in a bounded lookup | Ask for the intended reference/current source |
-| Resolved project, bounded literal replay, several current unapproved records | Ask which complete record is intended |
+| Resolved project, bounded literal replay, several current records regardless of ordinary approval | Ask which complete record is intended |
 | Resolved project, bounded literal replay with no current record or explicit denial | Request a current complete record |
 
 Recognition is limited to whole question shapes such as `Project Cedar data
@@ -211,7 +255,8 @@ historical answer contained days or percentages. Extra clauses, unsupported
 wordings, ordinary unqualified questions without a reference, and explicitly
 named multiple projects receive no new targeted condition. The existing literal
 replay grammar retains its own operation and full-source requirements. Primary
-source writes and questions with approved evidence keep their existing paths.
+source writes and ordinary semantic questions with approved evidence keep their
+existing paths.
 
 `tests/test_missing_evidence.py` exercises these boundaries with fixed authored
 questions and a Fake Provider. Its EngineSession cases capture the actual
