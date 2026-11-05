@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_contract_operational_verification",
+  "clock": 1793836800.0,
+  "durable_turns": [
+    {
+      "id": "write_initial",
+      "write": true,
+      "question": "For Project Silver Cedar, record its data retention period as 11 days. Reply only with that one setting.",
+      "memory_context": {
+        "id": "Silver Cedar",
+        "aliases": [
+          "Silver Cedar",
+          "銀杉"
+        ],
+        "remember": true
+      },
+      "memory_operation_id": "contract-write-initial",
+      "system2_mode": "off",
+      "expected_active": [
+        "write_initial"
+      ]
+    },
+    {
+      "id": "quote_initial",
+      "question": "Repeat Project Silver Cedar recorded answer verbatim.",
+      "target_qid": "write_initial",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [
+        "write_initial"
+      ],
+      "expected_active": [
+        "write_initial"
+      ],
+      "memory_operation_id": "contract-quote-initial"
+    },
+    {
+      "id": "write_correction",
+      "write": true,
+      "question": "Correction for Project Silver Cedar: its data retention period is now 7 days, replacing the earlier 11-day setting. Reply only with the corrected setting.",
+      "memory_context": {
+        "id": "Silver Cedar",
+        "aliases": [
+          "Silver Cedar",
+          "銀杉"
+        ],
+        "remember": true,
+        "supersedes": [
+          "write_initial"
+        ]
+      },
+      "memory_operation_id": "contract-write-correction",
+      "system2_mode": "off",
+      "expected_active": [
+        "write_correction"
+      ]
+    },
+    {
+      "id": "quote_corrected",
+      "question": "銀杉の記録された回答をそのまま再掲して。",
+      "target_qid": "write_correction",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [
+        "write_correction"
+      ],
+      "expected_active": [
+        "write_correction"
+      ],
+      "memory_operation_id": "contract-quote-corrected"
+    },
+    {
+      "id": "quote_pronoun",
+      "question": "Repeat that recorded answer verbatim.",
+      "reopen": false,
+      "target_qid": "write_correction",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [
+        "write_correction"
+      ],
+      "expected_active": [
+        "write_correction"
+      ],
+      "memory_operation_id": "contract-quote-pronoun"
+    }
+  ],
+  "cases": [
+    {
+      "id": "caller_scope",
+      "question": "What is the data-retention period?",
+      "records": [
+        {
+          "question": "What is the data-retention period?",
+          "answer": "99 days.",
+          "qid": "global",
+          "retrieval_scope": null,
+          "scope_aliases": [],
+          "timestamp": 1793836700.0
+        },
+        {
+          "question": "Project Birch data retention period?",
+          "answer": "29 days.",
+          "qid": "other",
+          "retrieval_scope": "Birch",
+          "scope_aliases": [
+            "Birch"
+          ],
+          "timestamp": 1793836700.0
+        },
+        {
+          "question": "Project Juniper data retention period?",
+          "answer": "17 days.",
+          "qid": "scoped",
+          "retrieval_scope": "Juniper",
+          "scope_aliases": [
+            "Juniper"
+          ],
+          "timestamp": 1793836700.0
+        }
+      ],
+      "manual_criterion": "Answer with Juniper's recorded 17-day period; do not borrow global 99 or Birch 29. Do not ask which project.",
+      "memory_context": {
+        "id": "Juniper",
+        "aliases": [
+          "Juniper"
+        ],
+        "remember": false
+      },
+      "expected_sources": [
+        "scoped"
+      ],
+      "forbidden_values": [
+        "99",
+        "29"
+      ]
+    },
+    {
+      "id": "period_missing",
+      "question": "Project Rowan data retention period?",
+      "records": [],
+      "manual_criterion": "Ask for a current source for the explicit data-retention period without re-identifying Rowan or asking which metric.",
+      "memory_context": {
+        "id": "Rowan",
+        "aliases": [
+          "Rowan"
+        ],
+        "remember": false
+      },
+      "expected_sources": [],
+      "expected_action": "request_current_source"
+    },
+    {
+      "id": "rate_missing",
+      "question": "What is Project Delta's retention rate?",
+      "records": [],
+      "manual_criterion": "Ask for a current retention-rate source; do not switch to a period or ask which metric.",
+      "memory_context": {
+        "id": "Delta",
+        "aliases": [
+          "Delta"
+        ],
+        "remember": false
+      },
+      "expected_sources": [],
+      "expected_action": "request_current_source"
+    },
+    {
+      "id": "bare_retention",
+      "question": "Project Hazel retention?",
+      "records": [],
+      "manual_criterion": "Ask whether retention means a data-retention period, retention rate or another measure; do not assume units.",
+      "memory_context": {
+        "id": "Hazel",
+        "aliases": [
+          "Hazel"
+        ],
+        "remember": false
+      },
+      "expected_sources": [],
+      "expected_action": "clarify_parameter"
+    },
+    {
+      "id": "reference_ambiguous",
+      "question": "Project Aster data retention period?",
+      "records": [
+        {
+          "question": "Project North data retention period?",
+          "answer": "13 days.",
+          "qid": "a1",
+          "retrieval_scope": "North",
+          "scope_aliases": [
+            "Aster"
+          ],
+          "timestamp": 1793836700.0
+        },
+        {
+          "question": "Project South data retention period?",
+          "answer": "31 days.",
+          "qid": "a2",
+          "retrieval_scope": "South",
+          "scope_aliases": [
+            "Aster"
+          ],
+          "timestamp": 1793836700.0
+        }
+      ],
+      "manual_criterion": "Ask which project is meant; do not choose North or South or assert their values.",
+      "expected_sources": [],
+      "expected_action": "clarify_reference",
+      "forbidden_values": [
+        "13",
+        "31"
+      ]
+    },
+    {
+      "id": "record_ambiguous",
+      "question": "Repeat Project Larch recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Larch data retention period?",
+          "answer": "Data retention period: 19 days.",
+          "qid": "larch-period",
+          "retrieval_scope": "Larch",
+          "scope_aliases": [
+            "Larch"
+          ],
+          "timestamp": 1793836700.0
+        },
+        {
+          "question": "Project Larch backup location?",
+          "answer": "Backup location: Dublin.",
+          "qid": "larch-backup",
+          "retrieval_scope": "Larch",
+          "scope_aliases": [
+            "Larch"
+          ],
+          "timestamp": 1793836700.0
+        }
+      ],
+      "manual_criterion": "Ask which complete current Larch record is intended; do not silently pick a record or combine them.",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [],
+      "expected_action": "clarify_record"
+    },
+    {
+      "id": "record_missing",
+      "question": "Repeat Project Ibis recorded answer verbatim.",
+      "records": [],
+      "manual_criterion": "Ask for a current complete recorded answer; do not invent or reconstruct wording.",
+      "memory_context": {
+        "id": "Ibis",
+        "aliases": [
+          "Ibis"
+        ],
+        "remember": false
+      },
+      "expected_sources": [],
+      "expected_action": "request_current_record"
+    },
+    {
+      "id": "support_unknown",
+      "question": "Project Willow data retention period?",
+      "records": [
+        {
+          "question": "Project Willow data retention period?",
+          "answer": "NONEXPOSED_CURRENT_23_DAYS xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "qid": "oversized",
+          "retrieval_scope": "Willow",
+          "scope_aliases": [
+            "Willow"
+          ],
+          "timestamp": 1793836700.0
+        }
+      ],
+      "manual_criterion": "State inability to establish support; do not claim the record is absent or require re-entry as though missing. Do not assert the withheld 23-day value.",
+      "expected_sources": [],
+      "expected_action": "preserve_unknown",
+      "forbidden_values": [
+        "23",
+        "NONEXPOSED_CURRENT"
+      ]
+    },
+    {
+      "id": "critic_on",
+      "question": "Explain how a Python context manager closes a file when the body raises an exception. Use two short sentences and mention __exit__.",
+      "records": [],
+      "manual_criterion": "Inspect a natural healthy external critic result and final System2 accounting. Semantic correctness and format are qualitative observations only.",
+      "system2_mode": "on"
+    },
+    {
+      "id": "critic_off",
+      "question": "Explain how a Python context manager closes a file when the body raises an exception. Use two short sentences and mention __exit__.",
+      "records": [],
+      "manual_criterion": "The explicit OFF setting dispatches no critic; ordinary detail consultation is allowed. Do not infer a quality comparison from one answer.",
+      "system2_mode": "off"
+    }
+  ]
+}
