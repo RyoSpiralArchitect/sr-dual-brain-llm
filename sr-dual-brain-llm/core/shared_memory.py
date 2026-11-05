@@ -395,30 +395,40 @@ class SharedMemory:
         self._pending_supersedes = frozenset()
         self._trim_history()
 
-    def replay_intent(self, question):
-        """Bind a quotation request to one current complete scoped source.
+    def _record_replay_sources(self, question):
+        """All current primaries for a bounded whole-record request.
 
-        Check uniqueness before candidate ranking/limits across all live primary
-        records in the scope. This binding still needs a complete support approval.
+        Count before eligibility, ranking, caps and factual approvals. Knowing
+        that records support a question cannot identify which one was requested.
+        Recompute after awaits so lifecycle or scope changes remain authoritative.
         """
-        if (not self.conversation_context or self.answerability_gate is None or self.primary_write_pending
+        if (not self.conversation_context or self.primary_write_pending
                 or self.reference_resolution(question) != 'resolved'):
-            return None
+            return []
         query = self.retrieval_question(question)
         resolver, cue = self._retrieval_scope_cue(query)
         declaration = self._reference_state(question)[4]
         if not (scoped_record_replay_requested(query, resolver)
                 or declaration is not None and literal_record_replay_requested(query)):
+            return []
+        return [t for t in self.past_qas if self._available(t, time.time())
+                and t.retrieval_scope in cue.scopes and not t.recalled_answer]
+
+    def replay_intent(self, question):
+        """Bind a quotation request to one current complete scoped source.
+
+        This binding still needs its own complete support approval.
+        """
+        if self.answerability_gate is None:
             return None
-        traces = [t for t in self.past_qas if self._available(t, time.time())
-                  and t.retrieval_scope in cue.scopes and not t.recalled_answer]
+        traces = self._record_replay_sources(question)
         if (len(traces) != 1 or not traces[0].qid
                 or sum(t.qid == traces[0].qid for t in self.past_qas) != 1):
             return None
         source = self._answerability_source(traces[0])
         if not self.answerability_gate.eligible(source):
             return None
-        return RecordReplayIntent.bind(query, source)
+        return RecordReplayIntent.bind(self.retrieval_question(question), source)
 
     def _trim_history(self):
         """Bound residency without letting derived answers evict active sources."""
@@ -668,6 +678,10 @@ class SharedMemory:
         """Expose exactly the traces used in formatted context for provenance."""
 
         question = self.retrieval_question(question)
+        if len(self._record_replay_sources(question)) > 1:
+            # Keep clarify_record reachable even when ordinary factual support
+            # approves every candidate. The same veto protects seed evidence.
+            return []
         if self.answerability_gate is not None:
             intent = self.replay_intent(question)
             return [trace for trace in self.answerability_candidates(question)

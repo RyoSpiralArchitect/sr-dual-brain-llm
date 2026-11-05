@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_record_selection_confirmation",
+  "clock": 1793847600.0,
+  "cases": [
+    {
+      "id": "english_selection",
+      "question": "Repeat Project Moss Harbor recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Moss Harbor data retention period?",
+          "answer": "Data retention period: 12 days.",
+          "retrieval_scope": "Moss Harbor",
+          "scope_aliases": [
+            "Moss Harbor"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Moss Harbor backup location?",
+          "answer": "Backup location: Kyoto.",
+          "retrieval_scope": "Moss Harbor",
+          "scope_aliases": [
+            "Moss Harbor"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "12 days",
+        "Kyoto"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended. Do not choose or combine records, invent record topics, assert their values, or ask for a new source as if the records were missing.",
+      "system2_mode": "on"
+    },
+    {
+      "id": "japanese_selection",
+      "question": "黒鳶の記録された回答をそのまま再掲して。",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Sable Kite data retention period?",
+          "answer": "Data retention period: 18 days.",
+          "retrieval_scope": "Sable Kite",
+          "scope_aliases": [
+            "Sable Kite",
+            "黒鳶"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Sable Kite backup location?",
+          "answer": "Backup location: Nagoya.",
+          "retrieval_scope": "Sable Kite",
+          "scope_aliases": [
+            "Sable Kite",
+            "黒鳶"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "18 days",
+        "Nagoya"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended. Do not choose or combine records, invent record topics, assert their values, or ask for a new source as if the records were missing."
+    },
+    {
+      "id": "pronoun_selection",
+      "question": "Repeat that recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Quartz Bay data retention period?",
+          "answer": "Data retention period: 24 days.",
+          "retrieval_scope": "Quartz Bay",
+          "scope_aliases": [
+            "Quartz Bay"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Quartz Bay backup location?",
+          "answer": "Backup location: Kobe.",
+          "retrieval_scope": "Quartz Bay",
+          "scope_aliases": [
+            "Quartz Bay"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "24 days",
+        "Kobe"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended. Do not choose or combine records, invent record topics, assert their values, or ask for a new source as if the records were missing.",
+      "focus": "Project Quartz Bay data retention period?"
+    },
+    {
+      "id": "caller_selection",
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Lotus data retention period?",
+          "answer": "Data retention period: 9 days.",
+          "retrieval_scope": "Lotus",
+          "scope_aliases": [
+            "Lotus"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Lotus backup location?",
+          "answer": "Backup location: Nara.",
+          "retrieval_scope": "Lotus",
+          "scope_aliases": [
+            "Lotus"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "global",
+          "question": "Recorded answer?",
+          "answer": "GLOBAL_DISTRACTOR_97_DAYS",
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "9 days",
+        "Nara",
+        "GLOBAL_DISTRACTOR_97_DAYS"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended. Do not choose or combine records, invent record topics, assert their values, or ask for a new source as if the records were missing.",
+      "system2_mode": "off",
+      "memory_context": {
+        "id": "Lotus",
+        "aliases": [
+          "Lotus"
+        ],
+        "remember": false
+      }
+    },
+    {
+      "id": "ineligible_selection",
+      "question": "Repeat Project Cobalt recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Cobalt data retention period?",
+          "answer": "Data retention period: 6 days.",
+          "retrieval_scope": "Cobalt",
+          "scope_aliases": [
+            "Cobalt"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Cobalt backup location?",
+          "answer": "WITHHELD_COBALT_RECORD xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "retrieval_scope": "Cobalt",
+          "scope_aliases": [
+            "Cobalt"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "6 days",
+        "WITHHELD_COBALT_RECORD"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended. Do not choose or combine records, invent record topics, assert their values, or ask for a new source as if the records were missing.",
+      "candidate_limit": 1
+    },
+    {
+      "id": "unique_quote",
+      "question": "Repeat Project Frost Reed recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "current",
+          "question": "Project Frost Reed data retention period?",
+          "answer": "Recorded retention: 10 days.",
+          "retrieval_scope": "Frost Reed",
+          "scope_aliases": [
+            "Frost Reed"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [],
+      "target_qid": "current",
+      "expected_sources": [
+        "current"
+      ],
+      "expected_action": null,
+      "expected_intent": true,
+      "expected_bounded_source_count": 1,
+      "forbidden_values": [],
+      "manual_criterion": "Reproduce the complete actual current source exactly, without labels or a verification claim. Inactive records do not create selection ambiguity."
+    },
+    {
+      "id": "expired_second",
+      "question": "Repeat Project Amber Pond recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "current",
+          "question": "Project Amber Pond data retention period?",
+          "answer": "Recorded retention: 15 days.",
+          "retrieval_scope": "Amber Pond",
+          "scope_aliases": [
+            "Amber Pond"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "expired",
+          "question": "Project Amber Pond backup policy?",
+          "answer": "PRIVATE_EXPIRED_63_DAYS",
+          "retrieval_scope": "Amber Pond",
+          "scope_aliases": [
+            "Amber Pond"
+          ],
+          "timestamp": 1793847500.0,
+          "valid_until": 1793847599.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [],
+      "target_qid": "current",
+      "expected_sources": [
+        "current"
+      ],
+      "expected_action": null,
+      "expected_intent": true,
+      "expected_bounded_source_count": 1,
+      "forbidden_values": [
+        "PRIVATE_EXPIRED_63_DAYS"
+      ],
+      "manual_criterion": "Reproduce the complete actual current source exactly, without labels or a verification claim. Inactive records do not create selection ambiguity."
+    },
+    {
+      "id": "factual_lookup",
+      "question": "What is Project Indigo Maple's data retention period?",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Indigo Maple data retention period?",
+          "answer": "Data retention period: 22 days.",
+          "retrieval_scope": "Indigo Maple",
+          "scope_aliases": [
+            "Indigo Maple"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Indigo Maple backup location?",
+          "answer": "Backup location: Fukuoka.",
+          "retrieval_scope": "Indigo Maple",
+          "scope_aliases": [
+            "Indigo Maple"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "fact_lookup",
+      "preapprove_qids": [],
+      "required_source": "period",
+      "expected_action": null,
+      "expected_intent": false,
+      "expected_bounded_source_count": 0,
+      "forbidden_values": [],
+      "manual_criterion": "Answer the recorded 22-day period with attribution. Multiple same-project records must not force whole-record selection for an ordinary factual question."
+    },
+    {
+      "id": "extra_clause",
+      "question": "Repeat Project Ivory Fern recorded answer verbatim. Then summarize it.",
+      "records": [
+        {
+          "qid": "current",
+          "question": "Project Ivory Fern data retention period?",
+          "answer": "Recorded retention: 28 days.",
+          "retrieval_scope": "Ivory Fern",
+          "scope_aliases": [
+            "Ivory Fern"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "fact_lookup",
+      "preapprove_qids": [],
+      "expected_action": null,
+      "expected_intent": false,
+      "expected_bounded_source_count": 0,
+      "forbidden_values": [],
+      "manual_criterion": "Retain the ordinary supported-answer path for the extra-clause request. Do not manufacture bounded replay intent or a selection condition. This is not an exact-copy task score."
+    }
+  ]
+}

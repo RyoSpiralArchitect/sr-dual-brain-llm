@@ -106,6 +106,15 @@ its own exact query/source/policy support approval. The quotation operation asks
 for the recorded text, without certifying its claims as true. Ordinary semantic
 questions retain their existing support policy.
 
+For a bounded whole-record request, two or more current primary records require
+record selection even if ordinary factual support approved every candidate.
+The delivery gate withholds their QA text and seed evidence so `clarify_record`
+reaches drafting, review and integration. It counts all current primaries in the
+resolved scope before eligibility, ranking and candidate limits, and rechecks
+after awaits. Expired, superseded, derived and other-scope records do not create
+this ambiguity. Actual approval receipts remain cached; they cannot choose the
+record for the user. This is an evidence guard, not an optional AUTO module.
+
 The [reference and assessment followup](benchmarks/record-replay-followup-protocol.md)
 defines a separate development comparison and an additive answer-assessment
 contract. Exact UTF-8 equality, source validity, attribution and handling of
@@ -154,9 +163,9 @@ for measured development failures, repairs, and the frozen evaluation results.
 ## Explicit missing-evidence conditions
 
 A validated `memory_context` declaration also supplies identity for its own turn
-when `remember` is false and there is no current record. It is kept in an
-identity-only resolver; factual retrieval, source candidates and approval cache
-keys still use the existing source resolver. Declarations are cleared at the next
+when `remember` is false. Its identity-only resolver constrains factual candidate
+and seed delivery to the declared scope, without granting source approval or
+changing the exact query/source approval keys. Declarations are cleared at the next
 turn, abort or committed-memory reload. They do not restore expired aliases for
 later undeclared turns. Current alias conflicts are rechecked after awaits.
 If a new alias resolves the question to a different scope, the reference remains
@@ -164,14 +173,15 @@ ambiguous; the surviving caller declaration cannot silently change identity.
 Unresolved or conflicting declarations withhold factual candidates and cached approvals for
 that turn without requesting another support decision.
 
-When no approved source is available, a bounded request can carry a
+When no source can be delivered for the bounded request, it can carry a
 `missing_evidence_v1` condition through prefrontal context, both brains and final
 integration. The packet contains enum values only: reference state and basis,
 operation, explicit parameter (if any), parameter status, source availability/approval and
 the requested clarification action. It contains no project/source IDs, historical
 questions, answers, units or values. `none_current` describes the resident source
 view for a resolved scope; `current_unapproved` means resident current sources
-exist but none is approved for this exact request; `unknown` is retained when the
+exist but none can be delivered for this exact request, including when whole-record
+selection is unresolved despite ordinary per-source factual approvals. `unknown` is retained when the
 reference cannot be resolved. None of these states establishes factual truth or
 the absence of a fact outside that view.
 
@@ -191,7 +201,7 @@ request is made to construct a clarification condition.
 | Resolved project, bare `retention` | Ask which measure is intended |
 | Resolved project and explicit parameter/literal request, current records with unknown approval | Preserve uncertainty about support; do not claim the stored value is absent |
 | Unknown or ambiguous reference in a bounded lookup | Ask for the intended reference/current source |
-| Resolved project, bounded literal replay, several current unapproved records | Ask which complete record is intended |
+| Resolved project, bounded literal replay, several current primary records regardless of ordinary factual approval | Ask which complete record is intended |
 | Resolved project, bounded literal replay with no current record or explicit denial | Request a current complete record |
 
 Recognition is limited to whole question shapes such as `Project Cedar data
@@ -211,7 +221,7 @@ historical answer contained days or percentages. Extra clauses, unsupported
 wordings, ordinary unqualified questions without a reference, and explicitly
 named multiple projects receive no new targeted condition. The existing literal
 replay grammar retains its own operation and full-source requirements. Primary
-source writes and questions with approved evidence keep their existing paths.
+source writes and ordinary factual questions with approved evidence keep their existing paths.
 
 `tests/test_missing_evidence.py` exercises these boundaries with fixed authored
 questions and a Fake Provider. Its EngineSession cases capture the actual
