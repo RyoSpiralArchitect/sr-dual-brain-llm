@@ -13,10 +13,15 @@ def _digest(value):
                                      separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
+def _normalized_literal_request(reference_content: str) -> str:
+    """Normalize recognition only; never change a query/source approval key."""
+    text = unicodedata.normalize('NFKC', reference_content).casefold().strip()
+    return re.sub(r'\s+', ' ', text).strip(' .。!?？')
+
+
 def literal_record_replay_requested(reference_content: str) -> bool:
     """Positive whole-record requests after declared aliases are removed."""
-    text = unicodedata.normalize('NFKC', reference_content).casefold().strip()
-    text = re.sub(r'\s+', ' ', text).strip(' .。!?？')
+    text = _normalized_literal_request(reference_content)
     text = re.sub(r'\b(?:for|of)\s*(?=verbatim\b|exactly\b|$)', '', text).strip()
     if re.fullmatch(r'(?:please )?(?:repeat|reproduce|quote) (?:(?:the|that) )?(?:recorded|stored) '
                     r'(?:answer|text|record) (?:verbatim|exactly)', text):
@@ -29,6 +34,13 @@ def literal_record_replay_requested(reference_content: str) -> bool:
         '保存済みの回答をそのまま再掲して', '記録文をそのまま引用して',
         '記録された回答を一字一句繰り返して',
     }
+
+
+def literal_record_replay_followup_requested(question: str) -> bool:
+    """The existing bounded English `that` form, with identical normalization."""
+    return (literal_record_replay_requested(question)
+            and re.match(r'^(?:please )?(?:repeat|reproduce|quote) that\b',
+                         _normalized_literal_request(question)) is not None)
 
 
 def scoped_record_replay_requested(question, resolver):

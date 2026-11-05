@@ -174,3 +174,73 @@ def test_explicit_identity_slots_preserve_bounded_supported_forms(question):
     m = memory()
     prepare(m, question)
     assert m.replay_intent(question) is not None
+
+
+@pytest.mark.parametrize('alias', ['Blue Rowan', 'Amber 31', '青 山',
+                                  'Blue Project Rowan', 'Project X Project Y'])
+def test_multiword_only_alias_keeps_replay_and_corrected_pronoun_binding(alias):
+    m = memory()
+    m.past_qas[0] = replace(m.past_qas[0], question=f'Project {alias} retention?',
+                            scope_aliases=(alias,))
+    m.store(MemoryTrace('Project Birch retention?', 'Retention is 42 days.', qid='birch',
+                        retrieval_scope='birch', scope_aliases=('Birch',)))
+    question = f'Repeat Project {alias} recorded answer verbatim.'
+    assert prepare(m, question)['answerability']['approved'] == 1
+    assert m.reference_resolution(question) == 'resolved'
+    assert [t.qid for t in m.retrieve_related_traces(question)] == ['original']
+
+    correction = f'Project {alias} retention?'
+    m.begin_turn(correction, 'corrected', {'id': 'rowan', 'aliases': [alias],
+        'remember': True, 'supersedes': ['original']})
+    m.store({'Q': correction, 'A': 'Retention is 5 days.'}, qid='corrected')
+    followup = 'その記録をそのまま再掲して'
+    assert prepare(m, followup)['answerability']['approved'] == 1
+    assert m.replay_intent(followup).source_qid == 'corrected'
+    assert [t.qid for t in m.retrieve_related_traces(followup)] == ['corrected']
+    assert m.answerability_gate.backend.requests[-1]['operation']['kind'] == 'recorded_answer_replay'
+    assert json.loads(m.retrieve_related(followup).split('\n', 1)[1])['recorded_answer'] == 'Retention is 5 days.'
+    assert m.past_qas[0].evidence_status == 'superseded'
+
+
+@pytest.mark.parametrize('followup', [
+    'Repeat  that recorded answer verbatim.',
+    'Repeat\tthat recorded answer verbatim.',
+    'Please  quote that stored text exactly.',
+    'Ｒｅｐｅａｔ ｔｈａｔ recorded answer verbatim.',
+    'Ｐｌｅａｓｅ　ｑｕｏｔｅ　ｔｈａｔ　ｓｔｏｒｅｄ　ｔｅｘｔ　ｅｘａｃｔｌｙ。',
+])
+def test_normalized_literal_followups_keep_focus_without_normalizing_approval_identity(followup):
+    m = memory()
+    m.begin_turn('Project Rowan retention?', 'corrected', {'id': 'rowan', 'aliases': ['Rowan'],
+        'remember': True, 'supersedes': ['original']})
+    m.store({'Q': 'Project Rowan retention?', 'A': 'Retention is 5 days.'}, qid='corrected')
+    assert prepare(m, followup)['answerability']['approved'] == 1
+    query = f'Project rowan: {followup}'
+    assert m.retrieval_question(followup) == query
+    assert m.replay_intent(followup).source_qid == 'corrected'
+    request = m.answerability_gate.backend.requests[-1]
+    assert request['question'] == query
+    assert request['operation']['kind'] == 'recorded_answer_replay'
+    source = m._answerability_source(m.past_qas[-1])
+    assert m.answerability_gate.allows(query, source, intent=m.replay_intent(followup))
+    assert not m.answerability_gate.allows('Project rowan: Repeat that recorded answer verbatim.',
+                                         source, intent=m.replay_intent(followup))
+
+
+@pytest.mark.parametrize('question', [
+    'Repeat  that recorded answer verbatim. Verify it.',
+    'Ｐｌｅａｓｅ　ｑｕｏｔｅ　ｔｈａｔ　ｓｔｏｒｅｄ　ｔｅｘｔ　ｅｘａｃｔｌｙ。　Ｅｘｐｌａｉｎ。',
+    'Repeat Project Blue Rowans recorded answer verbatim.',
+    'Repeat Project Unknown and Blue Rowan recorded answer verbatim.',
+    'Repeat Project Blue Rowan and Ｐｒｏｊｅｃｔ Unknown recorded answer verbatim.',
+])
+def test_normalization_and_multiword_aliases_never_hide_extra_clauses_or_unknown_projects(question):
+    m = memory()
+    m.past_qas[0] = replace(m.past_qas[0], scope_aliases=('Blue Rowan',))
+    prepare(m, 'Repeat Project Blue Rowan recorded answer verbatim.')
+    before = len(m.answerability_gate.backend.requests)
+    prepare(m, question, 'invalid')
+    assert m.replay_intent(question) is None
+    assert all('operation' not in request for request in m.answerability_gate.backend.requests[before:])
+    prepare(m, 'その記録をそのまま再掲して', 'after-invalid')
+    assert m.replay_intent('その記録をそのまま再掲して') is None

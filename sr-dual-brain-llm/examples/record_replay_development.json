@@ -1,0 +1,946 @@
+{
+  "schema_version": 1,
+  "origin": "scripted_record_replay_development",
+  "clock": 1793880000.0,
+  "support_repeats": 3,
+  "statement": "All support decisions, semantic verdicts and legacy task controls are authored and scripted. This is deterministic contract testing, not model calibration.",
+  "cases": [
+    {
+      "id": "multiword_quote",
+      "question": "Repeat Project Blue Rowan recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Blue Rowan saved instruction?",
+          "answer": "Use the quiet entrance.\nKeep the hatch closed.",
+          "qid": "blue-rowan-current",
+          "retrieval_scope": "blue-rowan",
+          "scope_aliases": [
+            "Blue Rowan"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "blue-rowan-current",
+      "expected_source_qids": [
+        "blue-rowan-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [
+              "blue-rowan-current"
+            ],
+            [
+              "blue-rowan-current"
+            ],
+            [
+              "blue-rowan-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "blue-rowan-current"
+            ],
+            [
+              "blue-rowan-current"
+            ],
+            [
+              "blue-rowan-current"
+            ]
+          ],
+          "intent": true,
+          "exact_stored_answer": true,
+          "axes": {
+            "exact_match": "pass",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "corrected_japanese",
+      "question": "その記録をそのまま再掲して",
+      "records": [
+        {
+          "question": "Project Copper Pine saved instruction?",
+          "answer": "Use the west path.",
+          "qid": "copper-pine-old",
+          "retrieval_scope": "copper-pine",
+          "scope_aliases": [
+            "Copper Pine"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        },
+        {
+          "question": "Project Copper Pine saved instruction?",
+          "answer": "Use the south path.",
+          "qid": "copper-pine-other-old",
+          "retrieval_scope": "copper-pine",
+          "scope_aliases": [
+            "Copper Pine"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": "Project Copper Pine saved instruction?",
+      "target_qid": "copper-pine-current",
+      "expected_source_qids": [
+        "copper-pine-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "deny",
+          "deny",
+          "deny"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "copper-pine-current"
+            ],
+            [
+              "copper-pine-current"
+            ],
+            [
+              "copper-pine-current"
+            ]
+          ],
+          "intent": true,
+          "exact_stored_answer": true,
+          "axes": {
+            "exact_match": "pass",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      },
+      "correction": {
+        "question": "Project Copper Pine saved instruction?",
+        "answer": "Use the east path after rain.",
+        "qid": "copper-pine-current",
+        "id": "copper-pine",
+        "aliases": [
+          "Copper Pine"
+        ],
+        "supersedes": [
+          "copper-pine-old",
+          "copper-pine-other-old"
+        ]
+      }
+    },
+    {
+      "id": "corrected_normalized_pronoun",
+      "question": "Please\tquote that stored text exactly.",
+      "records": [
+        {
+          "question": "Project Amber Finch saved instruction?",
+          "answer": "Use the west path.",
+          "qid": "amber-finch-old",
+          "retrieval_scope": "amber-finch",
+          "scope_aliases": [
+            "Amber Finch"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        },
+        {
+          "question": "Project Amber Finch saved instruction?",
+          "answer": "Use the south path.",
+          "qid": "amber-finch-other-old",
+          "retrieval_scope": "amber-finch",
+          "scope_aliases": [
+            "Amber Finch"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": "Project Amber Finch saved instruction?",
+      "target_qid": "amber-finch-current",
+      "expected_source_qids": [
+        "amber-finch-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "deny",
+          "deny",
+          "deny"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "amber-finch-current"
+            ],
+            [
+              "amber-finch-current"
+            ],
+            [
+              "amber-finch-current"
+            ]
+          ],
+          "intent": true,
+          "exact_stored_answer": true,
+          "axes": {
+            "exact_match": "pass",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      },
+      "correction": {
+        "question": "Project Amber Finch saved instruction?",
+        "answer": "Keep both doors closed during inspection.",
+        "qid": "amber-finch-current",
+        "id": "amber-finch",
+        "aliases": [
+          "Amber Finch"
+        ],
+        "supersedes": [
+          "amber-finch-old",
+          "amber-finch-other-old"
+        ]
+      }
+    },
+    {
+      "id": "cross_project",
+      "question": "Repeat Project Harbor Maple recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Harbor Cedar saved instruction?",
+          "answer": "Store the red folder by the window.",
+          "qid": "harbor-cedar-current",
+          "retrieval_scope": "harbor-cedar",
+          "scope_aliases": [
+            "Harbor Cedar"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        },
+        {
+          "question": "Project Harbor Maple saved instruction?",
+          "answer": "Store the blue folder in the cabinet.",
+          "qid": "harbor-maple-current",
+          "retrieval_scope": "harbor-maple",
+          "scope_aliases": [
+            "Harbor Maple"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "harbor-maple-current",
+      "expected_source_qids": [
+        "harbor-maple-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [
+              "harbor-maple-current"
+            ],
+            [
+              "harbor-maple-current"
+            ],
+            [
+              "harbor-maple-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "harbor-maple-current"
+            ],
+            [
+              "harbor-maple-current"
+            ],
+            [
+              "harbor-maple-current"
+            ]
+          ],
+          "intent": true,
+          "exact_stored_answer": true,
+          "axes": {
+            "exact_match": "pass",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "expired_source",
+      "question": "Repeat Project Hazel Cove recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Hazel Cove saved instruction?",
+          "answer": "Old maintenance window is Tuesday.",
+          "qid": "hazel-expired",
+          "retrieval_scope": "hazel-cove",
+          "scope_aliases": [
+            "Hazel Cove"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified",
+          "valid_until": 1793879999.0
+        }
+      ],
+      "focus": null,
+      "target_qid": "hazel-expired",
+      "expected_source_qids": [
+        "hazel-expired"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "superseded_source",
+      "question": "Repeat Project Willow Ridge recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Willow Ridge saved instruction?",
+          "answer": "Old pickup point is the west door.",
+          "qid": "willow-superseded",
+          "retrieval_scope": "willow-ridge",
+          "scope_aliases": [
+            "Willow Ridge"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "superseded"
+        }
+      ],
+      "focus": null,
+      "target_qid": "willow-superseded",
+      "expected_source_qids": [
+        "willow-superseded"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "incomplete_source",
+      "question": "Repeat Project Indigo Brook recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Indigo Brook saved instruction?",
+          "answer": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "qid": "indigo-long",
+          "retrieval_scope": "indigo-brook",
+          "scope_aliases": [
+            "Indigo Brook"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "indigo-long",
+      "expected_source_qids": [
+        "indigo-long"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "repeat_zero_denial",
+      "question": "Repeat Project Silver Moss recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Silver Moss saved instruction?",
+          "answer": "Use the marked service staircase.",
+          "qid": "silver-moss-current",
+          "retrieval_scope": "silver-moss",
+          "scope_aliases": [
+            "Silver Moss"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "silver-moss-current",
+      "expected_source_qids": [
+        "silver-moss-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "deny",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "deny",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [],
+            [
+              "silver-moss-current"
+            ],
+            [
+              "silver-moss-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [],
+            [
+              "silver-moss-current"
+            ],
+            [
+              "silver-moss-current"
+            ]
+          ],
+          "intent": true,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "partial_approval",
+      "question": "Repeat Project Ivory Sedge recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Ivory Sedge saved instruction?",
+          "answer": "Leave the sealed envelope at reception.",
+          "qid": "ivory-sedge-current",
+          "retrieval_scope": "ivory-sedge",
+          "scope_aliases": [
+            "Ivory Sedge"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "ivory-sedge-current",
+      "expected_source_qids": [
+        "ivory-sedge-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "partial",
+          "partial",
+          "partial"
+        ],
+        "replay_contract": [
+          "partial",
+          "partial",
+          "partial"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [
+              "ivory-sedge-current"
+            ],
+            [
+              "ivory-sedge-current"
+            ],
+            [
+              "ivory-sedge-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [],
+            [],
+            []
+          ],
+          "intent": true,
+          "exact_stored_answer": false,
+          "axes": {
+            "exact_match": "fail",
+            "source_validity": "fail",
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        }
+      }
+    },
+    {
+      "id": "extra_clause",
+      "question": "Repeat Project Drift Fern recorded answer verbatim and explain the consequence.",
+      "records": [
+        {
+          "question": "Project Drift Fern saved instruction?",
+          "answer": "Use the sheltered passage.",
+          "qid": "drift-fern-current",
+          "retrieval_scope": "drift-fern",
+          "scope_aliases": [
+            "Drift Fern"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "drift-fern-current",
+      "expected_source_qids": [
+        "drift-fern-current"
+      ],
+      "requested_operation": "fact_lookup",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "fail"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [
+              "drift-fern-current"
+            ],
+            [
+              "drift-fern-current"
+            ],
+            [
+              "drift-fern-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": null,
+          "axes": {
+            "exact_match": "not_applicable",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "drift-fern-current"
+            ],
+            [
+              "drift-fern-current"
+            ],
+            [
+              "drift-fern-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": null,
+          "axes": {
+            "exact_match": "not_applicable",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "semantic_question",
+      "question": "Why does Project Fennel Bridge require the inspection hatch to stay closed?",
+      "records": [
+        {
+          "question": "Project Fennel Bridge saved instruction?",
+          "answer": "Keep the inspection hatch closed.",
+          "qid": "fennel-bridge-current",
+          "retrieval_scope": "fennel-bridge",
+          "scope_aliases": [
+            "Fennel Bridge"
+          ],
+          "timestamp": 1793880000.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": null,
+      "target_qid": "fennel-bridge-current",
+      "expected_source_qids": [
+        "fennel-bridge-current"
+      ],
+      "requested_operation": "fact_lookup",
+      "execute": true,
+      "support_script": {
+        "generic_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ],
+        "replay_contract": [
+          "approve",
+          "approve",
+          "approve"
+        ]
+      },
+      "semantic_verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "fail"
+      },
+      "legacy_task_verdict": "fail",
+      "expectations": {
+        "generic_contract": {
+          "support_sources": [
+            [
+              "fennel-bridge-current"
+            ],
+            [
+              "fennel-bridge-current"
+            ],
+            [
+              "fennel-bridge-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": null,
+          "axes": {
+            "exact_match": "not_applicable",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        },
+        "replay_contract": {
+          "support_sources": [
+            [
+              "fennel-bridge-current"
+            ],
+            [
+              "fennel-bridge-current"
+            ],
+            [
+              "fennel-bridge-current"
+            ]
+          ],
+          "intent": false,
+          "exact_stored_answer": null,
+          "axes": {
+            "exact_match": "not_applicable",
+            "source_validity": "pass",
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    }
+  ]
+}

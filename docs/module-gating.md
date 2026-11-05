@@ -113,8 +113,9 @@ exact complete draft/source-answer equality,
 high finite confidence (`>= 0.85`), and zero
 risk. These facts supplement the existing support and source-lifecycle checks.
 Recognized requests include “Repeat the recorded answer for Project Amber verbatim”
-and “Amberの記録をそのまま再掲して”; identity aliases are removed by the existing
-scope resolver before whole-request matching. Other phrasing falls back normally.
+and “Amberの記録をそのまま再掲して”; the scope resolver retains a single alias's
+position so only an allowed identity slot can participate in whole-request
+matching. Other phrasing falls back normally.
 
 `literal_replay_v2` binds that request to one live primary source in the whole
 scope before retrieval ranking. The support checker receives a typed quotation

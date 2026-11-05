@@ -95,6 +95,24 @@ unknown project or ambiguous alias clears focus. This is a small phrase resolver
 not general pronoun understanding. The resolved cue is shared by support checking,
 direct retrieval and latent seed relevance. The user question is preserved.
 
+Whole-record quotation uses the existing bounded literal grammar, including
+`Repeat Project Blue Rowan recorded answer verbatim.` and
+`その記録をそのまま再掲して`. Declared multiword aliases are matched as complete
+identities. Bounded English continuations such as `Repeat that recorded answer
+verbatim.` use the grammar's same Unicode and whitespace normalization when
+carrying focus; an added instruction is not removed by that normalization.
+One current, complete primary record in the resolved scope must still receive
+its own exact query/source/policy support approval. The quotation operation asks
+for the recorded text, without certifying its claims as true. Ordinary semantic
+questions retain their existing support policy.
+
+The [reference and assessment followup](benchmarks/record-replay-followup-protocol.md)
+defines a separate development comparison and an additive answer-assessment
+contract. Exact UTF-8 equality, source validity, attribution and handling of
+information sufficiency are reported independently, alongside unchanged legacy
+model grades. The development comparison uses scripted Fake Provider responses;
+its results measure path and contract behavior, not model-judge reliability.
+
 Complete source questions and answers up to 2,048 characters each can be checked.
 Larger or sanitizer-modified records are withheld entirely. Both right-worker
 paths accept an explicit `complete_v1` packet bounded to three entries and 16,000
