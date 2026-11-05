@@ -102,6 +102,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     hippo_rollup_ev = _last_event(events, "hippocampal_collaboration") or {}
     meta_ev = _last_event(events, "metacognition") or {}
     system2_ev = _last_event(events, "system2_mode") or {}
+    system2_execution_ev = _last_event(events, "system2_execution") or {}
     consultation_ev = _last_event(events, "consultation_route")
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
@@ -310,13 +311,24 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         if low_signal_filter is None:
             low_signal_filter = policy_state.get("system2_low_signal_filter")
         system2_payload = {
-            "mode": system2_ev.get("mode"),
-            "enabled": system2_ev.get("enabled"),
-            "reason": system2_ev.get("reason"),
+            "mode": policy_state.get("system2_mode", system2_ev.get("mode")),
+            "enabled": policy_state.get("system2_enabled", system2_ev.get("enabled")),
+            "reason": policy_state.get("system2_reason", system2_ev.get("reason")),
+            "used": system2_execution_ev.get("used", policy_state.get("system2_used")),
+            **{key: system2_execution_ev.get(key) for key in (
+                "critic_attempts", "critic_responses", "attempted_rounds",
+                "review_completed", "external_review_completed", "attempts", "local_recovery")},
             "critic_kind": critic_kind,
             "critic_status": system2_refine_ev.get("critic_status"),
             "verify_critic_status": system2_refine_ev.get("verify_critic_status"),
             "round3_critic_status": system2_refine_ev.get("round3_critic_status"),
+            **{
+                stage + "critic_" + suffix: system2_refine_ev.get(
+                    stage + "critic_" + suffix, policy_state.get(prefix + "critic_" + suffix))
+                for stage, prefix in (("", ""), ("verify_", "system2_verify_"),
+                                      ("round3_", "system2_round3_"))
+                for suffix in ("review_valid", "external_review_valid", "validation")
+            },
             "low_signal_filter": low_signal_filter,
             "rounds": rounds,
             "round_target": round_target,
