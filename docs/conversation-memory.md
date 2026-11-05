@@ -159,6 +159,10 @@ identity-only resolver; factual retrieval, source candidates and approval cache
 keys still use the existing source resolver. Declarations are cleared at the next
 turn, abort or committed-memory reload. They do not restore expired aliases for
 later undeclared turns. Current alias conflicts are rechecked after awaits.
+If a new alias resolves the question to a different scope, the reference remains
+ambiguous; the surviving caller declaration cannot silently change identity.
+Unresolved or conflicting declarations withhold factual candidates and cached approvals for
+that turn without requesting another support decision.
 
 When no approved source is available, a bounded request can carry a
 `missing_evidence_v1` condition through prefrontal context, both brains and final

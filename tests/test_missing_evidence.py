@@ -233,6 +233,56 @@ def test_declared_identity_rechecks_conflicts_lifecycle_and_turn_ownership():
     assert m.reference_resolution(question) is None and m.missing_evidence(question) is None
 
 
+@pytest.mark.parametrize("question,alias", [
+    ("That project retention rate?", "That project"),
+    ("そのプロジェクトのデータ保持期間は？", "そのプロジェクト"),
+])
+@pytest.mark.parametrize("lifecycle", ["expired", "superseded"])
+def test_caller_pronoun_identity_cannot_switch_to_a_new_live_alias(question, alias, lifecycle):
+    m = memory()
+    prepare(m, question, DECLARATION)
+    assert m._reference_state(question)[:3] == ("resolved", "caller_declaration", frozenset({"Cedar"}))
+    m.store(source(scope="Birch", alias=alias))  # A new alias arrives after the turn began.
+    assert m.scope_resolver().query(question).scopes == {"Birch"}
+    assert m.reference_resolution(question) == "ambiguous"
+    condition = m.missing_evidence(question)
+    assert condition.reference == "ambiguous" and condition.action == "clarify_reference"
+    assert condition.source_availability == "unknown" and condition.source_approval == "not_applicable"
+    assert m._turn_metadata[0].retrieval_scope == "Cedar"
+    m.past_qas = [replace(m.past_qas[0], **({"valid_until": 0} if lifecycle == "expired"
+                                           else {"evidence_status": "superseded"}))]
+    assert m._reference_state(question)[:3] == ("resolved", "caller_declaration", frozenset({"Cedar"}))
+    assert not m.retrieve_related(question) and not m.answerability_gate.backend.requests
+
+
+@pytest.mark.parametrize("support", ["unchecked", "cached_approval", "disabled"])
+def test_conflicting_caller_reference_withholds_candidates_and_cached_approval(support):
+    m = SharedMemory(conversation_context=True) if support == "disabled" else memory(approve=True)
+    question = "That project data retention period?"
+    trace = source(scope="Birch", alias="That project", answer="PRIVATE_BIRCH_29_DAYS")
+    gate = m.answerability_gate
+    if support == "cached_approval":
+        m.store(trace)
+        prepare(m, question)  # A prior undeclared turn approved this exact question/source.
+        assert m.retrieve_related_traces(question) == [trace]
+        m.past_qas.clear()
+    m.begin_turn(question, "declared", DECLARATION)
+    m.store(trace)
+    cache = dict(gate.cache) if gate is not None else None
+    requests = len(gate.backend.requests) if gate is not None else 0
+    if support == "cached_approval":
+        assert gate.decision(question, m._answerability_source(trace)) is True
+    assert not m.answerability_candidates(question)
+    assert not m.retrieve_related_traces(question) and not m.retrieve_related(question)
+    prepared = asyncio.run(m.prepare_retrieval(question))
+    if gate is not None:
+        assert prepared["answerability"] == {"status": "empty", "candidates": 0}
+        assert dict(gate.cache) == cache and len(gate.backend.requests) == requests
+    condition = m.missing_evidence(question)
+    assert condition.action == "clarify_reference" and condition.source_availability == "unknown"
+    assert "PRIVATE_" not in PrefrontalCortex.clarification_context(condition)
+
+
 @pytest.mark.parametrize("question", [
     "Project Cedar retention rate? Project Cedar",
     "Project Cedar data retention period and price?",

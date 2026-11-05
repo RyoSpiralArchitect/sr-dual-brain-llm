@@ -298,8 +298,12 @@ class SharedMemory:
             unknown = False
         if unknown:
             return None, "unresolved", frozenset(), resolver, declaration
-        if cue.ambiguous:
-            return "ambiguous", "available_aliases", cue.scopes, resolver, declaration
+        if (cue.ambiguous or declaration is not None and cue.scopes
+                and cue.scopes != {declaration.retrieval_scope}):
+            # A newly available alias can claim the pronoun itself. Recheck the
+            # caller agreement from begin_turn instead of switching its scope.
+            scopes = cue.scopes | {declaration.retrieval_scope} if declaration else cue.scopes
+            return "ambiguous", "available_aliases", scopes, resolver, declaration
         if len(cue.scopes) > 1:
             return "multiple_explicit", "available_aliases", cue.scopes, resolver, declaration
         if len(cue.scopes) == 1:
@@ -312,6 +316,12 @@ class SharedMemory:
     def reference_resolution(self, question):
         """Identity metadata alone never establishes support for a requested fact."""
         return self._reference_state(question)[0] if self.conversation_context else None
+
+    def _unresolved_caller_reference(self, question):
+        """A current caller declaration may veto sources, never approve them."""
+        return bool(self.conversation_context and self._turn_metadata and not self.primary_write_pending
+                    and question in (self._turn_question, self._turn_query)
+                    and self.reference_resolution(question) != "resolved")
 
     def missing_evidence(self, question):
         """A bounded request's missing conditions, without unavailable record text."""
@@ -451,6 +461,8 @@ class SharedMemory:
 
     def answerability_candidates(self, question):
         question = self.retrieval_question(question)
+        if self._unresolved_caller_reference(question):
+            return []
         limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
         resolver = self.scope_resolver()
         query = resolver.query(question)
@@ -666,7 +678,7 @@ class SharedMemory:
 
     def _retrieve_related_traces(self, question: str, n: int = 3) -> List[MemoryTrace]:
 
-        if not self.past_qas or n <= 0:
+        if not self.past_qas or n <= 0 or self._unresolved_caller_reference(question):
             return []
 
         resolver = self.scope_resolver()
