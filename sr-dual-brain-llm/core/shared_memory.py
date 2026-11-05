@@ -28,7 +28,8 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
-from .memory_intent import RecordReplayIntent, literal_record_replay_followup_requested, scoped_record_replay_requested
+from .memory_intent import (RecordReplayIntent, literal_record_replay_requested,
+                            literal_record_replay_followup_requested, scoped_record_replay_requested)
 from .memory_clarification import MissingEvidenceCondition, declared_reference_followup, explicit_memory_request
 
 
@@ -323,6 +324,21 @@ class SharedMemory:
                     and question in (self._turn_question, self._turn_query)
                     and self.reference_resolution(question) != "resolved")
 
+    def _retrieval_scope_cue(self, question):
+        """Apply this turn's declared identity as a filter, never an approval.
+
+        Keep the exact query unchanged. An unqualified caller-scoped request
+        must neither lose its scoped records nor borrow a global legacy source.
+        Rebuild the identity on each lookup so late conflicts still veto recall.
+        """
+        resolver = self.scope_resolver()
+        if (self.conversation_context and self._turn_metadata and not self.primary_write_pending
+                and question in (self._turn_question, self._turn_query)):
+            reference, _, scopes, resolver, _ = self._reference_state(question)
+            cue = replace(resolver.query(question), scopes=scopes, ambiguous=reference != "resolved")
+            return resolver, cue
+        return resolver, resolver.query(question)
+
     def missing_evidence(self, question):
         """A bounded request's missing conditions, without unavailable record text."""
         if (not self.conversation_context or self.primary_write_pending
@@ -389,8 +405,10 @@ class SharedMemory:
                 or self.reference_resolution(question) != 'resolved'):
             return None
         query = self.retrieval_question(question)
-        cue = self.scope_resolver().query(query)
-        if not scoped_record_replay_requested(query, self.scope_resolver()):
+        resolver, cue = self._retrieval_scope_cue(query)
+        declaration = self._reference_state(question)[4]
+        if not (scoped_record_replay_requested(query, resolver)
+                or declaration is not None and literal_record_replay_requested(query)):
             return None
         traces = [t for t in self.past_qas if self._available(t, time.time())
                   and t.retrieval_scope in cue.scopes and not t.recalled_answer]
@@ -464,8 +482,7 @@ class SharedMemory:
         if self._unresolved_caller_reference(question):
             return []
         limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
-        resolver = self.scope_resolver()
-        query = resolver.query(question)
+        resolver, query = self._retrieval_scope_cue(question)
         if self.answerability_gate is not None and self.answerability_scope_expansion and query.scopes and not query.ambiguous:
             # A low relative score is not evidence against a separate requested fact.
             # Widen only within declared compatible scopes, and let the checker decide.
@@ -495,13 +512,14 @@ class SharedMemory:
         # A seed's hash trigger is not sufficient to establish scoped QA relevance.
         eligible = ({id(trace) for trace in self.retrieve_related_traces(question, len(self.past_qas))}
                     if question is not None else None)
+        cue = self._retrieval_scope_cue(self.retrieval_question(question))[1] if question is not None else None
         for seed_id in dict.fromkeys(seed_ids):
             matches = [trace for trace in self.past_qas if trace.seed_id == seed_id]
             if len(matches) != 1:
                 continue
             trace = matches[0]
             if eligible is not None and (self.answerability_gate is not None or trace.retrieval_scope
-                                         or self._scope_resolver.query(question).scopes) and id(trace) not in eligible:
+                                         or cue.scopes or cue.ambiguous) and id(trace) not in eligible:
                 continue
             if (not self._available(trace, now) or not trace.qid
                     or sum(item.qid == trace.qid for item in self.past_qas) != 1):
@@ -681,8 +699,7 @@ class SharedMemory:
         if not self.past_qas or n <= 0 or self._unresolved_caller_reference(question):
             return []
 
-        resolver = self.scope_resolver()
-        query = resolver.query(question)
+        resolver, query = self._retrieval_scope_cue(question)
         q_tokens = _tokenize(query.content)
         q_tags = _derive_tags(query.content)
         total = len(self.past_qas)

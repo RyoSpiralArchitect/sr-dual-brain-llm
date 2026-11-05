@@ -190,6 +190,45 @@ def test_caller_identity_does_not_keep_an_expired_cached_approval_alive():
     assert dict(m.answerability_gate.cache) == cache and len(m.answerability_gate.backend.requests) == 1
 
 
+@pytest.mark.parametrize('checker', [True, False])
+@pytest.mark.parametrize('has_scoped_source', [True, False])
+def test_unqualified_caller_scope_filters_global_and_other_scope_records(checker, has_scoped_source):
+    m = memory(approve=True) if checker else SharedMemory(conversation_context=True)
+    q = 'What is the data-retention period?'
+    m.store(MemoryTrace(q, 'PRIVATE_GLOBAL_VALUE', qid='global', seed_id='global-seed'))
+    m.store(source(qid='other', scope='Birch', alias='Birch', answer='PRIVATE_OTHER_VALUE'))
+    if has_scoped_source:
+        m.store(source(qid='cedar', answer='PRIVATE_CEDAR_VALUE', seed_id='cedar-seed'))
+    # A previous ordinary query can approve the global record. The declaration
+    # must veto that cached source without globally rewriting the query key.
+    prepare(m, q)
+    assert [t.qid for t in m.retrieve_related_traces(q)] == ['global']
+    prepare(m, q, DECLARATION)
+    expected = ['cedar'] if has_scoped_source else []
+    assert m.reference_resolution(q) == 'resolved'
+    assert [t.qid for t in m.answerability_candidates(q)] == expected
+    assert [t.qid for t in m.retrieve_related_traces(q)] == expected
+    assert 'PRIVATE_GLOBAL' not in m.retrieve_related(q) and 'PRIVATE_OTHER' not in m.retrieve_related(q)
+    assert not m.evidence_for_seeds(['global-seed'], question=q)
+    if has_scoped_source:
+        assert m.missing_evidence(q) is None
+        assert m.evidence_for_seeds(['cedar-seed'], question=q)[0]['source_qid'] == 'cedar'
+    else:
+        assert m.missing_evidence(q).action == 'request_current_source'
+
+
+def test_caller_scoped_literal_replay_requires_its_own_complete_approval():
+    m = memory(approve=True)
+    m.store(MemoryTrace('Recorded answer?', 'PRIVATE_GLOBAL_VALUE', qid='global'))
+    m.store(source(qid='cedar', answer='PRIVATE_CEDAR_VALUE'))
+    q = 'Repeat the recorded answer verbatim.'
+    prepare(m, q, DECLARATION)
+    assert [t.qid for t in m.retrieve_related_traces(q)] == ['cedar']
+    assert m.replay_intent(q).source_qid == 'cedar'
+    assert m.answerability_gate.backend.requests[-1]['operation']['kind'] == 'recorded_answer_replay'
+    assert 'PRIVATE_GLOBAL' not in m.retrieve_related(q)
+
+
 @pytest.mark.parametrize("alias", ["Blue Rowan", "Blue Project Rowan", "Data Retention"])
 def test_declared_whole_alias_is_separate_from_parameter_words(alias):
     m = memory()
