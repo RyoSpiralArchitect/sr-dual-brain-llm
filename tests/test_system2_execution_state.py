@@ -262,6 +262,7 @@ async def test_direct_fallback_has_its_own_attempt_and_review_provenance(monkeyp
     assert len(c.callosum.payloads) == len(observed['fallback_calls']) == 1
     assert metrics['critic_attempts'] == metrics['critic_responses'] == 2
     assert metrics['attempted_rounds'] == [1]
+    assert metrics['rounds'] == 1
     assert [a['source'] for a in metrics['attempts']] == ['callosum', 'direct_fallback']
     assert metrics['review_completed'] is metrics['external_review_completed'] is True
     assert_persisted_use(c, observed, True)
@@ -307,11 +308,22 @@ async def test_third_round_preserves_each_review_and_reports_latest_invalid_comp
 
 
 @pytest.mark.asyncio
-async def test_cancellation_records_attempt_and_drains_without_persistence(monkeypatch):
+@pytest.mark.parametrize('cancel_round', [1, 2, 3])
+async def test_cancellation_records_attempt_and_drains_without_persistence(monkeypatch, cancel_round):
+    monkeypatch.setenv('DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN', str(cancel_round))
+    before_cancel = [
+        {**ISSUES, 'issues': ['A stated condition is missing.', 'The boundary assumption is missing.']},
+        {**ISSUES, 'issues': ['A stated condition is missing.']},
+    ]
     c, observed = controller(monkeypatch, [])
     started, drained = asyncio.Event(), asyncio.Event()
 
     async def pending(payload, *, timeout_ms):
+        c.callosum.payloads.append(deepcopy(payload))
+        round_index = payload.get('round', 1)
+        assert round_index <= cancel_round, 'No request may follow the cancelled critic'
+        if round_index < cancel_round:
+            return deepcopy(before_cancel[round_index - 1])
         started.set()
         try:
             await asyncio.Future()
@@ -326,10 +338,19 @@ async def test_cancellation_records_attempt_and_drains_without_persistence(monke
     with pytest.raises(asyncio.CancelledError):
         await task
     metrics = _extract_metrics(c.telemetry.events)['system2']
-    assert drained.is_set() and not c.hippocampus.episodes and not observed['basal']
-    assert metrics['used'] is True and metrics['critic_attempts'] == 1
-    assert metrics['critic_responses'] == 0 and metrics['review_completed'] is False
-    assert metrics['attempts'][0]['outcome'] == 'cancelled'
+    assert drained.is_set() and not c.hippocampus.episodes and not c.memory.past_qas
+    assert not observed['basal'] and not observed['hippocampal'] and not observed['fallback_calls']
+    assert metrics['used'] is True and metrics['critic_attempts'] == cancel_round
+    assert metrics['rounds'] == cancel_round
+    assert metrics['attempted_rounds'] == list(range(1, cancel_round + 1))
+    assert metrics['critic_responses'] == cancel_round - 1
+    assert metrics['review_completed'] is metrics['external_review_completed'] is False
+    assert [a['round'] for a in metrics['attempts']] == list(range(1, cancel_round + 1))
+    assert [a['source'] for a in metrics['attempts']] == ['callosum'] * cancel_round
+    assert [a['outcome'] for a in metrics['attempts']] == ['returned'] * (cancel_round - 1) + ['cancelled']
+    assert metrics['attempts'][-1]['error_type'] == 'CancelledError'
+    assert [p.get('round', 1) for p in c.callosum.payloads] == list(range(1, cancel_round + 1))
+    assert len(c.left_model.integrations) == cancel_round - 1
 
 
 @pytest.mark.asyncio
@@ -347,3 +368,17 @@ def test_old_events_do_not_invent_execution_or_review_availability():
     metrics = _extract_metrics([{'event': 'system2_mode', 'enabled': True, 'mode': 'on'}])['system2']
     assert metrics['enabled'] is True
     assert metrics['used'] is metrics['critic_attempts'] is metrics['review_completed'] is None
+    assert metrics['rounds'] is None
+
+
+@pytest.mark.parametrize('refinement,expected', [(None, 2), ({'rounds': 3}, 3)])
+def test_old_events_keep_legacy_round_projection_without_execution(refinement, expected):
+    events = [
+        {'event': 'system2_mode', 'enabled': True, 'mode': 'on'},
+        {'event': 'policy_decision', 'state': {'system2_rounds': 2}},
+    ]
+    if refinement is not None:
+        events.append({'event': 'system2_refinement', **refinement})
+    metrics = _extract_metrics(events)['system2']
+    assert metrics['rounds'] == expected
+    assert metrics['attempted_rounds'] is metrics['used'] is None

@@ -282,9 +282,11 @@ Routing admission does not establish that a critic ran. The separate
 
 Initial, verification and third-round validation metadata also flow through the
 refinement event and metrics. Existing `rounds` retains its established attempted
-round semantics, including a timed-out first round; use the explicit completion
-fields to inspect review availability. Old events without execution metadata keep
-unknown execution/completion values. Hippocampal storage, consolidation and Basal
+round semantics, including timeout and cancellation. Metrics derive it from distinct
+`attempted_rounds` when execution metadata is present; same-round fallback requests
+count once. Events without execution metadata retain the previous refinement/policy
+round projection and unknown execution/completion values. Use the explicit completion
+fields to inspect review availability. Hippocampal storage, consolidation and Basal
 Ganglia feedback now derive `system2_used` from observed critic invocation rather
 than admission. The deterministic full-process regressions are in
 `tests/test_system2_execution_state.py`.

@@ -248,9 +248,18 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         critic_kind = system2_refine_ev.get("critic_kind")
         if critic_kind is None:
             critic_kind = policy_state.get("critic_kind")
-        rounds = system2_refine_ev.get("rounds")
-        if rounds is None:
-            rounds = policy_state.get("system2_rounds")
+        if system2_execution_ev:
+            # Cancellation may prevent refinement from publishing its final
+            # round count. Fallback requests share a round and must not inflate it.
+            attempted_rounds = system2_execution_ev.get("attempted_rounds")
+            rounds = (len(set(attempted_rounds))
+                      if isinstance(attempted_rounds, list)
+                      and all(type(item) is int and item > 0 for item in attempted_rounds)
+                      else None)
+        else:
+            rounds = system2_refine_ev.get("rounds")
+            if rounds is None:
+                rounds = policy_state.get("system2_rounds")
         round_target = system2_refine_ev.get("round_target")
         if round_target is None:
             round_target = policy_state.get("system2_round_target")
