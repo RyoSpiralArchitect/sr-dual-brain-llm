@@ -868,7 +868,8 @@ def _outbox_for_store(store):
     path = os.environ.get("DUALBRAIN_MEMORY_OUTBOX_PATH")
     if not path:
         path = Path.home() / ".local" / "state" / "sr-dual-brain" / "memory-outbox.sqlite3"
-    return MemoryOutbox(path, store.memory_namespace)
+    return MemoryOutbox(path, store.memory_namespace,
+                        legacy_namespaces=getattr(store, "memory_legacy_namespaces", ()))
 
 
 async def _load_session_memory(store, session_id, memory, *, episode_limit=None):

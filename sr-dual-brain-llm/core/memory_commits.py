@@ -63,8 +63,10 @@ class MemoryOutbox:
     SQLite is only an outbox; PostgreSQL receipts decide whether memory committed.
     """
 
-    def __init__(self, path, namespace):
+    def __init__(self, path, namespace, *, legacy_namespaces=()):
         self.path, self.namespace = Path(path), namespace
+        self.legacy_namespaces = ()
+        self.add_legacy_guards(legacy_namespaces)
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
         os.close(fd)
@@ -83,6 +85,26 @@ class MemoryOutbox:
         db.execute("PRAGMA synchronous=FULL")
         return db
 
+    def add_legacy_guards(self, namespaces):
+        """Keep every known legacy constraint when binding this outbox to a store."""
+        self.legacy_namespaces = tuple(dict.fromkeys((
+            *self.legacy_namespaces, *(item for item in namespaces if item != self.namespace))))
+
+    def _check_legacy_target(self, db, session_id):
+        if not self.legacy_namespaces:
+            return
+        # Reads share one snapshot; writes begin their transaction before this
+        # check. Both pending operations and saved acknowledged responses count.
+        if not db.in_transaction:
+            db.execute("BEGIN")
+        for namespace in self.legacy_namespaces:
+            if db.execute("SELECT 1 FROM memory_outbox WHERE namespace=? AND session_id=? LIMIT 1",
+                          (namespace, session_id)).fetchone() is not None:
+                raise MemoryCommitConflict(
+                    "Legacy outbox target is ambiguous for this session; retain the original outbox "
+                    "and verify its database/schema before recovery. Automatic migration is disabled."
+                )
+
     @staticmethod
     def _decode(row):
         if row is None:
@@ -97,12 +119,14 @@ class MemoryOutbox:
     def get(self, session_id, operation_id):
         validate_operation_id(operation_id)
         with closing(self._connect()) as db:
+            self._check_legacy_target(db, session_id)
             row = db.execute("SELECT * FROM memory_outbox WHERE namespace=? AND session_id=? AND operation_id=?",
                              (self.namespace, session_id, operation_id)).fetchone()
         return self._decode(row)
 
     def entries(self, session_id, *, pending_only=False):
         with closing(self._connect()) as db:
+            self._check_legacy_target(db, session_id)
             rows = db.execute("SELECT * FROM memory_outbox WHERE namespace=? AND session_id=? "
                               + ("AND receipt IS NULL " if pending_only else "") + "ORDER BY sequence",
                               (self.namespace, session_id)).fetchall()
@@ -113,30 +137,43 @@ class MemoryOutbox:
         decode_payload(payload)
         encoded, request_json = canonical_json(payload), canonical_json(request)
         with closing(self._connect()) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            self._check_legacy_target(db, session_id)
             db.execute("INSERT OR IGNORE INTO memory_outbox "
                        "(namespace, session_id, operation_id, request, payload, result, payload_sha256) "
                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
                        (self.namespace, session_id, operation_id, request_json, encoded,
                         canonical_json(result), payload_fingerprint(payload)))
-            row = db.execute("SELECT request, payload FROM memory_outbox "
+            row = db.execute("SELECT * FROM memory_outbox "
                              "WHERE namespace=? AND session_id=? AND operation_id=?",
                              (self.namespace, session_id, operation_id)).fetchone()
             if row["request"] != request_json or row["payload"] != encoded:
                 raise MemoryCommitConflict("Operation ID already has a different request or memory payload")
-        return self.get(session_id, operation_id)
+            return self._decode(row)
 
     def acknowledge(self, session_id, operation_id, receipt):
-        entry = self.get(session_id, operation_id)
-        if (entry is None or receipt.get("operation_id") != operation_id
-                or receipt.get("payload_sha256") != entry["payload_sha256"] or receipt.get("state") != "committed"
-                or (entry["receipt"] is not None and entry["receipt"] != receipt)):
-            raise MemoryCommitConflict("Memory receipt does not match the prepared operation")
+        validate_operation_id(operation_id)
         with closing(self._connect()) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            self._check_legacy_target(db, session_id)
+            entry = self._decode(db.execute(
+                "SELECT * FROM memory_outbox WHERE namespace=? AND session_id=? AND operation_id=?",
+                (self.namespace, session_id, operation_id)).fetchone())
+            if (entry is None or receipt.get("operation_id") != operation_id
+                    or receipt.get("payload_sha256") != entry["payload_sha256"] or receipt.get("state") != "committed"
+                    or (entry["receipt"] is not None and entry["receipt"] != receipt)):
+                raise MemoryCommitConflict("Memory receipt does not match the prepared operation")
             db.execute("UPDATE memory_outbox SET receipt=? WHERE namespace=? AND session_id=? AND operation_id=?",
                        (canonical_json(receipt), self.namespace, session_id, operation_id))
 
 
 async def reconcile_memory(outbox, store, session_id, *, operation_id=None):
+    if outbox.namespace != store.memory_namespace:
+        raise MemoryCommitConflict("Outbox target does not match the configured memory store")
+    # Direct callers may have used the original two-argument constructor. The
+    # store's upgrade guard still applies before any lookup or backend call,
+    # and remains attached for subsequent reads/writes through this object.
+    outbox.add_legacy_guards(getattr(store, "memory_legacy_namespaces", ()))
     entries = ([outbox.get(session_id, operation_id)] if operation_id is not None
                else outbox.entries(session_id, pending_only=True))
     receipts = []
