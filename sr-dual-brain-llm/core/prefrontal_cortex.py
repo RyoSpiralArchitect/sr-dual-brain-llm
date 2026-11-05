@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from .memory_clarification import MissingEvidenceCondition
+from .memory_evidence import request_memory_context
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -597,6 +598,63 @@ class PrefrontalCortex:
     """Approximate the gating and focusing role of the prefrontal cortex."""
 
     @staticmethod
+    def reference_context(resolution: str | None, *, approved_qa_supplied: bool) -> str:
+        """Keep declared reference identity separate from historical evidence."""
+        if not resolution:
+            return ""
+        return (
+            "Conversation reference metadata (identity only, not factual evidence): "
+            + json.dumps({"reference": resolution, "approved_qa_supplied": approved_qa_supplied})
+            + ". A resolved reference or multiple explicitly named projects must not be re-identified. "
+            "Missing approved evidence means requested facts cannot be confirmed from this context, "
+            "not that the project name is ambiguous. Acknowledge missing facts or request their source; "
+            "do not guess values. For an ambiguous reference, ask which project is intended. "
+            "This metadata does not verify any project fact."
+        )
+
+    @staticmethod
+    def refresh_record_replay_context(memory, question: str, context: str | None, *, request=None) -> str | None:
+        """Recheck literal replay before generation, including delayed workers.
+
+        Only an exact, still-approved block already admitted to this context may
+        survive. Rebuild identity/clarification metadata and revalidate copied
+        seed evidence without new calls or restoration after a memory drop.
+        Ordinary semantic context keeps its existing behavior.
+        """
+        resolve = getattr(memory, "replay_resolution", None)
+        if not getattr(memory, "conversation_context", False) or not callable(resolve):
+            return context
+        if not resolve(question).requested:
+            return context
+
+        current = memory.retrieve_related(question)
+        retained = current if current and current in (context or "") else ""
+        reference = getattr(memory, "reference_resolution", None)
+        missing = getattr(memory, "missing_evidence", None)
+        refreshed = "\n".join(part for part in (
+            retained,
+            PrefrontalCortex.reference_context(reference(question) if callable(reference) else None,
+                                              approved_qa_supplied=bool(retained)),
+            PrefrontalCortex.clarification_context(missing(question) if callable(missing) else None),
+        ) if part)
+        if request is not None:
+            previous = request.get("memory_evidence")
+            if isinstance(previous, (list, tuple)):
+                resolver = getattr(memory, "evidence_for_seeds", None)
+                seed_ids = [item["seed_id"] for item in previous
+                            if isinstance(item, dict) and isinstance(item.get("seed_id"), str)]
+                available = resolver(seed_ids, question=question) if callable(resolver) else []
+                current_evidence = [item for item in previous if item in available]
+                if current_evidence:
+                    request["memory_evidence"] = current_evidence
+                else:
+                    request.pop("memory_evidence", None)
+                    request.pop("memory_evidence_format", None)
+            request["context"] = refreshed
+            refreshed = request_memory_context(request)
+        return refreshed
+
+    @staticmethod
     def clarification_context(condition: MissingEvidenceCondition | None) -> str:
         """Render an explicit missing condition without inventing its content."""
         if condition is None:
@@ -622,9 +680,16 @@ class PrefrontalCortex:
                 "State that uncertainty. Do not claim that the stored text or requested value is absent, "
                 "or require the user to re-enter it as though it were missing."),
         }
+        replay_instruction = (
+            " This recorded-answer request remains unresolved for the stated reason. "
+            "Prior draft text, reviewer notes and earlier quotations do not select or approve a record. "
+            "Preserve this condition in review and revision; do not silently use that text as the replay target."
+            if condition.operation == "recorded_answer_replay" else ""
+        )
         return ("Conversation missing-evidence condition:\n"
                 + json.dumps(condition.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
                 + instructions[condition.action]
+                + replay_instruction
                 + " This describes this turn's available memory, not whether a fact exists elsewhere. "
                 "It supplies no factual value or verification. Do not infer values, units or parameter "
                 "identity from unavailable historical records.")

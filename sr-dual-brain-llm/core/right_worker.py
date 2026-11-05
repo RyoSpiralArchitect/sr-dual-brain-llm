@@ -1,10 +1,16 @@
 """Shared right-worker pump with per-consultation lifetime management."""
 from .callosum import CallosumClosed, RequestAbandoned
 from .memory_evidence import request_memory_context
+from .prefrontal_cortex import PrefrontalCortex
 
 
 async def _respond(req, memory, model):
-    context = request_memory_context(req)
+    # Callosum can hold a copied packet across admission/queue waits. Recheck
+    # literal source selection at the consumer, immediately before generation.
+    req = dict(req)
+    context = PrefrontalCortex.refresh_record_replay_context(
+        memory, req.get("question", ""), request_memory_context(req), request=req,
+    )
     if context is not None:
         req = {**req, "context": context}
     qid, kind = req["qid"], req.get("type")
