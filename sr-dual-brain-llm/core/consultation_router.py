@@ -6,29 +6,9 @@ from decimal import Decimal
 import math
 import re
 import unicodedata
+from .memory_intent import literal_record_replay_requested
 
-VERSION = "conversation_lookup_v1"
-
-
-def literal_record_replay_requested(reference_content: str) -> bool:
-    """Positive request shapes after the existing resolver removes known aliases.
-
-    This recognizes a whole-record repeat, not arbitrary fact lookup or semantic
-    completeness. Extra clauses, transformations and requested outputs fail shut.
-    """
-    text = unicodedata.normalize('NFKC', reference_content).casefold().strip()
-    text = re.sub(r'\s+', ' ', text).strip(' .。!?？')
-    text = re.sub(r'\b(?:for|of)\s*(?=verbatim\b|exactly\b|$)', '', text).strip()
-    if re.fullmatch(r'(?:please )?(?:repeat|reproduce|quote) (?:the )?(?:recorded|stored) '
-                    r'(?:answer|text|record) (?:verbatim|exactly)', text):
-        return True
-    text = re.sub(r'^の\s*', '', text)
-    return text in {
-        '記録をそのまま再掲して', '記録をそのまま再掲してください',
-        '記録された回答をそのまま再掲して', '記録された回答をそのまま再掲してください',
-        '保存済みの回答をそのまま再掲して', '記録文をそのまま引用して',
-        '記録された回答を一字一句繰り返して',
-    }
+VERSION = "conversation_lookup_v2"
 
 
 _REASONING = re.compile(
@@ -70,7 +50,7 @@ class ConsultationRoute:
 
 
 def route_conversation_lookup(*, question, draft, confidence, risk, q_type,
-                              reference, approved_records):
+                              reference, approved_records, replay_intent=False):
     """A skip is a routing estimate, not proof that a draft is correct.
 
     Require a single currently approved record and a resolved reference. Missing
@@ -93,6 +73,8 @@ def route_conversation_lookup(*, question, draft, confidence, risk, q_type,
     if not draft.strip() or len(q) > 180 or "\n" in q or not _LOOKUP.search(q):
         return ConsultationRoute("defer", "not_bounded_lookup")
     source = approved_records[0]
+    if replay_intent is True and draft == source.answer:
+        return ConsultationRoute("skip", "supported_literal_replay")
     try:
         source_numbers, draft_values = _numbers(source.answer), _numbers(draft)
         # Declared identity/version digits are not requested factual coverage.

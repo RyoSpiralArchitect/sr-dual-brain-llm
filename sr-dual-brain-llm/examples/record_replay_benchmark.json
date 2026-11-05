@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_record_replay_support_factor",
+  "clock": 1793836800.0,
+  "support_repeats": 3,
+  "cases": [
+    {
+      "id": "explicit_quote",
+      "question": "Repeat Project Juniper recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Juniper port?",
+          "answer": "The recorded port is 7559.",
+          "qid": "juniper",
+          "retrieval_scope": "juniper",
+          "scope_aliases": [
+            "Juniper"
+          ],
+          "timestamp": 1793836800.0
+        }
+      ],
+      "focus": null,
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "reference": "The exact current recorded answer is The recorded port is 7559.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      }
+    },
+    {
+      "id": "corrected_followup",
+      "question": "その記録をそのまま再掲して",
+      "records": [
+        {
+          "question": "Project Alder retention?",
+          "answer": "Retention is 15 days.",
+          "qid": "alder-old",
+          "retrieval_scope": "alder",
+          "scope_aliases": [
+            "Alder"
+          ],
+          "timestamp": 1793836800.0,
+          "evidence_status": "unverified"
+        }
+      ],
+      "focus": "Project Alder retention?",
+      "expected_source_qids": [
+        "alder-current"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "reference": "The focus is Alder. Both setup and probe must use the explicit correction. The exact current recorded answer is Retention is 4 days.; the prior 15-day source is superseded.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      },
+      "correction": {
+        "question": "Project Alder retention?",
+        "answer": "Retention is 4 days.",
+        "qid": "alder-current",
+        "id": "alder",
+        "aliases": [
+          "Alder"
+        ],
+        "supersedes": [
+          "alder-old"
+        ]
+      }
+    },
+    {
+      "id": "scope_switch",
+      "question": "Repeat Project Cypress recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Juniper port?",
+          "answer": "The recorded port is 7559.",
+          "qid": "juniper",
+          "retrieval_scope": "juniper",
+          "scope_aliases": [
+            "Juniper"
+          ],
+          "timestamp": 1793836800.0
+        },
+        {
+          "question": "Project Cypress port?",
+          "answer": "The recorded port is 8167.",
+          "qid": "cypress",
+          "retrieval_scope": "cypress",
+          "scope_aliases": [
+            "Cypress"
+          ],
+          "timestamp": 1793836800.0
+        }
+      ],
+      "focus": null,
+      "expected_source_qids": [
+        "cypress"
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "execute": true,
+      "reference": "The exact current recorded answer is The recorded port is 8167.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      }
+    },
+    {
+      "id": "expired",
+      "question": "Project Birch retention?",
+      "records": [
+        {
+          "question": "Project Birch retention?",
+          "answer": "Retention is 22 days.",
+          "qid": "birch-old",
+          "retrieval_scope": "birch",
+          "scope_aliases": [
+            "Birch"
+          ],
+          "timestamp": 1793836800.0,
+          "valid_until": 1793836799.0
+        },
+        {
+          "question": "Project Birch owner?",
+          "answer": "The recorded owner is Ren.",
+          "qid": "birch-owner",
+          "retrieval_scope": "birch",
+          "scope_aliases": [
+            "Birch"
+          ],
+          "timestamp": 1793836800.0
+        }
+      ],
+      "focus": null,
+      "expected_source_qids": [],
+      "requested_operation": "fact_lookup",
+      "execute": true,
+      "reference": "Birch is resolved, but no current approved retention record is available. Ask for a current retention source; do not guess a value.",
+      "criteria": {
+        "task": "Acknowledge unavailable current retention and request a current retention source.",
+        "grounding": "Do not invent a retention value or deny an explicitly supplied observation.",
+        "clarification": "Ask for the current retention source, not Birch identity or unrelated information."
+      }
+    },
+    {
+      "id": "extra_clause",
+      "question": "Repeat Project Juniper recorded answer verbatim and verify the port is open.",
+      "records": [
+        {
+          "question": "Project Juniper port?",
+          "answer": "The recorded port is 7559.",
+          "qid": "juniper",
+          "retrieval_scope": "juniper",
+          "scope_aliases": [
+            "Juniper"
+          ],
+          "timestamp": 1793836800.0
+        }
+      ],
+      "focus": null,
+      "expected_source_qids": [
+        "juniper"
+      ],
+      "requested_operation": "fact_lookup",
+      "execute": false,
+      "reference": "The requested recorded answer is exactly: The recorded port is 7559.",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      }
+    },
+    {
+      "id": "incomplete",
+      "question": "Repeat Project Juniper recorded answer verbatim.",
+      "records": [
+        {
+          "question": "Project Juniper port?",
+          "answer": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "qid": "juniper",
+          "retrieval_scope": "juniper",
+          "scope_aliases": [
+            "Juniper"
+          ],
+          "timestamp": 1793836800.0
+        }
+      ],
+      "focus": null,
+      "expected_source_qids": [],
+      "requested_operation": "recorded_answer_replay",
+      "execute": false,
+      "reference": "The exact current recorded answer is xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "criteria": {
+        "task": "Return exactly the complete approved recorded answer; no Q:/A: labels or added caveat.",
+        "grounding": "Keep the recorded text faithful without claiming independently verified truth.",
+        "clarification": "No clarification when the single complete current record is supplied."
+      }
+    }
+  ]
+}
