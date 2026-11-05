@@ -336,9 +336,12 @@ class SharedMemory:
             if callable(decide):
                 query = self.retrieval_question(question)
                 intent = self.replay_intent(question)
+                # A capped or eligibility-filtered subset cannot establish a
+                # denial for every resident current source. Omitted/ineligible
+                # records retain an unknown exact decision without new calls.
                 decisions = [decide(query, self._answerability_source(t),
                                     **({"intent": intent} if intent is not None else {}))
-                             for t in self.answerability_candidates(question)]
+                             for t in current]
                 if decisions and all(value is False for value in decisions):
                     approval = "denied"
         if reference != "resolved":

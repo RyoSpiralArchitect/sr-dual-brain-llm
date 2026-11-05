@@ -174,6 +174,10 @@ the absence of a fact outside that view.
 The exact cached source decision distinguishes approval, explicit denial and
 unknown. A failed/unprepared checker, changed backend identity or ineligible
 record remains unknown, so it cannot be reported as a confirmed missing value.
+An aggregate denial requires exact negative decisions for every resident current
+primary record in the resolved scope. Unknown records outside the support
+candidate cap, or filtered out as ineligible, keep the aggregate unknown even
+when all checked records were denied.
 `allows(...)` remains true only for an exact positive approval. No new support
 request is made to construct a clarification condition.
 

@@ -94,9 +94,11 @@ def test_inactive_sources_never_supply_identity_parameter_units_or_values(lifecy
     assert "PRIVATE_HISTORY" not in rendered and "17" not in rendered and "days" not in rendered
 
 
-def test_current_unapproved_record_and_empty_memory_have_distinct_availability():
+@pytest.mark.parametrize("record_count", [1, 6])
+def test_current_unapproved_record_and_empty_memory_have_distinct_availability(record_count):
     m = memory()
-    m.store(source())
+    for index in range(record_count):
+        m.store(source(qid=f"source-{index}"))
     question = "Project Cedar data retention period?"
     prepare(m, question)
     condition = m.missing_evidence(question)
@@ -105,6 +107,33 @@ def test_current_unapproved_record_and_empty_memory_have_distinct_availability()
     assert condition.source_approval == "denied"
     assert len(m.answerability_gate.backend.requests) == 1
     assert "PRIVATE_CURRENT" not in PrefrontalCortex.clarification_context(condition)
+
+
+@pytest.mark.parametrize("unprepared", ["incomplete", "candidate_cap"])
+def test_unchecked_current_records_prevent_aggregate_denial(unprepared):
+    m = memory()
+    if unprepared == "incomplete":
+        m.store(source(qid="incomplete", answer="PRIVATE_CURRENT\n[telemetry (raw)] omitted content"))
+        m.store(source(qid="checked"))
+        expected_checked = 1
+    else:
+        for index in range(m.answerability_gate.candidate_limit + 1):
+            m.store(source(qid=f"source-{index}"))
+        expected_checked = m.answerability_gate.candidate_limit
+    question = "Project Cedar data retention period?"
+    prepared = prepare(m, question)
+    assert prepared["answerability"]["checked_candidates"] == expected_checked
+    assert prepared["answerability"]["approved"] == 0
+    gate = m.answerability_gate
+    decisions = [gate.decision(question, m._answerability_source(trace)) for trace in m.past_qas]
+    assert decisions.count(False) == expected_checked and decisions.count(None) == 1
+    cache = dict(gate.cache)
+    condition = m.missing_evidence(question)
+    assert condition.source_availability == "current_unapproved"
+    assert condition.source_approval == "unknown" and condition.action == "preserve_unknown"
+    assert not m.retrieve_related(question)
+    assert dict(gate.cache) == cache and len(gate.backend.requests) == 1
+    assert "PRIVATE_" not in PrefrontalCortex.clarification_context(condition)
 
 
 @pytest.mark.parametrize("failure", ["not_prepared", "provider_error", "changed_identity", "incomplete_source"])
