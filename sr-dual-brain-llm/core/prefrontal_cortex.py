@@ -22,9 +22,12 @@ from __future__ import annotations
 
 import time
 import re
+import json
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+
+from .memory_clarification import MissingEvidenceCondition
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -592,6 +595,39 @@ class WorkingMemoryTrace:
 
 class PrefrontalCortex:
     """Approximate the gating and focusing role of the prefrontal cortex."""
+
+    @staticmethod
+    def clarification_context(condition: MissingEvidenceCondition | None) -> str:
+        """Render an explicit missing condition without inventing its content."""
+        if condition is None:
+            return ""
+        instructions = {
+            "request_current_source": (
+                "The project and requested parameter are explicit. Ask for a current source for that parameter. "
+                "Do not re-identify the project or ask which measure an explicit parameter means."),
+            "clarify_parameter": (
+                "The project is resolved, but retention alone does not identify a measure. "
+                "Ask which measure is meant, such as a data-retention period or a retention rate."),
+            "clarify_reference": (
+                "The intended project/reference is unresolved or ambiguous. Ask the user to identify it "
+                "or supply its current source; do not select one by recency."),
+            "clarify_record": (
+                "The project is resolved but several current records exist in that scope. "
+                "Ask which complete record is intended; do not select by recency or quote a partial record."),
+            "request_current_record": (
+                "The request is to replay complete stored wording. Ask for a current complete record/source; "
+                "do not reconstruct missing wording or substitute a semantic answer."),
+            "preserve_unknown": (
+                "Current records exist, but support for this request could not be established. "
+                "State that uncertainty. Do not claim that the stored text or requested value is absent, "
+                "or require the user to re-enter it as though it were missing."),
+        }
+        return ("Conversation missing-evidence condition:\n"
+                + json.dumps(condition.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
+                + instructions[condition.action]
+                + " This describes this turn's available memory, not whether a fact exists elsewhere. "
+                "It supplies no factual value or verification. Do not infer values, units or parameter "
+                "identity from unavailable historical records.")
 
     def __init__(
         self,

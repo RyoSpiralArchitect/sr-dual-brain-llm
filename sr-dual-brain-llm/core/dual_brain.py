@@ -1202,8 +1202,22 @@ class DualBrainController:
                 "This metadata does not verify any project fact."
             )
 
+        missing = getattr(self.memory, "missing_evidence", None)
+        if guarded_memory and not mem_ctx and callable(missing):
+            clarification = PrefrontalCortex.clarification_context(missing(question))
+            if clarification:
+                rebuilt.append(clarification)
+
         context = "\n".join(rebuilt)
         return context, focus
+
+    def _integration_with_missing_evidence(self, question: str, info: str) -> str:
+        """Keep the same explicit missing condition through final revision."""
+        missing = getattr(self.memory, "missing_evidence", None)
+        if not getattr(self.memory, "conversation_context", False) or not callable(missing):
+            return info
+        clarification = PrefrontalCortex.clarification_context(missing(question))
+        return info + "\n\n" + clarification if clarification else info
 
     @staticmethod
     def _infer_question_type(
@@ -3718,7 +3732,7 @@ class DualBrainController:
             final_answer = await self.left_model.integrate_info_async(
                 question=question,
                 draft=final_answer,
-                info="\n\n".join(integration_parts),
+                info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
                 temperature=max(0.2, min(0.6, decision.temperature)),
                 on_delta=None if stream_final_only else delta_cb,
             )
@@ -4078,7 +4092,7 @@ class DualBrainController:
                 final_answer = await self.left_model.integrate_info_async(
                     question=question,
                     draft=final_answer,
-                    info=followup_info,
+                    info=self._integration_with_missing_evidence(question, followup_info),
                     temperature=followup_temperature,
                     on_delta=None if stream_final_only else delta_cb,
                 )
@@ -4559,10 +4573,8 @@ class DualBrainController:
                     revised = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
-                        info=self.cerebellum.build_internal_notes(
-                            micro_result,
-                            forecast=cerebellar_forecast,
-                        ),
+                        info=self._integration_with_missing_evidence(question,
+                            self.cerebellum.build_internal_notes(micro_result, forecast=cerebellar_forecast)),
                         temperature=max(
                             0.15, min(0.35, float(decision.temperature))
                         ),
@@ -6121,7 +6133,7 @@ class DualBrainController:
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
-                            info="\n\n".join(integration_parts),
+                            info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
                             temperature=integration_temperature,
                             on_delta=None if stream_final_only else delta_cb,
                         )
@@ -6267,7 +6279,7 @@ class DualBrainController:
                             final_answer = await self.left_model.integrate_info_async(
                                 question=question,
                                 draft=draft,
-                                info=(
+                                info=self._integration_with_missing_evidence(question,
                                     "Reasoning critic notes (internal; do not output directly). "
                                     "Revise the draft to address issues and improve correctness. "
                                     "Apply minimal precise edits and avoid introducing new assumptions:\n"

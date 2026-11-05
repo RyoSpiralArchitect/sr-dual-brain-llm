@@ -29,6 +29,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
 from .memory_intent import RecordReplayIntent, literal_record_replay_followup_requested, scoped_record_replay_requested
+from .memory_clarification import MissingEvidenceCondition, declared_reference_followup, explicit_memory_request
 
 
 _WORD_RE = re.compile(r"[A-Za-z0-9_]+|[\u3040-\u30ff\u4e00-\u9fff]+", re.UNICODE)
@@ -247,6 +248,8 @@ class SharedMemory:
         # A known project plus an explicit unknown project must not leave a
         # deceptively unique focus for the next pronoun-only turn.
         unknown_project = resolver.mentions_unknown_project(question)
+        if declaration and not metadata.get("remember", False) and declared_reference_followup(question):
+            unknown_project = False
         if unknown_project:
             focus = None
         elif not cue.ambiguous and len(cue.scopes) == 1:
@@ -278,21 +281,80 @@ class SharedMemory:
     def retrieval_question(self, question):
         return self._turn_query if self.conversation_context and question == self._turn_question else question
 
+    def _reference_state(self, question):
+        """Keep this turn's declaration out of factual retrieval and approvals."""
+        resolver = self.scope_resolver()
+        declaration = (self._turn_metadata[0] if self._turn_metadata and not self.primary_write_pending
+                       and question in (self._turn_question, self._turn_query) else None)
+        if declaration is not None:
+            # Rebuild from live aliases on every lookup, including after awaits.
+            # The declaration contributes identity only, never a candidate QA.
+            resolver = MemoryScopeResolver([
+                *[t for t in self.past_qas if self._available(t, time.time())], declaration])
+        query = self.retrieval_question(question)
+        cue = resolver.query(query)
+        unknown = resolver.mentions_unknown_project(query)
+        if declaration and declared_reference_followup(question):
+            unknown = False
+        if unknown:
+            return None, "unresolved", frozenset(), resolver, declaration
+        if cue.ambiguous:
+            return "ambiguous", "available_aliases", cue.scopes, resolver, declaration
+        if len(cue.scopes) > 1:
+            return "multiple_explicit", "available_aliases", cue.scopes, resolver, declaration
+        if len(cue.scopes) == 1:
+            return ("resolved", "caller_declaration" if declaration else "available_aliases",
+                    cue.scopes, resolver, declaration)
+        if declaration is not None:
+            return "resolved", "caller_declaration", frozenset({declaration.retrieval_scope}), resolver, declaration
+        return None, "unresolved", frozenset(), resolver, declaration
+
     def reference_resolution(self, question):
         """Identity metadata alone never establishes support for a requested fact."""
-        if not self.conversation_context:
+        return self._reference_state(question)[0] if self.conversation_context else None
+
+    def missing_evidence(self, question):
+        """A bounded request's missing conditions, without unavailable record text."""
+        if (not self.conversation_context or self.primary_write_pending
+                or question not in (self._turn_question, self._turn_query)
+                or self.retrieve_related_traces(question)):
             return None
-        resolver = self.scope_resolver()
-        if resolver.mentions_unknown_project(question):
+        reference, basis, scopes, resolver, declaration = self._reference_state(question)
+        request = explicit_memory_request(self.retrieval_question(question), resolver,
+                                          caller_declared=declaration is not None)
+        # Multiple explicitly named projects remain explicit, not ambiguous.
+        # Unsupported shapes (including extra clauses) get no targeted advice.
+        if request is None or reference == "multiple_explicit":
             return None
-        cue = resolver.query(self.retrieval_question(question))
-        if cue.ambiguous:
-            return "ambiguous"
-        if len(cue.scopes) > 1:
-            return "multiple_explicit"
-        if len(cue.scopes) == 1:
-            return "resolved"
-        return None
+        current = [t for t in self.past_qas if self._available(t, time.time())
+                   and not t.recalled_answer and t.retrieval_scope in scopes]
+        availability = ("current_unapproved" if current else "none_current") if reference == "resolved" else "unknown"
+        approval = "not_applicable"
+        if current and reference == "resolved":
+            approval = "unknown"
+            decide = getattr(self.answerability_gate, "decision", None)
+            if callable(decide):
+                query = self.retrieval_question(question)
+                intent = self.replay_intent(question)
+                decisions = [decide(query, self._answerability_source(t),
+                                    **({"intent": intent} if intent is not None else {}))
+                             for t in self.answerability_candidates(question)]
+                if decisions and all(value is False for value in decisions):
+                    approval = "denied"
+        if reference != "resolved":
+            action = "clarify_reference"
+        elif request.operation == "recorded_answer_replay" and len(current) > 1:
+            action = "clarify_record"
+        elif request.parameter_status == "underspecified":
+            action = "clarify_parameter"
+        elif approval == "unknown":
+            action = "preserve_unknown"
+        elif request.operation == "recorded_answer_replay":
+            action = "request_current_record"
+        else:
+            action = "request_current_source"
+        return MissingEvidenceCondition(reference or "unresolved", basis, request.operation,
+                                        request.parameter, request.parameter_status, availability, approval, action)
 
     def restore_committed_traces(self, traces):
         """Refresh durable memory without discarding this process's conversation focus."""

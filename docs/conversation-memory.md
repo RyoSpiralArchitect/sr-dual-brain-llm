@@ -150,3 +150,66 @@ otherwise supported values and conditions. Evidence status and support approvals
 are unchanged; unsupported values and contradictions must still be challenged.
 See the [persistent final-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
 for measured development failures, repairs, and the frozen evaluation results.
+
+## Explicit missing-evidence conditions
+
+A validated `memory_context` declaration also supplies identity for its own turn
+when `remember` is false and there is no current record. It is kept in an
+identity-only resolver; factual retrieval, source candidates and approval cache
+keys still use the existing source resolver. Declarations are cleared at the next
+turn, abort or committed-memory reload. They do not restore expired aliases for
+later undeclared turns. Current alias conflicts are rechecked after awaits.
+
+When no approved source is available, a bounded request can carry a
+`missing_evidence_v1` condition through prefrontal context, both brains and final
+integration. The packet contains enum values only: reference state and basis,
+operation, explicit parameter (if any), parameter status, source availability/approval and
+the requested clarification action. It contains no project/source IDs, historical
+questions, answers, units or values. `none_current` describes the resident source
+view for a resolved scope; `current_unapproved` means resident current sources
+exist but none is approved for this exact request; `unknown` is retained when the
+reference cannot be resolved. None of these states establishes factual truth or
+the absence of a fact outside that view.
+
+The exact cached source decision distinguishes approval, explicit denial and
+unknown. A failed/unprepared checker, changed backend identity or ineligible
+record remains unknown, so it cannot be reported as a confirmed missing value.
+`allows(...)` remains true only for an exact positive approval. No new support
+request is made to construct a clarification condition.
+
+| Explicit request and available identity | Clarification action |
+| --- | --- |
+| Resolved project and explicit parameter, no current source or explicit denial | Request a current source for that parameter |
+| Resolved project, bare `retention` | Ask which measure is intended |
+| Resolved project and explicit parameter/literal request, current records with unknown approval | Preserve uncertainty about support; do not claim the stored value is absent |
+| Unknown or ambiguous reference in a bounded lookup | Ask for the intended reference/current source |
+| Resolved project, bounded literal replay, several current unapproved records | Ask which complete record is intended |
+| Resolved project, bounded literal replay with no current record or explicit denial | Request a current complete record |
+
+Recognition is limited to whole question shapes such as `Project Cedar data
+retention period?`, `What is the data-retention period for Project Cedar?`, `What
+is Project Cedar's retention rate?`, and `Project Cedar retention?`. Japanese
+forms include `Cedarのデータ保持期間は？`, `Cedarのデータ保存期間を教えてください。`,
+`Cedarのリテンション率は？`, `Cedarの保持率は？`, and `Cedarのリテンションは？`.
+The existing Unicode/whitespace normalization is used only for recognition.
+Declared aliases may contain multiple words; unknown single-word `Project` names
+can trigger reference clarification but do not become registered scopes.
+
+An authoritative declaration can supply the identity for bounded requests such
+as `What is its data retention period?`, `That project retention rate?`, or
+`そのプロジェクトのデータ保持期間は？`. Parameter identity comes only from the
+explicit wording. Bare `retention` stays underspecified even when an unavailable
+historical answer contained days or percentages. Extra clauses, unsupported
+wordings, ordinary unqualified questions without a reference, and explicitly
+named multiple projects receive no new targeted condition. The existing literal
+replay grammar retains its own operation and full-source requirements. Primary
+source writes and questions with approved evidence keep their existing paths.
+
+`tests/test_missing_evidence.py` exercises these boundaries with fixed authored
+questions and a Fake Provider. Its EngineSession cases capture the actual
+generation, consultation and integration inputs with System2 ON/OFF, including
+expired records, caller-declared pronouns and the three retention wordings. HTTP
+transport is blocked. The scripted answers verify the packet's delivery and
+branch behavior; natural clarification quality and semantic judge calibration
+remain separate measurements. Earlier study fixtures, outputs and grades are
+unchanged.
