@@ -19,7 +19,7 @@
 import asyncio, random, difflib, json, re, ast, os
 from typing import Any, Callable, Dict, Optional, Sequence
 
-from .llm_client import LLMClient, LLMConfig, load_llm_config
+from .llm_client import CompletionValidationError, LLMClient, LLMConfig, load_llm_config
 from .micro_critic import micro_criticise_reasoning
 
 _SYSTEM_GUARDRAILS = (
@@ -79,6 +79,19 @@ _INTEGRATION_GUARDRAILS = (
 )
 
 
+class _CriticSchemaError(ValueError):
+    pass
+
+
+def _unique_critic_fields(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise _CriticSchemaError("Duplicate critic field")
+        result[key] = value
+    return result
+
+
 def _extract_json_object(text: str) -> Optional[dict[str, Any]]:
     raw = str(text or "").strip()
     if not raw:
@@ -92,15 +105,27 @@ def _extract_json_object(text: str) -> Optional[dict[str, Any]]:
         return None
     blob = raw[start : end + 1].strip()
     try:
-        obj = json.loads(blob)
+        obj = json.loads(blob, object_pairs_hook=_unique_critic_fields)
+    except _CriticSchemaError:
+        raise
     except Exception:
         # Common LLM failure modes: trailing commas, Python dict syntax.
         cleaned = re.sub(r",(\s*[}\]])", r"\1", blob)
         try:
-            obj = json.loads(cleaned)
+            obj = json.loads(cleaned, object_pairs_hook=_unique_critic_fields)
+        except _CriticSchemaError:
+            raise
         except Exception:
             try:
-                obj = ast.literal_eval(cleaned)
+                tree = ast.parse(cleaned, mode="eval")
+                # Python-dict syntax is supported, but it must not erase an
+                # earlier issue by overwriting a duplicate field either.
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Dict):
+                        _unique_critic_fields((ast.literal_eval(key), None) for key in node.keys)
+                obj = ast.literal_eval(tree)
+            except _CriticSchemaError:
+                raise
             except Exception:
                 return None
     return obj if isinstance(obj, dict) else None
@@ -139,6 +164,40 @@ def _dedupe_critic_items(items: Any, *, limit: int = 12) -> list[str]:
         if len(out) >= limit:
             break
     return out
+
+
+def _validated_critic_response(text):
+    """Validate shape before normalization can discard malformed issue fields."""
+    if not isinstance(text, str) or not text.strip():
+        return None, "empty_response" if isinstance(text, str) else "invalid_schema"
+    try:
+        parsed = _extract_json_object(text)
+    except _CriticSchemaError:
+        return None, "invalid_schema"
+    if parsed is None:
+        return None, "unstructured"
+    if (not isinstance(parsed.get("verdict"), str)
+            or parsed["verdict"].strip().lower() not in {"ok", "issues"}
+            or any(not isinstance(parsed.get(key), list)
+                   or any(not isinstance(item, str) or not item.strip() for item in parsed[key])
+                   for key in ("issues", "fixes"))):
+        return None, "invalid_schema"
+    verdict = parsed["verdict"].strip().lower()
+    issues = _dedupe_critic_items(parsed["issues"], limit=12)
+    fixes = _dedupe_critic_items(parsed["fixes"], limit=12)
+    if ((verdict == "ok" and (parsed["issues"] or parsed["fixes"]))
+            or (verdict == "issues" and not issues)):
+        return None, "inconsistent"
+    return (verdict, issues, fixes), "ok"
+
+
+def _critic_summary(issues, fixes):
+    lines = []
+    for heading, items in (("Issues:", issues), ("Fixes:", fixes)):
+        if items:
+            lines.append(heading)
+            lines.extend(f"- {item}" for item in items[:10])
+    return "\n".join(lines).strip()
 
 def _env_flag(name: str, default: bool = False) -> bool:
     raw = os.environ.get(name)
@@ -462,7 +521,12 @@ class RightBrainModel:
         psychoid_projection: Optional[Dict[str, object]] = None,
         allow_micro_fallback: bool = True,
     ) -> Dict[str, Any]:
-        """Return a structured critique for System2-style reasoning corrections."""
+        """Return a structured critique for System2-style reasoning corrections.
+
+        Review validity describes a completed, well-formed review or an explicit
+        local micro result, not factual correctness of the draft. External
+        validity and each validation stage remain separate from that local result.
+        """
 
         allow_micro = bool(
             allow_micro_fallback and _env_flag("DUALBRAIN_CRITIC_MICRO_FALLBACK", True)
@@ -501,9 +565,10 @@ class RightBrainModel:
                 float(self.llm_config.timeout_seconds if self.llm_config else 40),
                 max(1.0, min(critic_timeout, 120.0)),
             )
-            call_failed = False
             completion = ""
-            last_error = ""
+            parsed = None
+            status = "provider_error"
+            error_type = None
             for attempt in range(3):
                 try:
                     completion = await self._llm_client.complete(
@@ -512,158 +577,99 @@ class RightBrainModel:
                         temperature=temperature,
                         max_output_tokens=max_tokens,
                         timeout_seconds=timeout_seconds,
+                        require_complete=True,
                     )
-                    call_failed = False
+                except CompletionValidationError as exc:
+                    # A returned response with invalid completion is not a
+                    # transport retry candidate, even if its text looks clean.
+                    status, error_type = exc.reason, type(exc).__name__
                     break
                 except Exception as exc:
-                    call_failed = True
-                    completion = ""
-                    last_error = f"{exc.__class__.__name__}: {exc}"
-                    retryable = False
-                    err_text = str(exc).lower()
-                    if any(
-                        marker in err_text
-                        for marker in ("rate limit", "rate_limited", "429", "timeout")
-                    ):
-                        retryable = True
+                    status, error_type = "provider_error", type(exc).__name__
+                    retryable = any(marker in str(exc).lower() for marker in
+                                    ("rate limit", "rate_limited", "429", "timeout"))
                     if retryable and attempt < 2:
                         await asyncio.sleep(0.35 * (2 ** attempt) + random.random() * 0.2)
                         continue
                     break
-
-            parsed_obj = _extract_json_object(completion)
-            parsed = parsed_obj or {}
-            verdict = str(parsed.get("verdict") or "").strip().lower()
-            if verdict not in {"ok", "issues"}:
-                verdict = "issues" if completion.strip() else "issues"
-
-            issues_raw = parsed.get("issues")
-            fixes_raw = parsed.get("fixes")
-            issues = _dedupe_critic_items(issues_raw, limit=12)
-            fixes = _dedupe_critic_items(fixes_raw, limit=12)
-
-            # Produce a compact internal summary string for the integrator.
-            lines: list[str] = []
-            if issues:
-                lines.append("Issues:")
-                for item in issues[:10]:
-                    lines.append(f"- {item}")
-            if fixes:
-                lines.append("Fixes:")
-                for item in fixes[:10]:
-                    lines.append(f"- {item}")
-            critic_sum = "\n".join(lines).strip()
-            critic_kind = "external"
-            critic_status = "ok"
-            if verdict == "issues" and not issues:
-                if call_failed:
-                    critic_status = "provider_error"
-                    if micro is not None and micro.verdict == "issues":
-                        issues = list(micro.issues)
-                        fixes = list(micro.fixes)
-                        critic_sum = micro.critic_sum
-                        verdict = micro.verdict
-                        critic_kind = "micro"
-                    else:
-                        issues = [
-                            "(fallback) External critic model unavailable; unable to verify reasoning."
-                        ]
-                        fixes = [
-                            "Retry later or verify provider API key/network settings."
-                        ]
-                        if last_error:
-                            critic_sum = f"External critic model unavailable: {last_error}"
-                        else:
-                            critic_sum = "External critic model unavailable."
-                elif completion.strip():
-                    critic_status = "unstructured"
-                    if micro is not None and micro.verdict == "issues":
-                        issues = list(micro.issues)
-                        fixes = list(micro.fixes)
-                        critic_sum = micro.critic_sum
-                        verdict = micro.verdict
-                        critic_kind = "micro"
-                    elif _env_flag("DUALBRAIN_CRITIC_JSON_REPAIR_CALL", True):
-                        # One-shot "repair" pass: ask the same critic model to
-                        # reformat its unstructured output into strict JSON.
-                        repair_blob = completion.strip()
-                        if len(repair_blob) > 1400:
-                            repair_blob = repair_blob[:1400] + "..."
-                        repair_prompt = (
-                            "Your previous response was not valid JSON.\n"
-                            "Convert it into a SINGLE JSON object with keys "
-                            '\"verdict\", \"issues\", \"fixes\".\n'
-                            "Output JSON only.\n\n"
-                            "Unstructured response:\n"
-                            f"{repair_blob}\n"
-                        )
-                        try:
-                            repaired = await self._llm_client.complete(
-                                repair_prompt,
-                                system=system,
-                                temperature=max(0.0, float(temperature) * 0.6),
-                                max_output_tokens=max_tokens,
-                                timeout_seconds=min(timeout_seconds, 18.0),
-                            )
-                        except Exception:
-                            repaired = ""
-                        repaired_obj = _extract_json_object(repaired)
-                        if repaired_obj:
-                            repaired_verdict = str(repaired_obj.get("verdict") or "").strip().lower()
-                            if repaired_verdict in {"ok", "issues"}:
-                                verdict = repaired_verdict
-                            issues = _dedupe_critic_items(repaired_obj.get("issues"), limit=12)
-                            fixes = _dedupe_critic_items(repaired_obj.get("fixes"), limit=12)
-                            lines = []
-                            if issues:
-                                lines.append("Issues:")
-                                for item in issues[:10]:
-                                    lines.append(f"- {item}")
-                            if fixes:
-                                lines.append("Fixes:")
-                                for item in fixes[:10]:
-                                    lines.append(f"- {item}")
-                            critic_sum = "\n".join(lines).strip()
-                            if verdict == "issues" and not issues:
-                                verdict = "issues"
-                            critic_kind = "external_repaired"
-                            critic_status = "ok"
-                        else:
-                            issues = [
-                                "(fallback) External critic response was unstructured; unable to parse actionable issues."
-                            ]
-                            fixes = [
-                                "Return strict JSON with concrete correctness issues."
-                            ]
-                            critic_sum = "External critic response unstructured."
-                    else:
-                        issues = [
-                            "(fallback) External critic response was unstructured; unable to parse actionable issues."
-                        ]
-                        fixes = [
-                            "Return strict JSON with concrete correctness issues."
-                        ]
-                        critic_sum = "External critic response unstructured."
                 else:
-                    critic_status = "empty_response"
-                    issues = ["(fallback) External critic returned an empty response; unable to verify reasoning."]
-                    fixes = ["Retry the critic with a larger output budget or a different provider."]
-                    critic_sum = "External critic response empty."
-            if verdict == "ok" and issues:
-                critic_status = "inconsistent"
-            if verdict == "ok" and not critic_sum:
-                critic_sum = "No issues detected."
-            # High-confidence sanity override: when micro-critic can compute an
-            # expected result and the external critic missed it.
-            if (
-                verdict == "ok"
-                and micro is not None
-                and micro.verdict == "issues"
-                and _env_flag("DUALBRAIN_CRITIC_MICRO_SANITY_OVERRIDE", True)
-            ):
+                    parsed, status = _validated_critic_response(completion)
+                    error_type = None
+                    break
+
+            validation = {"initial": {"status": status, "error_type": error_type}, "repair": None}
+            critic_kind = "external"
+            if (status == "unstructured"
+                    and not (micro is not None and micro.verdict == "issues")
+                    and _env_flag("DUALBRAIN_CRITIC_JSON_REPAIR_CALL", True)):
+                # Preserve the existing single reformat attempt for unstructured
+                # text. New shape/completion failures never add a repair call.
+                repair_blob = completion.strip()
+                if len(repair_blob) > 1400:
+                    repair_blob = repair_blob[:1400] + "..."
+                repair_prompt = (
+                    "Your previous response was not valid JSON.\n"
+                    "Convert it into a SINGLE JSON object with keys "
+                    '\"verdict\", \"issues\", \"fixes\".\n'
+                    "Output JSON only.\n\n"
+                    "Unstructured response:\n"
+                    f"{repair_blob}\n"
+                )
+                try:
+                    repaired = await self._llm_client.complete(
+                        repair_prompt,
+                        system=system,
+                        temperature=max(0.0, float(temperature) * 0.6),
+                        max_output_tokens=max_tokens,
+                        timeout_seconds=min(timeout_seconds, 18.0),
+                        require_complete=True,
+                    )
+                except CompletionValidationError as exc:
+                    status, error_type = exc.reason, type(exc).__name__
+                except Exception as exc:
+                    status, error_type = "provider_error", type(exc).__name__
+                else:
+                    parsed, status = _validated_critic_response(repaired)
+                    error_type = None
+                    if parsed is not None:
+                        critic_kind = "external_repaired"
+                validation["repair"] = {"status": status, "error_type": error_type}
+
+            external_valid = parsed is not None and status == "ok"
+            review_valid = external_valid
+            if external_valid:
+                verdict, issues, fixes = parsed
+                critic_sum = _critic_summary(issues, fixes) or "No issues detected."
+            else:
                 verdict = "issues"
-                issues = list(micro.issues)
-                fixes = list(micro.fixes)
+                descriptions = {
+                    "provider_error": "External critic model unavailable",
+                    "empty_response": "External critic returned an empty response",
+                    "incomplete_response": "External critic completion was incomplete",
+                    "invalid_response": "External critic response envelope was invalid",
+                    "refused_response": "External critic refused the review",
+                    "invalid_schema": "External critic response schema was invalid",
+                    "inconsistent": "External critic response was inconsistent",
+                    "unstructured": "External critic response unstructured",
+                }
+                # Keep the existing downstream unhealthy marker, and never
+                # place provider exception text in a fallback summary.
+                detail = descriptions.get(status, "External critic response was invalid")
+                critic_sum = f"{detail}; unable to verify reasoning."
+                issues = [f"(fallback) {critic_sum}"]
+                fixes = []
+                if micro is not None and micro.verdict == "issues" and status != "empty_response":
+                    verdict, issues, fixes = micro.verdict, list(micro.issues), list(micro.fixes)
+                    critic_sum = micro.critic_sum
+                    critic_kind = "micro"
+                    review_valid = True
+
+            # High-confidence sanity override: the explicit local result keeps
+            # its own provenance even when a valid external critic missed it.
+            if (external_valid and verdict == "ok" and micro is not None
+                    and micro.verdict == "issues"
+                    and _env_flag("DUALBRAIN_CRITIC_MICRO_SANITY_OVERRIDE", True)):
+                verdict, issues, fixes = micro.verdict, list(micro.issues), list(micro.fixes)
                 critic_sum = micro.critic_sum
                 critic_kind = "micro_sanity_override"
             return {
@@ -672,11 +678,13 @@ class RightBrainModel:
                 "issues": issues,
                 "fixes": fixes,
                 "critic_sum": critic_sum,
-                "confidence_r": (
-                    float(micro.confidence_r) if critic_kind.startswith("micro") else 0.9
-                ),
+                "confidence_r": (float(micro.confidence_r) if critic_kind.startswith("micro")
+                                 else 0.9 if external_valid else 0.0),
                 "critic_kind": critic_kind,
-                "critic_status": critic_status,
+                "critic_status": status,
+                "critic_review_valid": review_valid,
+                "critic_external_review_valid": external_valid,
+                "critic_validation": validation,
             }
 
         # Deterministic fallback when no external critic is configured.
@@ -690,6 +698,9 @@ class RightBrainModel:
                 "confidence_r": float(micro.confidence_r),
                 "critic_kind": "micro_offline",
                 "critic_status": "offline",
+                "critic_review_valid": True,
+                "critic_external_review_valid": False,
+                "critic_validation": {"initial": {"status": "not_requested", "error_type": None}, "repair": None},
             }
         return {
             "qid": qid,
@@ -702,6 +713,9 @@ class RightBrainModel:
             "confidence_r": 0.2,
             "critic_kind": "disabled",
             "critic_status": "not_configured",
+            "critic_review_valid": False,
+            "critic_external_review_valid": False,
+            "critic_validation": {"initial": {"status": "not_requested", "error_type": None}, "repair": None},
         }
 
         # Heuristic fallback (no external LLM available).

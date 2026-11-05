@@ -34,6 +34,18 @@ from .source_completion import record_completed_answer, source_completion_requir
 PromptInput = str | list[dict[str, Any]]
 
 
+class CompletionValidationError(RuntimeError):
+    """A response arrived but did not establish a complete, usable answer.
+
+    Keep the category separate from a transport failure without retaining any
+    response text, prompt or credentials on the exception.
+    """
+
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__("LLM response lacks a nonempty successful terminal completion")
+
+
 @dataclass
 class LLMConfig:
     provider: str
@@ -294,8 +306,10 @@ class LLMClient:
                 "huggingface": {"eos_token", "stop_sequence"},
             }
             allowed = successful_reasons.get(self.provider, set())
-            if not text.strip() or str(finish_reason or "").lower() not in allowed:
-                raise RuntimeError("LLM response lacks a nonempty successful terminal completion")
+            if not text.strip():
+                raise CompletionValidationError("empty_response")
+            if str(finish_reason or "").lower() not in allowed:
+                raise CompletionValidationError("incomplete_response")
             record_completed_answer(text)
         return text.strip()
 
@@ -565,6 +579,21 @@ class LLMClient:
                 )
             else:
                 data = await self._post_json(url, payload, headers)
+            if require_complete:
+                if not isinstance(data, dict):
+                    raise CompletionValidationError("invalid_response")
+                choices = data.get("choices")
+                if (not isinstance(choices, list) or len(choices) != 1
+                        or not isinstance(choices[0], dict)
+                        or not isinstance(choices[0].get("message"), dict)):
+                    raise CompletionValidationError("invalid_response")
+                message = choices[0]["message"]
+                if message.get("refusal") not in (None, ""):
+                    raise CompletionValidationError("refused_response")
+                if (message.get("tool_calls") or message.get("function_call")
+                        or message.get("content") is not None
+                        and not isinstance(message["content"], str)):
+                    raise CompletionValidationError("invalid_response")
             choices = data.get("choices") or []
             if not choices or not isinstance(choices, list):
                 return str(data).strip(), None
