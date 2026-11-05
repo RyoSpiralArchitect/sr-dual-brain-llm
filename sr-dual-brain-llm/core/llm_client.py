@@ -668,6 +668,13 @@ class LLMClient:
                 )
             else:
                 data = await self._post_json(url, payload, headers)
+            if require_complete:
+                if not isinstance(data, dict) or not isinstance(data.get("content"), list):
+                    raise CompletionValidationError("invalid_response")
+                if any(not isinstance(part, dict) or part.get("type") != "text"
+                       or not isinstance(part.get("text"), str)
+                       for part in data["content"]):
+                    raise CompletionValidationError("invalid_response")
             stop_reason = data.get("stop_reason")
             content = data.get("content") or []
             if content and isinstance(content, list):
@@ -737,11 +744,28 @@ class LLMClient:
             data = await self._post_json(url, payload, headers, timeout_seconds=timeout_seconds)
         else:
             data = await self._post_json(url, payload, headers)
+        if require_complete:
+            if not isinstance(data, dict):
+                raise CompletionValidationError("invalid_response")
+            candidates = data.get("candidates")
+            if (not isinstance(candidates, list) or len(candidates) != 1
+                    or not isinstance(candidates[0], dict)
+                    or not isinstance(candidates[0].get("content"), dict)
+                    or not isinstance(candidates[0]["content"].get("parts"), list)):
+                raise CompletionValidationError("invalid_response")
+            nontext_fields = {
+                "functionCall", "functionResponse", "inlineData", "fileData",
+                "executableCode", "codeExecutionResult",
+            }
+            if any(not isinstance(part, dict) or not isinstance(part.get("text"), str)
+                   or nontext_fields.intersection(part)
+                   for part in candidates[0]["content"]["parts"]):
+                raise CompletionValidationError("invalid_response")
         candidates = data.get("candidates") or []
         if candidates:
             parts = (candidates[0].get("content") or {}).get("parts", [])
             texts = [p.get("text", "") for p in parts if isinstance(p, dict)]
-            if texts:
+            if texts or require_complete:
                 return self._completion_text(
                     "\n".join([t for t in texts if t]), candidates[0].get("finishReason"),
                     require_complete=require_complete,
@@ -779,6 +803,21 @@ class LLMClient:
             data = await self._post_json(url, payload, headers, timeout_seconds=timeout_seconds)
         else:
             data = await self._post_json(url, payload, headers)
+        if require_complete:
+            if isinstance(data, list):
+                if len(data) != 1:
+                    raise CompletionValidationError("invalid_response")
+                result = data[0]
+            else:
+                result = data
+            if not isinstance(result, dict) or not isinstance(result.get("details"), dict):
+                raise CompletionValidationError("invalid_response")
+            text = result.get("generated_text", result.get("translation_text"))
+            if not isinstance(text, str):
+                raise CompletionValidationError("invalid_response")
+            return self._completion_text(
+                text, result["details"].get("finish_reason"), require_complete=True,
+            )
         if isinstance(data, list) and data:
             first = data[0]
             if isinstance(first, dict):
