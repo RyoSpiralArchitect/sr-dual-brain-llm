@@ -37,10 +37,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt -r requirements-pg.txt
-      - name: Test atomic memory commits and acknowledgement loss
+      - name: Test atomic commits and operational journal replay against PostgreSQL
         env:
           DUALBRAIN_TEST_PG_DSN: postgresql://memory_test:isolated-test-only@127.0.0.1:5432/memory_retry_test
-        run: pytest -q tests/test_memory_commit_postgres.py
+        run: pytest -q tests/test_memory_commit_postgres.py tests/test_benchmark_contract_live.py
 
   unit-tests:
     runs-on: ubuntu-latest

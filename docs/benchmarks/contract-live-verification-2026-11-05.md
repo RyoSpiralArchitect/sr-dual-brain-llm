@@ -156,6 +156,9 @@ The full Python suite at the frozen implementation head passed **1,699 tests /
 guard; unexpected blocked HTTP attempts were zero. The frozen head also passed
 all four jobs in the [push CI run](https://github.com/RyoSpiralArchitect/sr-dual-brain-llm/actions/runs/41981940921).
 The subsequent results commit adds only this report and its safe metrics.
+The following CI-only wiring change runs the new operational journal/real-store
+controls in the existing PostgreSQL service job too; it changes no measured
+source, fixture, model configuration or result.
 
 The user-requested merge review of #91 additionally ran 1,690 Python tests with
 isolated PostgreSQL, the intentional local HTTP case separately, Gateway
