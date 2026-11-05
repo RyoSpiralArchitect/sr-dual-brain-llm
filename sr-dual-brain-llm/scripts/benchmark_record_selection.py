@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prospective approval-positive record-selection confirmation; no old rescoring."""
+"""Live confirmation of reviewed PR #93; earlier prototype evidence stays frozen."""
 from __future__ import annotations
 
 import argparse
@@ -19,13 +19,21 @@ import benchmark_contract_live as pilot
 
 CALL_LIMIT = 64
 FIXTURE = pilot.base.ROOT / 'examples/record_selection_confirmation.json'
+INTEGRATION_FIXTURE = pilot.base.ROOT / 'examples/record_selection_integration.json'
+INTEGRATION_CALL_LIMIT = 32
 CASE_IDS = ('english_selection', 'japanese_selection', 'pronoun_selection', 'caller_selection',
             'ineligible_selection', 'unique_quote', 'expired_second', 'factual_lookup', 'extra_clause')
+INTEGRATION_CASE_IDS = ('integrated_english', 'integrated_japanese', 'integrated_caller_pronoun',
+                        'integrated_unique_expiry', 'integrated_fact')
 
 
 def validate(fixture):
-    if (fixture.get('schema_version') != 1 or fixture.get('origin') != 'prospective_record_selection_confirmation'
-            or tuple(c['id'] for c in fixture.get('cases', [])) != CASE_IDS):
+    expected = {'prospective_record_selection_confirmation': (CASE_IDS, CALL_LIMIT),
+                'prospective_record_selection_integration': (INTEGRATION_CASE_IDS, INTEGRATION_CALL_LIMIT)}
+    contract = expected.get(fixture.get('origin'))
+    if (fixture.get('schema_version') != 1 or contract is None
+            or tuple(c['id'] for c in fixture.get('cases', [])) != contract[0]
+            or fixture.get('call_limit', CALL_LIMIT) != contract[1]):
         raise ValueError('Complete fresh selection-confirmation fixture required')
     for case in fixture['cases']:
         if not case['manual_criterion'] or not case['question'].strip():
@@ -39,7 +47,8 @@ def validate(fixture):
 
 def metadata(fixture, config):
     return pilot.metadata(fixture, config) | {
-        'call_limit': CALL_LIMIT, 'case_ids': list(CASE_IDS), 'persistence': 'in_memory_engine_sessions',
+        'call_limit': fixture.get('call_limit', CALL_LIMIT), 'case_ids': [c['id'] for c in fixture['cases']],
+        'persistence': 'in_memory_engine_sessions',
         'support_preparation': 'once_on_predeclared_qids_under_ordinary_policy_before_runtime',
         'repeat_rule': 'one_fixed_order_no_paid_rescue',
     }
@@ -83,7 +92,12 @@ async def cell(case, config, journal, clock, options):
         row['runtime_calls_by_role'] = row['calls_by_role']
         row['usage'] = pilot.bench.usage(journal.events[before:])
         row['calls_by_role'] = dict(pilot.Counter(e['role'] for e in journal.events[before:]))
-        row['bounded_source_count'] = len(memory._record_replay_sources(case['question']))
+        resolution = memory.replay_resolution(case['question'])
+        row['binding_status'] = resolution.binding_status
+        reference, _, scopes, _, _ = memory._reference_state(case['question'])
+        row['bounded_source_count'] = (sum(memory._available(t, time.time()) and not t.recalled_answer
+            and t.retrieval_scope in scopes for t in memory.past_qas)
+            if resolution.requested and reference == 'resolved' else 0)
         packets = [r['request'] for r in journal.data['occurrences'][runtime_start:]
                    if r['request']['role'] != 'support']
         leaked = [p['role'] for p in packets if any(
@@ -139,12 +153,12 @@ def main():
     mode.add_argument('--model')
     mode.add_argument('--journal', type=Path)
     parser.add_argument('--replay-api-base')
-    parser.add_argument('--max-calls', choices=(CALL_LIMIT,), type=int, required=True)
+    parser.add_argument('--max-calls', choices=(INTEGRATION_CALL_LIMIT,), type=int, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=False)
     try:
-        fixture = pilot.bench.read_json(FIXTURE)
+        fixture = pilot.bench.read_json(INTEGRATION_FIXTURE)
         validate(fixture)
         frozen = pilot.bench.read_json(args.journal) if args.journal else None
         if args.model and subprocess.check_output(['git', 'status', '--porcelain'], cwd=pilot.base.ROOT.parent, text=True).strip():
@@ -156,7 +170,7 @@ def main():
             raise ValueError('An OpenAI-compatible configuration is required')
         config = replace(config, model=model, max_output_tokens=2048, timeout_seconds=60,
                          auto_continue=False, max_continuations=0)
-        journal = pilot.RawJournal(config, metadata(fixture, config), frozen=frozen, max_calls=CALL_LIMIT,
+        journal = pilot.RawJournal(config, metadata(fixture, config), frozen=frozen, max_calls=INTEGRATION_CALL_LIMIT,
             save=lambda data: pilot.bench.checkpoint(args.output_dir / 'journal.partial.json', data))
         if frozen:
             with pilot.forbid_provider_network() as audit:

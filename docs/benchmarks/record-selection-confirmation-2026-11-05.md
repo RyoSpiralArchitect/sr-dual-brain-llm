@@ -1,5 +1,12 @@
 # Record-selection confirmation — 2026-11-05
 
+**Prototype snapshot:** this report describes the narrower implementation frozen
+at `fd69cf8`, before the pre-existing PR #93 was discovered and integrated. Its
+results and original code remain reproducible at that commit. It is not evidence
+for PR #93's complete generation-boundary guards. The subsequent integration
+measurement has its own fixed inputs, allocation and report; no score here was
+changed. PR #93's runtime uses `current_unselected` for ambiguous records.
+
 The #92 pilot exposed two approved current records for an unspecific whole-record
 quotation and returned one without asking which record was intended. #92 is now
 merged at `b1a3d7fdae922c955b62208d7c13c9c3ac10a909`; its original failure and

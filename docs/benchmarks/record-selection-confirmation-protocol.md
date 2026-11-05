@@ -1,5 +1,9 @@
 # Prospective record-selection confirmation after #92
 
+This is the historical protocol for the `fd69cf8` prototype. Reproduce its code
+at that frozen commit. The current runner defaults to the separate PR #93
+integration fixture and 32-call allocation; see the integration protocol.
+
 Freeze this protocol, the fresh `record_selection_confirmation.json` fixture,
 runtime fix, runner and controls in a clean commit before paid calls. The prior
 #92 Larch ambiguity failure and its two failed expectations remain immutable.

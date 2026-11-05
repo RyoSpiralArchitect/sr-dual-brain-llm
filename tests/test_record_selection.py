@@ -52,6 +52,10 @@ def test_approved_records_cannot_replace_missing_record_selection(checker, quest
     m = memory(checker)
     if focus:
         m.begin_turn('Project Copper Finch retention?', 'focus')
+    if checker:
+        m.begin_turn(question, 'prepare-cache', DECLARATION if declared else None)
+        asyncio.run(m.answerability_gate.prepare(m.retrieval_question(question),
+                    [m._answerability_source(t) for t in m.past_qas]))
     prepare(m, question, DECLARATION if declared else None)
     if checker:
         gate, query = m.answerability_gate, m.retrieval_question(question)
@@ -166,6 +170,8 @@ async def test_selection_condition_survives_both_brains_and_final_integration(tm
             session.memory.answerability_gate = configured.answerability_gate
             for trace in configured.past_qas:
                 session.memory.store(trace)
+            await session.memory.answerability_gate.prepare(QUESTION,
+                [session.memory._answerability_source(t) for t in session.memory.past_qas])
             session.left._llm_client = ScriptedClient('left', calls)
             session.right._llm_client = ScriptedClient('right', calls)
             session.left.uses_external_llm = session.right.uses_external_llm = True
