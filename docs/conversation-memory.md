@@ -233,8 +233,10 @@ existing bounded whole-record grammar. Ordinary factual requests are unchanged.
 
 Changed, expired, superseded, missing, duplicate or moved records fail current
 binding. A selected request never substitutes another record. The finite states
-`invalid_selection` / `stale_selection` carry `selection_unavailable / unknown /
-reselect_record` and ask the caller to choose again, without pasting stored text.
+`invalid_selection` / `stale_selection` carry `selection_unavailable` and
+`reselect_record`, asking the caller to choose again without pasting stored text.
+They infer no support decision: approval remains unknown with current records,
+or not applicable when none are available.
 The existing generation/queued-worker refresh checks apply to selected sources.
 Persistent inventories and new selected requests reload the committed source
 view at request start; during generation the existing resident-view boundary

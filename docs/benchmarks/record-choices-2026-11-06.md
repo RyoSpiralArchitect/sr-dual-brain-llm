@@ -133,7 +133,10 @@ Local verification:
 
 The GitHub checks cover Python 3.10 consultation lifetime, the full Python/Node
 suite, Gateway contracts and PostgreSQL atomic commits plus the new selector
-and journal tests. Review is implementing-assistant manual inspection, without
+and journal tests. All eight checks pass at the implementation freeze in the
+[push](https://github.com/RyoSpiralArchitect/sr-dual-brain-llm/actions/runs/42194524476)
+and [PR](https://github.com/RyoSpiralArchitect/sr-dual-brain-llm/actions/runs/42194532710)
+runs. Review is implementing-assistant manual inspection, without
 independent external adjudication or automated approval. The broader semantic
 calibration in #89 remains open.
 
