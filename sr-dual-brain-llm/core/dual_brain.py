@@ -23,6 +23,8 @@ from .turn_lifecycle import begin_turn_commit, create_turn_task, cancel_task, re
 from .advisor_timing import AdvisorWork, LatencyEstimate, RecoveryStatus, model_profile
 from .advisor_delivery import compact_model
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
+from .detail_contract import detail_observation, detail_confidence, error_category
+from .memory_clarification import record_choice_clarifications
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -3167,6 +3169,11 @@ class DualBrainController:
                      if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF else None)
         literal_requested = False
         source_replayed = False
+        bounded_clarification = False
+        if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF and not approved:
+            missing = getattr(self.memory, 'missing_evidence', None)
+            replies = record_choice_clarifications(missing(question)) if callable(missing) else ()
+            bounded_clarification = type(draft) is str and draft in replies
         replay_intent = None
         intent_resolver = getattr(self.memory, 'replay_intent', None)
         if blocked is None and gate_config.valid and gate_config.mode != GateMode.OFF and callable(intent_resolver):
@@ -3182,20 +3189,23 @@ class DualBrainController:
                 has_draft=bool(str(draft).strip()), is_trivial=is_trivial_chat,
                 confidence=confidence, risk=affect.get('risk', 0.0), approved_records=len(approved),
                 reference_resolved=reference == 'resolved', literal_replay_requested=literal_requested,
-                full_source_replayed=source_replayed))
+                full_source_replayed=source_replayed, bounded_clarification_complete=bounded_clarification))
         if gate.enabled:
             route = route_conversation_lookup(
                 question=question, draft=draft, confidence=confidence,
                 risk=float(affect.get("risk", 0.0)), q_type=decision.state.get("q_type"),
                 reference=reference, approved_records=approved,
                 replay_intent=replay_intent is not None,
+                bounded_clarification_complete=bounded_clarification,
             )
             before_action, before_system2 = decision.action, system2_active
             apply_route = route.action in {'skip', 'consult'} and (
                 gate_config.mode != GateMode.AUTO or route.action == 'skip')
             if apply_route and route.action == "skip":
                 decision.action, system2_active = 0, False
-                system2_reason, system2_round_target = "selective_supported_lookup", 0
+                system2_reason = ('selective_record_clarification' if bounded_clarification
+                                  else 'selective_supported_lookup')
+                system2_round_target = 0
             elif apply_route and route.action == "consult":
                 decision.action, system2_active = max(1, decision.action), True
                 system2_reason = "selective_" + route.reason
@@ -3494,15 +3504,24 @@ class DualBrainController:
                 decision.state["critic_sum"] = str(detail_notes)[:1200]
             system2_initial_issue_count = len(critic_issues)
         else:
-            detail_notes = response.get("notes_sum")
+            observation = detail_observation(response)
+            detail_attempts = [{'source': 'callosum', **observation}]
+            detail_notes = response.get('notes_sum') if observation['usable'] else None
+            if not isinstance(response, dict):
+                response = {}
 
-        call_error = bool(response.get("error"))
-        call_confidence = float(response.get("confidence_r", 0.0) or 0.0)
+        call_error = bool(response.get("error")) if system2_active else not observation['usable']
+        call_confidence = (float(response.get("confidence_r", 0.0) or 0.0) if system2_active
+                           else detail_confidence(response) if observation['usable'] else 0.)
         fallback_used = False
         fallback_confidence = 0.0
         fallback_error: Optional[str] = None
         success = False
-        if call_error or not detail_notes:
+        # A known returned unusable result is not a missing delivery. Retain
+        # the draft rather than paying to repeat the same ordinary detail call.
+        fallback_needed = ((call_error or not detail_notes) if system2_active
+                           else observation['status'] == 'delivery_error')
+        if fallback_needed:
             response_source = "right_model_fallback"
             fallback_used = True
             try:
@@ -3538,7 +3557,10 @@ class DualBrainController:
                         ),
                     )
             except Exception as exc:  # pragma: no cover - defensive guard
-                fallback_error = str(exc)
+                fallback_error = error_category(exc)
+                if not system2_active:
+                    detail_attempts.append({'source': 'direct_fallback', **detail_observation({
+                        'detail_status': 'failed', 'detail_kind': 'unavailable', 'detail_error_type': fallback_error})})
                 final_answer = draft
             else:
                 if system2_active:
@@ -3575,15 +3597,24 @@ class DualBrainController:
                         decision.state["critic_sum"] = str(detail_notes)[:1200]
                     system2_initial_issue_count = len(critic_issues)
                 else:
-                    detail_notes = fallback.get("notes_sum")
-                fallback_confidence = float(
-                    fallback.get("confidence_r", 0.0) or 0.0
-                )
+                    latest = detail_observation(fallback)
+                    detail_attempts.append({'source': 'direct_fallback', **latest})
+                    detail_notes = fallback.get('notes_sum') if latest['usable'] else None
+                fallback_confidence = (float(fallback.get("confidence_r", 0.0) or 0.0) if system2_active
+                                       else detail_confidence(fallback) if latest['usable'] else 0.)
                 decision.state["right_conf"] = fallback_confidence
-                success = True
+                success = True if system2_active else latest['usable']
         else:
             decision.state["right_conf"] = call_confidence
-            success = True
+            success = True if system2_active else observation['usable']
+        if not system2_active:
+            if not success:
+                final_answer = draft
+            execution = {'version': 'detail_execution_v1', 'deliveries': detail_attempts,
+                         'usable': success, 'external_complete': detail_attempts[-1]['external_complete'],
+                         'fallback_used': fallback_used}
+            decision.state['detail_execution'] = execution
+            self.telemetry.log('detail_execution', qid=decision.qid, **execution)
         phase_add("right_consult", consult_started)
 
         return RightConsultStageResult(

@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, Optional, Sequence
 
 from .llm_client import CompletionValidationError, LLMClient, LLMConfig, load_llm_config
 from .micro_critic import micro_criticise_reasoning
+from .detail_contract import detail_result
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
@@ -466,7 +467,7 @@ class RightBrainModel:
         budget: str = "small",
         context: Optional[str] = None,
         psychoid_projection: Optional[Dict[str, object]] = None,
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
         if self._llm_client:
             budget_norm = str(budget or "small").strip().lower()
             max_tokens = 450 if budget_norm != "large" else 900
@@ -494,10 +495,14 @@ class RightBrainModel:
                     temperature=temperature,
                     max_output_tokens=max_tokens,
                     timeout_seconds=timeout_seconds,
+                    require_complete=True,
+                    allow_continuation=False,
                 )
-                return {"qid": qid, "notes_sum": completion, "confidence_r": 0.9}
-            except Exception:
-                pass
+                return detail_result(qid, completion)
+            except CompletionValidationError as exc:
+                return detail_result(qid, status=exc.reason, error=exc)
+            except Exception as exc:
+                return detail_result(qid, status='failed', error=exc)
 
         await asyncio.sleep(0.35 + random.random()*0.3)
         context_text = context if context is not None else shared_memory.retrieve_related(question)
@@ -508,7 +513,7 @@ class RightBrainModel:
             f"- Hidden assumptions: check what's being held constant.\n"
             f"- Context hint: {snippet}"
         )
-        return {"qid": qid, "notes_sum": detail, "confidence_r": 0.85}
+        return detail_result(qid, detail, kind='heuristic')
 
     async def criticise_reasoning(
         self,

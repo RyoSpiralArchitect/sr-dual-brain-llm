@@ -8,7 +8,7 @@ import re
 import unicodedata
 from .memory_intent import literal_record_replay_requested
 
-VERSION = "conversation_lookup_v2"
+VERSION = "conversation_lookup_v3"
 
 
 _REASONING = re.compile(
@@ -50,7 +50,8 @@ class ConsultationRoute:
 
 
 def route_conversation_lookup(*, question, draft, confidence, risk, q_type,
-                              reference, approved_records, replay_intent=False):
+                              reference, approved_records, replay_intent=False,
+                              bounded_clarification_complete=False):
     """A skip is a routing estimate, not proof that a draft is correct.
 
     Require a single currently approved record and a resolved reference. Missing
@@ -68,6 +69,9 @@ def route_conversation_lookup(*, question, draft, confidence, risk, q_type,
         return ConsultationRoute("defer", "unknown_signal")
     if risk > 0 or confidence < .85:
         return ConsultationRoute("defer", "risk_or_uncertainty")
+    if (bounded_clarification_complete is True and reference == 'resolved'
+            and not approved_records and isinstance(draft, str) and draft.strip()):
+        return ConsultationRoute('skip', 'bounded_record_clarification')
     if reference != "resolved" or len(approved_records) != 1:
         return ConsultationRoute("defer", "no_unique_supported_record")
     if not draft.strip() or len(q) > 180 or "\n" in q or not _LOOKUP.search(q):

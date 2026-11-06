@@ -27,7 +27,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from .memory_clarification import MissingEvidenceCondition
+from .memory_clarification import MissingEvidenceCondition, record_choice_clarifications
 from .memory_evidence import request_memory_context
 
 
@@ -690,10 +690,15 @@ class PrefrontalCortex:
             "Preserve this condition in review and revision; do not silently use that text as the replay target."
             if condition.operation == "recorded_answer_replay" else ""
         )
+        choices = record_choice_clarifications(condition)
+        concise_reply = (" For this bounded selection clarification, return exactly one of these replies "
+                         "in the input language, without adding claims: "
+                         + json.dumps(choices, ensure_ascii=False) if choices else "")
         return ("Conversation missing-evidence condition:\n"
                 + json.dumps(condition.to_dict(), ensure_ascii=False, sort_keys=True) + "\n"
                 + instructions[condition.action]
                 + replay_instruction
+                + concise_reply
                 + " This describes this turn's available memory, not whether a fact exists elsewhere. "
                 "It supplies no factual value or verification. Do not infer values, units or parameter "
                 "identity from unavailable historical records.")

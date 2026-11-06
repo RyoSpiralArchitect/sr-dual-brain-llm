@@ -36,6 +36,27 @@ class MissingEvidenceCondition:
         return {"version": "missing_evidence_v1", **asdict(self)}
 
 
+def record_choice_clarifications(condition):
+    """Exact source-free replies for two locally established replay conditions.
+
+    These texts establish neither factual support nor language understanding.
+    Other conditions and arbitrary paraphrases retain ordinary routing.
+    """
+    if (type(condition) is not MissingEvidenceCondition or condition.reference != 'resolved'
+            or condition.operation != 'recorded_answer_replay' or condition.parameter is not None
+            or condition.parameter_status != 'not_applicable'):
+        return ()
+    if (condition.action == 'clarify_record' and condition.source_availability == 'current_unselected'
+            and condition.source_approval == 'unknown'):
+        return ('Please choose which complete record to quote from the current record choices.',
+                '現在の候補から、再掲する記録を選んでください。')
+    if (condition.action == 'reselect_record' and condition.source_availability == 'selection_unavailable'
+            and condition.source_approval in {'unknown', 'not_applicable'}):
+        return ('Please choose the record again from the current record choices.',
+                '現在の候補から、再掲する記録をもう一度選んでください。')
+    return ()
+
+
 _PARAMETERS = {
     "data retention period": "data_retention_period",
     "data-retention period": "data_retention_period",

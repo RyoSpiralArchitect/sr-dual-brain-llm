@@ -2,6 +2,7 @@
 from .callosum import CallosumClosed, RequestAbandoned
 from .memory_evidence import request_memory_context
 from .prefrontal_cortex import PrefrontalCortex
+from .detail_contract import FIELDS as DETAIL_FIELDS
 
 
 async def _respond(req, memory, model):
@@ -18,7 +19,7 @@ async def _respond(req, memory, model):
         detail = await model.deepen(qid, req["question"], req.get("draft_sum", ""), memory,
             temperature=req.get("temperature", .7), budget=req.get("budget", "small"),
             context=req.get("context"), psychoid_projection=req.get("psychoid_attention_bias"))
-        return {"notes_sum": detail["notes_sum"], "confidence_r": detail["confidence_r"]}
+        return {key: detail[key] for key in DETAIL_FIELDS if key in detail}
     if kind == "ASK_CRITIC":
         critique = await model.criticise_reasoning(qid, req.get("question", ""),
             req.get("draft", "") or req.get("draft_sum", "") or "",
