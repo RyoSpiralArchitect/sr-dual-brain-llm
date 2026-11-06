@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_record_selection_integration",
+  "call_limit": 32,
+  "clock": 1793847600.0,
+  "cases": [
+    {
+      "id": "integrated_english",
+      "question": "Repeat Project Willow Cove recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Willow Cove data retention period?",
+          "answer": "Recorded retention: 14 days.",
+          "retrieval_scope": "Willow Cove",
+          "scope_aliases": [
+            "Willow Cove"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Willow Cove backup location?",
+          "answer": "Backup location: Kochi.",
+          "retrieval_scope": "Willow Cove",
+          "scope_aliases": [
+            "Willow Cove"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "14 days",
+        "Kochi"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended without choosing a value or inventing record titles. Retain any optional request to paste text as a wording limitation, rather than treating structural delivery as a semantic grade.",
+      "system2_mode": "on"
+    },
+    {
+      "id": "integrated_japanese",
+      "question": "銅鷺の記録された回答をそのまま再掲して。",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Copper Heron data retention period?",
+          "answer": "Recorded retention: 16 days.",
+          "retrieval_scope": "Copper Heron",
+          "scope_aliases": [
+            "Copper Heron",
+            "銅鷺"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Copper Heron backup location?",
+          "answer": "Backup location: Uji.",
+          "retrieval_scope": "Copper Heron",
+          "scope_aliases": [
+            "Copper Heron",
+            "銅鷺"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "16 days",
+        "Uji"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended without choosing a value or inventing record titles. Retain any optional request to paste text as a wording limitation, rather than treating structural delivery as a semantic grade."
+    },
+    {
+      "id": "integrated_caller_pronoun",
+      "question": "Repeat that recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Ash Harbor data retention period?",
+          "answer": "Recorded retention: 20 days.",
+          "retrieval_scope": "Ash Harbor",
+          "scope_aliases": [
+            "Ash Harbor"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Ash Harbor backup location?",
+          "answer": "Backup location: Matsue.",
+          "retrieval_scope": "Ash Harbor",
+          "scope_aliases": [
+            "Ash Harbor"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [
+        "period",
+        "backup"
+      ],
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "expected_intent": false,
+      "expected_bounded_source_count": 2,
+      "forbidden_values": [
+        "20 days",
+        "Matsue"
+      ],
+      "manual_criterion": "Ask which existing complete record is intended without choosing a value or inventing record titles. Retain any optional request to paste text as a wording limitation, rather than treating structural delivery as a semantic grade.",
+      "system2_mode": "off",
+      "memory_context": {
+        "id": "Ash Harbor",
+        "aliases": [
+          "Ash Harbor"
+        ],
+        "remember": false
+      }
+    },
+    {
+      "id": "integrated_unique_expiry",
+      "question": "Repeat Project River Wren recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "current",
+          "question": "Project River Wren data retention period?",
+          "answer": "Recorded retention: 25 days.",
+          "retrieval_scope": "River Wren",
+          "scope_aliases": [
+            "River Wren"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "expired",
+          "question": "Project River Wren backup location?",
+          "answer": "EXPIRED_INTEGRATION_51_DAYS",
+          "retrieval_scope": "River Wren",
+          "scope_aliases": [
+            "River Wren"
+          ],
+          "timestamp": 1793847500.0,
+          "valid_until": 1793847599.0
+        }
+      ],
+      "requested_operation": "recorded_answer_replay",
+      "preapprove_qids": [],
+      "target_qid": "current",
+      "expected_sources": [
+        "current"
+      ],
+      "expected_action": null,
+      "expected_intent": true,
+      "expected_bounded_source_count": 1,
+      "forbidden_values": [
+        "EXPIRED_INTEGRATION_51_DAYS"
+      ],
+      "manual_criterion": "Quote the complete actual current source exactly. The expired second record must neither be exposed nor create selection ambiguity."
+    },
+    {
+      "id": "integrated_fact",
+      "question": "What is Project Slate Birch's data retention period?",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Project Slate Birch data retention period?",
+          "answer": "Recorded retention: 26 days.",
+          "retrieval_scope": "Slate Birch",
+          "scope_aliases": [
+            "Slate Birch"
+          ],
+          "timestamp": 1793847500.0
+        },
+        {
+          "qid": "backup",
+          "question": "Project Slate Birch backup location?",
+          "answer": "Backup location: Hikone.",
+          "retrieval_scope": "Slate Birch",
+          "scope_aliases": [
+            "Slate Birch"
+          ],
+          "timestamp": 1793847500.0
+        }
+      ],
+      "requested_operation": "fact_lookup",
+      "preapprove_qids": [],
+      "required_source": "period",
+      "expected_action": null,
+      "expected_intent": false,
+      "expected_bounded_source_count": 0,
+      "forbidden_values": [],
+      "manual_criterion": "Report the supplied 26-day period with attribution. Ordinary factual support must not acquire whole-record selection advice."
+    }
+  ]
+}

@@ -1,0 +1,1834 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "experiment": "prospective_record_selection_confirmation",
+    "version": 1,
+    "fixture_sha256": "61c5ea5302d5e72e7e8d519a7a91a2a0147f0f4d4aa744fa26c699ecf39419d5",
+    "code_sha256": "36684635bb6033426e57ac7a9779b5ea5a1d62792dec14af45cee2246635eed8",
+    "config": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 2048
+      }
+    },
+    "call_limit": 64,
+    "runtime": {
+      "DUALBRAIN_SYSTEM2_PRIORITY_AUTO": "balanced",
+      "REASONING_DIAL": "evaluative",
+      "DUALBRAIN_MEMORY_CONVERSATION_CONTEXT": "1",
+      "DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_MONITOR_MODE": "auto",
+      "DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_DEFAULT_MODE_REFLECTION_INJECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE": "auto",
+      "DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE": "off",
+      "DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_TEMPERATURE_ADJUSTMENT_MODE": "auto",
+      "DUALBRAIN_MODULE_BASAL_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN": "0"
+    },
+    "transport": "production_nonstream_json",
+    "torch_available": true,
+    "semantic_grading": "not_assessed_manual_observations_only",
+    "source_diagnostics": "independent_record_assessment_v3",
+    "case_ids": [
+      "english_selection",
+      "japanese_selection",
+      "pronoun_selection",
+      "caller_selection",
+      "ineligible_selection",
+      "unique_quote",
+      "expired_second",
+      "factual_lookup",
+      "extra_clause"
+    ],
+    "persistence": "in_memory_engine_sessions",
+    "support_preparation": "once_on_predeclared_qids_under_ordinary_policy_before_runtime",
+    "repeat_rule": "one_fixed_order_no_paid_rescue"
+  },
+  "complete": true,
+  "source_revision": "fd69cf82bfc5b1f2d93c37c08911002581c01d7c",
+  "live_provider_calls": 32,
+  "usage": {
+    "calls": 32,
+    "input_tokens": 20783,
+    "output_tokens": 4499,
+    "known_input_tokens": 20783,
+    "known_output_tokens": 4499,
+    "unknown_usage_calls": 0,
+    "cancelled_calls": 0,
+    "failed_calls": 0
+  },
+  "calls_by_role": {
+    "support": 9,
+    "draft": 9,
+    "critic": 3,
+    "detail": 5,
+    "integration": 6
+  },
+  "served_models": [
+    "gpt-6-luna"
+  ],
+  "contract_failures": [],
+  "canonical_sha256": "7c4bf3de8cc123b87cb6523a5094bfc2ce258038af77fa728a52faf0b1728abb",
+  "rows": [
+    {
+      "id": "english_selection",
+      "status": "ok",
+      "system2": {
+        "mode": "on",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 1,
+        "critic_responses": 1,
+        "attempted_rounds": [
+          1
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 1,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "available_aliases",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "cached",
+            "candidates": 2,
+            "cached_candidates": 2,
+            "checked_candidates": 0,
+            "approved": 2
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2295,
+        "output_tokens": 336,
+        "known_input_tokens": 2295,
+        "known_output_tokens": 336,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "critic": 1
+      },
+      "elapsed_ms": 4453.540033980971,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "ready",
+          "candidates": 2,
+          "cached_candidates": 0,
+          "checked_candidates": 2,
+          "approved": 2
+        },
+        "decisions": {
+          "period": true,
+          "backup": true
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 317,
+          "output_tokens": 190,
+          "known_input_tokens": 317,
+          "known_output_tokens": 190,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 2,
+        "input_tokens": 1978,
+        "output_tokens": 146,
+        "known_input_tokens": 1978,
+        "known_output_tokens": 146,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "draft": 1,
+        "critic": 1
+      },
+      "bounded_source_count": 2,
+      "packet_leak_roles": [],
+      "answer_sha256": "68a4a0d78414b0809f2189465ca912b9655ebe1096137388cdb8cb2ea4e4f631"
+    },
+    {
+      "id": "japanese_selection",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "available_aliases",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "cached",
+            "candidates": 2,
+            "cached_candidates": 2,
+            "checked_candidates": 0,
+            "approved": 2
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2668,
+        "output_tokens": 1075,
+        "known_input_tokens": 2668,
+        "known_output_tokens": 1075,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "elapsed_ms": 6676.627031003591,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "ready",
+          "candidates": 2,
+          "cached_candidates": 0,
+          "checked_candidates": 2,
+          "approved": 2
+        },
+        "decisions": {
+          "period": true,
+          "backup": true
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 328,
+          "output_tokens": 709,
+          "known_input_tokens": 328,
+          "known_output_tokens": 709,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 3,
+        "input_tokens": 2340,
+        "output_tokens": 366,
+        "known_input_tokens": 2340,
+        "known_output_tokens": 366,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "bounded_source_count": 2,
+      "packet_leak_roles": [],
+      "answer_sha256": "9cf8a38f35aa42079bb368453bb1409557edf6785706394f9aeed5626f95b00e"
+    },
+    {
+      "id": "pronoun_selection",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "available_aliases",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "cached",
+            "candidates": 2,
+            "cached_candidates": 2,
+            "checked_candidates": 0,
+            "approved": 2
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2590,
+        "output_tokens": 801,
+        "known_input_tokens": 2590,
+        "known_output_tokens": 801,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "elapsed_ms": 6018.200544000138,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "ready",
+          "candidates": 2,
+          "cached_candidates": 0,
+          "checked_candidates": 2,
+          "approved": 2
+        },
+        "decisions": {
+          "period": true,
+          "backup": true
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 319,
+          "output_tokens": 470,
+          "known_input_tokens": 319,
+          "known_output_tokens": 470,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 3,
+        "input_tokens": 2271,
+        "output_tokens": 331,
+        "known_input_tokens": 2271,
+        "known_output_tokens": 331,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "bounded_source_count": 2,
+      "packet_leak_roles": [],
+      "answer_sha256": "e99d82176e0d6077e5775e2279b8fc27725c21ab5853c74ae0a05933a2e3ceac"
+    },
+    {
+      "id": "caller_selection",
+      "status": "ok",
+      "system2": {
+        "mode": "off",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "cached",
+            "candidates": 2,
+            "cached_candidates": 2,
+            "checked_candidates": 0,
+            "approved": 2
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2578,
+        "output_tokens": 559,
+        "known_input_tokens": 2578,
+        "known_output_tokens": 559,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "elapsed_ms": 6439.435076987138,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "ready",
+          "candidates": 2,
+          "cached_candidates": 0,
+          "checked_candidates": 2,
+          "approved": 2
+        },
+        "decisions": {
+          "period": true,
+          "backup": true
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 314,
+          "output_tokens": 267,
+          "known_input_tokens": 314,
+          "known_output_tokens": 267,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 3,
+        "input_tokens": 2264,
+        "output_tokens": 292,
+        "known_input_tokens": 2264,
+        "known_output_tokens": 292,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "bounded_source_count": 2,
+      "packet_leak_roles": [],
+      "answer_sha256": "3b98b8a4ba2a9f9d61c800d3ffabc016b8bc06fd96e98315ca27f976f4f8baf6"
+    },
+    {
+      "id": "ineligible_selection",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "available_aliases",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "cached",
+            "candidates": 1,
+            "cached_candidates": 1,
+            "checked_candidates": 0,
+            "approved": 1
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2540,
+        "output_tokens": 481,
+        "known_input_tokens": 2540,
+        "known_output_tokens": 481,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "elapsed_ms": 6430.460996023612,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "ready",
+          "candidates": 1,
+          "cached_candidates": 0,
+          "checked_candidates": 1,
+          "approved": 1
+        },
+        "decisions": {
+          "period": true
+        },
+        "usage": {
+          "calls": 1,
+          "input_tokens": 290,
+          "output_tokens": 124,
+          "known_input_tokens": 290,
+          "known_output_tokens": 124,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 3,
+        "input_tokens": 2250,
+        "output_tokens": 357,
+        "known_input_tokens": 2250,
+        "known_output_tokens": 357,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "bounded_source_count": 2,
+      "packet_leak_roles": [],
+      "answer_sha256": "f2c5d231b2cd5b89d377314f49fdd72e48bddb6f40f4f74b8793fd580523ee5b"
+    },
+    {
+      "id": "unique_quote",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [
+        "current"
+      ],
+      "condition": null,
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "ready",
+            "candidates": 1,
+            "cached_candidates": 0,
+            "checked_candidates": 1,
+            "approved": 1
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 2,
+        "input_tokens": 831,
+        "output_tokens": 77,
+        "known_input_tokens": 831,
+        "known_output_tokens": 77,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      },
+      "elapsed_ms": 2819.2149279930163,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "pass",
+          "basis": "utf8_exact",
+          "answer_bytes": 28,
+          "target_bytes": 28,
+          "answer_sha256": "45bd321c7e49ab53afa436098e5267f543c2ef917c3faf41aed9cb009ea80aac",
+          "target_sha256": "45bd321c7e49ab53afa436098e5267f543c2ef917c3faf41aed9cb009ea80aac"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true,
+            "unique_source": true,
+            "target_binding": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "current",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "pass",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": null,
+        "exact_replay": true,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": null,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "not_planned"
+        },
+        "decisions": {},
+        "usage": {
+          "calls": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "known_input_tokens": 0,
+          "known_output_tokens": 0,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 2,
+        "input_tokens": 831,
+        "output_tokens": 77,
+        "known_input_tokens": 831,
+        "known_output_tokens": 77,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "support": 1,
+        "draft": 1
+      },
+      "bounded_source_count": 1,
+      "packet_leak_roles": [],
+      "answer_sha256": "07fd3186e22ddb16cc94863760509f0880a003db7e843be70b3bd6df2d556864"
+    },
+    {
+      "id": "expired_second",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [
+        "current"
+      ],
+      "condition": null,
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "ready",
+            "candidates": 1,
+            "cached_candidates": 0,
+            "checked_candidates": 1,
+            "approved": 1
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 2,
+        "input_tokens": 831,
+        "output_tokens": 63,
+        "known_input_tokens": 831,
+        "known_output_tokens": 63,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1
+      },
+      "elapsed_ms": 2618.794500012882,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "pass",
+          "basis": "utf8_exact",
+          "answer_bytes": 28,
+          "target_bytes": 28,
+          "answer_sha256": "31a2cee397b74170fd11ecdba9cb29c59e1dcca5174ade333c3bc093f8fd2ab5",
+          "target_sha256": "31a2cee397b74170fd11ecdba9cb29c59e1dcca5174ade333c3bc093f8fd2ab5"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true,
+            "unique_source": true,
+            "target_binding": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "current",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "pass",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": true,
+        "missing_condition": true,
+        "scope_no_leak": true,
+        "exact_replay": true,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": true,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "not_planned"
+        },
+        "decisions": {},
+        "usage": {
+          "calls": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "known_input_tokens": 0,
+          "known_output_tokens": 0,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 2,
+        "input_tokens": 831,
+        "output_tokens": 63,
+        "known_input_tokens": 831,
+        "known_output_tokens": 63,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "support": 1,
+        "draft": 1
+      },
+      "bounded_source_count": 1,
+      "packet_leak_roles": [],
+      "answer_sha256": "16a70d6ae9d4d8468780483b9d1e93e1add1852002e59e01e9992edc730fef34"
+    },
+    {
+      "id": "factual_lookup",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 2,
+        "critic_responses": 2,
+        "attempted_rounds": [
+          1,
+          2
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 2,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          },
+          {
+            "round": 2,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [
+        "period"
+      ],
+      "condition": null,
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "ready",
+            "candidates": 2,
+            "cached_candidates": 0,
+            "checked_candidates": 2,
+            "approved": 1
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 5,
+        "input_tokens": 4135,
+        "output_tokens": 575,
+        "known_input_tokens": 4135,
+        "known_output_tokens": 575,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "critic": 2,
+        "integration": 1
+      },
+      "elapsed_ms": 10813.326942006825,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "period",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": null,
+        "missing_condition": true,
+        "scope_no_leak": null,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": null,
+        "required_source_available": true
+      },
+      "support_preparation": {
+        "result": {
+          "status": "not_planned"
+        },
+        "decisions": {},
+        "usage": {
+          "calls": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "known_input_tokens": 0,
+          "known_output_tokens": 0,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 5,
+        "input_tokens": 4135,
+        "output_tokens": 575,
+        "known_input_tokens": 4135,
+        "known_output_tokens": 575,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "critic": 2,
+        "integration": 1
+      },
+      "bounded_source_count": 0,
+      "packet_leak_roles": [],
+      "answer_sha256": "e7e070c461535f12d039343e55236d9628c7dee9eca681a5a6c013dc8723d07c"
+    },
+    {
+      "id": "extra_clause",
+      "status": "ok",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "commit": {
+        "state": null,
+        "operation_id": null
+      },
+      "source_qids": [
+        "current"
+      ],
+      "condition": null,
+      "preparations": [
+        {
+          "status": "disabled",
+          "answerability": {
+            "status": "ready",
+            "candidates": 1,
+            "cached_candidates": 0,
+            "checked_candidates": 1,
+            "approved": 1
+          }
+        }
+      ],
+      "client_failures": [
+        {
+          "role": "left",
+          "count": 0,
+          "types": []
+        },
+        {
+          "role": "right",
+          "count": 0,
+          "types": []
+        }
+      ],
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2315,
+        "output_tokens": 532,
+        "known_input_tokens": 2315,
+        "known_output_tokens": 532,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "elapsed_ms": 7866.634039004566,
+      "stages_available": true,
+      "diagnostics": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "current",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "contracts": {
+        "answer_available": true,
+        "accounting": true,
+        "source_selection": null,
+        "missing_condition": true,
+        "scope_no_leak": null,
+        "exact_replay": null,
+        "durable_commit": null,
+        "explicit_critic_mode": null,
+        "healthy_external_review": null,
+        "provider_stages_available": true,
+        "expected_condition": true,
+        "expected_intent": true,
+        "bounded_source_count": true,
+        "no_record_text_in_generation": null,
+        "required_source_available": null
+      },
+      "support_preparation": {
+        "result": {
+          "status": "not_planned"
+        },
+        "decisions": {},
+        "usage": {
+          "calls": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "known_input_tokens": 0,
+          "known_output_tokens": 0,
+          "unknown_usage_calls": 0,
+          "cancelled_calls": 0,
+          "failed_calls": 0
+        }
+      },
+      "runtime_usage": {
+        "calls": 4,
+        "input_tokens": 2315,
+        "output_tokens": 532,
+        "known_input_tokens": 2315,
+        "known_output_tokens": 532,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "runtime_calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "detail": 1,
+        "integration": 1
+      },
+      "bounded_source_count": 0,
+      "packet_leak_roles": [],
+      "answer_sha256": "86fa90dd2dac9647378098fde612392c56343322b35e6743c395c22a2ea07c59"
+    }
+  ],
+  "replay": {
+    "complete": true,
+    "live_provider_calls": 0,
+    "unexpected_blocked_http_attempts": 0,
+    "canonical_sha256": "7c4bf3de8cc123b87cb6523a5094bfc2ce258038af77fa728a52faf0b1728abb",
+    "canonical_equal": true
+  },
+  "artifact_sha256": {
+    "live/journal.json": "6846adcf48f7efa61e0b86c052c8866df49da9adc1e666f91df6fef096199cad",
+    "live/report.json": "381cbb2a72dbdd0af9dc4fcf91f7e028b8a9f08e98d5ce9a7aa412bda7f89a90",
+    "replay/journal.json": "6846adcf48f7efa61e0b86c052c8866df49da9adc1e666f91df6fef096199cad",
+    "replay/report.json": "e5e3b4d84bffa8dc6a9eef0facb757d820fde2203a4500c462aa5418a2d06e46"
+  }
+}
