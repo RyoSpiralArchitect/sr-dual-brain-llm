@@ -104,6 +104,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     system2_ev = _last_event(events, "system2_mode") or {}
     system2_execution_ev = _last_event(events, "system2_execution") or {}
     consultation_ev = _last_event(events, "consultation_route")
+    detail_ev = _last_event(events, 'detail_execution')
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
     advisor_timing = {}
@@ -371,6 +372,9 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         }
 
     metrics: dict[str, Any] = {
+        'detail': ({key: detail_ev.get(key) for key in
+                    ('version', 'deliveries', 'usable', 'external_complete', 'fallback_used')}
+                   if detail_ev is not None else None),
         "coherence": {
             "combined": signal.get("combined"),
             "tension": signal.get("tension"),

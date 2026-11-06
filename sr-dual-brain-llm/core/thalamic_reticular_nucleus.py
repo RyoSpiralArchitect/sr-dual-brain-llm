@@ -55,6 +55,7 @@ class GateFacts:
     reference_resolved: bool = False
     literal_replay_requested: bool = False
     full_source_replayed: bool = False
+    bounded_clarification_complete: bool = False
     micro_known: bool = False
     micro_issues: int = 0
     micro_confidence: float | None = None
@@ -142,6 +143,7 @@ AUTO_REASONS = frozenset({
     "time_budget_exhausted", "insufficient_time_budget", "invalid_timing_signal", "bounded_recovery_probe",
     "bounded_recovery_confirmation", "unusable_recovery_output", "invalid_recovery_signal", "recovery_unconfirmed",
     "local_controls_ready",
+    "bounded_record_clarification",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -204,6 +206,12 @@ def _auto_selective_consultation(facts: GateFacts) -> tuple[bool, str]:
         return False, "unknown_signal"
     if facts.confidence < 0.85 or facts.risk != 0:
         return False, "risk_or_uncertainty"
+    if facts.bounded_clarification_complete is True:
+        if type(facts.approved_records) is not int or facts.approved_records != 0:
+            return False, "unsupported_record_count"
+        if not facts.reference_resolved:
+            return False, "reference_unresolved"
+        return True, "bounded_record_clarification"
     if not facts.literal_replay_requested:
         return False, "literal_replay_not_requested"
     if not facts.full_source_replayed:
@@ -325,7 +333,7 @@ def _auto_basal_consult_promotion(facts: GateFacts) -> tuple[bool, str]:
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
     CONVERSATION_SELECTIVE_CONSULTATION: ModuleSpec(
         module_id=CONVERSATION_SELECTIVE_CONSULTATION,
-        phase="routing", policy_version="literal_replay_v2",
+        phase="routing", policy_version="literal_or_choice_clarification_v3",
         mode_env="DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE",
         legacy_env="DUALBRAIN_CONVERSATION_SELECTIVE_CONSULT",
         default_mode=GateMode.OFF, auto_policy=_auto_selective_consultation,

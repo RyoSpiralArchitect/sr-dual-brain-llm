@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_bounded_clarification_detail_confirmation",
+  "clock": 1793955600.0,
+  "cases": [
+    {
+      "id": "choose_english",
+      "scope": "Ivory Meadow",
+      "aliases": ["Ivory Meadow"],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [
+        {"qid":"period","question":"Ivory Meadow retention policy?","answer":"Recorded retention: 37 days.","timestamp":1793955500.0,"retrieval_scope":"Ivory Meadow","scope_aliases":["Ivory Meadow"]},
+        {"qid":"backup","question":"Ivory Meadow backup location?","answer":"Recorded backup: Kushiro.","timestamp":1793955510.0,"retrieval_scope":"Ivory Meadow","scope_aliases":["Ivory Meadow"]}
+      ],
+      "arms": ["selective_off", "selective_auto", "forced_on", "forced_off"],
+      "expected_state": "ambiguous_record",
+      "expected_sources": [],
+      "expected_action": "clarify_record",
+      "forbidden_values": ["37 days", "Kushiro"],
+      "manual_criterion": "Ask which current complete record to quote, without copying text, choosing by recency or adding claims."
+    },
+    {
+      "id": "reselect_japanese",
+      "scope": "雪梟",
+      "aliases": ["雪梟"],
+      "question": "記録された回答をそのまま再掲して",
+      "records": [
+        {"qid":"period","question":"雪梟 retention policy?","answer":"Recorded retention: 41 days.","timestamp":1793955500.0,"retrieval_scope":"雪梟","scope_aliases":["雪梟"]},
+        {"qid":"backup","question":"雪梟 backup location?","answer":"Recorded backup: Matsue.","timestamp":1793955510.0,"retrieval_scope":"雪梟","scope_aliases":["雪梟"]}
+      ],
+      "change_qid": "backup",
+      "changed_answer": "UNAPPROVED_NEW_LOCATION",
+      "arms": ["selective_off", "selective_auto"],
+      "expected_state": "stale_selection",
+      "expected_sources": [],
+      "expected_action": "reselect_record",
+      "forbidden_values": ["41 days", "Matsue", "UNAPPROVED_NEW_LOCATION"],
+      "manual_criterion": "Ask to choose again from current candidates, with no old, changed or other record body."
+    }
+  ]
+}

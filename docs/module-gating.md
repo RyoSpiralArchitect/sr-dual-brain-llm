@@ -107,7 +107,7 @@ ACC/amygdala overrides retain authority. System2 `auto` defaults to **precision*
 selective routing still requires an explicit non-precision choice, such as
 `DUALBRAIN_SYSTEM2_PRIORITY_AUTO=balanced`. The registry never changes that choice.
 
-Its automatic predicate accepts only a positively recognized single literal
+Its literal-replay branch accepts a positively recognized single literal
 record-repeat request, a resolved reference, one currently approved record,
 exact complete draft/source-answer equality,
 high finite confidence (`>= 0.85`), and zero
@@ -117,7 +117,7 @@ and “Amberの記録をそのまま再掲して”; the scope resolver retains 
 position so only an allowed identity slot can participate in whole-request
 matching. Other phrasing falls back normally.
 
-`literal_replay_v2` binds that request to one live primary source in the whole
+The literal-replay branch binds that request to one live primary source in the whole
 scope before retrieval ranking. The support checker receives a typed quotation
 operation and must quote the entire recorded answer; approvals bind exact query,
 source, scope and policy. A correction plus “その記録をそのまま再掲して” or a bounded
@@ -132,6 +132,20 @@ Unknown coverage, reasoning, review, calculations, or multiple requested
 conditions retain legacy routing. In `auto`, only a child router's `skip` proposal
 may change routing; `consult` and `defer` preserve the legacy decision. Manual
 `on` preserves the existing router's full skip/consult/defer behavior within scope.
+
+`literal_or_choice_clarification_v3` also admits two bounded source-free states:
+`clarify_record` with current unselected records, and `reselect_record` with an
+unavailable selection. The fresh typed memory condition must resolve the caller's
+reference and recognize the whole-record grammar. There must be no approved
+record, and the draft must equal one of the fixed English/Japanese selection
+replies in `record_choice_clarifications`. The PFC supplies these optional exact
+reply forms; arbitrary paraphrases, extra claims, changed conditions, other
+missing-evidence actions and unknown signals retain ordinary routing. High finite
+confidence and zero risk remain required. No semantic classifier is introduced.
+The route reports `bounded_record_clarification` and the final System2 reason
+`selective_record_clarification`, without claiming supported source delivery.
+Default OFF and all protected System2/Director/priority/override rules remain.
+
 
 ACC automatic admission requires a known cheap micro-critic result or a
 risk/uncertainty signal (finite risk above zero or confidence below `0.85`).
@@ -355,6 +369,33 @@ both profiles. Whole-turn attempts were 26 versus 25, but usable advisor outputs
 were 8 versus 6. A successful probe was followed by an ordinary timeout; bounded
 recovery works mechanically, while stable utility under latency jitter remains
 an open evaluation target. No cost or quality improvement is established.
+
+## Ordinary detail completion
+
+Built-in `RightBrainModel.deepen` requires nonempty terminal output and disables
+continuation within its existing 450/900-token budget. Its typed result separates
+external, heuristic and legacy output; empty, incomplete, invalid/refused and
+provider failures carry no usable notes or positive confidence. Configured
+provider failures are not replaced with simulated local success.
+
+The worker retains this metadata. A known returned unusable detail result keeps
+the draft without repeating the same provider call. A missing/error delivery
+can use the existing one direct fallback, whose result is checked too. Explicit
+legacy empty text is an unusable returned result; a legacy packet missing the
+notes field is an unknown delivery. Custom nonempty legacy notes remain compatible
+but carry no proof of external completion. Actual cancellation still propagates.
+This is an operational completion contract, outside optional-module admission.
+
+`detail_execution` and `metrics.detail` expose bounded delivery observations,
+usability, external completion and fallback use, without notes or exception text.
+Delivery counts are not provider HTTP attempts or billed usage. The event is
+emitted when the stage resolves; absent metrics cannot establish a completed
+delivery (the phase may be unreached or abandoned). Critic validation and System2 execution retain
+their separate accounting. `success` requires usable returned material, including
+after direct fallback; an empty fallback cannot improve success feedback.
+The [controlled live clarification comparison](benchmarks/clarification-detail-2026-11-06.md)
+reports shared-draft routing costs, explicit-mode controls and separately labeled
+injected completion failures.
 
 ## Facts and observability
 
