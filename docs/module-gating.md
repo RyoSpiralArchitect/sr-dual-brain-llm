@@ -393,6 +393,9 @@ emitted when the stage resolves; absent metrics cannot establish a completed
 delivery (the phase may be unreached or abandoned). Critic validation and System2 execution retain
 their separate accounting. `success` requires usable returned material, including
 after direct fallback; an empty fallback cannot improve success feedback.
+The [controlled live clarification comparison](benchmarks/clarification-detail-2026-11-06.md)
+reports shared-draft routing costs, explicit-mode controls and separately labeled
+injected completion failures.
 
 ## Facts and observability
 
