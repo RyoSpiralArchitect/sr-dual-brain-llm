@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_record_choices_confirmation",
+  "clock": 1793923200.0,
+  "cases": [
+    {
+      "id": "selected_english",
+      "scope": "Cedar Port",
+      "aliases": [
+        "Cedar Port"
+      ],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Cedar Port retention policy?",
+          "answer": "Recorded retention: 12 days.",
+          "retrieval_scope": "Cedar Port",
+          "scope_aliases": [
+            "Cedar Port"
+          ],
+          "timestamp": 1793923100.0
+        },
+        {
+          "qid": "backup",
+          "question": "Cedar Port backup location?",
+          "answer": "Recorded backup: Yokohama.",
+          "retrieval_scope": "Cedar Port",
+          "scope_aliases": [
+            "Cedar Port"
+          ],
+          "timestamp": 1793923110.0
+        }
+      ],
+      "choose_label": "backup",
+      "target_qid": "backup",
+      "requested_operation": "recorded_answer_replay",
+      "expected_state": "bound",
+      "expected_sources": [
+        "backup"
+      ],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "Quote only the explicitly selected current record exactly, without choosing another record or claiming independent verification.",
+      "system2_mode": "on"
+    },
+    {
+      "id": "selected_japanese",
+      "scope": "青鷺",
+      "aliases": [
+        "青鷺"
+      ],
+      "question": "記録された回答をそのまま再掲して",
+      "records": [
+        {
+          "qid": "period",
+          "question": "青鷺 retention policy?",
+          "answer": "Recorded retention: 19 days.",
+          "retrieval_scope": "青鷺",
+          "scope_aliases": [
+            "青鷺"
+          ],
+          "timestamp": 1793923100.0
+        },
+        {
+          "qid": "backup",
+          "question": "青鷺 backup location?",
+          "answer": "Recorded backup: Hakodate.",
+          "retrieval_scope": "青鷺",
+          "scope_aliases": [
+            "青鷺"
+          ],
+          "timestamp": 1793923110.0
+        }
+      ],
+      "choose_label": "retention",
+      "target_qid": "period",
+      "requested_operation": "recorded_answer_replay",
+      "expected_state": "bound",
+      "expected_sources": [
+        "period"
+      ],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "Quote only the explicitly selected current record exactly, without choosing another record or claiming independent verification.",
+      "system2_mode": "off"
+    },
+    {
+      "id": "changed_selection",
+      "scope": "Lime Cove",
+      "aliases": [
+        "Lime Cove"
+      ],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Lime Cove retention policy?",
+          "answer": "Recorded retention: 23 days.",
+          "retrieval_scope": "Lime Cove",
+          "scope_aliases": [
+            "Lime Cove"
+          ],
+          "timestamp": 1793923100.0
+        },
+        {
+          "qid": "backup",
+          "question": "Lime Cove backup location?",
+          "answer": "Recorded backup: Morioka.",
+          "retrieval_scope": "Lime Cove",
+          "scope_aliases": [
+            "Lime Cove"
+          ],
+          "timestamp": 1793923110.0
+        }
+      ],
+      "choose_label": "backup",
+      "target_qid": null,
+      "requested_operation": "fact_lookup",
+      "expected_state": "stale_selection",
+      "expected_sources": [],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "Ask to choose again from current candidates, without repasting text or substituting a different record.",
+      "changed_answer": "CHANGED_UNAPPROVED_VALUE",
+      "change_qid": "backup",
+      "expected_action": "reselect_record",
+      "forbidden_values": [
+        "Morioka",
+        "CHANGED_UNAPPROVED_VALUE",
+        "23 days"
+      ]
+    },
+    {
+      "id": "durable_selected",
+      "scope": "Quartz Shore",
+      "aliases": [
+        "Quartz Shore"
+      ],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [
+        {
+          "qid": "period",
+          "question": "Quartz Shore retention policy?",
+          "answer": "Recorded retention: 27 days.",
+          "retrieval_scope": "Quartz Shore",
+          "scope_aliases": [
+            "Quartz Shore"
+          ],
+          "timestamp": 1793923100.0
+        },
+        {
+          "qid": "backup",
+          "question": "Quartz Shore backup location?",
+          "answer": "Recorded backup: Wakayama.",
+          "retrieval_scope": "Quartz Shore",
+          "scope_aliases": [
+            "Quartz Shore"
+          ],
+          "timestamp": 1793923110.0
+        }
+      ],
+      "choose_label": "backup",
+      "target_qid": "backup",
+      "requested_operation": "recorded_answer_replay",
+      "expected_state": "bound",
+      "expected_sources": [
+        "backup"
+      ],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "Quote only the explicitly selected current record exactly, without choosing another record or claiming independent verification.",
+      "durable": true
+    },
+    {
+      "id": "restart_rejected",
+      "scope": "Quartz Shore",
+      "aliases": [
+        "Quartz Shore"
+      ],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [],
+      "choose_label": "backup",
+      "target_qid": null,
+      "requested_operation": "fact_lookup",
+      "expected_state": "invalid_selection",
+      "expected_sources": [],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "The prior incarnation reference cannot select anything after restart; ask for current choices without source text.",
+      "durable": true,
+      "expected_action": "reselect_record",
+      "forbidden_values": [
+        "Wakayama",
+        "27 days"
+      ]
+    },
+    {
+      "id": "durable_relisted",
+      "scope": "Quartz Shore",
+      "aliases": [
+        "Quartz Shore"
+      ],
+      "question": "Repeat the recorded answer verbatim.",
+      "records": [],
+      "choose_label": "backup",
+      "target_qid": "backup",
+      "requested_operation": "recorded_answer_replay",
+      "expected_state": "bound",
+      "expected_sources": [
+        "backup"
+      ],
+      "primary_qids": [
+        "period",
+        "backup"
+      ],
+      "manual_criterion": "Quote only the explicitly selected current record exactly, without choosing another record or claiming independent verification.",
+      "durable": true
+    }
+  ]
+}

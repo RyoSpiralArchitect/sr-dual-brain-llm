@@ -910,6 +910,11 @@ def _memory_request(params):
         "system2_mode", "reasoning_mode", "executive_mode", "executive_observer_mode")}
 
 
+def _has_record_ref(params):
+    metadata = params.get('memory_context')
+    return isinstance(metadata, dict) and 'record_ref' in metadata
+
+
 async def _prepare_memory_request(session, params):
     op_id = params.get("memory_operation_id")
     durable = session.state_store is not None and session.memory.conversation_context
@@ -1037,6 +1042,8 @@ async def _handle_process(
         replay = await _prepare_memory_request(session, params)
     if replay is not None:
         return replay
+    if _has_record_ref(params) and session.state_store is not None and session.memory.conversation_context:
+        await _reload_committed_memory(session)
 
     session.telemetry.clear()
 
@@ -1059,10 +1066,12 @@ async def _handle_process(
         vision_images=vision_images or None,
         memory_context=params.get("memory_context"),
     )
+    selection = session.memory.selection_status(question)
+    selection_result = {"record_selection": selection} if selection is not None else {}
     state_store = session.state_store
     memory_receipt = await _persist_session_memory(
         session, qid, operation_id=params.get("memory_operation_id"), request=_memory_request(params),
-        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}},
+        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}, **selection_result},
     )
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
@@ -1078,6 +1087,7 @@ async def _handle_process(
         "answer": answer,
         "session_id": session.session_id,
         "metrics": _extract_metrics(list(session.telemetry.events)),
+        **selection_result,
     }
     if memory_receipt is not None:
         result["memory_commit"] = memory_receipt
@@ -1156,6 +1166,8 @@ async def _handle_process_stream(
         replay = await _prepare_memory_request(session, params)
     if replay is not None:
         return replay
+    if _has_record_ref(params) and session.state_store is not None and session.memory.conversation_context:
+        await _reload_committed_memory(session)
 
     session.telemetry.clear()
 
@@ -1188,10 +1200,12 @@ async def _handle_process_stream(
         vision_images=vision_images or None,
         memory_context=params.get("memory_context"),
     )
+    selection = session.memory.selection_status(question)
+    selection_result = {"record_selection": selection} if selection is not None else {}
     state_store = session.state_store
     memory_receipt = await _persist_session_memory(
         session, qid, operation_id=params.get("memory_operation_id"), request=_memory_request(params),
-        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}},
+        result={"qid": qid, "answer": answer, "session_id": session.session_id, "metrics": {}, **selection_result},
     )
     if state_store is not None and hasattr(state_store, "append_telemetry_events"):
         persist_telemetry = str(os.environ.get("DUALBRAIN_PG_PERSIST_TELEMETRY", "1")).strip().lower()
@@ -1207,6 +1221,7 @@ async def _handle_process_stream(
         "answer": answer,
         "session_id": session.session_id,
         "metrics": _extract_metrics(list(session.telemetry.events)),
+        **selection_result,
     }
     if memory_receipt is not None:
         result["memory_commit"] = memory_receipt
@@ -1625,7 +1640,7 @@ async def _dispatch_request(req, *, sessions, state_store, blob_root, blob_index
     params = req.get("params") or {}
     session = None
     try:
-        if method in {"process", "process_stream"}:
+        if method in {"process", "process_stream", "record_choices"}:
             session_id = str(params.get("session_id", "default") or "default")
             left_cfg, right_cfg, exec_cfg = _maybe_extract_llm_configs(params)
             session = sessions.get(session_id)
@@ -1650,7 +1665,12 @@ async def _dispatch_request(req, *, sessions, state_store, blob_root, blob_index
 
             options = dict(blob_root=blob_root, blob_index=blob_index, vision_cache=vision_cache,
                            vision_cache_limit=vision_cache_limit)
-            if method == "process_stream":
+            if method == "record_choices":
+                if session.state_store is not None and session.memory.conversation_context:
+                    await _reload_committed_memory(session)
+                payload = {"session_id": session.session_id, **session.memory.record_choices(
+                    params.get("scope"), limit=params.get("limit", 20), offset=params.get("offset", 0))}
+            elif method == "process_stream":
                 payload = await _handle_process_stream(session, params, emit_event=emit_event, **options)
             else:
                 payload = await _handle_process(session, params, **options)

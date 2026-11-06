@@ -28,6 +28,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from .memory_evidence import EVIDENCE_STATUSES, bounded_evidence
 from .memory_scope import MemoryScopeResolver, normalize_name
+from .record_selection import RecordSelectionCodec
 from .memory_intent import (RecordReplayIntent, RecordReplayResolution, literal_record_replay_requested,
                             literal_record_replay_followup_requested, record_replay_requested,
                             scoped_record_replay_requested)
@@ -196,6 +197,8 @@ class SharedMemory:
         self.track_persistence = bool(track_persistence)
         self._turn_question = self._turn_query = None
         self._turn_replay_requested = False
+        self._record_refs = RecordSelectionCodec()
+        self._turn_record_ref = None
         self._turn_qid = None
         self._turn_metadata = None
         self._pending_supersedes = frozenset()
@@ -214,6 +217,7 @@ class SharedMemory:
         """Caller-declared scope/write intent; never infer a correction from recency."""
         self._turn_question = self._turn_query = None
         self._turn_replay_requested = False
+        self._turn_record_ref = None
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
         if not self.conversation_context:
@@ -222,8 +226,12 @@ class SharedMemory:
             return
         declaration = None
         if metadata is not None:
-            if not isinstance(metadata, dict) or set(metadata) - {"id", "aliases", "remember", "supersedes"}:
+            if not isinstance(metadata, dict) or set(metadata) - {"id", "aliases", "remember", "supersedes", "record_ref"}:
                 raise ValueError("Invalid conversation memory metadata")
+            if 'record_ref' in metadata and (
+                    not isinstance(metadata['record_ref'], str) or not 1 <= len(metadata['record_ref']) <= 4096
+                    or metadata.get('remember') is not False or metadata.get('supersedes')):
+                raise ValueError('record_ref requires a bounded reference, explicit remember=false and no supersedes')
             if type(metadata.get("remember", False)) is not bool:
                 raise ValueError("Explicit remember boolean required")
             declaration = MemoryTrace(question=question, answer="declaration", qid=qid,
@@ -271,6 +279,9 @@ class SharedMemory:
                 query = f"Project {aliases[0]}: {question}"
         else:
             focus = None
+        replay_requested = not (metadata or {}).get('remember', False) and record_replay_requested(query, resolver)
+        if metadata and 'record_ref' in metadata and not replay_requested:
+            raise ValueError('record_ref requires a bounded whole-record quotation request')
         self._focus_scope = focus
         self._turn_question, self._turn_query, self._turn_qid = question, query, qid
         self._turn_metadata = (declaration, tuple(metadata.get("supersedes", ())), metadata.get("remember", False)) if declaration else None
@@ -278,13 +289,15 @@ class SharedMemory:
         # Remember only this exact input's bounded operation, never its scope,
         # source or binding. Otherwise losing the last live alias after an
         # await could turn a quotation into ordinary recall of stale context.
-        self._turn_replay_requested = not self.primary_write_pending and record_replay_requested(query, resolver)
+        self._turn_replay_requested = replay_requested
+        self._turn_record_ref = (metadata or {}).get('record_ref')
 
     def abort_turn(self, previous_focus):
         """Discard an uncommitted turn's scope and correction intent."""
         self._focus_scope = previous_focus
         self._turn_question = self._turn_query = None
         self._turn_replay_requested = False
+        self._turn_record_ref = None
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
 
@@ -368,11 +381,17 @@ class SharedMemory:
             return None
         current = [t for t in self.past_qas if self._available(t, time.time())
                    and not t.recalled_answer and t.retrieval_scope in scopes]
+        selection_failure = replay.binding_status in {'invalid_selection', 'stale_selection'}
+        if self._active_record_ref(question) and not selection_failure:
+            _, selected = self._selected_record(question, scopes)
+            current = [selected] if selected is not None else []
         availability = ("current_unapproved" if current else "none_current") if reference == "resolved" else "unknown"
         if replay.binding_status == "ambiguous_record":
             # Resident records may already have ordinary factual approvals.
             # This state reports unresolved selection, not denial or absence.
             availability = "current_unselected"
+        elif selection_failure:
+            availability = 'selection_unavailable'
         approval = "not_applicable"
         if current and reference == "resolved":
             approval = "unknown"
@@ -390,6 +409,8 @@ class SharedMemory:
                     approval = "denied"
         if reference != "resolved":
             action = "clarify_reference"
+        elif selection_failure:
+            action = 'reselect_record'
         elif replay.binding_status == "ambiguous_record":
             action = "clarify_record"
         elif request.parameter_status == "underspecified":
@@ -410,9 +431,63 @@ class SharedMemory:
         self.pending_memory_updates.clear()
         self._turn_question = self._turn_query = None
         self._turn_replay_requested = False
+        self._turn_record_ref = None
         self._turn_qid = self._turn_metadata = None
         self._pending_supersedes = frozenset()
         self._trim_history()
+
+    def _active_record_ref(self, question):
+        return self._turn_record_ref if question in (self._turn_question, self._turn_query) else None
+
+    def _selected_record(self, question, scopes):
+        selection = self._record_refs.decode(self._active_record_ref(question))
+        if selection is None or selection.scope not in scopes:
+            return 'invalid_selection', None
+        matches = [t for t in self.past_qas if t.qid == selection.qid]
+        if len(matches) != 1:
+            return 'stale_selection', None
+        trace = matches[0]
+        if (trace.retrieval_scope != selection.scope or not self._available(trace, time.time())
+                or trace.recalled_answer or not self._record_refs.unchanged(selection, self._answerability_source(trace))):
+            return 'stale_selection', None
+        return 'selected', trace
+
+    def record_choices(self, scope, *, limit=20, offset=0):
+        """Read-only caller inventory, separate from model evidence and approvals."""
+        if not self.conversation_context:
+            raise ValueError('record_choices requires conversation memory')
+        if not isinstance(scope, str) or not scope.strip() or len(scope) > 128:
+            raise ValueError('A bounded exact scope is required')
+        if type(limit) is not int or not 1 <= limit <= 20 or type(offset) is not int or offset < 0:
+            raise ValueError('limit must be 1..20 and offset must be a nonnegative integer')
+        now = time.time()
+        current = [t for t in self.past_qas if t.retrieval_scope == scope
+                   and self._available(t, now) and not t.recalled_answer]
+        def finite_time(trace):
+            return trace.timestamp if isinstance(trace.timestamp, (int, float)) and math.isfinite(trace.timestamp) else None
+        current.sort(key=lambda t: (finite_time(t) if finite_time(t) is not None else -math.inf,
+                                    str(t.qid or ''), t.question), reverse=True)
+        identities = Counter(t.qid for t in self.past_qas if t.qid)
+        choices = []
+        for trace in current[offset:offset + limit]:
+            source = self._answerability_source(trace)
+            reason = ('missing_identity' if not trace.qid else
+                      'ambiguous_identity' if identities[trace.qid] != 1 else
+                      'checker_unavailable' if self.answerability_gate is None else
+                      'incomplete_source' if not self.answerability_gate.eligible(source) else None)
+            choices.append({'record_ref': self._record_refs.issue(scope, source) if reason is None else None,
+                'label': re.sub(r'[\x00-\x1f\x7f]', ' ', trace.question)[:120],
+                'recorded_at': finite_time(trace), 'selectable': reason is None, 'reason': reason})
+        end = offset + len(choices)
+        return {'scope': scope, 'choices': choices, 'total': len(current),
+                'next_offset': end if end < len(current) else None}
+
+    def selection_status(self, question):
+        if self._active_record_ref(question) is None:
+            return None
+        resolution = self.replay_resolution(question)
+        condition = self.missing_evidence(question)
+        return {'status': resolution.binding_status, 'action': condition.action if condition else None}
 
     def replay_resolution(self, question):
         """Resolve a bounded quotation request before ranking or approval.
@@ -433,6 +508,11 @@ class SharedMemory:
             return RecordReplayResolution('unresolved_reference')
         traces = [t for t in self.past_qas if self._available(t, time.time())
                   and t.retrieval_scope in scopes and not t.recalled_answer]
+        if self._active_record_ref(question) is not None:
+            status, selected = self._selected_record(question, scopes)
+            if selected is None:
+                return RecordReplayResolution(status)
+            traces = [selected]
         if not traces:
             return RecordReplayResolution('missing_record')
         if len(traces) > 1:
@@ -516,6 +596,11 @@ class SharedMemory:
         question = self.retrieval_question(question)
         if self._unresolved_caller_reference(question) or self._unbound_record_replay(question):
             return []
+        replay = self.replay_resolution(question)
+        if replay.intent is not None:
+            return [t for t in self.past_qas if self._available(t, time.time())
+                    and t.qid == replay.intent.source_qid and t.retrieval_scope == replay.intent.scope
+                    and replay.intent.matches(question, self._answerability_source(t))]
         limit = self.answerability_gate.candidate_limit if self.answerability_gate is not None else 3
         resolver, query = self._retrieval_scope_cue(question)
         if self.answerability_gate is not None and self.answerability_scope_expansion and query.scopes and not query.ambiguous:
