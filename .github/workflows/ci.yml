@@ -40,7 +40,7 @@ jobs:
       - name: Test atomic commits and operational journal replay against PostgreSQL
         env:
           DUALBRAIN_TEST_PG_DSN: postgresql://memory_test:isolated-test-only@127.0.0.1:5432/memory_retry_test
-        run: pytest -q tests/test_memory_commit_postgres.py tests/test_benchmark_contract_live.py tests/test_record_choices_postgres.py tests/test_benchmark_record_choices.py
+        run: pytest -q tests/test_memory_commit_postgres.py tests/test_benchmark_contract_live.py tests/test_record_choices_postgres.py tests/test_benchmark_record_choices.py tests/test_benchmark_natural_memory.py
 
   unit-tests:
     runs-on: ubuntu-latest

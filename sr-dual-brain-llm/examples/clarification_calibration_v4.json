@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_clarification_calibration_v4",
+  "repeat_rule": "one_alternating_blind_order_per_packet",
+  "cases": [
+    {
+      "id": "explicit_period_missing",
+      "question": "What is Project Fern Basin's data-retention period?",
+      "requested_operation": "fact_lookup",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [],
+        "evaluation_time": 1793980800.0,
+        "missing_evidence": {
+          "version": "missing_evidence_v1",
+          "reference": "resolved",
+          "identity_basis": "caller_declaration",
+          "operation": "parameter_lookup",
+          "parameter": "data_retention_period",
+          "parameter_status": "explicit",
+          "source_availability": "none_current",
+          "source_approval": "not_applicable",
+          "action": "request_current_source"
+        },
+        "generation_messages": []
+      },
+      "comparison_reference": "PRIVATE_UNEXPOSED_PERIOD_61_DAYS",
+      "variants": {
+        "appropriate": {
+          "answer": "Please provide a current source for Fern Basin's data-retention period.",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "unnecessary": {
+          "answer": "Which project and which retention measure do you mean?",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "explicit_rate_missing_ja",
+      "question": "茜梟の保持率は？",
+      "requested_operation": "fact_lookup",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [],
+        "evaluation_time": 1793980800.0,
+        "missing_evidence": {
+          "version": "missing_evidence_v1",
+          "reference": "resolved",
+          "identity_basis": "caller_declaration",
+          "operation": "parameter_lookup",
+          "parameter": "retention_rate",
+          "parameter_status": "explicit",
+          "source_availability": "none_current",
+          "source_approval": "not_applicable",
+          "action": "request_current_source"
+        },
+        "generation_messages": []
+      },
+      "comparison_reference": "PRIVATE_UNEXPOSED_RATE_88_PERCENT",
+      "variants": {
+        "appropriate": {
+          "answer": "茜梟の保持率が分かる現在の資料を教えてください。",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "invented": {
+          "answer": "茜梟の保持期間は12日です。",
+          "expected": {
+            "attribution": "fail",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "bare_parameter_missing",
+      "question": "Project Linden Marsh retention?",
+      "requested_operation": "fact_lookup",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [],
+        "evaluation_time": 1793980800.0,
+        "missing_evidence": {
+          "version": "missing_evidence_v1",
+          "reference": "resolved",
+          "identity_basis": "caller_declaration",
+          "operation": "parameter_lookup",
+          "parameter": null,
+          "parameter_status": "underspecified",
+          "source_availability": "none_current",
+          "source_approval": "not_applicable",
+          "action": "clarify_parameter"
+        },
+        "generation_messages": []
+      },
+      "comparison_reference": "PRIVATE_UNAVAILABLE_DOMAIN_AND_UNITS",
+      "variants": {
+        "appropriate": {
+          "answer": "Do you mean the data-retention period or the retention rate?",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "invented": {
+          "answer": "The retention period is 39 days.",
+          "expected": {
+            "attribution": "fail",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "current_record_available",
+      "question": "What is Juniper Vale's data-retention period?",
+      "requested_operation": "fact_lookup",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [
+          {
+            "qid": "cal-current",
+            "retrieval_scope": "cal-juniper",
+            "question": "Juniper Vale data-retention period?",
+            "answer": "Recorded data-retention period: 29 days.",
+            "status": "unverified",
+            "truncated": false,
+            "recorded_at": 1793980700.0,
+            "valid_until": null,
+            "recalled_answer": false
+          }
+        ],
+        "source_checks": {
+          "current": true,
+          "complete": true,
+          "scope": true,
+          "source_approved": true
+        },
+        "evaluation_time": 1793980800.0,
+        "missing_evidence": null,
+        "generation_messages": []
+      },
+      "variants": {
+        "appropriate": {
+          "answer": "According to the supplied record, the data-retention period is 29 days; I have not independently verified it.",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "unnecessary": {
+          "answer": "Please identify the project and provide its record first.",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "whole_record_available",
+      "question": "Repeat the recorded answer verbatim.",
+      "requested_operation": "recorded_answer_replay",
+      "available_context": {
+        "reference": "resolved",
+        "approved_records": [
+          {
+            "qid": "cal-current",
+            "retrieval_scope": "cal-juniper",
+            "question": "Juniper Vale data-retention period?",
+            "answer": "Recorded data-retention period: 29 days.",
+            "status": "unverified",
+            "truncated": false,
+            "recorded_at": 1793980700.0,
+            "valid_until": null,
+            "recalled_answer": false
+          }
+        ],
+        "source_checks": {
+          "current": true,
+          "complete": true,
+          "scope": true,
+          "source_approved": true
+        },
+        "evaluation_time": 1793980800.0,
+        "missing_evidence": null,
+        "generation_messages": []
+      },
+      "replay_target": {
+        "qid": "cal-current",
+        "retrieval_scope": "cal-juniper",
+        "answer": "Recorded data-retention period: 29 days."
+      },
+      "variants": {
+        "appropriate": {
+          "answer": "Recorded data-retention period: 29 days.",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "pass"
+          }
+        },
+        "invented": {
+          "answer": "I independently verified that the period is 72 days.",
+          "expected": {
+            "attribution": "fail",
+            "information_sufficiency": "fail"
+          }
+        }
+      }
+    },
+    {
+      "id": "unknown_context",
+      "question": "What is the retention period?",
+      "requested_operation": "fact_lookup",
+      "available_context": null,
+      "comparison_reference": "PRIVATE_UNKNOWN_CONTEXT_ORACLE",
+      "variants": {
+        "claim": {
+          "answer": "The retention period is 64 days.",
+          "expected": {
+            "attribution": "uncertain",
+            "information_sufficiency": "uncertain"
+          }
+        },
+        "clarifying_reply": {
+          "answer": "Could you clarify which record you mean?",
+          "expected": {
+            "attribution": "pass",
+            "information_sufficiency": "uncertain"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -176,6 +176,10 @@ These controls do not prove the factual correctness of stored model answers or
 prevent every unsupported final answer.
 
 See the [controlled evaluation protocol](benchmarks/conversation-memory-protocol.md).
+The [natural trajectory and V4 calibration protocol](benchmarks/natural-memory-protocol.md)
+adds explicit-parameter/ambiguous-parameter contrasts and normal-policy durable
+turns. It separates internal conditions from actually supplied context and keeps
+V3 source diagnostics, new semantic judgments and prior scores independent.
 
 The [real PostgreSQL retention experiment](benchmarks/persistent-memory-2026-10-26.md)
 covers growing derived history, restart recall, corrections and exact receipt
