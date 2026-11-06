@@ -101,8 +101,8 @@ Whole-record quotation uses the existing bounded literal grammar, including
 identities. Bounded English continuations such as `Repeat that recorded answer
 verbatim.` use the grammar's same Unicode and whitespace normalization when
 carrying focus; an added instruction is not removed by that normalization.
-One current, complete primary record in the resolved scope must still receive
-its own exact query/source/policy support approval. The quotation operation asks
+The selected current, complete primary record in the resolved scope must still
+receive its own exact query/source/policy support approval. The quotation operation asks
 for the recorded text, without certifying its claims as true. Ordinary semantic
 questions retain their existing support policy.
 
@@ -114,15 +114,18 @@ to an exact source. Its immutable result is recomputed at each lookup:
 | `not_requested` | This question is outside the bounded whole-record operation |
 | `unresolved_reference` | The operation is recognized, but its current reference is unresolved |
 | `missing_record` | The reference resolves, but its scope has no current primary record |
-| `ambiguous_record` | The scope has more than one current primary record |
+| `ambiguous_record` | The scope has more than one current primary record and no explicit selection |
 | `unavailable_binding` | A unique record exists, but the complete-source binding requirements cannot be met |
+| `invalid_selection` | The supplied reference was not issued by this memory incarnation for the resolved scope |
+| `stale_selection` | The selected source is changed, unavailable or no longer uniquely identifiable |
 | `bound` | One current eligible complete source is bound; its exact replay support approval is still required |
 
 `replay_intent(question)` remains the compatibility projection of that binding.
 All current primary records in the resolved resident scope count before
 eligibility filtering, relevance ranking, candidate limits or support decisions.
-If two records remain, neither an ordinary positive decision for one nor a
-negative/unknown decision for the other selects the intended record. Recognized
+Without explicit caller selection, if two records remain, neither an ordinary
+positive decision for one nor a negative/unknown decision for the other selects
+the intended record. Recognized
 unbound replay withholds source bodies from direct retrieval, support candidates
 and latent seed evidence, and preserves the appropriate clarification condition.
 The disabled-checker path also withholds an unapproved complete-record replay.
@@ -191,6 +194,75 @@ otherwise supported values and conditions. Evidence status and support approvals
 are unchanged; unsupported values and contradictions must still be challenged.
 See the [persistent final-answer pilot](benchmarks/persistent-answers-2026-10-28.md)
 for measured development failures, repairs, and the frozen evaluation results.
+
+## Read-only record choices
+
+The stdio `record_choices` RPC lists current resident primary records in an exact
+scope (within the existing memory residency limit):
+
+```json
+{"id":"choices","method":"record_choices","params":{"session_id":"s","scope":"alpha","limit":20,"offset":0}}
+```
+
+The result contains `choices` (short question label, `recorded_at`, `selectable`,
+`reason`, and an opaque `record_ref`), `total` and `next_offset`. The count is
+before completeness/eligibility filtering and pagination; unavailable entries
+are disabled rather than silently becoming a unique choice. Expired,
+superseded and derived answers are excluded. Labels are untrusted display data,
+not evidence for a model. Answer text and factual approvals are not returned.
+Listing/choosing requires no model call and creates no primary source. Startup
+may reconcile previously authorized pending operations through existing recovery.
+Configure the intended LLM/checker environment before creating the session, as
+with normal stdio requests; without a checker the choices are disabled.
+
+Select one by passing its reference in the existing caller metadata:
+
+```json
+{"id":"quote","method":"process","params":{"session_id":"s","qid":"selected-read","question":"Repeat the recorded answer verbatim.","memory_context":{"id":"alpha","aliases":["Alpha"],"remember":false,"record_ref":"<reference from choices>"}}}
+```
+
+The same metadata works in `process_stream`. A reference selects identity only;
+the exact typed full-source approval remains mandatory. It binds the scope,
+source ID and complete source fingerprint using a key unique to this memory
+incarnation. It is a reference, not an access token or a truth certificate. It
+cannot cross sessions/store incarnations or survive engine restart/reset.
+Its active selection clears on the next turn, abort or committed-memory reload;
+an unchanged reference can be explicitly resubmitted within the same instance.
+It is accepted only with explicit `remember:false`, no supersession, and the
+existing bounded whole-record grammar. Ordinary factual requests are unchanged.
+
+Changed, expired, superseded, missing, duplicate or moved records fail current
+binding. A selected request never substitutes another record. The finite states
+`invalid_selection` / `stale_selection` carry `selection_unavailable` and
+`reselect_record`, asking the caller to choose again without pasting stored text.
+They infer no support decision: approval remains unknown with current records,
+or not applicable when none are available.
+The existing generation/queued-worker refresh checks apply to selected sources.
+Persistent inventories and new selected requests reload the committed source
+view at request start; during generation the existing resident-view boundary
+checks apply. Independent database writers are not made serializable with an
+ongoing generation, and already-emitted text is not revoked.
+
+Selected responses include `record_selection: {status, action}`. It is captured
+before persistence reload and retained in durable results. Identical completed
+`memory_operation_id` retries remain historical result replays (`replayed:true`),
+even after restart; they do not revive the old reference or perform a fresh quote.
+Changing the selection under the same operation ID conflicts. Fresh operations
+after restart must list again. No selection promotes recalled text to a primary
+record. The outbox request already includes the full `memory_context`.
+
+For a persistent session, the terminal client lists labels/dates and accepts a
+number, keeping references and stored answers out of the selection input:
+
+```bash
+python sr-dual-brain-llm/scripts/record_choices_cli.py --session-id s --scope alpha
+# Or use --index 2 for a scripted choice and --offset 20 for the next page.
+```
+
+It uses the configured `DUALBRAIN_PG_DSN`/table prefix and existing conversation
+and answerability flags. API clients can render the same metadata as buttons.
+The [live selection confirmation](benchmarks/record-choices-2026-11-06.md)
+records exact quotations, invalidation, PostgreSQL restart and ordered replay.
 
 ## Explicit missing-evidence conditions
 

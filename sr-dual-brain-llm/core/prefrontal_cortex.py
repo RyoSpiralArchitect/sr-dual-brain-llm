@@ -660,6 +660,10 @@ class PrefrontalCortex:
         if condition is None:
             return ""
         instructions = {
+            "reselect_record": (
+                "The previous record selection is unavailable or has changed. Ask the caller to choose "
+                "again from the current record choices. Do not substitute a different or newer record, "
+                "claim that all records are absent, or ask the user to paste the stored text."),
             "request_current_source": (
                 "The project and requested parameter are explicit. Ask for a current source for that parameter. "
                 "Do not re-identify the project or ask which measure an explicit parameter means."),

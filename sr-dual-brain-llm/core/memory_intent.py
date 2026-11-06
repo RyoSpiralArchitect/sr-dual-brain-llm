@@ -114,7 +114,7 @@ class RecordReplayResolution:
     def __post_init__(self):
         if (type(self.binding_status) is not str or self.binding_status not in {
                 'not_requested', 'unresolved_reference', 'missing_record',
-                'ambiguous_record', 'unavailable_binding', 'bound'}
+                'ambiguous_record', 'unavailable_binding', 'invalid_selection', 'stale_selection', 'bound'}
                 or (self.binding_status == 'bound' and type(self.intent) is not RecordReplayIntent)
                 or (self.binding_status != 'bound' and self.intent is not None)):
             raise ValueError('Replay resolution requires a consistent exact binding state')
