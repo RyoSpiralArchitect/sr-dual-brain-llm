@@ -259,6 +259,8 @@ python sr-dual-brain-llm/scripts/record_choices_cli.py --session-id s --scope al
 
 It uses the configured `DUALBRAIN_PG_DSN`/table prefix and existing conversation
 and answerability flags. API clients can render the same metadata as buttons.
+The [live selection confirmation](benchmarks/record-choices-2026-11-06.md)
+records exact quotations, invalidation, PostgreSQL restart and ordered replay.
 
 ## Explicit missing-evidence conditions
 
