@@ -3,9 +3,16 @@ from .callosum import CallosumClosed, RequestAbandoned
 from .memory_evidence import request_memory_context
 from .prefrontal_cortex import PrefrontalCortex
 from .detail_contract import FIELDS as DETAIL_FIELDS
+from .task_goals import worker_task
 
 
 async def _respond(req, memory, model):
+    plan = None if getattr(memory, 'primary_write_pending', False) else req.get('task_plan')
+    with worker_task(req.get('question', ''), plan):
+        return await _respond_with_task(req, memory, model)
+
+
+async def _respond_with_task(req, memory, model):
     # Callosum can hold a copied packet across admission/queue waits. Recheck
     # literal source selection at the consumer, immediately before generation.
     req = dict(req)
@@ -25,10 +32,13 @@ async def _respond(req, memory, model):
             req.get("draft", "") or req.get("draft_sum", "") or "",
             temperature=req.get("temperature", .2), context=req.get("context"),
             psychoid_projection=req.get("psychoid_attention_bias"))
-        return {key: critique.get(key) for key in ("verdict", "issues", "fixes", "critic_sum",
+        result = {key: critique.get(key) for key in ("verdict", "issues", "fixes", "critic_sum",
                                                   "confidence_r", "critic_kind", "critic_status",
                                                   "critic_review_valid", "critic_external_review_valid",
                                                   "critic_validation")}
+        if 'goal_review' in critique:
+            result['goal_review'] = critique['goal_review']
+        return result
     if kind == "ASK_LEAD":
         notes = await model.generate_lead(req.get("question", ""), req.get("context", ""),
                                          temperature=float(req.get("temperature", .85)))

@@ -343,6 +343,11 @@ Everything “internal” lives out-of-band:
 ## The Python engine: roles + interaction
 
 The core orchestration happens in `sr-dual-brain-llm/core/dual_brain.py` (`DualBrainController.process`).
+The opt-in [task-goal prototype](docs/task-goal-orchestration.md) carries explicit
+user requirements into left/right reasoning, goal-specific critic observations
+and integration, while preserving unverified and unresolved states.
+Its [first OFF/AUTO comparison](docs/benchmarks/task-goals-2026-11-07.md)
+finds no reliable quality gain and retains empty completions and a failed replay.
 
 Treat “brains” as **roles** with strict I/O contracts:
 
@@ -366,7 +371,7 @@ deadlines through generation, drains owned work before session reuse, and defers
 cancellation once factual memory writes begin.
 
 The [optional-module gating prototype](docs/module-gating.md) centralizes controls
-for twelve optional functions, including the selective consultation router, ACC
+for fourteen optional functions, including the selective consultation router, ACC
 and basal consultation controls, cerebellar correction, DMN injection and
 Executive/Director observation.
 Defaults remain unchanged. New optional switches should follow its naming,

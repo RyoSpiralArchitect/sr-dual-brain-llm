@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, Optional, Sequence
 from .llm_client import CompletionValidationError, LLMClient, LLMConfig, load_llm_config
 from .micro_critic import micro_criticise_reasoning
 from .detail_contract import detail_result
+from .task_goals import current_task, goal_review
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
@@ -252,6 +253,9 @@ class LeftBrainModel:
         """Produce a first-pass draft that reflects retrieved memory snippets."""
         if self._llm_client:
             system_parts = [_SYSTEM_GUARDRAILS]
+            task = current_task(input_text) if not require_success else None
+            if task is not None:
+                system_parts.append(task.prompt('left'))
             if context:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
@@ -367,6 +371,9 @@ class LeftBrainModel:
             return merged
 
         system_parts = [_SYSTEM_GUARDRAILS, _INTEGRATION_GUARDRAILS]
+        task = current_task(question)
+        if task is not None:
+            system_parts.append(task.prompt('integration', draft=draft))
         system = "\n\n".join(system_parts)
         prompt = (
             f"User message:\n{question}\n\n"
@@ -414,6 +421,9 @@ class RightBrainModel:
         """Produce an imagistic first impression before the left brain speaks."""
         if self._llm_client:
             system_parts = [_SYSTEM_GUARDRAILS]
+            task = current_task(question)
+            if task is not None:
+                system_parts.append(task.prompt('right'))
             if context:
                 system_parts.append(f"Context:\n{context}")
             system = "\n\n".join(system_parts)
@@ -478,6 +488,9 @@ class RightBrainModel:
             system_parts = []
             system_parts.append(_SYSTEM_GUARDRAILS)
             system_parts.append(_RIGHT_DEEPEN_GUARDRAILS)
+            task = current_task(question)
+            if task is not None:
+                system_parts.append(task.prompt('right'))
             if context:
                 system_parts.append(f"Context:\n{context}")
             if psychoid_projection:
@@ -542,6 +555,9 @@ class RightBrainModel:
 
         if self._llm_client:
             system_parts = [_SYSTEM_GUARDRAILS, _RIGHT_CRITIC_GUARDRAILS]
+            task = current_task(question)
+            if task is not None:
+                system_parts.append(task.prompt('critic'))
             if context:
                 system_parts.append(f"Context:\n{context}")
             if psychoid_projection:
@@ -603,6 +619,7 @@ class RightBrainModel:
                     break
 
             validation = {"initial": {"status": status, "error_type": error_type}, "repair": None}
+            goal_completion = completion
             critic_kind = "external"
             if (status == "unstructured"
                     and not (micro is not None and micro.verdict == "issues")
@@ -638,6 +655,7 @@ class RightBrainModel:
                     error_type = None
                     if parsed is not None:
                         critic_kind = "external_repaired"
+                        goal_completion = repaired
                 validation["repair"] = {"status": status, "error_type": error_type}
 
             external_valid = parsed is not None and status == "ok"
@@ -677,7 +695,7 @@ class RightBrainModel:
                 verdict, issues, fixes = micro.verdict, list(micro.issues), list(micro.fixes)
                 critic_sum = micro.critic_sum
                 critic_kind = "micro_sanity_override"
-            return {
+            result = {
                 "qid": qid,
                 "verdict": verdict,
                 "issues": issues,
@@ -691,6 +709,16 @@ class RightBrainModel:
                 "critic_external_review_valid": external_valid,
                 "critic_validation": validation,
             }
+            if task is not None:
+                try:
+                    goal_data = _extract_json_object(goal_completion) if external_valid else None
+                except (_CriticSchemaError, TypeError, ValueError):
+                    goal_data = None
+                result['goal_review'] = goal_review(task.plan, draft,
+                    goal_data.get('goal_findings') if isinstance(goal_data, dict) else None,
+                    external_valid=external_valid,
+                    verdict=str(goal_data.get('verdict') or '').strip().lower() if isinstance(goal_data, dict) else None)
+            return result
 
         # Deterministic fallback when no external critic is configured.
         if micro is not None:

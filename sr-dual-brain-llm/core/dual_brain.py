@@ -26,6 +26,7 @@ from .source_completion import guard_source_completions, record_completed_answer
 from .detail_contract import detail_observation, detail_confidence, error_category
 from .memory_clarification import record_choice_clarifications
 from .speculative_preview import OwnedPreview
+from .task_goals import bind_task, current_task, guard_task_turn
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -57,6 +58,7 @@ from .thalamic_reticular_nucleus import (
     ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT,
     BASAL_CONSULT_PROMOTION,
     SPECULATIVE_PREVIEW_SUPPRESSION,
+    TASK_GOAL_ORCHESTRATION,
 )
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
@@ -2191,6 +2193,7 @@ class DualBrainController:
     async def _track_system2_request(
         self, decision: DecisionOutcome, *, round_index: int, source: str,
         request: Callable[[], Any],
+        review_draft: str | None = None,
     ) -> Dict[str, Any]:
         attempt: Dict[str, Any] = {
             "round": round_index, "source": source, "outcome": "pending",
@@ -2203,12 +2206,18 @@ class DualBrainController:
         try:
             response = await request()
         except BaseException as exc:
+            task = current_task()
+            if task is not None:
+                task.observe(None, review_draft)
             attempt.update(outcome="cancelled" if isinstance(exc, asyncio.CancelledError) else "failed",
                            error_type=type(exc).__name__)
             decision.state[prefix + "_review_valid"] = False
             decision.state[prefix + "_external_review_valid"] = False
             raise
         else:
+            task = current_task()
+            if task is not None:
+                task.observe(response, review_draft)
             attempt["outcome"] = "returned"
             if isinstance(response, dict):
                 self._retain_critic_validation(decision, response, prefix=prefix)
@@ -2617,6 +2626,28 @@ class DualBrainController:
             director_payload=director_payload,
             director_control=director_control,
         )
+
+    def _prepare_task_goals(self, *, question, qid, is_trivial_chat, vision_images):
+        config = self.thalamic_reticular_nucleus.configure(TASK_GOAL_ORCHESTRATION)
+        blocked = ('primary_write_pending' if getattr(self.memory, 'primary_write_pending', False)
+                   else 'outside_scope' if is_trivial_chat or vision_images else None)
+        plan = None
+        if blocked is None and config.valid and config.mode != GateMode.OFF:
+            try:
+                replay = getattr(self.memory, 'replay_resolution', None)
+                if callable(replay) and replay(question).requested:
+                    blocked = 'outside_scope'
+                else:
+                    propose = getattr(self.orchestrator, 'propose_task', None)
+                    plan = propose(question) if callable(propose) else None
+            except Exception:
+                plan = None
+        gate = self._module_gate(TASK_GOAL_ORCHESTRATION, qid=qid, config=config,
+            facts=GateFacts(eligible=blocked is None and plan is not None,
+                blocked_reason=blocked or 'outside_scope', task_goal_count=len(plan.goals) if plan else 0))
+        if gate.enabled:
+            bind_task(self.orchestrator.begin_task(qid, plan))
+        return gate
 
     def _preview_suppression_gate(
         self, *, question, qid, leading, collaborative_lead, requested_leading,
@@ -3331,6 +3362,9 @@ class DualBrainController:
             "hemisphere_mode": hemisphere_mode,
             "hemisphere_bias": hemisphere_bias,
         }
+        task = current_task(question)
+        if task is not None:
+            payload['task_plan'] = task.plan.payload()
         q_type_hint = str(decision.state.get("q_type") or "").strip().lower()
         system2_draft_limit = 2400
         if system2_active:
@@ -3553,6 +3587,7 @@ class DualBrainController:
                 if system2_active:
                     fallback = await self._track_system2_request(
                         decision, round_index=1, source="direct_fallback",
+                        review_draft=payload.get('draft') or draft,
                         request=lambda: self.right_model.criticise_reasoning(
                             decision.qid,
                             question,
@@ -3947,6 +3982,7 @@ class DualBrainController:
                 try:
                     verify_fallback = await self._track_system2_request(
                         decision, round_index=2, source="direct_fallback",
+                        review_draft=verify_payload.get('draft') or final_answer,
                         request=lambda: self.right_model.criticise_reasoning(
                             decision.qid,
                             question,
@@ -4240,6 +4276,7 @@ class DualBrainController:
                     try:
                         round3_fallback = await self._track_system2_request(
                             decision, round_index=3, source="direct_fallback",
+                            review_draft=round3_payload.get('draft') or final_answer,
                             request=lambda: self.right_model.criticise_reasoning(
                                 decision.qid,
                                 question,
@@ -5472,6 +5509,7 @@ class DualBrainController:
             )
 
     @guard_source_completions
+    @guard_task_turn
     async def process(
         self,
         question: str,
@@ -5724,7 +5762,8 @@ class DualBrainController:
             if payload_obj.get("type") == "ASK_CRITIC":
                 return await self._track_system2_request(
                     decision, round_index=int(payload_obj.get("round") or 1),
-                    source="callosum", request=ask)
+                    source="callosum", request=ask,
+                    review_draft=payload_obj.get('draft') or payload_obj.get('draft_sum'))
             return await ask()
 
         delta_cb = _emit_delta if on_delta else None
@@ -5742,6 +5781,8 @@ class DualBrainController:
                         source_qids=[trace.qid for trace in traces if getattr(trace, "seed_id", None)],
                         destination="draft_context", status="provided_to_stage",
                     )
+        task_gate = self._prepare_task_goals(question=question, qid=qid_value,
+            is_trivial_chat=is_trivial_chat, vision_images=vision_images)
         preview_gate = self._preview_suppression_gate(
             question=question, qid=qid_value, leading=leading, collaborative_lead=collaborative_lead,
             requested_leading=requested_leading, system2_mode=system2_norm,
@@ -5804,6 +5845,7 @@ class DualBrainController:
         )
         decision.state.setdefault('module_gates', {}).update(observer_setup.module_gates)
         decision.state['module_gates'][SPECULATIVE_PREVIEW_SUPPRESSION] = preview_gate.to_payload()
+        decision.state['module_gates'][TASK_GOAL_ORCHESTRATION] = task_gate.to_payload()
         if insula_state is not None:
             decision.state["interoception"] = insula_state.to_payload()
         if salience_signal is not None:
@@ -6197,6 +6239,13 @@ class DualBrainController:
                     integration_parts.append(
                         "Executive directives (do not output directly):\n" + directives_json
                     )
+
+                task = current_task(question)
+                if (task is not None and task.needs_revision(draft)
+                        and not suppress_critic_revision):
+                    integration_parts.append('Unresolved user-goal reports (unverified):\n'
+                        + json.dumps(task.latest, ensure_ascii=False))
+                    has_right_material = True
 
                 if has_right_material or has_mix_in_material or can_polish:
                     if integration_parts:
@@ -6984,6 +7033,12 @@ class DualBrainController:
             turn_started=turn_started,
             consult_latency_ms=consult_latency_ms,
         )
+        task = current_task(question)
+        if task is not None:
+            try:
+                self.telemetry.log('task_goal_execution', qid=qid_value, **task.summary(user_answer))
+            except Exception:
+                pass
         return final_answer
 
 

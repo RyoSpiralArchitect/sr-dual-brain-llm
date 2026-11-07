@@ -29,6 +29,7 @@ ACC_SYSTEM2_PROMOTION = "acc_system2_promotion"
 ACC_TEMPERATURE_ADJUSTMENT = "acc_temperature_adjustment"
 BASAL_CONSULT_PROMOTION = "basal_consult_promotion"
 SPECULATIVE_PREVIEW_SUPPRESSION = "speculative_preview_suppression"
+TASK_GOAL_ORCHESTRATION = "task_goal_orchestration"
 
 
 class GateMode(str, Enum):
@@ -78,6 +79,7 @@ class GateFacts:
     recovery_confirmation_required: bool = False
     local_controls_ready: bool = False
     record_choice_pending: bool = False
+    task_goal_count: int = 0
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -147,6 +149,7 @@ AUTO_REASONS = frozenset({
     "local_controls_ready",
     "bounded_record_clarification",
     "record_choice_pending", "preview_context_needed",
+    "explicit_task_goals", "task_goals_unavailable",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -340,7 +343,19 @@ def _auto_preview_suppression(facts: GateFacts) -> tuple[bool, str]:
     return False, "preview_context_needed"
 
 
+def _auto_task_goals(facts: GateFacts) -> tuple[bool, str]:
+    if type(facts.task_goal_count) is int and 2 <= facts.task_goal_count <= 4:
+        return True, "explicit_task_goals"
+    return False, "task_goals_unavailable"
+
+
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
+    TASK_GOAL_ORCHESTRATION: ModuleSpec(
+        module_id=TASK_GOAL_ORCHESTRATION,
+        phase="pre_draft", policy_version="explicit_task_goals_v1",
+        mode_env="DUALBRAIN_MODULE_TASK_GOAL_ORCHESTRATION_MODE", legacy_env=None,
+        default_mode=GateMode.OFF, auto_policy=_auto_task_goals,
+    ),
     SPECULATIVE_PREVIEW_SUPPRESSION: ModuleSpec(
         module_id=SPECULATIVE_PREVIEW_SUPPRESSION,
         phase="pre_draft", policy_version="pending_record_choice_v1",
@@ -517,4 +532,5 @@ __all__ = [
     "ACC_CONSULT_PROMOTION", "ACC_SYSTEM2_PROMOTION", "ACC_TEMPERATURE_ADJUSTMENT",
     "BASAL_CONSULT_PROMOTION",
     "SPECULATIVE_PREVIEW_SUPPRESSION",
+    "TASK_GOAL_ORCHESTRATION",
 ]

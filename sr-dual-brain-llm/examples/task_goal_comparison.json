@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_task_goal_orchestration_comparison",
+  "clock": 1794009600.0,
+  "private_reference_canary": "PRIVATE_TASK_GOAL_REFERENCE_ONLY",
+  "cases": [
+    {
+      "id": "schedule",
+      "system2_mode": "auto",
+      "arms": ["off", "auto"],
+      "judge_labels": {"A": "auto", "B": "off"},
+      "expected_goal_count": 3,
+      "question": "A single worker runs non-preemptive jobs A, B and C. All are released at time 0; switching is free. Durations are A=3 minutes, B=2 minutes, C=4 minutes. B must run after A. Deadlines are B by minute 5 and C by minute 9.\nRequirements:\n1. Give a feasible schedule and each completion time.\n2. Give a concrete counterexample showing whether putting C before A satisfies both deadlines.\n3. Using step 1, state the minimum makespan and justify a lower bound.",
+      "reference": "A then B then C completes at 3, 5, 9 and satisfies precedence and both deadlines. C then A then B completes at 4, 7, 9 and misses B's deadline 5, so C-before-A fails. Total work is 3+2+4=9 on one worker, establishing a makespan lower bound of 9; the feasible schedule attains it. All three requested outputs and the precedence condition must be retained. A vague alternative or a schedule that misses a deadline is insufficient."
+    },
+    {
+      "id": "retry",
+      "system2_mode": "off",
+      "arms": ["auto", "off"],
+      "judge_labels": {"A": "off", "B": "auto"},
+      "expected_goal_count": 3,
+      "question": "A notification client currently retries like this. A timeout may occur after the server commits the notification. The server supports an idempotency key retained for 24 hours, plus lookup(key).\n```python\ndef submit(payload):\n    try:\n        return transport.send(payload)\n    except TimeoutError:\n        return transport.send(payload)\n```\nRequirements:\n1. Describe a concrete timeout-after-commit sequence that produces a duplicate effect.\n2. Give a minimal patch that reuses one stable logical-operation key across retries and repeated delivery, without rewriting the transport.\n3. Give one test that distinguishes the patch from generating a new key on each retry; do not claim the test was run.",
+      "reference": "The first send commits but its reply is lost; a retry with no stable key can create another notification. Accept or persist one operation key for the logical operation and reuse it in all sends/repeated deliveries. A caller-supplied operation_key is a minimal patch; fresh keys per attempt or every repeat of submit are insufficient. A fake server should commit the first call and raise TimeoutError, then deduplicate the second same-key call; assert one effect and equal keys, with a different-key variant producing two effects. It is a proposed test, not an executed one. lookup(key) can resolve uncertainty within the documented retention window; neither successful delivery nor permanent exactly-once behavior beyond 24 hours is established."
+    },
+    {
+      "id": "queue",
+      "system2_mode": "auto",
+      "arms": ["off", "auto"],
+      "judge_labels": {"A": "off", "B": "auto"},
+      "expected_goal_count": 3,
+      "question": "There are two threads and a capacity-one queue. Producer P holds mutex M while calling blocking queue.put(item) on a full queue. Consumer C must acquire M before calling queue.get(). Production has no timeouts.\nRequirements:\n1. Explain a concrete execution that deadlocks.\n2. Give two repairs that preserve bounded memory, distinguishing a lock-order change from a nonblocking retry strategy.\n3. Using step 1, provide a small test or pseudocode that detects the failure with a bounded test duration, without claiming it was executed.",
+      "reference": "P holds M and waits for space in the full queue; C waits for M and cannot remove an item, so neither progresses. One repair releases M before a potentially blocking put (or safely changes consumer lock order), preserving invariants. A distinct repair uses a nonblocking offer while synchronized, releases M on Full, and retries/backoffs outside M with a bounded pending buffer. Increasing to unbounded capacity or waiting/retrying while holding M does not fix the requested bounded system. A proposed test should arrange a full queue and the lock ordering, detect non-progress with bounded waits/joins or daemon processes/threads, and avoid hanging its own test runner. Do not claim real execution."
+    },
+    {
+      "id": "unknown_rate",
+      "system2_mode": "auto",
+      "arms": ["auto", "off"],
+      "judge_labels": {"A": "auto", "B": "off"},
+      "expected_goal_count": 3,
+      "question": "A single-worker queue has capacity 32. We observed 8 arrivals, but the observation interval duration was not recorded. Service durations and arrival timing are unmeasured. The overflow/drop policy is unspecified.\nRequirements:\n1. Determine whether a numerical steady-state overflow probability follows from these facts, and explain why.\n2. Identify the additional measurements and model assumptions needed for such a calculation.\n3. Give two concrete compatible workloads with different overflow risks; label all introduced numbers as hypothetical.",
+      "reference": "No numerical overflow probability follows from capacity and a count without time, service behavior, arrival/burst structure and the overflow policy. Obtain arrival rate/timing or distribution, service rate/distribution and a specified finite-queue service/drop/blocking model; capacity alone does not supply these. Hypothetical evenly spaced 8 arrivals/hour with 1-second service and hypothetical 8 arrivals/second with 1-second service are compatible with an un-timed count of 8, but can have very different loss risks. Numbers must be explicitly hypothetical and not presented as observed data. A finite-capacity loss queue may have a stationary distribution even at arrival rate above service rate; do not indiscriminately claim that no steady state exists from infinite-buffer stability rules. Any claimed exact probability needs explicitly stated assumptions, not an unsupported estimate."
+    },
+    {
+      "id": "simple",
+      "system2_mode": "off",
+      "arms": ["off", "auto"],
+      "judge_labels": {"A": "auto", "B": "off"},
+      "expected_goal_count": 0,
+      "question": "What is 17 × 6? Answer with only the number.",
+      "reference": "The answer is exactly 102. The request needs no decomposition, alternatives, internal goal labels, explanation or unrequested advice. All three criteria reward the correct direct output; relevant_contribution here means respecting the requested minimal format."
+    }
+  ]
+}
