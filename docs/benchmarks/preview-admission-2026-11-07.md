@@ -132,6 +132,18 @@ unexpected provider requests. This is a post-study replay fault-path fix; the
 production core, live transport path, fixture, criteria and original artifacts
 remain unchanged. No additional paid run is made.
 
+The fix is pinned at `3d1afe899ae3c00877914ad83d7653afe547613c`.
+A separately declared **post-study offline validation** also consumes all 32
+requests / 64 events and matches the original canonical hash with zero provider
+calls / zero blocked attempts. Its derived input changes only
+`metadata.code_sha256` to the new code digest; every raw occurrence, envelope,
+transport event and feedback input is unchanged. Original journals are never
+overwritten, and their artifact hashes are checked again. This explicit metadata
+bridge validates the subsequent fix, not the original prospective protocol or a
+new paid measurement. Original replay uses the measured revision; current source
+continues to require its own exact code digest. Safe metrics retain both
+provenances and all artifact hashes separately.
+
 ## Verification and return to the intelligence work
 
 The measured frozen implementation passes **1,964 Python tests** with isolated real

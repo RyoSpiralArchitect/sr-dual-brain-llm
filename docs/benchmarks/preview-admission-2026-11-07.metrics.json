@@ -2219,6 +2219,37 @@
     "module-gating-preview-admission-2026-11-07-replay/outbox.sqlite3": "054a33a252eca3ca5d1efe30d30468df61deccfc2cefaf7862ef8362c30fb655",
     "module-gating-preview-admission-2026-11-07-replay/report.json": "8005fe8672549fbf7ca0b810f8f08d68fe9ee7d3800663ce11b67588e9742b16",
     "module-gating-preview-admission-2026-11-07-replay/report.partial.json": "07bad008bc47135ac629046711f49b47054035e256ca039eb858cc3e6ccd066f",
-    "module-gating-preview-admission-2026-11-07-replay/summary.json": "c9789ab09662b61cb9e001326baaca5c1e7d2b1c0bacd5e0bc0fb8189b98a5c0"
+    "module-gating-preview-admission-2026-11-07-replay/summary.json": "c9789ab09662b61cb9e001326baaca5c1e7d2b1c0bacd5e0bc0fb8189b98a5c0",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-input/journal.json": "3f176136f4228f8e96d7075175b5dab55dacf60841f042c144713f7b415753be",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-input/provenance.json": "7afe6a30a45594031e12cbcf1eff29cb76b509c28332ff5812251cc7ad56d432",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/journal.json": "3f176136f4228f8e96d7075175b5dab55dacf60841f042c144713f7b415753be",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/journal.partial.json": "8142a152eee5c4afc7abd57bbee7fb1d62949b8de491aeead3ad321aa795a0e4",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/outbox.sqlite3": "b4c708d092fac762371e08e0506daa6930b1f79e0897084f0bcbc7a60266eead",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/report.json": "26e91046799161e3a2dbd70f0e8e92944ce528e3a78db88ea3d7b4008a1b6338",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/report.partial.json": "204415c08eb1629cfc01a38b6a952c37bfe13f6676d3d64b1cdf4c8b86153adc",
+    "module-gating-preview-admission-2026-11-07-timeout-guard-replay/summary.json": "9360aacda498b0015f1426afc4b4dcaec7f1acbc18beb6df77fd8cf811995c2c"
+  },
+  "post_study_timeout_guard_validation": {
+    "kind": "post_study_offline_validation_not_original_frozen_replay",
+    "original_journal_sha256": "e8d3a0aa96c801f43610d070ef45116fec2bb0d8a7826cb28b0b445b2ef7b445",
+    "derived_journal_sha256": "3f176136f4228f8e96d7075175b5dab55dacf60841f042c144713f7b415753be",
+    "only_metadata_field_changed": "code_sha256",
+    "original_code_sha256": "617dc154077f22922a51f4450d9e90ebde0bf99f7874afb4dd1fbca300df1af0",
+    "current_code_sha256": "068f80930c833a6df20a6c16f2b224938a262a3f125f9fd18e09c04584f5040b",
+    "source_files_changed": [
+      "sr-dual-brain-llm/scripts/scheduled_http_journal.py"
+    ],
+    "validation_revision": "3d1afe899ae3c00877914ad83d7653afe547613c",
+    "raw_occurrences_transport_events_and_feedback_unchanged": true,
+    "additional_paid_calls": 0,
+    "status": "passed",
+    "canonical_sha256": "7b20c3b54b8710de88f0682c32ebc05ee52a1fa4fd829c4c52a851f98c510ab0",
+    "exact_ordered_requests": 32,
+    "exact_ordered_transport_events": 64,
+    "live_provider_calls": 0,
+    "unexpected_blocked_http_attempts": 0,
+    "canonical_equal": true,
+    "original_artifact_hashes_unchanged": true,
+    "scope": "separately_declared_offline_metadata_bridge_not_original_prospective_validation"
   }
 }
