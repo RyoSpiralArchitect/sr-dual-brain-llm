@@ -107,6 +107,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     detail_ev = _last_event(events, 'detail_execution')
     preview_ev = _last_event(events, 'preview_execution')
     task_goals_ev = _last_event(events, 'task_goal_execution')
+    generation_ev = _last_event(events, 'answer_generation')
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
     advisor_timing = {}
@@ -374,6 +375,10 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         }
 
     metrics: dict[str, Any] = {
+        'answer_generation': ({key: generation_ev.get(key) for key in
+            ('version', 'answer_status', 'terminal_complete', 'semantic_correctness', 'stages',
+             'reserved_output_tokens', 'total_output_token_cap', 'turn_status')}
+            if generation_ev is not None else None),
         'task_goals': ({key: task_goals_ev.get(key) for key in
             ('version', 'goal_count', 'review_status', 'review_snapshot_matches_answer', 'verified_complete', 'goals')}
             if task_goals_ev is not None else None),
@@ -1106,6 +1111,8 @@ async def _handle_process(
 
     telemetry_events = list(session.telemetry.events)
     metrics = result["metrics"]
+    if metrics.get('answer_generation') is not None:
+        result['answer_status'] = metrics['answer_generation']['answer_status']
     dialogue_flow = session.memory.dialogue_flow(qid)
     executive = None
     executive_observer = None

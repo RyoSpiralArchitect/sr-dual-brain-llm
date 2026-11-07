@@ -2,10 +2,12 @@ import asyncio
 import pytest
 import os
 import time
+from types import SimpleNamespace
 
 from core.dual_brain import DualBrainController, _resolve_system2_priority
 from core.shared_memory import SharedMemory
 from core.models import LeftBrainModel, RightBrainModel
+from core.llm_client import LLMClient, LLMConfig
 from core.policy import RightBrainPolicy
 from core.hypothalamus import Hypothalamus
 from core.policy_modes import ReasoningDial
@@ -55,6 +57,28 @@ class TrackingTelemetry:
 
     def log(self, event, **payload):
         self.events.append((event, payload))
+
+
+def scripted_left_model():
+    """Successful local provider simulation for organ/role wiring tests.
+
+    These tests need draft content to exercise orchestration, independently of
+    the production model's explicit no-provider availability behavior.
+    """
+    model = LeftBrainModel(LLMConfig('openai', 'scripted-test', 'FAKE_NO_CREDENTIAL', auto_continue=False))
+    client = LLMClient(model.llm_config)
+    async def post(_url, payload, _headers, **kwargs):
+        prompt = payload['messages'][-1]['content']
+        if 'Internal collaborator notes (do not output directly):\n' in prompt:
+            draft = prompt.split('Draft answer:\n', 1)[1].split('\n\nInternal collaborator', 1)[0]
+            notes = prompt.split('Internal collaborator notes (do not output directly):\n', 1)[1].rsplit('\n\nFinal answer:', 1)[0]
+            text = model.integrate_info(draft, notes)
+        else:
+            text = f'A scripted answer about {prompt[:120]} ...'
+        return {'choices': [{'message': {'content': text}, 'finish_reason': 'stop'}]}
+    client._post_json = post
+    model._llm_client = SimpleNamespace(complete=client.complete)
+    return model
 
 
 class SlowExecutiveModel:
@@ -837,7 +861,7 @@ def test_controller_requests_right_brain_when_confidence_low():
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=LeftBrainModel(),
+        left_model=scripted_left_model(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),
@@ -981,7 +1005,7 @@ def test_controller_falls_back_to_local_right_model():
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=LeftBrainModel(),
+        left_model=scripted_left_model(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),
@@ -3772,7 +3796,7 @@ def test_amygdala_forces_consult_on_sensitive_requests():
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=LeftBrainModel(),
+        left_model=scripted_left_model(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),
@@ -3811,7 +3835,7 @@ def test_right_brain_can_take_the_lead():
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=LeftBrainModel(),
+        left_model=scripted_left_model(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),
@@ -3858,7 +3882,7 @@ def test_unconscious_emergent_enriches_payload_and_answer():
     controller = DualBrainController(
         callosum=callosum,
         memory=memory,
-        left_model=LeftBrainModel(),
+        left_model=scripted_left_model(),
         right_model=RightBrainModel(),
         policy=RightBrainPolicy(),
         hypothalamus=Hypothalamus(),

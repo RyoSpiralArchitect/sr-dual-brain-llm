@@ -152,6 +152,7 @@ async def test_real_engine_uses_auto_admission_without_an_extra_model_classifier
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / 'sr-dual-brain-llm/scripts'))
     from engine_stdio import EngineSession,_handle_process
     from core.thalamic_reticular_nucleus import DEFAULT_REGISTRY
+    from core.llm_client import LLMClient, LLMConfig
     for spec in DEFAULT_REGISTRY.values():
         monkeypatch.setenv(spec.mode_env, 'auto')
     monkeypatch.setenv('DUALBRAIN_MEMORY_CONVERSATION_CONTEXT','1')
@@ -159,10 +160,15 @@ async def test_real_engine_uses_auto_admission_without_an_extra_model_classifier
     monkeypatch.setenv('DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE','auto')
     calls=[]
     class Client:
-        def __init__(self,role):self.role=role
+        def __init__(self,role):
+            self.client=LLMClient(LLMConfig('openai','fixture','FAKE_NO_CREDENTIAL'))
+            async def post(*args,**kwargs):
+                calls.append(role)
+                text=SOURCE if role=='left' else json.dumps({'verdict':'ok','issues':[],'fixes':[]})
+                return {'choices':[{'message':{'content':text},'finish_reason':'stop'}]}
+            self.client._post_json=post
         async def complete(self,*args,**kwargs):
-            calls.append(self.role)
-            return SOURCE if self.role=='left' else json.dumps({'verdict':'ok','issues':[],'fixes':[]})
+            return await self.client.complete(*args,**kwargs)
     session=await EngineSession.create('module-gates')
     try:
         session.memory.store(MemoryTrace('Project Amber retention',SOURCE,qid='primary',

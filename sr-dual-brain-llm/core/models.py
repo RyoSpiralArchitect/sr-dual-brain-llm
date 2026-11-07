@@ -23,6 +23,8 @@ from .llm_client import CompletionValidationError, LLMClient, LLMConfig, load_ll
 from .micro_critic import micro_criticise_reasoning
 from .detail_contract import detail_result
 from .task_goals import current_task, goal_review
+from .answer_generation import Generation, generate, record_generation, current_generation, reasoning_profile
+from .source_completion import source_completion_required
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
@@ -268,6 +270,12 @@ class LeftBrainModel:
                             f"Vision inputs are only supported for openai-style providers; got '{provider}'."
                         )
                     prompt = _openai_vision_prompt(input_text, vision_images)
+                if not require_success and not source_completion_required():
+                    result, cap = await generate(self._llm_client, self.llm_config, 'draft', prompt,
+                        system=system, temperature=.4, on_delta=on_delta)
+                    text = result.text if result.status in {'complete', 'partial', 'unverified'} else ''
+                    record_generation('draft', result, text, cap)
+                    return text
                 completion_kwargs = {"require_complete": True} if require_success else {}
                 if hasattr(self._llm_client, "complete_stream"):
                     completion = await self._llm_client.complete_stream(
@@ -294,24 +302,19 @@ class LeftBrainModel:
             except Exception:
                 if require_success:
                     raise RuntimeError("Primary source generation failed") from None
-                pass
+                record_generation('draft', Generation(status='failed', error_type='Error'), '', 0)
+                return ''
 
         if require_success:
             raise RuntimeError("Primary source generation unavailable")
 
-        base = f"Draft answer for: {input_text[:80]}"
-        if context:
-            summary = context.splitlines()[0][:80]
-            base += f"\nContext hint: {summary}"
-        if any(k in input_text for k in ["詳しく","分析","計算","証拠"]):
-            base += " ... (brief, looks complex)"
-        if on_delta:
-            maybe = on_delta(base)
-            if asyncio.iscoroutine(maybe):
-                await maybe
-        return base
+        record_generation('draft', Generation(), '', 0)
+        return ''
 
     def estimate_confidence(self, draft: str) -> float:
+        state = current_generation()
+        if not draft.strip() or state is not None and state.observed(draft) and state.status(draft) != 'complete':
+            return 0.
         return 0.45 if "..." in draft else 0.9
 
     def integrate_info(self, draft: str, info: str) -> str:
@@ -362,7 +365,7 @@ class LeftBrainModel:
         if not info:
             return draft
 
-        if not self._llm_client:
+        if not self._llm_client and source_completion_required():
             merged = self.integrate_info(draft, info)
             if on_delta:
                 maybe = on_delta(merged)
@@ -382,6 +385,21 @@ class LeftBrainModel:
             f"{info}\n\n"
             "Final answer:"
         )
+        if not source_completion_required():
+            # Buffer integration deltas until selecting the result. A failed or
+            # partial revision must not replace an already complete draft in UI.
+            result, cap = await generate(self._llm_client, self.llm_config, 'integration', prompt,
+                system=system, temperature=temperature)
+            state = current_generation()
+            retain = bool(state is not None and state.status(draft) == 'complete' and result.status != 'complete')
+            text = draft if retain or result.status not in {'complete', 'partial', 'unverified'} or not result.text else result.text
+            record_generation('integration', result, text, cap,
+                preserve_existing=text == draft and result.status != 'complete')
+            if on_delta and text:
+                maybe = on_delta(text)
+                if asyncio.iscoroutine(maybe):
+                    await maybe
+            return text
         try:
             if hasattr(self._llm_client, "complete_stream"):
                 completion = await self._llm_client.complete_stream(
@@ -497,20 +515,21 @@ class RightBrainModel:
                 system_parts.append(f"Psychoid projection: {psychoid_projection}")
             system = "\n\n".join(system_parts) if system_parts else None
             try:
-                completion = await self._llm_client.complete(
-                    (
-                        f"{question}\n\n"
-                        "Draft (for reference only):\n"
-                        f"{partial_answer}\n\n"
-                        "Return only user-facing additive content (no coaching, no critique)."
-                    ),
-                    system=system,
-                    temperature=temperature,
-                    max_output_tokens=max_tokens,
-                    timeout_seconds=timeout_seconds,
-                    require_complete=True,
-                    allow_continuation=False,
-                )
+                with reasoning_profile():
+                    completion = await self._llm_client.complete(
+                        (
+                            f"{question}\n\n"
+                            "Draft (for reference only):\n"
+                            f"{partial_answer}\n\n"
+                            "Return only user-facing additive content (no coaching, no critique)."
+                        ),
+                        system=system,
+                        temperature=temperature,
+                        max_output_tokens=max_tokens,
+                        timeout_seconds=timeout_seconds,
+                        require_complete=True,
+                        allow_continuation=False,
+                    )
                 return detail_result(qid, completion)
             except CompletionValidationError as exc:
                 return detail_result(qid, status=exc.reason, error=exc)
