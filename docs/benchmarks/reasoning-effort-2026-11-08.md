@@ -10,8 +10,9 @@ default remains unchanged; low stays opt-in.
 
 Code, fresh fixture/references and the [prospective protocol](reasoning-effort-protocol.md)
 were frozen at `8feec824a55b24a8d9b9309bb9c58c62c9a197a9`, on merged #104
-`37d86db4a8200fc45ad1c4b8f97253b32ef2f82b`. Subsequent changes add only this
-report, filtered observations and discoverability links. No paid repeat, rescue,
+`37d86db4a8200fc45ad1c4b8f97253b32ef2f82b`. The results commit adds this
+report, filtered observations and discoverability links. A later offline-only
+cancellation-precedence correction is reported separately below. No paid repeat, rescue,
 resampling, cap/profile change or rubric tuning occurs. See the
 [filtered metrics](reasoning-effort-2026-11-08.metrics.json),
 [fixture](../../sr-dual-brain-llm/examples/reasoning_effort_comparison.json) and
@@ -39,7 +40,7 @@ RPC deadline and subsequent request reuse, repeated cancellation and the
 subprocess-bounded queued-callback case also pass.
 
 The original #101 failed replay and all old grades remain unchanged. Separate
-historical-source validation applies **only the current drain fix** to measured
+historical-source validation applies **only the initial drain fix at the frozen revision** to measured
 source `ac61b3b5307908eb5945e76a5381bb2fb6e0d619`. Only a derived metadata code
 hash changes; raw requests, responses, event order, fixtures and criteria do not.
 All **33 requests / 66 events** and non-timing canonical outcomes match, with zero
@@ -48,7 +49,7 @@ unknown usage. The overlay code digest is
 `02ddf6043820b0d1304538078808998d0c72ee0275ba509c4d6a6cd8336e4269`;
 the private exact patch, runner, artifacts and hashes are retained.
 
-Current-source validation against that old tape also matches all **28 runtime
+Validation at that same current-source freeze against the old tape matches all **28 runtime
 requests / 56 runtime events**, including both owned critic cancellations. Its
 first different request is the old queue judge packet at occurrence 30
 (zero-based): #102 intentionally changed both empty-generation failure answers.
@@ -57,6 +58,16 @@ for new answer text. That current-source run remains incomplete, with no equal
 whole-study canonical result. This is distinct from both the original failed
 replay and the historical-source overlay success. The fresh study below tests
 current answers with its own frozen tape.
+
+After that live run and its successful first replay, implementer review reproduced
+a separate boundary case: a cleanup-waiter error could replace an already observed
+owner cancellation, making abandonment appear to be a recoverable consultation
+failure. Cancellation now takes precedence across both the wait and its result,
+after cleanup has settled. A targeted pre-fix test fails; the corrected
+ownership/channel/journal/cancellation set passes61. This is an offline-only
+robustness correction, not profile/cap/rubric tuning or a new paid measurement.
+Original results and first-replay provenance remain unchanged; supplemental
+current-code replay records its own source hash and derived-metadata boundary.
 
 ## Fresh profile comparison
 

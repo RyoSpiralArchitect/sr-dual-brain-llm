@@ -52,14 +52,18 @@ async def drain_consultation(channel):
         return
     drain = asyncio.ensure_future(wait_idle())
     cancelled = False
-    while not drain.done():
-        try:
-            await asyncio.shield(drain)
-        except asyncio.CancelledError:
-            cancelled = True
-    drain.result()
-    if cancelled:
-        raise asyncio.CancelledError()
+    try:
+        while not drain.done():
+            try:
+                await asyncio.shield(drain)
+            except asyncio.CancelledError:
+                cancelled = True
+        drain.result()
+    finally:
+        if cancelled:
+            # Cleanup errors cannot turn an abandoned turn into a recoverable
+            # consultation failure that admits a fresh fallback request.
+            raise asyncio.CancelledError() from None
 
 
 @dataclass

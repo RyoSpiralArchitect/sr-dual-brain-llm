@@ -29,7 +29,7 @@ fallback through the real controller/worker/channel, JSON-round-tripped exact
 scheduled replay, repeated owner cancellation during draining, later RPC
 cancellation/deadline and reuse, and a subprocess-bounded done-callback case.
 The original #101 failed replay remains unchanged. A separate validation applies
-only this fix to its measured historical runtime: all 33 requests / 66 events
+only the initial frozen drain fix to its measured historical runtime: all 33 requests / 66 events
 and non-timing canonical outcomes match with zero provider calls. That is a
 historical-source overlay validation, not a claim that #102's intentionally
 changed ordinary-generation behavior equals the old answers.
@@ -41,3 +41,8 @@ provenance; fresh answer quality requires its own observations.
 
 The [2026-11-08 results](benchmarks/reasoning-effort-2026-11-08.md) retain all
 three replay provenances and the fresh profile comparison.
+
+Final review also preserves an observed owner cancellation when the cleanup
+waiter itself fails. The error is consumed after settling, and cancellation
+still propagates, so an abandoned turn cannot admit a new fallback. This later
+offline-only correction keeps the original measurement and replay provenance.

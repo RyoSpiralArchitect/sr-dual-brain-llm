@@ -11,13 +11,16 @@ from core.turn_lifecycle import TurnDispatcher
 
 
 @pytest.mark.asyncio
-async def test_drain_propagates_repeated_owner_cancel_only_after_cleanup():
+@pytest.mark.parametrize('cleanup_error', [False, True])
+async def test_drain_propagates_repeated_owner_cancel_only_after_cleanup(cleanup_error):
     started, release, finished = [asyncio.Event() for _ in range(3)]
     class Channel:
         async def wait_idle(self):
             started.set()
             await release.wait()
             finished.set()
+            if cleanup_error:
+                raise RuntimeError('PRIVATE_CLEANUP_FAILURE')
     task = asyncio.create_task(drain_consultation(Channel()))
     await started.wait()
     task.cancel()
