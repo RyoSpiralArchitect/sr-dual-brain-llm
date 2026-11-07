@@ -96,6 +96,15 @@ class RawJournal:
         if self.save:
             self.save(self.data)
 
+    def _transport_admitted(self, index):
+        """Optional observation hook; legacy journals retain immediate replay."""
+
+    async def _wait_recorded_transport(self, index):
+        """A scheduled journal may wait without changing the raw envelope."""
+
+    def _transport_finished(self, index, row):
+        """Optional terminal observation; cancellation must retain its authority."""
+
     async def post(self, role, url, payload, headers, **kwargs):
         request = {'case': self.case, 'role': role,
                    'endpoint_sha256': hashlib.sha256(url.encode()).hexdigest(),
@@ -112,8 +121,10 @@ class RawJournal:
         # order independently of the order in which they finish.
         self.data['occurrences'].append(row)
         self.events.append(event)
+        index = len(self.events) - 1
         started = time.perf_counter()
         try:
+            self._transport_admitted(index)
             if self.frozen:
                 index = self.position
                 self.position += 1
@@ -122,6 +133,7 @@ class RawJournal:
                     self.divergences.append(index)
                     raise AdmissionError('Exact request occurrence differs')
                 recorded = rows[index]
+                await self._wait_recorded_transport(index)
                 if recorded.get('error_type'):
                     category = recorded['error_type']
                     row.update({k: v for k, v in recorded.items() if k != 'request'})
@@ -159,6 +171,7 @@ class RawJournal:
                 event[field] = value if type(value) is int and value >= 0 else None
             event.update(error_type=row.get('error_type'),
                          served_model=response.get('model') if isinstance(response, dict) else None)
+            self._transport_finished(index, row)
             self.checkpoint()
 
     def finish(self):

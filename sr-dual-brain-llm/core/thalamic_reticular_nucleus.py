@@ -28,6 +28,7 @@ ACC_CONSULT_PROMOTION = "acc_consult_promotion"
 ACC_SYSTEM2_PROMOTION = "acc_system2_promotion"
 ACC_TEMPERATURE_ADJUSTMENT = "acc_temperature_adjustment"
 BASAL_CONSULT_PROMOTION = "basal_consult_promotion"
+SPECULATIVE_PREVIEW_SUPPRESSION = "speculative_preview_suppression"
 
 
 class GateMode(str, Enum):
@@ -76,6 +77,7 @@ class GateFacts:
     recovery_output_blocked: bool = False
     recovery_confirmation_required: bool = False
     local_controls_ready: bool = False
+    record_choice_pending: bool = False
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -144,6 +146,7 @@ AUTO_REASONS = frozenset({
     "bounded_recovery_confirmation", "unusable_recovery_output", "invalid_recovery_signal", "recovery_unconfirmed",
     "local_controls_ready",
     "bounded_record_clarification",
+    "record_choice_pending", "preview_context_needed",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -330,7 +333,20 @@ def _auto_basal_consult_promotion(facts: GateFacts) -> tuple[bool, str]:
     return _auto_conflict_control(facts)
 
 
+def _auto_preview_suppression(facts: GateFacts) -> tuple[bool, str]:
+    # This is a pre-draft fact, never the eventual policy action or answer.
+    if facts.record_choice_pending is True:
+        return True, "record_choice_pending"
+    return False, "preview_context_needed"
+
+
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
+    SPECULATIVE_PREVIEW_SUPPRESSION: ModuleSpec(
+        module_id=SPECULATIVE_PREVIEW_SUPPRESSION,
+        phase="pre_draft", policy_version="pending_record_choice_v1",
+        mode_env="DUALBRAIN_MODULE_SPECULATIVE_PREVIEW_SUPPRESSION_MODE", legacy_env=None,
+        default_mode=GateMode.OFF, auto_policy=_auto_preview_suppression,
+    ),
     CONVERSATION_SELECTIVE_CONSULTATION: ModuleSpec(
         module_id=CONVERSATION_SELECTIVE_CONSULTATION,
         phase="routing", policy_version="literal_or_choice_clarification_v3",
@@ -500,4 +516,5 @@ __all__ = [
     "EXECUTIVE_ADVICE", "DIRECTOR_ADVICE", "EXECUTIVE_METRICS_OBSERVATION",
     "ACC_CONSULT_PROMOTION", "ACC_SYSTEM2_PROMOTION", "ACC_TEMPERATURE_ADJUSTMENT",
     "BASAL_CONSULT_PROMOTION",
+    "SPECULATIVE_PREVIEW_SUPPRESSION",
 ]
