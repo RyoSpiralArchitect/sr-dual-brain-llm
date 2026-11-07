@@ -1,0 +1,245 @@
+{
+  "kind": "development_only_isolated_original_envelope_contract_check",
+  "source_revision": "e95046dd3feb5f9c9c608cf2183df4e441bba7e4",
+  "code_sha256": "627a0acd720e710f5c601ced337c9607e97b031da3ce247576b00dca682f456f",
+  "original_study_source_revision": "ac61b3b5307908eb5945e76a5381bb2fb6e0d619",
+  "original_journal_file_sha256": "8524b63d4bdf1c4f3fd042192c66df19f934d51d0337154948579d3bffaf33b3",
+  "diagnostic_script_sha256": "d8c517e2b212283d61981dd9a4d92b18fe2d33bc7ac7f94819318002e63b2728",
+  "provider_network_calls": 0,
+  "unexpected_blocked_http_attempts": 0,
+  "scripted_envelope_checks": 8,
+  "original_replay_replaced": false,
+  "semantic_quality": "not_assessed",
+  "rows": [
+    {
+      "original_occurrence": 5,
+      "case": "retry:auto",
+      "stage": "detail",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 450,
+      "original_reasoning_tokens": 450,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "detail",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 450,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 450,
+        "total_output_token_cap": 1800
+      },
+      "applicability": "generic_helper_control_not_the_production_right_detail_path"
+    },
+    {
+      "original_occurrence": 7,
+      "case": "retry:off",
+      "stage": "detail",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 450,
+      "original_reasoning_tokens": 450,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "detail",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 450,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 450,
+        "total_output_token_cap": 1800
+      },
+      "applicability": "generic_helper_control_not_the_production_right_detail_path"
+    },
+    {
+      "original_occurrence": 8,
+      "case": "queue:off",
+      "stage": "draft",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "draft",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    },
+    {
+      "original_occurrence": 10,
+      "case": "queue:off",
+      "stage": "integration",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "integration",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    },
+    {
+      "original_occurrence": 11,
+      "case": "queue:auto",
+      "stage": "draft",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "draft",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    },
+    {
+      "original_occurrence": 13,
+      "case": "queue:auto",
+      "stage": "integration",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "integration",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    },
+    {
+      "original_occurrence": 14,
+      "case": "unknown_rate:auto",
+      "stage": "draft",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "draft",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    },
+    {
+      "original_occurrence": 19,
+      "case": "unknown_rate:off",
+      "stage": "draft",
+      "original_finish_reason": "length",
+      "original_completion_tokens": 2048,
+      "original_reasoning_tokens": 2048,
+      "new_contract": {
+        "version": "ordinary_generation_v1",
+        "answer_status": "empty",
+        "terminal_complete": false,
+        "semantic_correctness": "not_assessed",
+        "stages": [
+          {
+            "stage": "draft",
+            "status": "empty",
+            "finish_reason": "length",
+            "nonempty_text": false,
+            "error_type": "CompletionValidationError",
+            "max_output_tokens": 2048,
+            "request_reasoning_effort": null
+          }
+        ],
+        "reserved_output_tokens": 2048,
+        "total_output_token_cap": 8192
+      },
+      "applicability": "ordinary_left_contract"
+    }
+  ],
+  "interpretation": "isolated_development_contract_checks_only_no_quality_or_full_replay_claim",
+  "applicability_counts": {
+    "ordinary_left_draft_and_integration": 6,
+    "generic_helper_controls_of_detail_sized_envelopes": 2
+  },
+  "private_report_file_sha256": "8fab169f81c34bca79d45c571ad4921b8fe337be11a5b396234d5c9a07add945"
+}

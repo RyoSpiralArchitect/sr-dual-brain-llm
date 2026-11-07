@@ -37,6 +37,8 @@ response says generation failed and invites a retry. An auditor's empty-answer
 clarification cannot turn a generation failure into a claim that the user's
 question was incomplete. Internal placeholder drafts and raw collaborator notes
 do not become a substitute successful answer.
+Notices respect the existing plain-answer Director character limits and appended
+questions. Explicit debug output retains its sections alongside the notice.
 
 Confidence is zero for an empty or unconfirmed ordinary draft. Existing routing
 still decides whether to consult; manual System2 OFF does not authorize a critic,
@@ -113,3 +115,7 @@ payloads, unavailable/custom clients, goal-report authority and owned
 cancellation. RPC/controller checks distinguish normal handler success from
 complete, partial and empty generation. Scripted completions demonstrate those
 contracts and do not measure real model quality.
+
+The [development record](benchmarks/ordinary-generation-2026-11-07.md) applies
+the contract to preserved empty envelopes without new provider calls and keeps
+the original study and failed replay intact.

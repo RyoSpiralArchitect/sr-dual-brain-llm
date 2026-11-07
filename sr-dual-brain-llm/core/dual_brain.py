@@ -6668,10 +6668,13 @@ class DualBrainController:
             meta = meta if isinstance(meta, dict) else {}
             # A failed generator is not evidence that the user omitted detail.
             presentation_input = '' if 'empty_after_cleaning' in meta.get('flags', []) else user_answer
-            presented = generation.present(presentation_input, question)
+            constrain = None if emit_debug_sections else lambda value: self._apply_director_output_constraints(
+                value, director_max_chars=director_max_chars,
+                director_append_question=director_append_question)
+            presented = generation.present(presentation_input, question, constrain=constrain)
             if presented != user_answer:
                 user_answer = presented
-                final_answer = presented
+                final_answer = f'{presented}\n\n{final_answer}' if emit_debug_sections else presented
                 await _emit_reset_if_needed()
             generation_summary = generation.summary(user_answer)
             if not generation_summary['terminal_complete']:

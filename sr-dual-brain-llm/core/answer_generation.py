@@ -131,7 +131,7 @@ class AnswerGeneration:
             'stages': list(self.records), 'reserved_output_tokens': self.reserved,
             'total_output_token_cap': self.total_cap}
 
-    def present(self, answer, question):
+    def present(self, answer, question, *, constrain=None):
         status = self.status(answer)
         japanese = bool(re.search(r'[\u3040-\u30ff\u4e00-\u9fff]', question))
         text = answer
@@ -141,6 +141,8 @@ class AnswerGeneration:
             text = ('回答を生成できませんでした。もう一度お試しください。' if japanese else
                     'I could not generate an answer. Please try again.')
         if text != answer:
+            if constrain is not None:
+                text = constrain(text)
             self.answers[fingerprint(text)] = status
         return text
 
