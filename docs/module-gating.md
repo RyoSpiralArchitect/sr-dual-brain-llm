@@ -396,6 +396,11 @@ after direct fallback; an empty fallback cannot improve success feedback.
 The [controlled live clarification comparison](benchmarks/clarification-detail-2026-11-06.md)
 reports shared-draft routing costs, explicit-mode controls and separately labeled
 injected completion failures.
+The [natural persistent trajectory](benchmarks/natural-memory-2026-11-06.md)
+observes two native selective skips, but also five earlier speculative previews,
+including two cancelled attempts with unknown usage. Its original replay race
+and supplemental schedule diagnostic remain separate observations; no new
+preview admission rule or default is introduced.
 
 ## Facts and observability
 

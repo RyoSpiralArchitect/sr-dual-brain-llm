@@ -1,0 +1,2483 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "experiment": "prospective_natural_memory_trajectory",
+    "version": 1,
+    "fixture_sha256": "bc47be31235640e348d3892a3f0910b1bc7db305e3e2cf60b327aad119481175",
+    "code_sha256": "7b009c28ecc02903dc964abfae449b6234bfbabbbdad858020344e45c347b2ab",
+    "config": {
+      "provider": "openai",
+      "model": "gpt-6-luna",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-luna",
+        "max_completion_tokens": 2048
+      }
+    },
+    "call_limit": 64,
+    "runtime": {
+      "DUALBRAIN_SYSTEM2_PRIORITY_AUTO": "balanced",
+      "REASONING_DIAL": "evaluative",
+      "DUALBRAIN_MEMORY_CONVERSATION_CONTEXT": "1",
+      "DUALBRAIN_MODULE_CONVERSATION_SELECTIVE_CONSULTATION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_MONITOR_MODE": "auto",
+      "DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_DEFAULT_MODE_REFLECTION_INJECTION_MODE": "auto",
+      "DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE": "auto",
+      "DUALBRAIN_MODULE_EXECUTIVE_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_DIRECTOR_ADVICE_MODE": "off",
+      "DUALBRAIN_MODULE_EXECUTIVE_METRICS_OBSERVATION_MODE": "off",
+      "DUALBRAIN_MODULE_ACC_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_SYSTEM2_PROMOTION_MODE": "auto",
+      "DUALBRAIN_MODULE_ACC_TEMPERATURE_ADJUSTMENT_MODE": "auto",
+      "DUALBRAIN_MODULE_BASAL_CONSULT_PROMOTION_MODE": "auto",
+      "DUALBRAIN_SYSTEM2_ROUND_TARGET_MIN": "0"
+    },
+    "transport": "production_nonstream_json",
+    "torch_available": true,
+    "semantic_grading": "available_condition_assessment_v4",
+    "source_diagnostics": "independent_record_assessment_v3",
+    "runtime_call_limit": 49,
+    "calibration_sha256": "27e6f2bf499ba48ec7f85b50249c1f6e00c0c5d481cb56d726ca4b20bcbf99b8",
+    "judge_config": {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "max_output_tokens": 2048,
+      "timeout_seconds": 60,
+      "auto_continue": false,
+      "max_continuations": 0,
+      "api_base_sha256": "ee071e382ae11baecc06ca51545a6d4f3fa74cb3ea12b605d63d0b19ae84fea7",
+      "request_options": {
+        "model": "gpt-6-sol",
+        "max_completion_tokens": 2048
+      }
+    },
+    "judge_instructions_sha256": "51a8c263eac62202826c5885c6fc936ca0f672c980b39567037db30786b07380",
+    "policy": "unmodified_production_policy",
+    "drafts": "native_generation_no_substitution",
+    "persistence": "isolated_postgresql_and_private_outbox",
+    "replay_feedback": "record_measured_latency_only_verify_all_other_feedback_inputs",
+    "output_caps": {
+      "generation_ceiling": 2048,
+      "support": 4096,
+      "semantic_judge": 2048,
+      "ordinary_detail_small": 450,
+      "ordinary_detail_large": 900
+    },
+    "repeat_rule": "one_fixed_order_no_resampling_or_rescue"
+  },
+  "complete": true,
+  "source_revision": "96cbdde91a47514c9475cb1b989a7e0f5d2b8e3b",
+  "calibration_summary": {
+    "comparisons": 24,
+    "matches": 24,
+    "disagreements": [],
+    "by_expected_verdict": {
+      "pass": {
+        "comparisons": 13,
+        "matches": 13
+      },
+      "fail": {
+        "comparisons": 8,
+        "matches": 8
+      },
+      "uncertain": {
+        "comparisons": 3,
+        "matches": 3
+      }
+    },
+    "failed_packets": 0,
+    "authority": "authored_expectations_not_independent_human_adjudication"
+  },
+  "episode_elapsed_ms": 50895.253019058146,
+  "feedback_sha256": "873391ce1ca7b8c819f6716e7004bd962e8c942fdd99bc069e311c4a2f4d2878",
+  "live_provider_calls": 50,
+  "usage": {
+    "calls": 50,
+    "input_tokens": null,
+    "output_tokens": null,
+    "known_input_tokens": 56622,
+    "known_output_tokens": 4244,
+    "unknown_usage_calls": 2,
+    "cancelled_calls": 2,
+    "failed_calls": 0
+  },
+  "calls_by_role": {
+    "calibration_v4": 6,
+    "draft": 12,
+    "critic": 7,
+    "support": 5,
+    "right": 5,
+    "detail": 4,
+    "integration": 2,
+    "answer_judge_v4": 9
+  },
+  "served_models": [
+    "gpt-6-luna",
+    "gpt-6-sol"
+  ],
+  "contract_failures": [],
+  "trajectory_complete": true,
+  "semantic_interpretation": "all_authored_calibration_expectations_match",
+  "canonical_sha256": "17e1d3112502d1972d608a8ae8af111d3c638d40a00fd06f6d7dd6304defedc4",
+  "calibration": [
+    {
+      "id": "explicit_period_missing",
+      "order": [
+        "appropriate",
+        "unnecessary"
+      ],
+      "expected": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "unnecessary": {
+          "attribution": "pass",
+          "information_sufficiency": "fail"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1003,
+        "output_tokens": 153,
+        "known_input_tokens": 1003,
+        "known_output_tokens": 153,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "unnecessary": {
+          "attribution": "pass",
+          "information_sufficiency": "fail"
+        }
+      }
+    },
+    {
+      "id": "explicit_rate_missing_ja",
+      "order": [
+        "invented",
+        "appropriate"
+      ],
+      "expected": {
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        },
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1009,
+        "output_tokens": 172,
+        "known_input_tokens": 1009,
+        "known_output_tokens": 172,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        },
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        }
+      }
+    },
+    {
+      "id": "bare_parameter_missing",
+      "order": [
+        "appropriate",
+        "invented"
+      ],
+      "expected": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 991,
+        "output_tokens": 209,
+        "known_input_tokens": 991,
+        "known_output_tokens": 209,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        }
+      }
+    },
+    {
+      "id": "current_record_available",
+      "order": [
+        "unnecessary",
+        "appropriate"
+      ],
+      "expected": {
+        "unnecessary": {
+          "attribution": "pass",
+          "information_sufficiency": "fail"
+        },
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1047,
+        "output_tokens": 145,
+        "known_input_tokens": 1047,
+        "known_output_tokens": 145,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "unnecessary": {
+          "attribution": "pass",
+          "information_sufficiency": "fail"
+        },
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        }
+      }
+    },
+    {
+      "id": "whole_record_available",
+      "order": [
+        "appropriate",
+        "invented"
+      ],
+      "expected": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1034,
+        "output_tokens": 153,
+        "known_input_tokens": 1034,
+        "known_output_tokens": 153,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "appropriate": {
+          "attribution": "pass",
+          "information_sufficiency": "pass"
+        },
+        "invented": {
+          "attribution": "fail",
+          "information_sufficiency": "fail"
+        }
+      }
+    },
+    {
+      "id": "unknown_context",
+      "order": [
+        "clarifying_reply",
+        "claim"
+      ],
+      "expected": {
+        "clarifying_reply": {
+          "attribution": "pass",
+          "information_sufficiency": "uncertain"
+        },
+        "claim": {
+          "attribution": "uncertain",
+          "information_sufficiency": "uncertain"
+        }
+      },
+      "usage": {
+        "calls": 1,
+        "input_tokens": 876,
+        "output_tokens": 358,
+        "known_input_tokens": 876,
+        "known_output_tokens": 358,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "clarifying_reply": {
+          "attribution": "pass",
+          "information_sufficiency": "uncertain"
+        },
+        "claim": {
+          "attribution": "uncertain",
+          "information_sufficiency": "uncertain"
+        }
+      }
+    }
+  ],
+  "grades": [
+    {
+      "id": "period_initial",
+      "status": "not_assessed",
+      "reason": "source_write_or_unavailable"
+    },
+    {
+      "id": "backup_initial",
+      "status": "not_assessed",
+      "reason": "source_write_or_unavailable"
+    },
+    {
+      "id": "ambiguous_replay",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1506,
+        "output_tokens": 147,
+        "known_input_tokens": 1506,
+        "known_output_tokens": 147,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "selected_replay",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 3173,
+        "output_tokens": 75,
+        "known_input_tokens": 3173,
+        "known_output_tokens": 75,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "period_corrected",
+      "status": "not_assessed",
+      "reason": "source_write_or_unavailable"
+    },
+    {
+      "id": "old_selection",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 3593,
+        "output_tokens": 110,
+        "known_input_tokens": 3593,
+        "known_output_tokens": 110,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "restart_selection",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1539,
+        "output_tokens": 106,
+        "known_input_tokens": 1539,
+        "known_output_tokens": 106,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "relisted_replay",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 3164,
+        "output_tokens": 73,
+        "known_input_tokens": 3164,
+        "known_output_tokens": 73,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "current_period",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 5132,
+        "output_tokens": 90,
+        "known_input_tokens": 5132,
+        "known_output_tokens": 90,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "bare_parameter",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 3004,
+        "output_tokens": 91,
+        "known_input_tokens": 3004,
+        "known_output_tokens": 91,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "explicit_rate_missing",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 1943,
+        "output_tokens": 118,
+        "known_input_tokens": 1943,
+        "known_output_tokens": 118,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    },
+    {
+      "id": "explicit_period_missing",
+      "usage": {
+        "calls": 1,
+        "input_tokens": 3035,
+        "output_tokens": 92,
+        "known_input_tokens": 3035,
+        "known_output_tokens": 92,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "verdicts": {
+        "attribution": "pass",
+        "information_sufficiency": "pass"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "id": "period_initial",
+      "write": true,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 3474.8869940522127,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": null,
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 1,
+        "critic_responses": 1,
+        "attempted_rounds": [
+          1
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 1,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-period_initial"
+      },
+      "active_primary_qids": [
+        "period_initial"
+      ],
+      "write_complete": true,
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1494,
+        "output_tokens": 92,
+        "known_input_tokens": 1494,
+        "known_output_tokens": 92,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1,
+        "critic": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "write_complete": true,
+        "requested_content": true
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "649d81fcd295eca629c03a0d3eabcbb1dca67b5cef1686eee42be2789b96fc21"
+    },
+    {
+      "id": "backup_initial",
+      "write": true,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 4476.581530005205,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": null,
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": {
+        "version": "detail_execution_v1",
+        "deliveries": [
+          {
+            "source": "callosum",
+            "status": "ok",
+            "kind": "external",
+            "usable": true,
+            "external_complete": true,
+            "error_type": null
+          }
+        ],
+        "usable": true,
+        "external_complete": true,
+        "fallback_used": false
+      },
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-backup_initial"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_initial"
+      ],
+      "write_complete": true,
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "right",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "detail",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2108,
+        "output_tokens": 218,
+        "known_input_tokens": 2108,
+        "known_output_tokens": 218,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "right": 1,
+        "detail": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "write_complete": true,
+        "requested_content": true
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "0ac60acbd0a9530674f283c71e8b180191008e8e4c40cdce1d48eca9a5c70fa3"
+    },
+    {
+      "id": "ambiguous_replay",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 1275.599306973163,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "current_unselected",
+        "source_approval": "unknown",
+        "action": "clarify_record"
+      },
+      "binding_status": "ambiguous_record",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": null,
+      "route": {
+        "version": "conversation_lookup_v3",
+        "action": "skip",
+        "reason": "bounded_record_clarification",
+        "prior_action": 1,
+        "prior_system2": false,
+        "final_action": 0,
+        "final_system2": false,
+        "approved_records": 0,
+        "activation_mode": "auto",
+        "applied": true
+      },
+      "policy_action": 0,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-ambiguous_replay"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_initial"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 549,
+        "output_tokens": 16,
+        "known_input_tokens": 549,
+        "known_output_tokens": 16,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "f5e8b0cd8976e5e954934de0e0724d0f273247b795ffb06f948e14f231f5d2fc"
+    },
+    {
+      "id": "selected_replay",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 3770.795384014491,
+      "preparation_observed": true,
+      "source_qids": [
+        "period_initial"
+      ],
+      "condition": null,
+      "binding_status": "bound",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": {
+        "version": "detail_execution_v1",
+        "deliveries": [
+          {
+            "source": "callosum",
+            "status": "ok",
+            "kind": "external",
+            "usable": true,
+            "external_complete": true,
+            "error_type": null
+          }
+        ],
+        "usable": true,
+        "external_complete": true,
+        "fallback_used": false
+      },
+      "route": null,
+      "policy_action": 2,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-selected_replay"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_initial"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "right",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "detail",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": true,
+      "retrieval_source_qids": [
+        "period_initial"
+      ],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 4,
+        "input_tokens": 2529,
+        "output_tokens": 121,
+        "known_input_tokens": 2529,
+        "known_output_tokens": 121,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "right": 1,
+        "detail": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": true
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "pass",
+          "basis": "utf8_exact",
+          "answer_bytes": 36,
+          "target_bytes": 36,
+          "answer_sha256": "07b923bbb3418d21c3acc5f2a517147ec536c670053417adbfdb349aec6e40b6",
+          "target_sha256": "07b923bbb3418d21c3acc5f2a517147ec536c670053417adbfdb349aec6e40b6"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true,
+            "unique_source": true,
+            "target_binding": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "period_initial",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "pass",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 7.630817010067403,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "649d81fcd295eca629c03a0d3eabcbb1dca67b5cef1686eee42be2789b96fc21"
+    },
+    {
+      "id": "period_corrected",
+      "write": true,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 12552.183124003932,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": null,
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 2,
+        "critic_responses": 2,
+        "attempted_rounds": [
+          1,
+          2
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 2,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          },
+          {
+            "round": 2,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 2,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-period_corrected"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "write_complete": true,
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "integration",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 5,
+        "input_tokens": 3970,
+        "output_tokens": 826,
+        "known_input_tokens": 3970,
+        "known_output_tokens": 826,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "critic": 2,
+        "integration": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "write_complete": true,
+        "requested_content": true
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "391730ea5348eb0648222077dc47e17cc251d7d09a4771d61efe40ee855991ac"
+    },
+    {
+      "id": "old_selection",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 2654.66490999097,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "selection_unavailable",
+        "source_approval": "unknown",
+        "action": "reselect_record"
+      },
+      "binding_status": "stale_selection",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": {
+        "version": "detail_execution_v1",
+        "deliveries": [
+          {
+            "source": "callosum",
+            "status": "ok",
+            "kind": "external",
+            "usable": true,
+            "external_complete": true,
+            "error_type": null
+          }
+        ],
+        "usable": true,
+        "external_complete": true,
+        "fallback_used": false
+      },
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-old_selection"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "right",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "detail",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 3,
+        "input_tokens": 2542,
+        "output_tokens": 42,
+        "known_input_tokens": 2542,
+        "known_output_tokens": 42,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1,
+        "right": 1,
+        "detail": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "a830617c78e369514fd902d818d59176c8bb3e53875f86ae575e8c2da8d0b3b2"
+    },
+    {
+      "id": "restart_selection",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 1014.3613740219735,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "recorded_answer_replay",
+        "parameter": null,
+        "parameter_status": "not_applicable",
+        "source_availability": "selection_unavailable",
+        "source_approval": "unknown",
+        "action": "reselect_record"
+      },
+      "binding_status": "invalid_selection",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": null,
+      "route": {
+        "version": "conversation_lookup_v3",
+        "action": "skip",
+        "reason": "bounded_record_clarification",
+        "prior_action": 1,
+        "prior_system2": false,
+        "final_action": 0,
+        "final_system2": false,
+        "approved_records": 0,
+        "activation_mode": "auto",
+        "applied": true
+      },
+      "policy_action": 0,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-restart_selection"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 1,
+        "input_tokens": 570,
+        "output_tokens": 23,
+        "known_input_tokens": 570,
+        "known_output_tokens": 23,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "unknown",
+          "basis": "utf8_exact",
+          "reason": "missing_or_malformed_text"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false,
+            "unique_source": false,
+            "target_binding": null
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "unknown_target_binding",
+            "failed_exposed",
+            "failed_unique_source",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "unknown",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 6.197170005179942,
+      "restart_elapsed_ms": 17.713858047500253,
+      "answer_sha256": "e39e0a6ff82b304f5f9956505f83550c2cf3f2cf3359a9a8e71231cfc73922dc"
+    },
+    {
+      "id": "relisted_replay",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 5009.049478976522,
+      "preparation_observed": true,
+      "source_qids": [
+        "period_corrected"
+      ],
+      "condition": null,
+      "binding_status": "bound",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": {
+        "version": "detail_execution_v1",
+        "deliveries": [
+          {
+            "source": "callosum",
+            "status": "ok",
+            "kind": "external",
+            "usable": true,
+            "external_complete": true,
+            "error_type": null
+          }
+        ],
+        "usable": true,
+        "external_complete": true,
+        "fallback_used": false
+      },
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-relisted_replay"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "right",
+          "finish_reason": "unknown",
+          "nonempty_text": false,
+          "transport_error": "CancelledError"
+        },
+        {
+          "stage": "detail",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": true,
+      "retrieval_source_qids": [
+        "period_corrected"
+      ],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 4,
+        "input_tokens": null,
+        "output_tokens": null,
+        "known_input_tokens": 2132,
+        "known_output_tokens": 117,
+        "unknown_usage_calls": 1,
+        "cancelled_calls": 1,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "right": 1,
+        "detail": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": true
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "pass",
+          "basis": "utf8_exact",
+          "answer_bytes": 36,
+          "target_bytes": 36,
+          "answer_sha256": "f70acaaf05a73d16c3e41b2339a351da3980966eaf01c7666b83e816665507a3",
+          "target_sha256": "f70acaaf05a73d16c3e41b2339a351da3980966eaf01c7666b83e816665507a3"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true,
+            "unique_source": true,
+            "target_binding": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "period_corrected",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "unknown",
+          "exact_match": "pass",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 5.512856994755566,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "391730ea5348eb0648222077dc47e17cc251d7d09a4771d61efe40ee855991ac"
+    },
+    {
+      "id": "current_period",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 7373.715733003337,
+      "preparation_observed": true,
+      "source_qids": [
+        "period_corrected"
+      ],
+      "condition": null,
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 2,
+        "critic_responses": 2,
+        "attempted_rounds": [
+          1,
+          2
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 2,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          },
+          {
+            "round": 2,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-current_period"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "integration",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": true,
+      "retrieval_source_qids": [
+        "period_corrected"
+      ],
+      "condition_provided": false,
+      "reference_private": true,
+      "usage": {
+        "calls": 5,
+        "input_tokens": 4261,
+        "output_tokens": 333,
+        "known_input_tokens": 4261,
+        "known_output_tokens": 333,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "support": 1,
+        "draft": 1,
+        "critic": 2,
+        "integration": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "pass",
+          "checks": {
+            "current": true,
+            "complete": true,
+            "scope": true,
+            "source_approved": true,
+            "reference_resolved": true,
+            "exposed": true,
+            "record_shape": true,
+            "current_status": true,
+            "complete_text": true,
+            "primary_source": true,
+            "recorded_time": true,
+            "not_expired": true,
+            "unique_identities": true
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [
+            {
+              "qid": "period_corrected",
+              "declared_checks": {
+                "current": true,
+                "complete": true,
+                "scope": true,
+                "source_approved": true
+              },
+              "consistency": {
+                "record_shape": true,
+                "current_status": true,
+                "complete_text": true,
+                "primary_source": true,
+                "recorded_time": true,
+                "not_expired": true
+              }
+            }
+          ],
+          "reasons": [],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "7229e63581dd87e0cc29239d58bae602092bbc5df44d3f6570b70f88cc5f31f1"
+    },
+    {
+      "id": "bare_parameter",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 2708.25425197836,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "parameter_lookup",
+        "parameter": null,
+        "parameter_status": "underspecified",
+        "source_availability": "none_current",
+        "source_approval": "not_applicable",
+        "action": "clarify_parameter"
+      },
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 1,
+        "critic_responses": 1,
+        "attempted_rounds": [
+          1
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 1,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 2,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-bare_parameter"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1972,
+        "output_tokens": 110,
+        "known_input_tokens": 1972,
+        "known_output_tokens": 110,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1,
+        "critic": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "failed_exposed",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "5980c003867f0fa905a08aa6dcfdc21d18a636a2839716b28ca704615e3d6452"
+    },
+    {
+      "id": "explicit_rate_missing",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 2074.8724489822052,
+      "preparation_observed": false,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "parameter_lookup",
+        "parameter": "retention_rate",
+        "parameter_status": "explicit",
+        "source_availability": "current_unapproved",
+        "source_approval": "unknown",
+        "action": "preserve_unknown"
+      },
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": false,
+        "used": false,
+        "critic_attempts": 0,
+        "critic_responses": 0,
+        "attempted_rounds": [],
+        "review_completed": false,
+        "external_review_completed": false,
+        "rounds": 0,
+        "attempts": [],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 0,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-explicit_rate_missing"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "right",
+          "finish_reason": "unknown",
+          "nonempty_text": false,
+          "transport_error": "CancelledError"
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": null,
+        "output_tokens": null,
+        "known_input_tokens": 461,
+        "known_output_tokens": 151,
+        "unknown_usage_calls": 1,
+        "cancelled_calls": 1,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1,
+        "right": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "failed_exposed",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "e6e40c623433206ff0784558dee92245883f74eb14af59a688529ac80ca7463f"
+    },
+    {
+      "id": "explicit_period_missing",
+      "write": false,
+      "status": "ok",
+      "policy_class": "RightBrainPolicy",
+      "elapsed_ms": 3326.0220770025626,
+      "preparation_observed": true,
+      "source_qids": [],
+      "condition": {
+        "version": "missing_evidence_v1",
+        "reference": "resolved",
+        "identity_basis": "caller_declaration",
+        "operation": "parameter_lookup",
+        "parameter": "data_retention_period",
+        "parameter_status": "explicit",
+        "source_availability": "none_current",
+        "source_approval": "not_applicable",
+        "action": "request_current_source"
+      },
+      "binding_status": "not_requested",
+      "system2": {
+        "mode": "auto",
+        "enabled": true,
+        "used": true,
+        "critic_attempts": 1,
+        "critic_responses": 1,
+        "attempted_rounds": [
+          1
+        ],
+        "review_completed": true,
+        "external_review_completed": true,
+        "rounds": 1,
+        "attempts": [
+          {
+            "round": 1,
+            "source": "callosum",
+            "outcome": "returned",
+            "review_valid": true,
+            "external_review_valid": true,
+            "critic_status": "ok",
+            "critic_kind": "external",
+            "validation": {
+              "initial": {
+                "status": "ok",
+                "error_type": null
+              },
+              "repair": null
+            }
+          }
+        ],
+        "consistent": true
+      },
+      "detail": null,
+      "route": null,
+      "policy_action": 1,
+      "commit": {
+        "state": "committed",
+        "operation_id": "natural-explicit_period_missing"
+      },
+      "active_primary_qids": [
+        "backup_initial",
+        "period_corrected"
+      ],
+      "generation_receipts": [
+        {
+          "stage": "draft",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        },
+        {
+          "stage": "critic",
+          "finish_reason": "stop",
+          "nonempty_text": true,
+          "transport_error": null
+        }
+      ],
+      "source_exposure_confirmed": false,
+      "retrieval_source_qids": [],
+      "condition_provided": true,
+      "reference_private": true,
+      "usage": {
+        "calls": 2,
+        "input_tokens": 1985,
+        "output_tokens": 103,
+        "known_input_tokens": 1985,
+        "known_output_tokens": 103,
+        "unknown_usage_calls": 0,
+        "cancelled_calls": 0,
+        "failed_calls": 0
+      },
+      "calls_by_role": {
+        "draft": 1,
+        "critic": 1
+      },
+      "contracts": {
+        "answer_available": true,
+        "primary_identities": true,
+        "committed": true,
+        "execution_accounting": true,
+        "reference_private": true,
+        "binding_status": true,
+        "source_selection": true,
+        "expected_action": true,
+        "exact_quote": null
+      },
+      "diagnostics_v3": {
+        "version": "independent_record_assessment_v3",
+        "exact_match": {
+          "verdict": "not_applicable",
+          "basis": "utf8_exact"
+        },
+        "source_validity": {
+          "verdict": "fail",
+          "checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null,
+            "reference_resolved": true,
+            "exposed": false
+          },
+          "declared_checks": {
+            "current": null,
+            "complete": null,
+            "scope": null,
+            "source_approved": null
+          },
+          "records": [],
+          "reasons": [
+            "unknown_current",
+            "unknown_complete",
+            "unknown_scope",
+            "unknown_source_approved",
+            "failed_exposed",
+            "no_exposed_record"
+          ],
+          "verifies_recorded_claims": false
+        },
+        "equality_task_disagreement": {
+          "status": "not_applicable",
+          "exact_match": "not_applicable",
+          "model_task": null
+        },
+        "assessment_error": null,
+        "attribution": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "information_sufficiency": {
+          "verdict": "unknown",
+          "reason": "not_assessed"
+        },
+        "legacy_model_verdicts": null
+      },
+      "choice_elapsed_ms": 0.0,
+      "restart_elapsed_ms": 0.0,
+      "answer_sha256": "eecb6b4c0e54b40f7801b3e81ae5c5c74b0d1edbe108e3b57644bbe2adc2f322"
+    }
+  ],
+  "provenance": {
+    "implementation_freeze": "96cbdde91a47514c9475cb1b989a7e0f5d2b8e3b",
+    "base_main": "f4015037c5bb753e2768ac20cf1ab4703733804f",
+    "production_core_changed": false,
+    "measured_code_fixtures_grader_changed_after_outputs": false,
+    "paid_repeats": 0,
+    "runtime_http_attempts": 35,
+    "runtime_limit": 49,
+    "calibration_http_attempts": 6,
+    "read_judge_http_attempts": 9,
+    "calibration_authority": "implementing_assistant_authored_not_independent_human",
+    "live_semantic_authority": "single_model_judge_observations_not_general_quality_validation",
+    "module_profile": "opt_in_all_auto_balanced_executive_director_off_not_default_promotion"
+  },
+  "replay_validation": {
+    "frozen_cli": {
+      "status": "failed",
+      "error_type": "ValueError",
+      "provider_calls": 0,
+      "first_divergence_occurrence_zero_based": 10,
+      "case": "backup_initial",
+      "expected_role": "right",
+      "actual_role": "detail",
+      "first_matching_occurrences": 10,
+      "original_failure_retained": true,
+      "canonical_equality_established": false
+    },
+    "post_output_schedule_diagnostic": {
+      "status": "passed",
+      "predeclared": false,
+      "source": "natural-memory-schedule-diagnostic.py",
+      "source_sha256": "f239c8cfd2e51a9e8ddab5ed99f7a76ef5bd28e5cedc64577d7edb473882666f",
+      "exact_ordered_requests": 50,
+      "provider_calls": 0,
+      "unexpected_blocked_http_attempts": 0,
+      "canonical_sha256": "17e1d3112502d1972d608a8ae8af111d3c638d40a00fd06f6d7dd6304defedc4",
+      "feedback_sha256": "873391ce1ca7b8c819f6716e7004bd962e8c942fdd99bc069e311c4a2f4d2878",
+      "canonical_equal": true,
+      "feedback_non_timing_inputs_verified": true,
+      "scope": "frozen_recorded_preview_start_and_completion_cancellation_order_only",
+      "does_not_establish": "unmodified_cli_replay_pass_or_general_scheduler_correctness"
+    },
+    "diagnostic_setup_failures": [
+      {
+        "artifact_suffix": "schedule-probe",
+        "error_type": "ValueError",
+        "provider_calls": 0,
+        "cause": "old_module_shadowed_repository_import_from_tmp",
+        "before_benchmark_execution": true
+      },
+      {
+        "artifact_suffix": "schedule-debug",
+        "error_type": "ValueError",
+        "provider_calls": 0,
+        "cause": "old_module_shadowed_repository_import_from_tmp",
+        "before_benchmark_execution": true
+      },
+      {
+        "artifact_suffix": "schedule-debug2",
+        "error_type": "ValueError",
+        "provider_calls": 0,
+        "cause": "old_module_shadowed_repository_import_from_tmp",
+        "before_benchmark_execution": true
+      }
+    ]
+  },
+  "observations": {
+    "live_turns_ok": 12,
+    "write_completions": 3,
+    "exact_source_quotes": 2,
+    "read_judgments": 9,
+    "read_semantic_criteria_pass": 18,
+    "returned_stop_envelopes": 48,
+    "cancelled_envelopes_without_usage": 2,
+    "natural_selective_skips": [
+      "ambiguous_replay",
+      "restart_selection"
+    ],
+    "preview_occurrences": [
+      {
+        "occurrence": 10,
+        "case": "backup_initial",
+        "status": "completed",
+        "latency_ms": 869.1632089903578
+      },
+      {
+        "occurrence": 15,
+        "case": "selected_replay",
+        "status": "completed",
+        "latency_ms": 735.2160270093009
+      },
+      {
+        "occurrence": 23,
+        "case": "old_selection",
+        "status": "completed",
+        "latency_ms": 1415.1742520043626
+      },
+      {
+        "occurrence": 28,
+        "case": "relisted_replay",
+        "status": "CancelledError",
+        "latency_ms": 896.5438170125708
+      },
+      {
+        "occurrence": 38,
+        "case": "explicit_rate_missing",
+        "status": "CancelledError",
+        "latency_ms": 2043.6810120008886
+      }
+    ],
+    "next_bounded_scope": "speculative_preview_admission_before_http_with_lifecycle_authority_and_schedule_replay"
+  },
+  "verification": {
+    "python_full_passed": 1907,
+    "intentional_local_http_deselections": 1,
+    "unexpected_blocked_http_attempts": 0,
+    "focused_passed": 45,
+    "gateway_local_http_passed": 18,
+    "gateway_platform_skips": 2,
+    "node_passed": 13
+  },
+  "private_artifacts_sha256": {
+    "module-gating-natural-memory-2026-11-06-live/journal.json": "3f27aea12d93ed1d4836e3996bbbfe76a836edb542d88c353d888b19c338c785",
+    "module-gating-natural-memory-2026-11-06-live/journal.partial.json": "3f27aea12d93ed1d4836e3996bbbfe76a836edb542d88c353d888b19c338c785",
+    "module-gating-natural-memory-2026-11-06-live/outbox.sqlite3": "bc65709c2ed77254a34b93d8a2fc5a791f8873ca169ec5d43b5abac07e9c2ed7",
+    "module-gating-natural-memory-2026-11-06-live/report.json": "90df99426846e31288990cb8ddf403d3fba8a3a6560942301738ae4a04b92df1",
+    "module-gating-natural-memory-2026-11-06-live/report.partial.json": "90df99426846e31288990cb8ddf403d3fba8a3a6560942301738ae4a04b92df1",
+    "module-gating-natural-memory-2026-11-06-live/summary.json": "7033f9cb3c8096f97d0c2daca7d0d3d0e475d08f4c71b32417a4d38bb7ebef34",
+    "module-gating-natural-memory-2026-11-06-replay/failure.json": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+    "module-gating-natural-memory-2026-11-06-replay/journal.partial.json": "4aa5f281ac62425c819d5204027132f0c5354244c59752367c1b8b4f9038ea1d",
+    "module-gating-natural-memory-2026-11-06-replay/outbox.sqlite3": "c93e7f3a569c70e13ed129caa0c4441b67bdde8f51b4b0939fc4fcb2ec35695f",
+    "module-gating-natural-memory-2026-11-06-replay/report.partial.json": "6e28c7f4dfb77cb72bc4b23f526f59c9bb7408377db3dab6d0b035cd69faa558",
+    "module-gating-natural-memory-2026-11-06-schedule-probe/failure.json": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+    "module-gating-natural-memory-2026-11-06-schedule-debug/failure.json": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+    "module-gating-natural-memory-2026-11-06-schedule-debug2/failure.json": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/journal.json": "3f27aea12d93ed1d4836e3996bbbfe76a836edb542d88c353d888b19c338c785",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/journal.partial.json": "72c6a774ece5d4a3ded6eb29849a018ac889d56786ed101a6c26a0a25427d426",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/outbox.sqlite3": "f8905673e94411490cc5c97e2f0841f75ddd42435218b3e48fffe57209e6fb4c",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/report.json": "1f3f54370571eb7655d630acfddf10f6b6806410d0c561d1173c6886d260f54e",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/report.partial.json": "580656b3a59c366002781deb1a77b505b02633867855f9fe335534b8f5c99bc9",
+    "module-gating-natural-memory-2026-11-06-schedule-probe-v2/summary.json": "66f837c97079f680bb8f53dfb16ab268a86c97df3c407b7f0201767acae23844"
+  }
+}
