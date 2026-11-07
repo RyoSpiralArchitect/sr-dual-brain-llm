@@ -27,6 +27,7 @@ from .detail_contract import detail_observation, detail_confidence, error_catego
 from .memory_clarification import record_choice_clarifications
 from .speculative_preview import OwnedPreview
 from .task_goals import bind_task, current_task, guard_task_turn
+from .callosum import drain_consultation
 from .answer_generation import guard_answer_generation, current_generation
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
@@ -5760,6 +5761,7 @@ class DualBrainController:
                         raise
                 finally:
                     self.callosum.slot_ms = original_slot
+                    await drain_consultation(self.callosum)
 
             if payload_obj.get("type") == "ASK_CRITIC":
                 return await self._track_system2_request(

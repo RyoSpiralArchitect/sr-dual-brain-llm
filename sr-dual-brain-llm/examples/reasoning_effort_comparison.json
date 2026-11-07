@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_bounded_reasoning_effort_comparison",
+  "clock": 1794096000,
+  "cases": [
+    {
+      "id": "lower_bound_search",
+      "arms": ["provider_default", "low"],
+      "judge_labels": {"A": "low", "B": "provider_default"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "question": "This function is intended to return the first index with a[i] >= x in an ascending integer list, or len(a) if no such index exists. The list may be empty.\n```python\ndef first_ge(a, x):\n    lo, hi = 0, len(a) - 1\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if a[mid] >= x:\n            hi = mid - 1\n        else:\n            lo = mid + 1\n    return lo\n```\nRequirements:\n1. Give a concrete failing input with the actual and required indices.\n2. Correct the function and justify an invariant and termination, including the no-match case.\n3. Using step 2, propose tests for empty input, duplicates and a target above every element; do not claim to have run them.",
+      "reference": "For example a=[1,2,2,4],x=2 returns 0 but must return 1; a=[1],x=2 returns 0 but must return 1. Correct half-open search: lo=0,hi=len(a); while lo<hi: mid=(lo+hi)//2; if a[mid]>=x: hi=mid; else: lo=mid+1; return lo. Invariants: 0<=lo<=hi<=n, all i<lo have a[i]<x, all i>=hi have a[i]>=x. The interval shrinks; lo=hi is the boundary, including n. Empty returns0; duplicate examples and above-maximum returnn. Other correct searches/invariants are acceptable. Proposed tests must connect to the submitted function without asserting real execution."
+    },
+    {
+      "id": "conditional_tests",
+      "arms": ["low", "provider_default"],
+      "judge_labels": {"A": "provider_default", "B": "low"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "question": "A condition has prevalence 0.1. Two tests each have sensitivity 0.9 and false-positive probability 0.2. Both tests are positive.\nRequirements:\n1. Assuming the tests are independent conditional on condition status, compute the posterior probability of the condition and show the calculation.\n2. Withdraw that independence assumption: explain whether the individual test rates alone determine the posterior.\n3. Give a concrete joint-outcome model with the same individual rates but a different posterior after two positives, and compute that posterior.",
+      "reference": "With conditional independence: numerator .1*.9*.9=.081, negative-state joint contribution .9*.2*.2=.036; posterior .081/.117=9/13 about .6923077. Conditional rather than unconditional independence matters. Marginals alone do not specify joint positive probabilities. One valid countermodel makes tests identical conditional on status: joint positive .9 under the condition and .2 otherwise, joint negative .1 and .8; individual sensitivity/FPR are unchanged. Posterior is .09/(.09+.18)=1/3, different from 9/13. Other valid joint models are acceptable. No unsupported unique answer after withdrawing independence."
+    },
+    {
+      "id": "order_totals",
+      "arms": ["provider_default", "low"],
+      "judge_labels": {"A": "provider_default", "B": "low"},
+      "system2_mode": "off",
+      "expected_goal_count": 3,
+      "question": "orders(id,total) contains (1,10), (2,10), (3,30). lines(order_id,sku) contains (1,'A'), (1,'B'), (2,'C'). The intended result is the sum of order totals for orders with at least one line, counting each qualifying order once. A developer uses SELECT SUM(o.total) FROM orders o JOIN lines l ON l.order_id=o.id; another proposes SUM(DISTINCT o.total) over that join.\nRequirements:\n1. Compute the intended result and the result of each proposed query.\n2. Give a corrected SQL query and explain why orders with equal totals remain separate and the order without lines is excluded.\n3. Give a small proposed regression test that would catch both multiplicity and mistaken value deduplication; do not claim actual database execution.",
+      "reference": "Intended20; ordinary joined sum30 because order1 repeats; SUM(DISTINCT total)=10 because both qualifying orders cost10. Correct e.g SELECT SUM(o.total) FROM orders o WHERE EXISTS (SELECT 1 FROM lines l WHERE l.order_id=o.id). Also valid: join order IDs deduplicated before summing, or group by order ID then sum once. Deduplicate identity, not equal monetary values. Order3 has no line and must not contribute30. Proposed test should cover two distinct equal-total orders, one with multiple lines, and a no-line order; expected20 versus30/10. SQL dialect need not be PostgreSQL-specific."
+    },
+    {
+      "id": "inverse_measurements",
+      "arms": ["low", "provider_default"],
+      "judge_labels": {"A": "low", "B": "provider_default"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "question": "Exact measurements follow u=2x+y and v=3y. No noise or additional constraints on real x,y are assumed.\nRequirements:\n1. Derive the inverse transformation, justify uniqueness from both measurements, and recover x,y when u=5,v=6.\n2. Suppose v is unavailable and only u=5 is observed: state the complete family of compatible x,y rather than selecting one solution.\n3. Give two concrete compatible points for step 2 and show why they cannot both match the additional observation v=6.",
+      "reference": "y=v/3, x=u/2-v/6; determinant6 nonzero, hence unique using both exact measurements. u5,v6 gives x1.5,y2. With u5 alone, (x,y)=((5-t)/2,t), t real, equivalently (s,5-2s). For example (1.5,2) and (2.5,0) both give u5 but imply v6 and v0 respectively, so only the first matches v6. Any two distinct compatible points with correctly differing implied v values are acceptable, as is another correct parameterization. No invented constraint or unique solution from one equation."
+    },
+    {
+      "id": "direct_control",
+      "arms": ["provider_default", "low"],
+      "judge_labels": {"A": "low", "B": "provider_default"},
+      "system2_mode": "off",
+      "expected_goal_count": 0,
+      "question": "What is 19 + 23? Return only the number.",
+      "reference": "The answer is exactly 42 with no added advice or internal labels."
+    }
+  ]
+}

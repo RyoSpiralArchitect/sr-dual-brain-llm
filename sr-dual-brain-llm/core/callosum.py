@@ -40,6 +40,32 @@ class RequestAbandoned(Exception):
     """Normal worker control flow when a caller no longer needs its result."""
 
 
+async def drain_consultation(channel):
+    """Drain a serial controller's abandoned work before direct fallback.
+
+    Local consultation timeouts only request cancellation; asynchronous provider
+    cleanup can still own a request. Preserve that ownership on later RPC
+    cancellation too, without cancelling the child cleanup a second time.
+    """
+    wait_idle = getattr(channel, 'wait_idle', None)
+    if not callable(wait_idle):
+        return
+    drain = asyncio.ensure_future(wait_idle())
+    cancelled = False
+    try:
+        while not drain.done():
+            try:
+                await asyncio.shield(drain)
+            except asyncio.CancelledError:
+                cancelled = True
+        drain.result()
+    finally:
+        if cancelled:
+            # Cleanup errors cannot turn an abandoned turn into a recoverable
+            # consultation failure that admits a fresh fallback request.
+            raise asyncio.CancelledError() from None
+
+
 @dataclass
 class _Pending:
     qid: str
@@ -229,6 +255,14 @@ class Callosum:
     async def wait_idle(self) -> None:
         """Drain owned provider cleanup before reusing a session after a turn."""
         while self._running:
+            # A completed task's done callback can still be queued. Gathering
+            # only done tasks may finish synchronously on Python 3.12, starving
+            # that callback forever if we keep waiting on the same set.
+            for task in list(self._running):
+                if task.done():
+                    self._operation_done(task)
+            if not self._running:
+                break
             await asyncio.shield(asyncio.gather(*list(self._running), return_exceptions=True))
 
     async def close(self) -> None:
