@@ -106,6 +106,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     consultation_ev = _last_event(events, "consultation_route")
     detail_ev = _last_event(events, 'detail_execution')
     preview_ev = _last_event(events, 'preview_execution')
+    task_goals_ev = _last_event(events, 'task_goal_execution')
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
     advisor_timing = {}
@@ -373,6 +374,9 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
         }
 
     metrics: dict[str, Any] = {
+        'task_goals': ({key: task_goals_ev.get(key) for key in
+            ('version', 'goal_count', 'review_status', 'review_snapshot_matches_answer', 'verified_complete', 'goals')}
+            if task_goals_ev is not None else None),
         'preview': ({key: preview_ev.get(key) for key in
                      ('version', 'requested', 'admitted', 'started', 'available', 'outcome')}
                     if preview_ev is not None else None),
