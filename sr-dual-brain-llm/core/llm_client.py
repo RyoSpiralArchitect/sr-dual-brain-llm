@@ -30,6 +30,9 @@ from typing import Any, Callable, Dict, Optional
 import aiohttp
 
 from .source_completion import record_completed_answer, source_completion_required
+from .answer_generation import (
+    record_completion, record_stream_text, capturing_completion, requested_reasoning_effort, record_request_effort,
+)
 
 PromptInput = str | list[dict[str, Any]]
 
@@ -250,6 +253,7 @@ class LLMClient:
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
         require_complete: bool = False,
+        allow_continuation: bool = True,
     ) -> str:
         """Stream output tokens as they arrive (when supported).
 
@@ -275,6 +279,7 @@ class LLMClient:
                 max_output_tokens=max_output_tokens,
                 timeout_seconds=timeout_seconds,
                 require_complete=require_complete,
+                allow_continuation=allow_continuation,
             )
 
         text = await self.complete(
@@ -284,6 +289,7 @@ class LLMClient:
             max_output_tokens=max_output_tokens,
             timeout_seconds=timeout_seconds,
             require_complete=require_complete,
+            allow_continuation=allow_continuation,
         )
         if on_delta:
             maybe = on_delta(text)
@@ -297,6 +303,7 @@ class LLMClient:
         """Validate this request's final status without shared per-client state."""
         require_complete = require_complete or source_completion_required()
         if require_complete:
+            record_completion(self.provider, text, finish_reason)
             successful_reasons = {
                 "openai": {"stop"},
                 "mistral": {"stop"},
@@ -373,6 +380,10 @@ class LLMClient:
             payload["max_completion_tokens"] = int(
                 max_output_tokens or self.config.max_output_tokens
             )
+            effort = requested_reasoning_effort()
+            if effort is not None:
+                payload['reasoning_effort'] = effort
+            record_request_effort(effort)
         else:
             payload["temperature"] = float(temperature)
             payload["max_tokens"] = int(max_output_tokens or self.config.max_output_tokens)
@@ -418,6 +429,8 @@ class LLMClient:
             try:
                 payload = json.loads(data_line)
             except Exception:
+                if capturing_completion():
+                    raise CompletionValidationError('invalid_response') from None
                 continue
 
             if isinstance(payload, dict) and payload.get("error"):
@@ -425,20 +438,35 @@ class LLMClient:
 
             choices = payload.get("choices") if isinstance(payload, dict) else None
             if not choices or not isinstance(choices, list):
+                if capturing_completion() and not (isinstance(payload, dict) and 'usage' in payload and choices == []):
+                    raise CompletionValidationError('invalid_response')
                 continue
 
+            if capturing_completion() and (len(choices) != 1 or not isinstance(choices[0], dict)):
+                raise CompletionValidationError('invalid_response')
             choice0 = choices[0] if isinstance(choices[0], dict) else {}
+            delta = (choice0.get('delta', choice0.get('message', {})) if capturing_completion()
+                     else choice0.get('delta') or choice0.get('message') or {})
+            if capturing_completion():
+                if not isinstance(delta, dict) or delta.get('tool_calls') or delta.get('function_call'):
+                    raise CompletionValidationError('invalid_response')
+                if delta.get('refusal') not in (None, ''):
+                    raise CompletionValidationError('refused_response')
+                if delta.get('content') is not None and not isinstance(delta['content'], str):
+                    raise CompletionValidationError('invalid_response')
+                if finish_reason is not None and (delta.get('content') or choice0.get('finish_reason') is not None):
+                    raise CompletionValidationError('invalid_response')
             reason = choice0.get("finish_reason")
             if reason is not None:
                 finish_reason = str(reason)
 
-            delta = choice0.get("delta") or choice0.get("message") or {}
             content = delta.get("content") if isinstance(delta, dict) else None
             if not content:
                 continue
 
             chunk = str(content)
             full_text += chunk
+            record_stream_text(full_text)
             if on_delta:
                 maybe = on_delta(chunk)
                 if asyncio.iscoroutine(maybe):
@@ -495,6 +523,7 @@ class LLMClient:
         max_output_tokens: Optional[int] = None,
         timeout_seconds: Optional[float] = None,
         require_complete: bool = False,
+        allow_continuation: bool = True,
     ) -> str:
         base_messages = []
         if system:
@@ -514,7 +543,7 @@ class LLMClient:
         )
         full_text = chunk
 
-        if not self.config.auto_continue or not finish:
+        if not allow_continuation or not self.config.auto_continue or not finish:
             return self._completion_text(full_text, finish, require_complete=require_complete)
         if str(finish).lower() not in {"length", "max_tokens"}:
             return self._completion_text(full_text, finish, require_complete=require_complete)

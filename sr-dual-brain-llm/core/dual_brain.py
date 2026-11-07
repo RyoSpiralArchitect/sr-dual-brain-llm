@@ -27,6 +27,7 @@ from .detail_contract import detail_observation, detail_confidence, error_catego
 from .memory_clarification import record_choice_clarifications
 from .speculative_preview import OwnedPreview
 from .task_goals import bind_task, current_task, guard_task_turn
+from .answer_generation import guard_answer_generation, current_generation
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -5510,6 +5511,7 @@ class DualBrainController:
 
     @guard_source_completions
     @guard_task_turn
+    @guard_answer_generation
     async def process(
         self,
         question: str,
@@ -6659,6 +6661,30 @@ class DualBrainController:
         tags = audit_stage.tags
         success = audit_stage.success
 
+        generation = current_generation()
+        generation_summary = generation.summary(user_answer) if generation is not None else None
+        if generation is not None and generation.records:
+            meta = audit_result.get('metacognition')
+            meta = meta if isinstance(meta, dict) else {}
+            # A failed generator is not evidence that the user omitted detail.
+            presentation_input = '' if 'empty_after_cleaning' in meta.get('flags', []) else user_answer
+            constrain = None if emit_debug_sections else lambda value: self._apply_director_output_constraints(
+                value, director_max_chars=director_max_chars,
+                director_append_question=director_append_question)
+            presented = generation.present(presentation_input, question, constrain=constrain)
+            if presented != user_answer:
+                user_answer = presented
+                final_answer = f'{presented}\n\n{final_answer}' if emit_debug_sections else presented
+                await _emit_reset_if_needed()
+            generation_summary = generation.summary(user_answer)
+            if not generation_summary['terminal_complete']:
+                success = False
+                tags.add('answer_generation_' + generation_summary['answer_status'])
+            try:
+                self.telemetry.log('answer_generation', qid=qid_value, **generation_summary, turn_status='returned')
+            except Exception:
+                pass
+
         if stream_final_only and delta_cb and not emitted_any and final_answer:
             chunk_size = 512
             for i in range(0, len(final_answer), chunk_size):
@@ -7036,7 +7062,9 @@ class DualBrainController:
         task = current_task(question)
         if task is not None:
             try:
-                self.telemetry.log('task_goal_execution', qid=qid_value, **task.summary(user_answer))
+                self.telemetry.log('task_goal_execution', qid=qid_value, **task.summary(user_answer,
+                    generation_complete=generation_summary['terminal_complete'] if generation_summary is not None
+                                        and generation_summary['stages'] else None))
             except Exception:
                 pass
         return final_answer

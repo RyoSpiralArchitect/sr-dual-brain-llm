@@ -348,6 +348,9 @@ user requirements into left/right reasoning, goal-specific critic observations
 and integration, while preserving unverified and unresolved states.
 Its [first OFF/AUTO comparison](docs/benchmarks/task-goals-2026-11-07.md)
 finds no reliable quality gain and retains empty completions and a failed replay.
+The [ordinary generation contract](docs/ordinary-answer-generation.md) preserves
+complete/partial/unavailable outcomes, retains a complete draft after a failed
+integration and bounds shared left-generation allocation without continuation.
 
 Treat “brains” as **roles** with strict I/O contracts:
 
@@ -637,7 +640,12 @@ Optional overrides:
 - `LLM_TIMEOUT` / `LEFT_BRAIN_TIMEOUT` / `RIGHT_BRAIN_TIMEOUT` / `EXECUTIVE_TIMEOUT`
 - `LLM_AUTO_CONTINUE` / `LEFT_BRAIN_AUTO_CONTINUE` / `RIGHT_BRAIN_AUTO_CONTINUE` / `EXECUTIVE_AUTO_CONTINUE` (default: on)
 - `LLM_MAX_CONTINUATIONS` / `LEFT_BRAIN_MAX_CONTINUATIONS` / `RIGHT_BRAIN_MAX_CONTINUATIONS` / `EXECUTIVE_MAX_CONTINUATIONS` (default: 2)
+- `DUALBRAIN_ANSWER_TOKEN_BUDGET` (optional lower shared draft/integration ceiling; default: four stage ceilings)
+- `DUALBRAIN_ANSWER_REASONING_EFFORT` (opt-in `low`, `medium`, `high`; default: `provider_default`; [scope and limits](docs/ordinary-answer-generation.md))
 - `OPENAI_ORGANIZATION`
+
+Ordinary draft, integration and detail requests disable automatic continuation
+within their stage budgets, regardless of the general continuation defaults.
 
 For OpenAI GPT-5/6 models such as `gpt-6-luna`, Chat Completions requests use
 `max_completion_tokens` and omit `temperature` (the API rejects the older

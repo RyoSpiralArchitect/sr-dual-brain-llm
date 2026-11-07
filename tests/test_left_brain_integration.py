@@ -4,7 +4,7 @@ from core.models import LeftBrainModel
 
 
 class DummyLlmClient:
-    async def complete(self, prompt: str, *, system=None, temperature: float = 0.7) -> str:
+    async def complete(self, prompt: str, *, system=None, temperature: float = 0.7, **kwargs) -> str:
         assert "Internal collaborator notes" in prompt
         assert system is not None and "Do not mention internal orchestration" in system
         return "やあ！元気？"
