@@ -68,6 +68,16 @@ ownership/channel/journal/cancellation set passes61. This is an offline-only
 robustness correction, not profile/cap/rubric tuning or a new paid measurement.
 Original results and first-replay provenance remain unchanged; supplemental
 current-code replay records its own source hash and derived-metadata boundary.
+The correction is frozen at
+`e0e573197a165daf5d7ebd1ba648fc3b22c5f399`. Its supplemental current-runtime
+replay matches all 28 requests / 56 events and the same fresh canonical digest;
+only a derived metadata code hash changes. Applying the final fix to the measured
+historical base also matches all 33 requests / 66 events and its original canonical
+digest (overlay code hash
+`179fd714515f57b7ee7f88a63020606aed06a4bd338993adde49cd8335010c4a`).
+Both make zero provider calls and trigger zero blocked HTTP attempts. They do
+not replace the original failure, the first overlay, the paid run or first fresh
+replay. The total paid allocation remains 28 attempts.
 
 ## Fresh profile comparison
 

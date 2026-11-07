@@ -1620,7 +1620,8 @@
       "unknown_usage_calls": 2,
       "cancelled_calls": 2,
       "failed_calls": 0
-    }
+    },
+    "fix_source_revision": "8feec824a55b24a8d9b9309bb9c58c62c9a197a9"
   },
   "current_on_old_tape": {
     "source_revision": "8feec824a55b24a8d9b9309bb9c58c62c9a197a9",
@@ -1686,6 +1687,73 @@
     "task-goals-effort-2026-11-08-replay/report.partial.json": "d667ef96ae29822698940225fb810dda363489ec4215d374f24717448d2d9367",
     "task-goals-effort-2026-11-08-replay/summary.json": "c1ddd8362fbdf9e9c74cdb4ef21fc2a6d9ba84fff67278bf03ba5fbdd7d49242",
     "task-goals-2026-11-08-current-derived-input.json": "418a5322e6ba356479f36adb3271ed72c0055dd5eb323c3e220e9b1928afd9ec",
-    "task-goals-2026-11-08-current-derived-input.manifest.json": "69f9a5886ee33e9ac3dc02e6bf29a598f7f434ae15ee5468e565f59103a1f0d5"
+    "task-goals-2026-11-08-current-derived-input.manifest.json": "69f9a5886ee33e9ac3dc02e6bf29a598f7f434ae15ee5468e565f59103a1f0d5",
+    "task-goals-2026-11-08-drain-robustness-replay/journal.json": "155bed3c42aa0c11af2e08f6a1cef9a082fd73d9676caf5e825c3d5289eb571d",
+    "task-goals-2026-11-08-drain-robustness-replay/journal.partial.json": "155bed3c42aa0c11af2e08f6a1cef9a082fd73d9676caf5e825c3d5289eb571d",
+    "task-goals-2026-11-08-drain-robustness-replay/historical-runtime.patch": "932d2c3b12ec7513b48349428dba4c7ff395a9ead9d18a2e1e6e0d31640caade",
+    "task-goals-2026-11-08-drain-robustness-replay/report.partial.json": "9158840f10caeab8a4e90d763c2ee080e75f344fe16857fbc04844860d4fd5e4",
+    "task-goals-2026-11-08-drain-robustness-replay/final-owner-focus.log": "7c5200d8bf2ba35d505d8f150425f98f7a2309d37632c7f111868e04b428f84d",
+    "task-goals-2026-11-08-drain-robustness-replay/report.json": "9158840f10caeab8a4e90d763c2ee080e75f344fe16857fbc04844860d4fd5e4",
+    "task-goals-2026-11-08-drain-robustness-replay/validation.json": "aa49e28ed19af556798b73432e5da9fa5cb2165bd5542c8e0021e29f98b32804",
+    "task-goals-2026-11-08-drain-robustness-replay/cancellation-precedence-before.log": "799324f878bf1e227f196b6a20b7b19a1c2e72d4fc89a45cb6e9e937701aebb5",
+    "task-goals-2026-11-08-drain-robustness-replay/execution.log": "c6affd25a5f86eb6b10829aa03d544c8252f678eadc9aaf6d78f705ebd81ca5a",
+    "task-goals-effort-2026-11-08-robustness-replay/journal.json": "976a756f9efbbd63d0a94c61e0f7a8ec98b0c922bd148c79f326a67c6a251001",
+    "task-goals-effort-2026-11-08-robustness-replay/journal.partial.json": "bb49e2b1e81d8db740c2f9fb76ffd5bb58ecd8fd7baae4543e623380a2035d2f",
+    "task-goals-effort-2026-11-08-robustness-replay/summary.json": "113d328af126969ccd529436db9841f5cc2da8b45dac53aed7e5a69eba3a7f88",
+    "task-goals-effort-2026-11-08-robustness-replay/report.partial.json": "5fa5d8087db0964ed9b2d5bcfa410014798fd4c21150eb91ec1d7979d587c35b",
+    "task-goals-effort-2026-11-08-robustness-replay/report.json": "934754f4265a6eb3ce19d812573fc5b1682c2f80d563bed26be139e9d72e35a0",
+    "task-goals-effort-2026-11-08-robustness-replay/execution.log": "3ed9a5ce46af32fe74af7be9cf326e68166e76bc0974dbb78f44e5973831c821",
+    "task-goals-effort-2026-11-08-robustness-input.manifest.json": "f4af8fc28ffd0ebd646550f1f2bc4e79a7dd44f27ac1e98889c6e3d6e811e839",
+    "task-goals-effort-2026-11-08-robustness-input.json": "976a756f9efbbd63d0a94c61e0f7a8ec98b0c922bd148c79f326a67c6a251001"
+  },
+  "post_study_robustness": {
+    "fix_source_revision": "e0e573197a165daf5d7ebd1ba648fc3b22c5f399",
+    "current_code_manifest": {
+      "source_revision": "e0e573197a165daf5d7ebd1ba648fc3b22c5f399",
+      "metadata_changes": [
+        "code_sha256"
+      ],
+      "code_sha256": "6eccd7ed05c6fc2c25049735a6b64e0492d9c20e4717ac8c8a0af2be452f1d37",
+      "original_journal_file_sha256": "058be4be772a367efdd904693b3006ec7aeac725f7e5c4fff58fee9cd86902c2"
+    },
+    "fresh_replay": {
+      "canonical_equal": true,
+      "canonical_sha256": "4d77a573047975ced373d47f0ad2031e59f05e41724ec3fcdf32b99ce2f213b9",
+      "requests": 28,
+      "transport_events": 56,
+      "provider_calls": 0,
+      "blocked_http": 0
+    },
+    "historical_overlay": {
+      "kind": "historical_source_plus_current_drain_fix_offline_validation",
+      "historical_base": "ac61b3b5307908eb5945e76a5381bb2fb6e0d619",
+      "overlay_code_sha256": "179fd714515f57b7ee7f88a63020606aed06a4bd338993adde49cd8335010c4a",
+      "original_code_sha256": "77d9dfb8d909165d68d1601c3ebc2fb27678660ebb723d07b174aaa0c5bcc1b6",
+      "metadata_changes_only": [
+        "code_sha256"
+      ],
+      "original_journal_file_sha256": "8524b63d4bdf1c4f3fd042192c66df19f934d51d0337154948579d3bffaf33b3",
+      "provider_calls": 0,
+      "blocked_http": 0,
+      "requests": 33,
+      "transport_events": 66,
+      "canonical_sha256": "f002ea639b8d010b43b84dc31cec65a5fcc04e95eeb6110561de9c24dde4be4a",
+      "canonical_equal": true,
+      "original_failed_replay_replaced": false,
+      "current_main_not_asserted_historical_behavior": "#102 intentionally changes ordinary generation",
+      "usage": {
+        "calls": 33,
+        "input_tokens": null,
+        "output_tokens": null,
+        "known_input_tokens": 30960,
+        "known_output_tokens": 27639,
+        "unknown_usage_calls": 2,
+        "cancelled_calls": 2,
+        "failed_calls": 0
+      }
+    },
+    "owner_focus_passed": 61,
+    "original_paid_results_or_first_replay_replaced": false,
+    "new_paid_calls": 0
   }
 }
