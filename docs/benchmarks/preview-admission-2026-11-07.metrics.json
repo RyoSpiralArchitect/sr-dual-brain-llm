@@ -2146,9 +2146,18 @@
     "base_main": "092421ab0032b16034465a64f59a7cd2fd8369c2",
     "protocol": "preview-admission-protocol.md",
     "paid_repeats": 0,
-    "measured_code_fixture_or_protocol_changed_after_outputs": false,
     "grading": "not_assessed_no_model_judge_or_independent_human_grade",
-    "comparison": "unpaired_descriptive_observations_no_savings_quality_or_latency_effect_estimate"
+    "comparison": "unpaired_descriptive_observations_no_savings_quality_or_latency_effect_estimate",
+    "measurement_revision_and_original_artifacts_immutable": true,
+    "final_source_differs_from_measurement": true,
+    "post_study_change": {
+      "file": "sr-dual-brain-llm/scripts/scheduled_http_journal.py",
+      "reason": "independent_synthetic_local_timeout_spent_rpc_cancel_guard",
+      "change": "observe_and_drain_separate_local_waiter_with_asyncio_wait",
+      "production_core_or_live_transport_path_changed": false,
+      "paid_inputs_criteria_or_protocol_changed": false,
+      "additional_paid_calls": 0
+    }
   },
   "replay": {
     "status": "passed_first_frozen_cli_attempt",
@@ -2160,7 +2169,9 @@
     "feedback_sha256": "e18bf39be06273c61754e5a7780adb9bdfeeb6d56c112e80e38feba6623ccc4b",
     "transport_events_sha256": "2a47c1af1fde2aba4e1dd74b8b7166f0d14fd52686b1bff8c387834dbdd7e5f9",
     "canonical_equal": true,
-    "post_output_diagnostic_used": false
+    "post_output_diagnostic_used": false,
+    "implementation_revision": "6123b0d9c945291899423f4bb0cb9a65f3570f53",
+    "validation_kind": "prospectively_defined_first_frozen_cli_before_subsequent_timeout_fix"
   },
   "observations": {
     "live_turns_ok": 12,
@@ -2193,7 +2204,8 @@
     "routing_focus_before_final_condition_control_passed": 442,
     "gateway_local_http_passed": 18,
     "gateway_platform_skips": 2,
-    "node_passed": 13
+    "node_passed": 13,
+    "post_study_timeout_ownership_focus_passed": 24
   },
   "private_artifacts_sha256": {
     "module-gating-preview-admission-2026-11-07-live/journal.json": "e8d3a0aa96c801f43610d070ef45116fec2bb0d8a7826cb28b0b445b2ef7b445",

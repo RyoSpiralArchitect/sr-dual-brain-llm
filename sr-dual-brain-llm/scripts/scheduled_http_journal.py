@@ -80,13 +80,18 @@ class ScheduledJournal(RawJournal):
             if remaining <= 0:
                 self.schedule_errors.append('event_timeout')
                 raise AdmissionError('Recorded transport event was not reached')
-            # asyncio.wait_for owns only this local waiter, never the caller.
-            # For cancellation receipts, wait for the real owner to cancel us.
+            # Observe a separate waiter without spending the caller's cancel-once
+            # guard on a local timeout (asyncio.wait_for can cancel that caller).
+            # Cancellation receipts still require the actual owning task.
+            waiter = asyncio.create_task(self.changed.wait())
             try:
-                await asyncio.wait_for(self.changed.wait(), remaining)
-            except asyncio.TimeoutError:
-                self.schedule_errors.append('event_timeout')
-                raise AdmissionError('Recorded transport event was not reached') from None
+                done, _ = await asyncio.wait({waiter}, timeout=remaining)
+                if not done:
+                    self.schedule_errors.append('event_timeout')
+                    raise AdmissionError('Recorded transport event was not reached')
+            finally:
+                waiter.cancel()
+                await asyncio.gather(waiter, return_exceptions=True)
 
     def _transport_finished(self, index, row):
         try:

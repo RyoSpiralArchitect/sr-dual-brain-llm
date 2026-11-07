@@ -112,3 +112,59 @@ async def test_a_recorded_cancellation_is_not_injected_without_actual_owner_canc
         await replay.post('right', 'fake', {}, {})
     with pytest.raises(ValueError):
         replay.finish()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('abandon', ['cancel', 'deadline'])
+async def test_replay_timeout_preserves_later_owning_rpc_cancellation(abandon):
+    from core.turn_lifecycle import TurnDispatcher
+    from benchmark_contract_live import AdmissionError
+    entered, timed_out = asyncio.Event(), asyncio.Event()
+    journal = ScheduledJournal(config(), {'test': 'rpc-after-timeout'})
+    class Pending:
+        async def _post_json(self, *_args, **_kwargs):
+            entered.set()
+            await asyncio.Event().wait()
+    journal.transport = Pending()
+    raw = asyncio.create_task(journal.post('right', 'fake', {}, {}))
+    await entered.wait()
+    raw.cancel()
+    await asyncio.gather(raw, return_exceptions=True)
+    journal.finish()
+    replay = ScheduledJournal(config(), {'test': 'rpc-after-timeout'},
+        frozen=deepcopy(journal.data), replay_wait_seconds=.01)
+    responses, calls = [], []
+    async def handle(req):
+        calls.append(req['id'])
+        if req['id'] == 'first':
+            with pytest.raises(AdmissionError):
+                await replay.post('right', 'fake', {}, {})
+            timed_out.set()
+            await asyncio.Event().wait()
+        return {'id': req['id'], 'ok': True}
+    dispatcher = TurnDispatcher(handle, responses.append, timeout_seconds=.15)
+    try:
+        dispatcher.submit({'id': 'first'})
+        await asyncio.wait_for(timed_out.wait(), 1.)
+        if abandon == 'cancel':
+            assert dispatcher.cancel('first')['accepted']
+        async def first_finished():
+            while not responses:
+                await asyncio.sleep(.001)
+        await asyncio.wait_for(first_finished(), .7)
+        dispatcher.submit({'id': 'second'})
+        async def second_finished():
+            while len(responses) != 2:
+                await asyncio.sleep(.001)
+        await asyncio.wait_for(second_finished(), .7)
+        assert calls == ['first', 'second']
+        assert responses[0]['error']['type'] == ('Cancelled' if abandon == 'cancel' else 'DeadlineExceeded')
+        assert responses[1] == {'id': 'second', 'ok': True}
+        assert dispatcher.snapshot()['pending'] == 0
+        with pytest.raises(ValueError):
+            replay.finish()
+    finally:
+        for state in list(dispatcher.requests.values()):
+            if state.task is not None and not state.task.done():
+                asyncio.Task.cancel(state.task)
+        await dispatcher.close()

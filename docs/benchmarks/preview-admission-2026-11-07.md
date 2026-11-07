@@ -5,8 +5,10 @@ model-generated primary writes, correction/restart and two byte-exact quotations
 of the actual current sources. One pending-record-choice preview is suppressed
 before task/HTTP admission. The first frozen CLI replay consumes **32/32 exact
 ordered requests and 64/64 transport events**, with zero provider calls, zero
-unexpected blocked HTTP attempts and identical canonical outcomes. No post-output
-diagnostic, code change or paid repeat is used.
+unexpected blocked HTTP attempts and identical canonical outcomes. That first
+predeclared replay needs no supplemental diagnostic or paid repeat. A subsequent
+synthetic timeout regression and offline-only robustness correction are reported
+separately below.
 
 Implementation, fresh fixture and [prospective protocol](preview-admission-protocol.md)
 were frozen at `6123b0d9c945291899423f4bb0cb9a65f3570f53`, on merged #97
@@ -117,9 +119,22 @@ Safe metrics publish filtered observations and artifact hashes. The result
 establishes replay for this recorded transport ordering, not wall-time replay,
 all possible asyncio schedules or success of #97's original immediate replayer.
 
+## Subsequent offline timeout correction
+
+After the successful measured run and first replay, implementing-assistant review
+reproduced a separate fault: the replay wait's local `asyncio.wait_for` timeout
+could spend an RPC `_TurnTask`'s cancel-once guard, preventing later cancellation.
+This does not explain or change the measured successful trajectory. The replay
+wait now observes and drains a separate local waiter with `asyncio.wait`, keeping
+the actual caller cancellable. Two real-dispatcher regressions cover later cancel
+and deadline, and a 24-case delayed/replay/ownership focus passes with zero
+unexpected provider requests. This is a post-study replay fault-path fix; the
+production core, live transport path, fixture, criteria and original artifacts
+remain unchanged. No additional paid run is made.
+
 ## Verification and return to the intelligence work
 
-The frozen implementation passes **1,964 Python tests** with isolated real
+The measured frozen implementation passes **1,964 Python tests** with isolated real
 PostgreSQL, one intentional local-HTTP deselection and zero unexpected blocked
 provider requests. The delayed/persistence focus passes 60; gateway/local HTTP
 passes 18 with two platform skips; Node passes 13. Python 3.10 CI includes the
