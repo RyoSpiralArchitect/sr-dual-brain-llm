@@ -25,6 +25,7 @@ from .advisor_delivery import compact_model
 from .source_completion import guard_source_completions, record_completed_answer, require_completed_answer
 from .detail_contract import detail_observation, detail_confidence, error_category
 from .memory_clarification import record_choice_clarifications
+from .speculative_preview import OwnedPreview
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -55,6 +56,7 @@ from .thalamic_reticular_nucleus import (
     EXECUTIVE_ADVICE, DIRECTOR_ADVICE, EXECUTIVE_METRICS_OBSERVATION,
     ACC_CONSULT_PROMOTION, ACC_SYSTEM2_PROMOTION, ACC_TEMPERATURE_ADJUSTMENT,
     BASAL_CONSULT_PROMOTION,
+    SPECULATIVE_PREVIEW_SUPPRESSION,
 )
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
@@ -181,6 +183,7 @@ class DraftStageResult:
     novelty: float
     consult_bias: float
     steps: List[InnerDialogueStep]
+    preview_observation: Dict[str, Any] | None = None
 
 
 @dataclass
@@ -2615,6 +2618,34 @@ class DualBrainController:
             director_control=director_control,
         )
 
+    def _preview_suppression_gate(
+        self, *, question, qid, leading, collaborative_lead, requested_leading,
+        system2_mode, system2_active, precision_priority, director_control,
+    ) -> GateDecision:
+        protected = (
+            (not ((leading == "right" or collaborative_lead) and not system2_active), "outside_scope"),
+            (getattr(self.memory, "primary_write_pending", False), "primary_write_pending"),
+            (requested_leading == "right", "right_lead"),
+            (system2_mode != "auto", "explicit_system2_mode"),
+            (precision_priority, "precision_priority"),
+            (str((director_control or {}).get("consult") or "auto").strip().lower() != "auto", "director_override"),
+            (not getattr(self.memory, "conversation_context", False), "conversation_context_disabled"),
+            (getattr(self.memory, "answerability_gate", None) is None, "answerability_gate_unavailable"),
+        )
+        blocked = next((reason for active, reason in protected if active), None)
+        config = self.thalamic_reticular_nucleus.configure(SPECULATIVE_PREVIEW_SUPPRESSION)
+        pending = False
+        if blocked is None and config.valid and config.mode != GateMode.OFF:
+            missing = getattr(self.memory, "missing_evidence", None)
+            try:
+                pending = bool(record_choice_clarifications(missing(question))) if callable(missing) else False
+            except Exception:
+                # An unavailable local signal cannot establish AUTO inhibition.
+                pending = False
+        return self._module_gate(SPECULATIVE_PREVIEW_SUPPRESSION, qid=qid, config=config,
+            facts=GateFacts(eligible=blocked is None, blocked_reason=blocked or "outside_scope",
+                            record_choice_pending=pending))
+
     async def _run_left_draft_stage(
         self,
         *,
@@ -2633,6 +2664,8 @@ class DualBrainController:
         hemisphere_mode: str,
         hemisphere_bias: float,
         phase_add: Callable[[str, float], None],
+        suppress_preview: bool = False,
+        qid: str | None = None,
     ) -> DraftStageResult:
         steps: List[InnerDialogueStep] = []
         context = self._refresh_record_replay_context(question, context)
@@ -2642,17 +2675,14 @@ class DualBrainController:
             if not callable(generator):
                 raise RuntimeError("Primary source writes require success-aware generation")
         right_lead_notes: Optional[str] = None
-        right_preview_task: asyncio.Task[str] | None = None
-        if (leading == "right" or collaborative_lead) and not system2_active:
+        requested = (leading == "right" or collaborative_lead) and not system2_active
+        preview = OwnedPreview(requested=requested, suppressed=suppress_preview)
+        if preview.allowed:
             async def generate_preview() -> str:
                 return await self.right_model.generate_lead(
                     question, self._refresh_record_replay_context(question, context), on_delta=None,
                 )
-
-            try:
-                right_preview_task = create_turn_task(generate_preview())
-            except Exception:  # pragma: no cover - defensive guard
-                right_preview_task = None
+            preview.start(generate_preview)
 
         left_context = context
         if system2_active:
@@ -2677,28 +2707,22 @@ class DualBrainController:
                     else None
                 ),
             )
-        except BaseException:
-            if right_preview_task is not None:
-                cancel_task(right_preview_task)
-                await asyncio.gather(right_preview_task, return_exceptions=True)
-            raise
+        finally:
+            try:
+                await preview.close()
+            finally:
+                try:
+                    self.telemetry.log("preview_execution", qid=qid, **preview.observation)
+                except Exception:  # Optional observability cannot change the outcome.
+                    pass
+        right_lead_notes = preview.notes
         phase_add("left_draft", left_draft_started)
 
         if getattr(self.memory, "primary_write_pending", False):
             # Custom source generators explicitly promise this contract too.
             record_completed_answer(draft)
 
-        if right_preview_task is not None:
-            if right_preview_task.done():
-                try:
-                    right_lead_notes = right_preview_task.result()
-                except asyncio.CancelledError:
-                    right_lead_notes = None
-                except Exception:  # pragma: no cover - defensive guard
-                    right_lead_notes = None
-            else:
-                cancel_task(right_preview_task)
-
+        if preview.task is not None:
             preview_meta = {
                 "requested": True,
                 "collaborative": collaborative_lead,
@@ -2775,6 +2799,7 @@ class DualBrainController:
             novelty=novelty,
             consult_bias=consult_bias,
             steps=steps,
+            preview_observation=preview.observation,
         )
 
     async def _run_routing_stage(
@@ -5717,6 +5742,12 @@ class DualBrainController:
                         source_qids=[trace.qid for trace in traces if getattr(trace, "seed_id", None)],
                         destination="draft_context", status="provided_to_stage",
                     )
+        preview_gate = self._preview_suppression_gate(
+            question=question, qid=qid_value, leading=leading, collaborative_lead=collaborative_lead,
+            requested_leading=requested_leading, system2_mode=system2_norm,
+            system2_active=system2_active, precision_priority=precision_priority,
+            director_control=director_control,
+        )
         try:
             draft_stage = await self._run_left_draft_stage(
                 question=question,
@@ -5734,6 +5765,8 @@ class DualBrainController:
                 hemisphere_mode=hemisphere_mode,
                 hemisphere_bias=hemisphere_bias,
                 phase_add=_phase_add,
+                suppress_preview=preview_gate.enabled,
+                qid=qid_value,
             )
         except BaseException:
             pending = [task for task in (executive_task, director_task) if task is not None]
@@ -5770,6 +5803,7 @@ class DualBrainController:
             qid=qid_value,
         )
         decision.state.setdefault('module_gates', {}).update(observer_setup.module_gates)
+        decision.state['module_gates'][SPECULATIVE_PREVIEW_SUPPRESSION] = preview_gate.to_payload()
         if insula_state is not None:
             decision.state["interoception"] = insula_state.to_payload()
         if salience_signal is not None:

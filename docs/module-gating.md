@@ -34,8 +34,9 @@ switches; introducing the registry does not activate automatic policies.
 | `acc_system2_promotion` | `_run_routing_stage` | `off` | `DUALBRAIN_ACC_SYSTEM2_BUMP` |
 | `acc_temperature_adjustment` | `_run_routing_stage` | `on` when amount is positive | `DUALBRAIN_ACC_TEMPERATURE_DROP` remains the amount, default `0` |
 | `basal_consult_promotion` | `_run_routing_stage` | `on` under the existing loop recommendation | None; ACC/salience-driven consultation override |
+| `speculative_preview_suppression` | `_preview_suppression_gate` (pre-draft) | `off` | None; optional preview inhibition only |
 
-All twelve entries are connected to their production admission point. The nine
+All thirteen entries are connected to their production admission point. The nine
 follow-on migration candidates are implemented; no candidate in this inventory
 is a registration-only placeholder. This inventory covers optional work selected
 by the controller's public modes/enable switches plus DMN prompt injection.
@@ -401,6 +402,26 @@ observes two native selective skips, but also five earlier speculative previews,
 including two cancelled attempts with unknown usage. Its original replay race
 and supplemental schedule diagnostic remain separate observations; no new
 preview admission rule or default is introduced.
+
+## Speculative preview ownership and pre-draft inhibition
+
+`speculative_preview_suppression` is a separate default-OFF TRN module. AUTO
+admits inhibition only when the current typed condition establishes pending
+whole-record selection/reselection before drafting. Other missing-evidence
+conditions and unknown support preserve preview admission. The gate reads no
+draft, final policy action or semantic grade, and makes no model/evidence call.
+ON forces inhibition only within the eligible optional read scope. Primary
+writes, explicit right lead, explicit System2 ON/OFF, precision priority and
+Director consultation overrides remain protected. Auto-rotated right lead can
+omit its preview; later routing and consultation retain their own authority.
+
+The stage now drains cancelled preview work before returning, including outside
+RPC. `preview_execution` / `metrics.preview` report requested/admitted/started,
+availability and a bounded outcome. Starting the model coroutine does not prove
+HTTP admission or billed usage. Cancelled-before-start and cancelled-after-start
+are distinct; provider cost comes from actual transport receipts, with unknown
+usage retained. See the [prospective operational protocol](benchmarks/preview-admission-protocol.md)
+for exact transport-event replay and the limited live scope.
 
 ## Facts and observability
 

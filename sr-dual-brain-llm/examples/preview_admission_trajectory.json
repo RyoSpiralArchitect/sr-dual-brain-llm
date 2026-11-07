@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_preview_admission_trajectory",
+  "clock": 1794009600.0,
+  "turns": [
+    {
+      "id": "period_initial",
+      "question": "Remember Twilight Cove's data-retention period: 61 days. Reply with 'Twilight Cove retains data for 61 days.' only.",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": true
+      },
+      "expected_primary": [
+        "period_initial"
+      ],
+      "required_text": "61 days"
+    },
+    {
+      "id": "backup_initial",
+      "question": "Remember Twilight Cove's backup location: Kushiro. Reply with 'Twilight Cove backs up in Kushiro.' only.",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": true
+      },
+      "expected_primary": [
+        "period_initial",
+        "backup_initial"
+      ],
+      "required_text": "Kushiro"
+    },
+    {
+      "id": "ambiguous_replay",
+      "question": "Quote the stored text exactly.",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_initial",
+        "backup_initial"
+      ],
+      "expected_primary": [
+        "period_initial",
+        "backup_initial"
+      ],
+      "expected_state": "ambiguous_record",
+      "expected_action": "clarify_record",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": []
+    },
+    {
+      "id": "selected_replay",
+      "question": "記録された回答をそのまま再掲してください。",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_initial",
+        "backup_initial"
+      ],
+      "choice": {
+        "label": "data-retention period",
+        "save_as": "initial_ref"
+      },
+      "target_qid": "period_initial",
+      "expected_primary": [
+        "period_initial",
+        "backup_initial"
+      ],
+      "expected_state": "bound",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [
+        "period_initial"
+      ]
+    },
+    {
+      "id": "period_corrected",
+      "question": "Remember the updated data-retention period for Twilight Cove: 53 days. Reply with 'Twilight Cove retains data for 53 days.' only.",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": true,
+        "supersedes": [
+          "period_initial"
+        ]
+      },
+      "requires": [
+        "period_initial"
+      ],
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "required_text": "53 days"
+    },
+    {
+      "id": "old_selection",
+      "question": "Quote the stored text exactly.",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_corrected"
+      ],
+      "use_ref": "initial_ref",
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "stale_selection",
+      "expected_action": "reselect_record",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": []
+    },
+    {
+      "id": "restart_selection",
+      "question": "記録された回答をそのまま再掲して",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_corrected"
+      ],
+      "choice_before_restart": {
+        "label": "data-retention period",
+        "save_as": "restart_ref"
+      },
+      "reopen": true,
+      "use_ref": "restart_ref",
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "invalid_selection",
+      "expected_action": "reselect_record",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": []
+    },
+    {
+      "id": "relisted_replay",
+      "question": "記録された回答をそのまま再掲してください。",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_corrected"
+      ],
+      "choice": {
+        "label": "data-retention period",
+        "save_as": "current_ref"
+      },
+      "target_qid": "period_corrected",
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "bound",
+      "requested_operation": "recorded_answer_replay",
+      "expected_sources": [
+        "period_corrected"
+      ]
+    },
+    {
+      "id": "current_period",
+      "question": "What is the data-retention period for Project Twilight Cove?",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "requires": [
+        "period_corrected"
+      ],
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "not_requested",
+      "requested_operation": "fact_lookup",
+      "expected_sources": [
+        "period_corrected"
+      ]
+    },
+    {
+      "id": "bare_parameter",
+      "question": "Project Silver Quay retention?",
+      "memory_context": {
+        "id": "silver-quay",
+        "aliases": [
+          "Silver Quay"
+        ],
+        "remember": false
+      },
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "not_requested",
+      "expected_action": "clarify_parameter",
+      "requested_operation": "fact_lookup",
+      "expected_sources": []
+    },
+    {
+      "id": "explicit_rate_missing",
+      "question": "薄明湾の保持率は？",
+      "memory_context": {
+        "id": "twilight-cove",
+        "aliases": [
+          "Twilight Cove",
+          "薄明湾"
+        ],
+        "remember": false
+      },
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "not_requested",
+      "requested_operation": "fact_lookup",
+      "expected_sources": [],
+      "expected_actions": [
+        "request_current_source",
+        "preserve_unknown"
+      ]
+    },
+    {
+      "id": "explicit_period_missing",
+      "question": "What is Project Silver Quay's data-retention period?",
+      "memory_context": {
+        "id": "silver-quay",
+        "aliases": [
+          "Silver Quay"
+        ],
+        "remember": false
+      },
+      "expected_primary": [
+        "period_corrected",
+        "backup_initial"
+      ],
+      "expected_state": "not_requested",
+      "expected_action": "request_current_source",
+      "requested_operation": "fact_lookup",
+      "expected_sources": []
+    }
+  ]
+}

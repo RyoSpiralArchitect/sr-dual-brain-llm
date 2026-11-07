@@ -226,6 +226,7 @@ async def execute_turn(session, turn, context, store, options, journal):
             result=reply['result']; row.update(status='ok',answer=result['answer'],
                 system2=pilot.accounting(result['metrics'],result['telemetry']),
                 detail=result['metrics'].get('detail'), route=result['metrics']['policy']['consultation_route'],
+                preview=result['metrics'].get('preview'),
                 policy_action=result['metrics']['policy']['action'],
                 gates=result['metrics']['modules']['gates'],
                 commit={k:(result.get('memory_commit') or {}).get(k) for k in ('state','operation_id')})
