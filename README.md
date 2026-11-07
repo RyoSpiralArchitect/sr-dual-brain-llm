@@ -351,6 +351,8 @@ finds no reliable quality gain and retains empty completions and a failed replay
 The [ordinary generation contract](docs/ordinary-answer-generation.md) preserves
 complete/partial/unavailable outcomes, retains a complete draft after a failed
 integration and bounds shared left-generation allocation without continuation.
+The [cleanup and fresh effort pilot](docs/benchmarks/reasoning-effort-2026-11-08.md)
+records exact replay and a numeric failure under low effort; provider default remains unchanged.
 
 Treat “brains” as **roles** with strict I/O contracts:
 

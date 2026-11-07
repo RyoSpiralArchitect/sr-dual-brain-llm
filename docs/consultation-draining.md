@@ -38,3 +38,6 @@ The following [fresh reasoning-effort protocol](benchmarks/reasoning-effort-prot
 compares provider-default and low effort on the current completion-aware runtime,
 under the same fixed ceilings. Its old-envelope validation is development
 provenance; fresh answer quality requires its own observations.
+
+The [2026-11-08 results](benchmarks/reasoning-effort-2026-11-08.md) retain all
+three replay provenances and the fresh profile comparison.
