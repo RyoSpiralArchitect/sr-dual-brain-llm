@@ -422,6 +422,10 @@ HTTP admission or billed usage. Cancelled-before-start and cancelled-after-start
 are distinct; provider cost comes from actual transport receipts, with unknown
 usage retained. See the [prospective operational protocol](benchmarks/preview-admission-protocol.md)
 for exact transport-event replay and the limited live scope.
+The [first live result](benchmarks/preview-admission-2026-11-07.md) observes one
+pre-draft suppression, preserves the twelve-turn durable-source contracts and
+replays all 32 requests / 64 events without provider calls. It is unpaired and
+does not estimate quality, latency or request savings.
 
 ## Facts and observability
 

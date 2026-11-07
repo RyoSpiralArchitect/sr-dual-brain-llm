@@ -183,6 +183,10 @@ V3 source diagnostics, new semantic judgments and prior scores independent.
 The [first live result](benchmarks/natural-memory-2026-11-06.md) completes all
 12 turns and retains an original preview-scheduling replay failure beside a
 separately labeled post-output offline diagnostic.
+The [preview-admission followup](benchmarks/preview-admission-2026-11-07.md)
+freshly exercises the twelve-turn acceptance structure with prospective transport
+event recording and passing first-attempt zero-network replay. It checks
+operational/source contracts and leaves semantic quality unassessed.
 
 The [real PostgreSQL retention experiment](benchmarks/persistent-memory-2026-10-26.md)
 covers growing derived history, restart recall, corrections and exact receipt
