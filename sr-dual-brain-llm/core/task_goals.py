@@ -175,14 +175,15 @@ class TaskState:
             and self.latest['snapshot_sha256'] == text_digest(draft)
             and any(f['status'] == 'unresolved' for f in self.latest['findings']))
 
-    def summary(self, answer):
+    def summary(self, answer, *, generation_complete=None):
         current = bool(self.latest and self.latest['snapshot_sha256'] == text_digest(answer))
         reports = {f['goal_id']: 'reported_' + f['status'] for f in (self.latest or {}).get('findings', [])}
         return {'version': VERSION, 'goal_count': len(self.plan.goals),
             'review_status': (self.latest or {}).get('status', 'not_reviewed'),
             'review_snapshot_matches_answer': current, 'verified_complete': False,
             'goals': [{'goal_id': g.goal_id, 'depends_on': list(g.depends_on),
-                'status': reports.get(g.goal_id, 'unreviewed') if current else 'unreviewed_answer' if self.latest else 'unreviewed',
+                'status': 'unconfirmed_generation' if current and generation_complete is False and reports.get(g.goal_id) == 'reported_addressed'
+                    else reports.get(g.goal_id, 'unreviewed') if current else 'unreviewed_answer' if self.latest else 'unreviewed',
                 'last_report': reports.get(g.goal_id, 'unknown')} for g in self.plan.goals]}
 
     def prompt(self, role, *, draft=None):

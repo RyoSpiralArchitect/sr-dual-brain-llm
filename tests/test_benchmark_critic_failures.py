@@ -30,8 +30,10 @@ async def test_fixed_failure_matrix_and_zero_transport_replay(tmp_path):
         assert rows[name]['source_context']['source_approved']
     assert rows['clean']['answer_origin'] == 'draft'
     assert rows['clean']['last_external_review_valid'] is True
-    assert rows['integration_error']['answer_origin'] == 'local_fallback'
-    assert rows['integration_error']['answer_completion_confirmed'] is False
+    # Ordinary integration now retains the actual complete draft on failure.
+    # Historical reports retain their original local-fallback observation.
+    assert rows['integration_error']['answer_origin'] == 'draft'
+    assert rows['integration_error']['answer_completion_confirmed'] is True
     assert rows['repair_clean']['reviews'][-1]['critic_kind'] == 'external_repaired'
     assert rows['repair_clean']['last_external_review_valid'] is True
     assert [r['role'] for r in rows['scalar_issue']['receipts']].count('critic_repair') == 0
