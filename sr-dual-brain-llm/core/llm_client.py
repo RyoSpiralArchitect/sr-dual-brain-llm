@@ -445,11 +445,12 @@ class LLMClient:
             if capturing_completion() and (len(choices) != 1 or not isinstance(choices[0], dict)):
                 raise CompletionValidationError('invalid_response')
             choice0 = choices[0] if isinstance(choices[0], dict) else {}
-            delta = choice0.get('delta') or choice0.get('message') or {}
+            delta = (choice0.get('delta', choice0.get('message', {})) if capturing_completion()
+                     else choice0.get('delta') or choice0.get('message') or {})
             if capturing_completion():
                 if not isinstance(delta, dict) or delta.get('tool_calls') or delta.get('function_call'):
                     raise CompletionValidationError('invalid_response')
-                if delta.get('refusal'):
+                if delta.get('refusal') not in (None, ''):
                     raise CompletionValidationError('refused_response')
                 if delta.get('content') is not None and not isinstance(delta['content'], str):
                     raise CompletionValidationError('invalid_response')
@@ -459,7 +460,6 @@ class LLMClient:
             if reason is not None:
                 finish_reason = str(reason)
 
-            delta = choice0.get("delta") or choice0.get("message") or {}
             content = delta.get("content") if isinstance(delta, dict) else None
             if not content:
                 continue

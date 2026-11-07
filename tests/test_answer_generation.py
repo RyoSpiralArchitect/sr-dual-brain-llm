@@ -368,3 +368,38 @@ async def test_custom_client_shapes_are_withheld_without_fabricating_a_completio
     with forbid_provider_network():
         await Harness().run(action)
     assert not calls
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('bad_delta', [None, [], False, '', {'refusal': False}, {'refusal': []}])
+async def test_malformed_stream_terminal_cannot_bless_earlier_text(bad_delta):
+    left, client, _ = model_for([], stream=True)
+    async def stream_call(messages, *, on_delta, **kwargs):
+        async def events():
+            yield json.dumps({'choices': [{'delta': {'content': 'Visible prefix'}, 'finish_reason': None}]})
+            yield json.dumps({'choices': [{'delta': bad_delta, 'finish_reason': 'stop'}]})
+        return await client._consume_openai_style_stream(events(), on_delta=on_delta)
+    client._openai_style_stream_call = stream_call
+    async def action(state):
+        text = await left.generate_answer('Explain.', '')
+        assert text == '' and state.status(text) == 'invalid'
+        assert not state.summary(text)['terminal_complete']
+        return text
+    with forbid_provider_network():
+        await Harness().run(action)
+
+
+@pytest.mark.asyncio
+async def test_larger_requested_allocation_cannot_increase_the_stage_or_turn_bound(monkeypatch):
+    monkeypatch.setenv('DUALBRAIN_ANSWER_TOKEN_BUDGET', '1000000')
+    left, _, calls = model_for([envelope()] * 4)
+    async def action(state):
+        draft = await left.generate_answer('Explain.', '')
+        for _ in range(4):
+            draft = await left.integrate_info_async(question='Explain.', draft=draft, info='Recheck.')
+        assert state.total_cap == state.reserved == 128
+        assert state.records[-1]['status'] == 'budget_exhausted'
+        return draft
+    with forbid_provider_network():
+        await Harness().run(action)
+    assert len(calls) == 4 and all(p['max_completion_tokens'] == 32 for p in calls)

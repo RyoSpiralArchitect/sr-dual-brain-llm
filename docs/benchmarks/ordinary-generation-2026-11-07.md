@@ -45,8 +45,9 @@ requests, without enlarging that cap. Real provider acceptance and answer-qualit
 effects of that setting have not been measured here.
 
 All eight isolated checks preserve `empty`, make **zero provider HTTP calls** and
-record zero unexpected blocked HTTP attempts. Source bytes, questions, answers
-and judge quotes remain private. This is development evidence from previously
+record zero unexpected blocked HTTP attempts. This artifact publishes no raw
+runtime messages, question/answer text or judge quotes; the original synthetic
+fixture is already tracked. This is development evidence from previously
 observed failures, not fresh benchmark data. The old cancellations and unknown
 usage are not rerun, refunded or converted to success by an output allocation.
 The private check report/script are retained under ignored
@@ -68,8 +69,13 @@ one intentional local-HTTP deselection and zero unexpected blocked provider
 requests. Affected regression controls pass 77; envelope/source/detail/goal focus
 passes 147; Node passes 13. The subsequent presentation change passes 53 focused
 checks, including an effective 80-character Director bound and retained debug
-sections. Final full regression and CI evidence is attached to PR #104 at its
-reviewed head.
+sections. Its full local run at `12b59d11e0ffe3da74f25fb2d43a848eb617081b`
+passes **2,069 tests**, with the same isolated PostgreSQL/deselection/HTTP guard;
+all eight CI checks at that revision pass. Gateway/local HTTP passes 18 with two
+platform skips. Final review additionally rejects malformed falsey SSE terminal
+objects instead of converting them to an empty valid delta. Its focused
+envelope/source/detail/goal/cancellation set passes **161 tests**. Final-head CI
+evidence is attached to PR #104 at its reviewed head.
 
 Actual RPC/controller tests distinguish handler `ok` from complete/partial/empty
 answers and preserve manual System2 OFF. JSON/SSE tests cover terminal reasons,
