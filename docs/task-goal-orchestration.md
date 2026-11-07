@@ -73,3 +73,9 @@ dependencies, review status and whether the reviewed snapshot matches the final
 answer. They contain no goal text, quote or reason. `verified_complete` remains
 false: useful output and requested-goal coverage require separate evaluation.
 The module gate itself contains only the existing bounded admission metadata.
+
+The [first frozen OFF/AUTO comparison](benchmarks/task-goals-2026-11-07.md)
+records actual prompt handoffs and conservative unresolved states, but does not
+establish a reliable quality improvement. Empty ordinary completions and a
+cancel/fallback replay divergence remain visible limitations. The feature stays
+default OFF.

@@ -221,3 +221,4 @@ __marimo__/
 sr-dual-brain-llm/samples/*.json
 sr-dual-brain-llm/samples/*.jsonl
 sr-dual-brain-llm/samples/module-gating-*/
+sr-dual-brain-llm/samples/task-goals-*/

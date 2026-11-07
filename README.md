@@ -346,6 +346,8 @@ The core orchestration happens in `sr-dual-brain-llm/core/dual_brain.py` (`DualB
 The opt-in [task-goal prototype](docs/task-goal-orchestration.md) carries explicit
 user requirements into left/right reasoning, goal-specific critic observations
 and integration, while preserving unverified and unresolved states.
+Its [first OFF/AUTO comparison](docs/benchmarks/task-goals-2026-11-07.md)
+finds no reliable quality gain and retains empty completions and a failed replay.
 
 Treat “brains” as **roles** with strict I/O contracts:
 
