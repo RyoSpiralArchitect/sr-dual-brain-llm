@@ -68,8 +68,8 @@ A revision discharges a witnessed obligation only if that same user scope and
 output variables remain checkable and consistent. Removing the point, changing
 to unsupported notation, a failed revision or a later critic `ok` cannot by itself
 erase the earlier witness. Turn-local obligations clear on return, exception and
-cancellation. The final displayed answer is assessed after audit and generation
-presentation; unresolved obligations veto resolution/success without another
+cancellation. Turns with a witnessed contradiction reassess the final displayed
+answer after audit and generation presentation; unresolved obligations veto resolution/success without another
 model call. Existing cancellation, consultation draining and token caps apply.
 
 `constraint_consistency` telemetry and `metrics.constraint_check` contain only

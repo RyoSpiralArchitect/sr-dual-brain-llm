@@ -2228,7 +2228,7 @@ class DualBrainController:
             if (constraints is not None and isinstance(response, dict)
                     and isinstance(response.get('constraint_check'), dict)
                     and response['constraint_check'].get('version') == CONSTRAINT_VERSION):
-                # Re-derive evidence against our own full snapshot; a copied
+                # Re-derive evidence against the exact reviewed snapshot; a copied
                 # worker summary is not proof or authority over another draft.
                 constraints.observe(check_constraints(constraints.question, review_draft))
             attempt["outcome"] = "returned"
