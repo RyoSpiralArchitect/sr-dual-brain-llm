@@ -708,12 +708,20 @@ class RightBrainModel:
 
             # High-confidence sanity override: the explicit local result keeps
             # its own provenance even when a valid external critic missed it.
+            witnessed = bool(micro is not None and micro.constraint_report is not None
+                             and micro.constraint_report.contradictions)
             if (external_valid and verdict == "ok" and micro is not None
                     and micro.verdict == "issues"
-                    and _env_flag("DUALBRAIN_CRITIC_MICRO_SANITY_OVERRIDE", True)):
+                    and (witnessed or _env_flag("DUALBRAIN_CRITIC_MICRO_SANITY_OVERRIDE", True))):
                 verdict, issues, fixes = micro.verdict, list(micro.issues), list(micro.fixes)
                 critic_sum = micro.critic_sum
                 critic_kind = "micro_sanity_override"
+            elif witnessed and critic_kind not in {'micro', 'micro_sanity_override'}:
+                # Keep external failure/validity provenance, but do not discard
+                # a witnessed contradiction when that review has other issues.
+                issues = (list(micro.issues) + list(issues))[:8]
+                fixes = (list(micro.fixes) + list(fixes))[:8]
+                critic_sum = _critic_summary(issues, fixes)
             result = {
                 "qid": qid,
                 "verdict": verdict,
@@ -728,6 +736,8 @@ class RightBrainModel:
                 "critic_external_review_valid": external_valid,
                 "critic_validation": validation,
             }
+            if micro is not None and micro.constraint_report is not None:
+                result['constraint_check'] = micro.constraint_report.summary()
             if task is not None:
                 try:
                     goal_data = _extract_json_object(goal_completion) if external_valid else None
@@ -753,6 +763,8 @@ class RightBrainModel:
                 "critic_review_valid": True,
                 "critic_external_review_valid": False,
                 "critic_validation": {"initial": {"status": "not_requested", "error_type": None}, "repair": None},
+                **({'constraint_check': micro.constraint_report.summary()}
+                   if micro.constraint_report is not None else {}),
             }
         return {
             "qid": qid,

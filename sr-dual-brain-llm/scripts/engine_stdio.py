@@ -108,6 +108,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
     preview_ev = _last_event(events, 'preview_execution')
     task_goals_ev = _last_event(events, 'task_goal_execution')
     generation_ev = _last_event(events, 'answer_generation')
+    constraint_ev = _last_event(events, 'constraint_consistency')
     gate_fields = ('module', 'phase', 'mode', 'source', 'eligible', 'enabled', 'reason', 'policy_version')
     module_gates = {}
     advisor_timing = {}
@@ -374,7 +375,19 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             "truncation_signal": truncation_signal,
         }
 
+    if (system2_payload is not None and constraint_ev is not None
+            and (constraint_ev.get('status') == 'contradiction'
+                 or constraint_ev.get('unresolved_obligations', 0))):
+        # Presentation/audit can change a previously reviewed answer. The final
+        # local observation may veto resolution, never grant semantic approval.
+        system2_payload['resolved'] = False
+        system2_payload['resolution_basis'] = 'local_constraint_unresolved'
+
     metrics: dict[str, Any] = {
+        'constraint_check': ({key: constraint_ev.get(key) for key in
+            ('version', 'status', 'checked_claims', 'contradictions', 'kinds',
+             'semantic_correctness', 'unresolved_obligations')}
+            if constraint_ev is not None else None),
         'answer_generation': ({key: generation_ev.get(key) for key in
             ('version', 'answer_status', 'terminal_complete', 'semantic_correctness', 'stages',
              'reserved_output_tokens', 'total_output_token_cap', 'turn_status')}
