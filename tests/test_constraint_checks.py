@@ -35,6 +35,22 @@ def test_development_failure_has_exact_visible_anchors_and_residual():
     assert not repaired(report, check_constraints(QUESTION, 'The result is now correct.'))
 
 
+@pytest.mark.parametrize('wrapper', [('\\[', '\\]'), ('$$', '$$')])
+def test_display_math_wrappers_do_not_create_paragraph_boundaries(wrapper):
+    question = 'Given p=3a+b and q=2b. Recover a,b when p=8,q=4.'
+    left, right = wrapper
+    answer = ('The symbolic inverse follows from substitution.\n'
+              r'For \(p=8,\ q=4\), this yields' + '\n' + left + '\n'
+              r'(a,b)=\left(1,2\right).' + '\n' + right + '\n\n'
+              'If only p=8 is available, (a,b)=(0,8) is a compatible example.')
+    report = check_constraints(question, answer)
+    assert report.status == 'contradiction' and len(report.findings) == 1
+    assert 'substituted 5, required 8, residual -3' in report.findings[0].witness
+    assert check_constraints(question, answer.replace('(1,2', '(2,2')).status == 'consistent'
+    # An actual paragraph break still withholds unsupported scope inheritance.
+    assert check_constraints(question, answer.replace('yields\n', 'yields\n\n')).status == 'unknown'
+
+
 @pytest.mark.parametrize('dimension', [2, 3, 4])
 def test_generated_affine_systems_with_renamed_variables_and_exact_perturbations(dimension):
     # Generate points/constraints independently of parser mechanics; no solving,
@@ -91,6 +107,8 @@ def test_supported_subset_exact_decimals_fractions_and_multiple_solutions(questi
     'For u=5,v=6, (x,y)=(3/2,2) and (x,y)=(1,(2)).',
     'For u=5,v=6, (x,y)=(3/2,2) and (x,z)=(1,2).',
     'For u=5,v=6, counterexamples are (x,y)=(1,2).',
+    'Someone wrote: "For u=5,v=6, (x,y)=(1,2)."',
+    '```text\nFor u=5,v=6, (x,y)=(1,2).\n```',
 ])
 def test_unsupported_hypothetical_and_ambiguous_claims_abstain(answer):
     assert check_constraints(QUESTION, answer).status == 'unknown'

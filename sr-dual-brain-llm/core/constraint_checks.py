@@ -165,26 +165,36 @@ def _assignments(text):
     return result
 
 
-def _cases(text, *, claims=False):
+def _cases(text, *, claims=False, original=None):
     """Require explicit numeric conditions in one clause; no scope inference."""
+    original = text if original is None else original
     result = []
     for index, case in enumerate(_CASE.finditer(text)):
         if index >= 8:
             raise ValueError('case limit')
         # A period in a decimal is not a sentence boundary.
-        boundary = re.search(r'\n\s*\n|[.!?](?=\s|$)', text[case.end():])
+        # Removing a standalone display-math wrapper produces a whitespace-only
+        # line. Paragraph boundaries must come from the original, not that mask.
+        boundaries = [m for m in (
+            re.search(r'\n[ \t\r]*\n', original[case.end():]),
+            re.search(r'[.!?](?=\s|$)', text[case.end():]),
+        ) if m is not None]
+        boundary = min(boundaries, key=lambda m: m.start()) if boundaries else None
         if claims and boundary is not None and boundary[0].startswith('?'):
             continue
         end = case.end() + boundary.start() if boundary else len(text)
-        previous = list(re.finditer(r'[.!?](?=\s|$)|\n\s*\n', text[:case.start()]))
-        start = previous[-1].end() if previous else 0
+        previous = (list(re.finditer(r'[.!?](?=\s|$)', text[:case.start()]))
+                    + list(re.finditer(r'\n[ \t\r]*\n', original[:case.start()])))
+        start = max((m.end() for m in previous), default=0)
+        if claims and text[start:case.start()].strip():
+            continue  # Do not reinterpret a quoted/embedded conditional as a claim.
         segment = text[start:end]
         # A changed assumption/negative example invalidates this clause's scope.
         if _UNSCOPED.search(segment):
             continue
         values, consumed = {}, case.end()
         for match in _ASSIGN.finditer(text, case.end(), end):
-            if text[consumed:match.start()].strip(' ,') not in ('', 'and'):
+            if text[consumed:match.start()].strip(' ,\t\r\n') not in ('', 'and'):
                 break
             expression, rhs_end = _read_expression(text, match.end())
             if set(expression) - {''}:
@@ -200,7 +210,7 @@ def _cases(text, *, claims=False):
 
 def _numeric(question, draft):
     q, a = _mask(question), _mask(draft)
-    question_cases = _cases(q)
+    question_cases = _cases(q, original=question)
     if not question_cases:
         return []
     # Definitions must precede the request/first numeric case. Never import an
@@ -214,7 +224,7 @@ def _numeric(question, draft):
     noise_context = re.sub(r'\bno noise\b', '', prefix, flags=re.I)
     if (_UNSCOPED.search(prefix) or re.search(r'\b(?:noise|rounded|uncertainty)\b', noise_context, re.I)
             or any(marker in prefix for marker in ('>', '?', '"', '“', '”'))
-            or '```' in question or '~~~' in question):
+            or any(marker in value for marker in ('```', '~~~') for value in (question, draft))):
         return []
     definitions = {}
     parsed = _assignments(prefix)
@@ -227,7 +237,7 @@ def _numeric(question, draft):
     if not 1 <= len(definitions) <= 4:
         return []
     findings = []
-    for begin, condition_end, clause_end, values in _cases(a, claims=True):
+    for begin, condition_end, clause_end, values in _cases(a, claims=True, original=draft):
         scopes = [(s, e, v) for s, e, _, v in question_cases if v == values]
         if len(scopes) != 1 or not set(values) <= definitions.keys():
             continue

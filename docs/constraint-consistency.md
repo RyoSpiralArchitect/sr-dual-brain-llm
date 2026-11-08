@@ -32,7 +32,9 @@ request heading/first numeric case. Supported single-letter ASCII variables
 are arbitrary; no benchmark IDs, coefficients, expected answers or model names
 are inspected. Only explicitly selected measurements are active. The checker
 does not import a withdrawn measurement into a later counterexample. Clauses
-with recognized negative, hypothetical or approximate wording are withheld;
+must start with their explicit answer condition; embedded quotations and fenced
+answers are withheld. Recognized negative, hypothetical or approximate wording
+also withholds a clause;
 unsupported natural-language scope remains a substantial recall limitation.
 
 Both texts are limited to 10,000 characters. Numeric checks allow at most four
