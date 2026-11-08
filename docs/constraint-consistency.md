@@ -100,3 +100,8 @@ unsupported scope, withdrawn assumptions and valid counterexamples. Retain all
 failures and unknown usage. Report local exact witnesses separately from answer
 quality and uncalibrated model-judge observations; a gain on numeric development
 cases cannot establish a general orchestration gain.
+
+The [first mixed-domain ablation](benchmarks/constraint-mixed-2026-11-09.md)
+retains a ten-pair score tie, no witnessed contradiction, an observed extraction
+coverage gap and one unavailable SQL critic. It does not establish a repair gain;
+all 53 requests and 106 transport events replay exactly without provider access.
