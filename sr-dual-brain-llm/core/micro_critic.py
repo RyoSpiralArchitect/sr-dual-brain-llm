@@ -2060,8 +2060,6 @@ def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCritic
             result = None
         if result is not None:
             return result
-    # Passing a structural/local check must never suppress an existing content
-    # check (for example, correct JSON keys containing a wrong arithmetic result).
-    if report.findings:
-        return _constraint_payload(report)
+    # Positive local consistency cannot supply overall confidence or suppress
+    # content checks. It is used directly to recheck a witnessed repair only.
     return None

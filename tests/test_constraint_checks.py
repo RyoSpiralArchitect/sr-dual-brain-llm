@@ -142,6 +142,36 @@ def test_expression_work_limits_abstain(expression):
     assert check_constraints(QUESTION.replace('2x+y', expression), BAD).status == 'unknown'
 
 
+@pytest.mark.parametrize('value', ['3,000', '3.e2', '3.2.1', '3!', '3:2',
+    '3e2', '3%', '3_000', '3//2', '3**2', 'nan', 'True'])
+def test_unsupported_numeric_conditions_are_not_silently_truncated(value):
+    question = f'Given p=a+b. Recover a,b when p={value}.'
+    assert check_constraints(question, 'For p=3, (a,b)=(1,2).').status == 'unknown'
+
+
+@pytest.mark.parametrize('expression', ['a+b!', 'a+b.2', 'a+b:2', 'a+b,000',
+    'a+b**2', 'a+b%2', 'a+b[0]', '3.e2*a+b'])
+def test_unsupported_expression_suffixes_are_not_silently_truncated(expression):
+    question = f'Given p={expression}. Recover a,b when p=3.'
+    assert check_constraints(question, 'For p=3, (a,b)=(1,2).').status == 'unknown'
+
+
+@pytest.mark.parametrize('question', [
+    'Given p=a+b or q=a-b. Recover a,b when p=3,q=-1.',
+    'Given p=a+b or nothing is measured. Recover a,b when p=3.',
+    'Given p=a+b and q=a-b. Recover a,b when p=3 or q=-1.',
+    'Given p=a+b and q=a-b. Recover a,b when p=3,q=t.',
+])
+def test_disjunction_is_not_silently_selected_as_an_active_constraint(question):
+    assert check_constraints(question, 'For p=3, (a,b)=(1,2).').status == 'unknown'
+
+
+@pytest.mark.parametrize('connector', [';', '/', '&', 'plus'])
+def test_unsupported_condition_connector_does_not_drop_an_explicit_measurement(connector):
+    question = f'Given p=a+b and q=a-b. Recover a,b when p=3 {connector} q=-1.'
+    assert check_constraints(question, 'For p=3, (a,b)=(1,2).').status == 'unknown'
+
+
 def test_json_key_sets_share_witness_contract_without_numeric_reasoning():
     report = check_constraints(JSON_QUESTION, '{"name":"cat","debug":true}')
     assert report.status == 'contradiction'

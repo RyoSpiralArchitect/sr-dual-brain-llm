@@ -94,6 +94,8 @@ def _linear(expression):
     """Exact affine arithmetic; reject powers/calls/products of variables."""
     if not 1 <= len(expression) <= 160:
         raise ValueError('expression size limit')
+    if re.search(r'\d(?:\.\d*)?[eE][+-]?\d', expression):
+        raise ValueError('unsupported scientific notation')
     expression = _FRAC.sub(r'(\1/\2)', expression).strip()
     expression = re.sub(r'(?<=[\d)])\s*(?=[A-Za-z])', '*', expression)
     nesting = 0
@@ -150,7 +152,9 @@ def _read_expression(text, start):
         end = position = match.end()
         count += 1
     tail = text[end:]
-    if tail and not re.match(r'\s*(?:[,.;:!?\n]|$|\band\b)', tail):
+    if re.match(r'\s*,\s*[+-]?\d', tail):
+        raise ValueError('ambiguous numeric comma')
+    if tail and not re.match(r'\s*(?:[,;\n]|[.:?](?=\s|$)|$|\band\b)', tail):
         raise ValueError('unsupported expression tail')
     return _linear(text[start:end]), end
 
@@ -190,14 +194,18 @@ def _cases(text, *, claims=False, original=None):
             continue  # Do not reinterpret a quoted/embedded conditional as a claim.
         segment = text[start:end]
         # A changed assumption/negative example invalidates this clause's scope.
-        if _UNSCOPED.search(segment):
+        if _UNSCOPED.search(segment) or re.search(r'\bor\b', segment, re.I):
             continue
         values, consumed = {}, case.end()
         for match in _ASSIGN.finditer(text, case.end(), end):
             if text[consumed:match.start()].strip(' ,\t\r\n') not in ('', 'and'):
+                if not claims:
+                    raise ValueError('unsupported question condition connector')
                 break
             expression, rhs_end = _read_expression(text, match.end())
             if set(expression) - {''}:
+                if values:
+                    raise ValueError('partially symbolic condition')
                 break  # A symbolic definition is not a numeric case.
             if match[1] in values:
                 raise ValueError('ambiguous case')
@@ -230,7 +238,11 @@ def _numeric(question, draft):
     parsed = _assignments(prefix)
     if len(parsed) != prefix.count('='):
         return []
-    for name, expression, start, end in parsed:
+    for index, (name, expression, start, end) in enumerate(parsed):
+        gap = prefix[parsed[index - 1][3]:start] if index else ''
+        statement_tail = re.split(r'[.;\n]', prefix[end:], maxsplit=1)[0]
+        if re.search(r'\bor\b', gap + ' ' + statement_tail, re.I):
+            return []
         if not set(expression) - {''} or name in definitions:
             return []
         definitions[name] = (expression, _span(question, start, end))

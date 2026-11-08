@@ -34,8 +34,10 @@ are inspected. Only explicitly selected measurements are active. The checker
 does not import a withdrawn measurement into a later counterexample. Clauses
 must start with their explicit answer condition; embedded quotations and fenced
 answers are withheld. Recognized negative, hypothetical or approximate wording
-also withholds a clause;
-unsupported natural-language scope remains a substantial recall limitation.
+also withholds a clause; unsupported natural-language scope remains a substantial
+recall limitation. Unsupported numeric suffixes, scientific notation, numeric
+commas, disjunctions and question-condition connectors do not silently truncate
+into a supported constraint.
 
 Both texts are limited to 10,000 characters. Numeric checks allow at most four
 measurement definitions, eight assignments/cases, sixteen findings, 160-character
@@ -53,7 +55,9 @@ schema, review validity and failure provenance remain separate. An empty externa
 critic is still an unavailable review even if a local witness is present.
 
 Witnesses feed the existing System2 integration or ACC/Cerebellum path. Passing
-a structural/local check never suppresses existing content detectors. Manual
+a structural/local check never supplies overall micro-critic approval or routing
+confidence, and never suppresses existing content detectors. Positive consistency
+is used directly to recheck witnessed repairs. Manual
 System2 modes and TRN gates retain authority; there is no additional review round,
 retry, implicit continuation or output-budget escalation. Primary writes,
 including a delayed right worker, and byte-exact/literal reproduction do not

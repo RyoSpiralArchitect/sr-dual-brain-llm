@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from core.constraint_checks import current_constraints
+from core.constraint_checks import check_constraints, current_constraints
 from core.models import RightBrainModel
 from core.right_worker import _respond
 from core.source_completion import guard_source_completions
@@ -95,6 +95,12 @@ def test_passing_json_shape_does_not_hide_existing_arithmetic_contradiction():
     result = micro_criticise_reasoning(
         'Compute 2+2.\nReturn a JSON object with exactly these keys: result.', '{"result":5}')
     assert result is not None and result.verdict == 'issues' and result.domain == 'arithmetic'
+
+
+@pytest.mark.parametrize('question,draft', [(QUESTION, GOOD), (JSON_QUESTION, JSON_GOOD)])
+def test_passing_local_check_does_not_supply_routing_confidence_or_overall_approval(question, draft):
+    assert check_constraints(question, draft).status == 'consistent'
+    assert micro_criticise_reasoning(question, draft) is None
 
 
 @pytest.mark.parametrize('question,bad,good', [(QUESTION, BAD, GOOD), (JSON_QUESTION, JSON_BAD, JSON_GOOD)])
