@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_mixed_constraint_ablation",
+  "clock": 1794182400,
+  "cases": [
+    {
+      "id": "three_sensor_scope",
+      "domain": "numeric",
+      "arms": ["ablated", "witnesses"],
+      "judge_labels": {"A": "witnesses", "B": "ablated"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "Exact measurements follow p=3a-b+c, q=2b+c and r=4c. All variables are real and measurements have no noise.\nRequirements:\n1. Derive the inverse and recover a,b,c when p=11,q=7,r=4. Give the recovered point as a named (a,b,c) tuple after stating those observations.\n2. Withdraw r and retain p=11,q=7: give the complete compatible family, with its free parameter.\n3. Give two distinct points in the family from step 2 and explain how the extra observation r=4 distinguishes them; preserve the withdrawn scope of these examples.",
+      "reference": "Inverse: c=r/4, b=(q-r/4)/2=q/2-r/8, a=(p+b-c)/3=p/3+q/6-r/8. At p11,q7,r4: (a,b,c)=(13/3,3,1). With r withdrawn, let c=t: b=(7-t)/2, a=(29-3t)/6, for every real t. For example t0 gives (29/6,7/2,0), t2 gives (23/6,5/2,2). They meet p11,q7 and give r0,r8; neither is the r4 point. Other correct compatible examples are valid; the added observation selects t1 uniquely. Do not reject withdrawn-scope examples merely because they differ from r4."
+    },
+    {
+      "id": "nonlinear_ambiguity",
+      "domain": "numeric",
+      "arms": ["witnesses", "ablated"],
+      "judge_labels": {"A": "ablated", "B": "witnesses"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": true,
+      "question": "Given s=a*a+b*b. The variables a,b are real and s=25 is observed.\nRequirements:\n1. Explain whether this observation identifies a,b uniquely, with two distinct concrete compatible points.\n2. Add the assumption a=b: give every compatible pair and explain the sign ambiguity.\n3. Give one additional observation that would distinguish those pairs, and state the result under that added observation. Do not infer a sign before adding it.",
+      "reference": "The full original solution set is a circle and is not unique; (0,5) and (3,4), among many alternatives, both work. With a=b: 2a^2=25, so (a,b)=(5/sqrt(2),5/sqrt(2)) or its simultaneous negative. A valid added observation such as a>0 distinguishes them and selects the positive pair. A sign observation need not distinguish all original circle points; the requested distinction refers to the two pairs under a=b. Nonlinear notation is outside the new affine checker; exact local unknown is expected, not mathematical approval."
+    },
+    {
+      "id": "status_object",
+      "domain": "json",
+      "arms": ["ablated", "witnesses"],
+      "judge_labels": {"A": "ablated", "B": "witnesses"},
+      "system2_mode": "auto",
+      "expected_goal_count": 0,
+      "negative_control": false,
+      "question": "A job has identifier job-coral. Its last acknowledged state is queued. A cancellation request has no acknowledgement. Construct the supplied status record with job_id='job-coral', state='cancellation unconfirmed', next_action='check acknowledgement'. Copy these three supplied values to their named fields.\nReturn only a JSON object with exactly these keys: job_id, state, next_action.",
+      "reference": "The whole response must be a valid JSON object with exactly job_id, state, next_action and their supplied string values job-coral, cancellation unconfirmed, check acknowledgement. No wrapper, extra key or prose. A submitted cancellation is not an acknowledged cancellation. Correct keys alone do not prove correct values.",
+      "exact_probe": {"kind": "json_object", "expected": {"job_id": "job-coral", "state": "cancellation unconfirmed", "next_action": "check acknowledgement"}}
+    },
+    {
+      "id": "conditional_object",
+      "domain": "json",
+      "arms": ["witnesses", "ablated"],
+      "judge_labels": {"A": "witnesses", "B": "ablated"},
+      "system2_mode": "auto",
+      "expected_goal_count": 0,
+      "negative_control": true,
+      "question": "Use the branch matching the stated lookup outcome.\nIf the lookup fails:\nReturn a JSON object with exactly these keys: error, message.\nFor a successful lookup, respond with a JSON object containing exactly the key result, whose value is the stored title. The lookup outcome is success. The stored title is Velvet Index. Return the successful-branch object alone.",
+      "reference": "The active success branch requires exactly {\"result\":\"Velvet Index\"}. The error/message directive belongs to an inactive branch and must not be applied to this answer. JSON field order is immaterial. The whole answer must be a JSON object with the one correct value and no surrounding prose.",
+      "exact_probe": {"kind": "json_object", "expected": {"result": "Velvet Index"}}
+    },
+    {
+      "id": "dedup_call_boundary",
+      "domain": "code",
+      "arms": ["ablated", "witnesses"],
+      "judge_labels": {"A": "witnesses", "B": "ablated"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "This Python function should return distinct tags in first-occurrence order independently for each call.\n```python\ndef distinct_tags(tags, seen=set()):\n    result = []\n    for tag in tags:\n        if tag not in seen:\n            result.append(tag)\n            seen.add(tag)\n    return result\n```\nRequirements:\n1. Show the actual results of calling distinct_tags(['oak','elm','oak']) and then distinct_tags(['oak','fir']) on this one function object, and contrast the intended second result.\n2. Correct the implementation so callers have no shared hidden state, preserving first-occurrence order.\n3. Propose tests that expose the repeated-call defect and test within-call duplicates; distinguish proposed tests from tests actually run.",
+      "reference": "One function object shares its default set: first call returns ['oak','elm']; second returns ['fir'], instead of intended ['oak','fir']. Allocate a fresh seen set inside each call, preferably remove the parameter, then perform the same ordered accumulation; alternatively seen=None with clear ownership semantics is acceptable. A plain unordered set return does not preserve the required order. Repeated-call and within-call tests should exercise the submitted implementation; no unobserved execution claim."
+    },
+    {
+      "id": "cancellation_boundary",
+      "domain": "code",
+      "arms": ["witnesses", "ablated"],
+      "judge_labels": {"A": "ablated", "B": "witnesses"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "For Python 3.12, inspect this async wrapper. Its intended contract is to return None on an ordinary reader exception while preserving task cancellation and process-control exceptions.\n```python\nasync def optional_read(reader):\n    try:\n        return await reader()\n    except BaseException:\n        return None\n```\nRequirements:\n1. Explain a concrete cancellation failure and the relevant exception hierarchy.\n2. Correct the wrapper to preserve that contract, without adding a retry or a background task.\n3. Propose a normal-error test and a cancellation test that distinguish the corrected behavior; do not claim actual test execution.",
+      "reference": "asyncio.CancelledError derives from BaseException rather than Exception in Python 3.12. Catching BaseException swallows cancellation and also KeyboardInterrupt/SystemExit, converting them into apparent success/None. Catch Exception instead, preserving CancelledError and process-control exceptions. Ordinary RuntimeError from reader returns None; an awaited cancelled operation must still raise CancelledError. An explicit cancellation re-raise alone is insufficient if other BaseException process-control exceptions remain swallowed. No retry/background task is needed, and tests are proposals."
+    },
+    {
+      "id": "latest_event_row",
+      "domain": "sql",
+      "arms": ["ablated", "witnesses"],
+      "judge_labels": {"A": "ablated", "B": "witnesses"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "In PostgreSQL, accounts(id) contains reed, fern, moss. events(id,account_id,created_at,payload) contains (41,reed,'2026-06-01','old'), (42,reed,'2026-06-02','first'), (43,reed,'2026-06-02',NULL), (44,fern,'2026-06-03','fern-value'). The result needs every account and its latest event row, breaking timestamp ties by greater event id. An existing proposal joins accounts to events and selects MAX(created_at), MAX(payload) grouped by account.\nRequirements:\n1. Give the required account/event-id/payload results, distinguishing an absent event from a present event with NULL payload.\n2. Write a correct deterministic query and explain how it keeps moss.\n3. Explain why taking independent maxima can construct the wrong row, and propose a test for the timestamp tie and the absent account without claiming execution.",
+      "reference": "Required rows: reed,43,NULL; fern,44,'fern-value'; moss,NULL,NULL, with event id distinguishing absent from present-null. Rank events by ROW_NUMBER() OVER(PARTITION BY account_id ORDER BY created_at DESC,id DESC), then LEFT JOIN accounts to ranked events ON account_id=id AND rn=1. PostgreSQL DISTINCT ON with correct ordering or LEFT JOIN LATERAL ORDER BY ... LIMIT1 are also valid. Put the ranking filter in ON or an equivalent subquery so moss survives. Independent MAX(payload) may choose a value from another row and MAX ignores NULL; MAX timestamps do not select a unique full row, especially on ties. Tests must address tie selection and absent account."
+    },
+    {
+      "id": "silent_monitor",
+      "domain": "evidence",
+      "arms": ["witnesses", "ablated"],
+      "judge_labels": {"A": "witnesses", "B": "ablated"},
+      "system2_mode": "auto",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "A deployment note says 'no errors observed after the patch'. The error monitor was disabled throughout that interval. No independent health observations or test results were supplied. A teammate concludes the bug is fixed and proposes removing the rollback option.\nRequirements:\n1. Separate the supported observation from the unsupported conclusion.\n2. Give a concrete alternative explanation compatible with the supplied facts.\n3. Propose a small evidence-gathering check and a rollback decision criterion, without inventing a failure rate or claiming that any test has run.",
+      "reference": "The note records an absence of observations under disabled monitoring, not observed absence of errors. A continuing fault with no telemetry is compatible; other explanations are possible. The data do not establish either a fix or a failure rate. Restore/validate observability and reproduce the relevant scenario in a controlled check with expected outcomes; preserve rollback until relevant positive evidence and a stated failure signal/operational criterion support a decision. Do not remove rollback solely because the silent monitor logged nothing. No real execution, dates, rates or operational success may be invented."
+    },
+    {
+      "id": "customer_memo",
+      "domain": "prose",
+      "arms": ["ablated", "witnesses"],
+      "judge_labels": {"A": "witnesses", "B": "ablated"},
+      "system2_mode": "off",
+      "expected_goal_count": 3,
+      "negative_control": false,
+      "question": "Source memo: An internal prototype reproduced the export failure in staging. The cause is unconfirmed. A fix is being investigated. The available workaround is the legacy export path.\nRequirements:\n1. Rewrite this for customers as one paragraph with exactly two sentences and at most 45 words.\n2. Preserve the reproduced staging failure and the uncertainty about its cause and fix.\n3. Include the supplied workaround and avoid a release-date commitment, extra advice or a claim that production validation succeeded.",
+      "reference": "A compliant rewrite has exactly two sentences and <=45 whitespace-separated words in one paragraph, says the failure was reproduced in staging, leaves cause/fix unconfirmed/in investigation, includes legacy export as the workaround, and promises no date or production validation. Wording can vary. Do not treat the presence of staging reproduction as evidence of a completed fix. More than two sentences, omitted uncertainty/workaround or invented rollout commitments fail coverage."
+    },
+    {
+      "id": "literal_record",
+      "domain": "literal",
+      "arms": ["witnesses", "ablated"],
+      "judge_labels": {"A": "ablated", "B": "witnesses"},
+      "system2_mode": "off",
+      "expected_goal_count": 0,
+      "negative_control": true,
+      "question": "Reproduce verbatim the three lines between <record> and </record>, with no wrapper or leading/trailing newline. This task is a faithful transcription of a supplied record.\n<record>\nGiven p=a+b. Recover a,b when p=9.\nFor p=9, (a,b)=(2,3).\nstatus = unverified\n</record>",
+      "reference": "Exact transcription, including the supplied mathematically inconsistent line, is required. The response must be precisely the three record lines without tags, code fences, additions or a leading/trailing newline. Transcription does not endorse the source's truth and grants no permission to repair it.",
+      "exact_probe": {"kind": "literal_text", "expected": "Given p=a+b. Recover a,b when p=9.\nFor p=9, (a,b)=(2,3).\nstatus = unverified"}
+    }
+  ]
+}
