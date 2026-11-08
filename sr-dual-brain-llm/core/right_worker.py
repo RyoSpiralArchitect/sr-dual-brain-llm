@@ -28,16 +28,20 @@ async def _respond_with_task(req, memory, model):
             context=req.get("context"), psychoid_projection=req.get("psychoid_attention_bias"))
         return {key: detail[key] for key in DETAIL_FIELDS if key in detail}
     if kind == "ASK_CRITIC":
+        micro_options = ({'allow_micro_fallback': False}
+                         if getattr(memory, 'primary_write_pending', False) else {})
         critique = await model.criticise_reasoning(qid, req.get("question", ""),
             req.get("draft", "") or req.get("draft_sum", "") or "",
             temperature=req.get("temperature", .2), context=req.get("context"),
-            psychoid_projection=req.get("psychoid_attention_bias"))
+            psychoid_projection=req.get("psychoid_attention_bias"), **micro_options)
         result = {key: critique.get(key) for key in ("verdict", "issues", "fixes", "critic_sum",
                                                   "confidence_r", "critic_kind", "critic_status",
                                                   "critic_review_valid", "critic_external_review_valid",
                                                   "critic_validation")}
         if 'goal_review' in critique:
             result['goal_review'] = critique['goal_review']
+        if 'constraint_check' in critique:
+            result['constraint_check'] = critique['constraint_check']
         return result
     if kind == "ASK_LEAD":
         notes = await model.generate_lead(req.get("question", ""), req.get("context", ""),

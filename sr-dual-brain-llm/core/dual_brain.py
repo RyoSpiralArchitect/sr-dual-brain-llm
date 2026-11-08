@@ -27,6 +27,10 @@ from .detail_contract import detail_observation, detail_confidence, error_catego
 from .memory_clarification import record_choice_clarifications
 from .speculative_preview import OwnedPreview
 from .task_goals import bind_task, current_task, guard_task_turn
+from .constraint_checks import (
+    VERSION as CONSTRAINT_VERSION, check_constraints, current_constraints,
+    guard_constraint_turn, observe_constraints, repaired,
+)
 from .callosum import drain_consultation
 from .answer_generation import guard_answer_generation, current_generation
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
@@ -2220,6 +2224,13 @@ class DualBrainController:
             task = current_task()
             if task is not None:
                 task.observe(response, review_draft)
+            constraints = current_constraints()
+            if (constraints is not None and isinstance(response, dict)
+                    and isinstance(response.get('constraint_check'), dict)
+                    and response['constraint_check'].get('version') == CONSTRAINT_VERSION):
+                # Re-derive evidence against the exact reviewed snapshot; a copied
+                # worker summary is not proof or authority over another draft.
+                constraints.observe(check_constraints(constraints.question, review_draft))
             attempt["outcome"] = "returned"
             if isinstance(response, dict):
                 self._retain_critic_validation(decision, response, prefix=prefix)
@@ -4385,6 +4396,15 @@ class DualBrainController:
                 if round3_detail:
                     decision.state["system2_round3_critic_sum"] = round3_detail[:1200]
 
+        constraints = current_constraints()
+        if constraints is not None and constraints.observed:
+            summary = constraints.finish(question, final_answer)
+            if summary['status'] == 'contradiction' or summary['unresolved_obligations']:
+                system2_resolved = False
+                resolution_basis = 'local_constraint_unresolved'
+                system2_final_issue_count = max(system2_final_issue_count,
+                    summary['contradictions'], summary['unresolved_obligations'])
+
         decision.state["system2_rounds"] = int(system2_rounds_completed)
         decision.state["system2_issue_count_initial"] = int(
             system2_initial_issue_count
@@ -4602,6 +4622,8 @@ class DualBrainController:
             facts=GateFacts(eligible=micro_result is not None and self.cerebellum is not None
                             and bool(getattr(self.left_model, 'uses_external_llm', False)),
                             blocked_reason=cerebellum_blocked, **shared_facts)).enabled
+        if (acc_enabled or cerebellum_enabled) and micro_result is not None and micro_result.constraint_report is not None:
+            observe_constraints(micro_result.constraint_report)
 
         acc_signal = None
         if acc_enabled and self.anterior_cingulate_cortex is not None:
@@ -4698,6 +4720,10 @@ class DualBrainController:
                         resolved = bool(
                             post_micro.verdict == "ok" or final_issues == 0
                         )
+                    if micro_result.constraint_report is not None:
+                        after = check_constraints(question, final_answer)
+                        resolved = repaired(micro_result.constraint_report, after)
+                        final_issues = len(after.contradictions) if resolved or after.contradictions else initial_issues
                 finally:
                     phase_add("cerebellum", correction_started)
 
@@ -5511,6 +5537,7 @@ class DualBrainController:
             )
 
     @guard_source_completions
+    @guard_constraint_turn
     @guard_task_turn
     @guard_answer_generation
     async def process(
@@ -6384,6 +6411,8 @@ class DualBrainController:
                     micro_result = None
 
                 if micro_result is not None:
+                    if micro_result.constraint_report is not None:
+                        observe_constraints(micro_result.constraint_report)
                     timeout_recovered = True
                     timeout_recovery_source = f"micro:{micro_result.domain}"
                     timeout_rounds = 1
@@ -6430,6 +6459,11 @@ class DualBrainController:
                                     post_micro.verdict == "ok"
                                     or timeout_final_issues == 0
                                 )
+                            if micro_result.constraint_report is not None:
+                                after = check_constraints(question, final_answer)
+                                timeout_resolved = repaired(micro_result.constraint_report, after)
+                                timeout_final_issues = (len(after.contradictions)
+                                    if timeout_resolved or after.contradictions else timeout_initial_issues)
                         except Exception:
                             timeout_followup_revision = False
                     success = True
@@ -6684,6 +6718,22 @@ class DualBrainController:
                 tags.add('answer_generation_' + generation_summary['answer_status'])
             try:
                 self.telemetry.log('answer_generation', qid=qid_value, **generation_summary, turn_status='returned')
+            except Exception:
+                pass
+
+        constraints = current_constraints()
+        if constraints is not None and constraints.observed:
+            constraint_summary = constraints.finish(question, user_answer)
+            decision.state['constraint_check'] = constraint_summary
+            if (constraint_summary['status'] == 'contradiction'
+                    or constraint_summary['unresolved_obligations']):
+                success = False
+                if decision.state.get('system2_used'):
+                    decision.state['system2_resolved'] = False
+                    decision.state['system2_resolution_basis'] = 'local_constraint_unresolved'
+                tags.add('constraint_unresolved')
+            try:
+                self.telemetry.log('constraint_consistency', qid=qid_value, **constraint_summary)
             except Exception:
                 pass
 

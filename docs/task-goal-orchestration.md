@@ -74,6 +74,11 @@ answer. They contain no goal text, quote or reason. `verified_complete` remains
 false: useful output and requested-goal coverage require separate evaluation.
 The module gate itself contains only the existing bounded admission metadata.
 
+[Grounded constraint checks](constraint-consistency.md) can independently witness
+an explicit local contradiction and feed the existing bounded correction path.
+They apply to supported numeric substitutions and JSON key sets, without changing
+goal extraction or treating provisional coverage as semantic verification.
+
 The [first frozen OFF/AUTO comparison](benchmarks/task-goals-2026-11-07.md)
 records actual prompt handoffs and conservative unresolved states, but does not
 establish a reliable quality improvement. Empty ordinary completions and a

@@ -32,6 +32,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from .constraint_checks import CheckReport, check_constraints, literal_requested
+from .source_completion import source_completion_required
+
 
 _FLOAT_RE = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?")
 _FRACTION_RE = re.compile(r"(-?\d+)\s*/\s*(-?\d+)")
@@ -208,6 +211,7 @@ class MicroCriticResult:
     critic_sum: str
     confidence_r: float
     domain: str
+    constraint_report: Optional[CheckReport] = None
 
 
 def _critic_payload(*, domain: str, issues: list[str], fixes: list[str], confidence: float) -> MicroCriticResult:
@@ -1996,8 +2000,23 @@ def _micro_japanese_implication_transitivity(question: str, draft: str) -> Optio
     return _critic_payload(domain="japanese_logic", issues=issues[:4], fixes=fixes[:8], confidence=0.9)
 
 
+def _constraint_payload(report: CheckReport) -> MicroCriticResult:
+    issues = [f'{f.kind}: {f.witness}; claim {f.claim.text}' for f in report.contradictions]
+    fixes = (["Recheck the cited claim against its explicit user constraints. Preserve "
+              "withdrawn assumptions, counterexamples and unrelated goals; do not invent a solution."]
+             if issues else [])
+    result = _critic_payload(domain='constraint_consistency', issues=issues, fixes=fixes, confidence=1.0)
+    return MicroCriticResult(**{**result.__dict__, 'constraint_report': report})
+
+
 def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCriticResult]:
     """Return MicroCriticResult when a supported, high-confidence check applies."""
+
+    if source_completion_required() or literal_requested(question):
+        return None
+    report = check_constraints(question, draft)
+    if report.contradictions:
+        return _constraint_payload(report)
 
     detectors = (
         _micro_code_review_avg,
@@ -2041,4 +2060,6 @@ def micro_criticise_reasoning(question: str, draft: str) -> Optional[MicroCritic
             result = None
         if result is not None:
             return result
+    # Positive local consistency cannot supply overall confidence or suppress
+    # content checks. It is used directly to recheck a witnessed repair only.
     return None

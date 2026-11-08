@@ -93,6 +93,7 @@ class Cerebellum:
             "linear_equation",
             "probability",
             "unit_conversion",
+            "constraint_consistency",
         } else 0.0
         predicted_gain = _clamp01(
             0.46 * micro_conf
@@ -135,7 +136,7 @@ class Cerebellum:
         blob = str(micro.critic_sum or "").strip()
         header = (
             "Cerebellar micro-correction (internal; do not output directly). "
-            "Fix the high-confidence numeric issue(s) flagged below. "
+            "Fix the high-confidence issue(s) flagged below, within their stated assumptions. "
             "Apply minimal precise edits and preserve the original voice.\n"
         )
         if forecast is not None:
