@@ -353,6 +353,9 @@ complete/partial/unavailable outcomes, retains a complete draft after a failed
 integration and bounds shared left-generation allocation without continuation.
 The [cleanup and fresh effort pilot](docs/benchmarks/reasoning-effort-2026-11-08.md)
 records exact replay and a numeric failure under low effort; provider default remains unchanged.
+The [harder cross-domain comparison](docs/benchmarks/reasoning-frontier-2026-11-09.md)
+records self-review 5/8, dual AUTO 5/8 and dual ON 6/8 exact answers, shared logical
+completion failures, and an explicitly amended calibration rule; all 152 requests replay exactly.
 
 Treat “brains” as **roles** with strict I/O contracts:
 
