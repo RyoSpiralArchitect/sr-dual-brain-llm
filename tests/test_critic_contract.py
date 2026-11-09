@@ -152,7 +152,8 @@ def test_existing_single_repair_requires_the_same_completion_and_shape(monkeypat
     else:
         assert_unusable(result, status)
     assert len(calls) == 2
-    assert calls[0]["timeout_seconds"] == 24.0 and calls[1]["timeout_seconds"] == 18.0
+    assert 0 < calls[0]["timeout_seconds"] <= 24.0
+    assert 0 < calls[1]["timeout_seconds"] <= min(18.0, calls[0]["timeout_seconds"])
 
 
 def test_repair_transport_failure_preserves_error_category_without_provider_text(monkeypatch):

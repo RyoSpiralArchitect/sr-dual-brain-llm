@@ -393,7 +393,7 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
              'reserved_output_tokens', 'total_output_token_cap', 'turn_status')}
             if generation_ev is not None else None),
         'task_goals': ({key: task_goals_ev.get(key) for key in
-            ('version', 'goal_count', 'review_status', 'review_snapshot_matches_answer', 'verified_complete', 'goals')}
+            ('version', 'goal_count', 'review_status', 'review_snapshot_matches_answer', 'verified_complete', 'goals', 'replanning')}
             if task_goals_ev is not None else None),
         'preview': ({key: preview_ev.get(key) for key in
                      ('version', 'requested', 'admitted', 'started', 'available', 'outcome')}

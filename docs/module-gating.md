@@ -36,14 +36,18 @@ switches; introducing the registry does not activate automatic policies.
 | `basal_consult_promotion` | `_run_routing_stage` | `on` under the existing loop recommendation | None; ACC/salience-driven consultation override |
 | `speculative_preview_suppression` | `_preview_suppression_gate` (pre-draft) | `off` | None; optional preview inhibition only |
 | `task_goal_orchestration` | `_prepare_task_goals` (pre-draft) | `off` | None; explicit user-goal assignment and provisional review |
+| `completion_replanning` | `_integration_with_replanning` (existing integration) | `off` | None; goal/dependency reconstruction of a recorded length-limited candidate |
 
-All fourteen entries are connected to their production admission point. The nine
+All fifteen entries are connected to their production admission point. The nine
 follow-on migration candidates are implemented; no candidate in this inventory
 is a registration-only placeholder. This inventory covers optional work selected
 by the controller's public modes/enable switches plus DMN prompt injection.
 The [task-goal prototype](task-goal-orchestration.md) uses the same registry for
 default-OFF admission of role-specific reasoning; it adds no planner call or
 per-goal execution loop.
+The independent [completion-replanning prototype](completion-replanning.md)
+uses current generation provenance and remaining allocation to choose a work
+plan for an existing integration; it also stays default OFF.
 
 Canonical configuration is `DUALBRAIN_MODULE_<UPPER_ID>_MODE=on|off|auto`.
 For example, configure automatic decisions for subsequent turns with:

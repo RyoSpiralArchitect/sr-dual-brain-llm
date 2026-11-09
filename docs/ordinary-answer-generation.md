@@ -119,3 +119,8 @@ contracts and do not measure real model quality.
 The [development record](benchmarks/ordinary-generation-2026-11-07.md) applies
 the contract to preserved empty envelopes without new provider calls and keeps
 the original study and failed replay intact.
+
+An optional [completion-replanning module](completion-replanning.md) now uses
+these outcomes and remaining allocation inside existing integrations. Its
+separate TRN control stays default OFF and adds no planner-model call or token
+allocation. Critic role/deadline changes are documented there separately.

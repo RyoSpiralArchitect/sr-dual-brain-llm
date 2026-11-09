@@ -33,6 +33,7 @@ from .source_completion import record_completed_answer, source_completion_requir
 from .answer_generation import (
     record_completion, record_stream_text, capturing_completion, requested_reasoning_effort, record_request_effort,
 )
+from .review_budget import review_http_timeout_seconds
 
 PromptInput = str | list[dict[str, Any]]
 
@@ -173,7 +174,8 @@ class LLMClient:
         *,
         timeout_seconds: Optional[float] = None,
     ) -> Dict[str, object]:
-        timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.config.timeout_seconds)
+        seconds = review_http_timeout_seconds(timeout_seconds or self.config.timeout_seconds)
+        timeout = aiohttp.ClientTimeout(total=seconds)
         async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
             async with session.post(url, json=payload, headers=headers) as resp:
                 data = await resp.json(content_type=None)
