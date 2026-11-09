@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "experiment": "reasoning_frontier_headroom_followup_v1",
+  "selection_rule": "first_level_with_3_eligible_and_1_semantic_error_of_4",
+  "selected_level": 5,
+  "global_call_limit": 192,
+  "confirmation_call_limit": 96,
+  "prior_admissions": 80,
+  "source_revision": "5afd59bb16c408b84f288940f7e7edefa8be5a19",
+  "source_report_sha256": "c27494b4f769791c33abbc25a0dff2ade4175eb9e18b458fbaa00b2f50f7f762",
+  "source_canonical_sha256": "42c496ef209eee9f3084a3805211880414553ead4f64b3f417c7a83c10770e10",
+  "fixture_sha256": "0739e09c07cdc5ba5c0558466da31e15f92cb882fe430127d954941a3eb676d7",
+  "source_code_sha256": "a83d40fa9fe31ff1d5ae28efd45b5b35acf48b82e820d135ea77d399523f8154",
+  "source_protocol_sha256": "6263d6567b29c9fdc804851e2d7f181791499491b47e54d7b6110da15eb40535"
+}
