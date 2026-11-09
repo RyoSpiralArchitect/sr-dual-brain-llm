@@ -11,6 +11,13 @@ from .turn_lifecycle import remaining_turn_ms
 _deadline = ContextVar('critic_review_deadline', default=None)
 
 
+class ReviewBudgetExhausted(TimeoutError):
+    """A local review window expired, not a provider health/auth verdict."""
+    def __init__(self,message='Critic review window elapsed',*,http_attempted=False):
+        super().__init__(message)
+        self.http_attempted=http_attempted
+
+
 def _now():
     return asyncio.get_running_loop().time()
 
@@ -41,11 +48,24 @@ def review_timeout_seconds(limit):
     return max(0., min(bounds))
 
 
+def review_budget_active():
+    return _deadline.get() is not None
+
+
+def review_io_timeout_seconds(limit):
+    """The RPC/bus owner cancels its work; do not duplicate its timer in HTTP.
+
+    Local/client limits still bound direct reviews without a shorter owner.
+    Admission and late-result checks continue to consult every actual owner.
+    """
+    deadline=_deadline.get()
+    return limit if deadline is None else max(0.,min(float(limit),deadline-_now()))
+
+
 def review_http_timeout_seconds(limit):
-    seconds = review_timeout_seconds(limit)
-    if _deadline.get() is not None and seconds <= 0:
-        raise TimeoutError('Critic review deadline elapsed before HTTP admission')
-    return seconds
+    if review_budget_active() and review_timeout_seconds(limit)<=0:
+        raise ReviewBudgetExhausted('Critic review window elapsed before HTTP admission')
+    return review_io_timeout_seconds(limit)
 
 
 def bounded_critic_review(method):
