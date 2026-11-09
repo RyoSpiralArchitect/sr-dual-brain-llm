@@ -356,6 +356,10 @@ records exact replay and a numeric failure under low effort; provider default re
 The [harder cross-domain comparison](docs/benchmarks/reasoning-frontier-2026-11-09.md)
 records self-review 5/8, dual AUTO 5/8 and dual ON 6/8 exact answers, shared logical
 completion failures, and an explicitly amended calibration rule; all 152 requests replay exactly.
+The default-OFF [completion-replanning prototype](docs/completion-replanning.md)
+uses goal dependencies and remaining allocation in existing integrations. Critic
+reviews share their remaining owner-bounded time across retries and schema repair.
+Offline contracts are tested; a new quality/completion-rate gain remains unmeasured.
 
 Treat “brains” as **roles** with strict I/O contracts:
 

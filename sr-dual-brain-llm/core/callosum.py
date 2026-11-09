@@ -19,6 +19,7 @@
 import asyncio
 from asyncio import TimeoutError
 from collections import OrderedDict
+from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass
 import math
@@ -26,6 +27,17 @@ import uuid
 from typing import Any, Awaitable, Callable, Dict
 
 from .turn_lifecycle import cancel_task
+
+_request_lifetime = ContextVar('active_consultation_lifetime', default=None)
+
+
+def remaining_consultation_ms():
+    """Read the bus-owned lifetime, never a deadline supplied in a packet."""
+    lifetime = _request_lifetime.get()
+    if lifetime is None:
+        return None
+    end, active = lifetime
+    return max(0., (end-asyncio.get_running_loop().time())*1000.) if active() else 0.
 
 
 class CallosumClosed(RuntimeError):
@@ -221,7 +233,12 @@ class Callosum:
             # Do not even invoke a provider factory for an abandoned request.
             if self._active(request_id) is None:
                 raise RequestAbandoned()
-            return await operation()
+            token = _request_lifetime.set((pending.deadline,
+                lambda: self._active(request_id) is pending))
+            try:
+                return await operation()
+            finally:
+                _request_lifetime.reset(token)
         task = asyncio.create_task(execute())
         pending.operation = task
         self._running.add(task)

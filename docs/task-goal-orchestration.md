@@ -84,3 +84,8 @@ records actual prompt handoffs and conservative unresolved states, but does not
 establish a reliable quality improvement. Empty ordinary completions and a
 cancel/fallback replay divergence remain visible limitations. The feature stays
 default OFF.
+
+An independent default-OFF [completion-replanning module](completion-replanning.md)
+can carry all goals and dependencies into reconstruction after a recorded length-
+limited generation. It uses the existing integration and remaining allocation,
+without a planner-model call, per-goal execution loop or verified-goal promotion.

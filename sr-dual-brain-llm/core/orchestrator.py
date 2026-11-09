@@ -37,6 +37,10 @@ class Orchestrator:
     def clear_task(self, qid):
         self.task_plans.pop(qid, None)
 
+    def replan_task(self, qid, plan):
+        state = self.task_plans.get(qid)
+        return state.accept_replan(plan) if state is not None else None
+
     def register_request(self, qid: str, *, leader: str | None = None):
         self.active_roundtrips[qid] = self.active_roundtrips.get(qid, 0) + 1
         if leader:

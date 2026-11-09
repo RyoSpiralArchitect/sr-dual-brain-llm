@@ -23,6 +23,12 @@ the same loop's `loop.time()`, not a wall-clock timestamp or a deadline that can
 be carried unchanged between processes. Workers receive `deadline_at` for
 diagnostics; execution uses the bus's authoritative stored deadline.
 
+During an owned operation, `remaining_consultation_ms()` exposes that stored
+lifetime in operation-local context. It ignores packet deadline edits, returns
+zero after abandonment and resets after the operation. The [critic review
+budget](completion-replanning.md) clips review/retry/reformat/continuation
+requests to that remainder while preserving the owner's cancellation and cleanup.
+
 ```mermaid
 flowchart LR
     A[Bounded admission] --> S[Slot delay]

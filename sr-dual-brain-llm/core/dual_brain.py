@@ -33,6 +33,7 @@ from .constraint_checks import (
 )
 from .callosum import drain_consultation
 from .answer_generation import guard_answer_generation, current_generation
+from .completion_replanning import propose_replan
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -65,6 +66,7 @@ from .thalamic_reticular_nucleus import (
     BASAL_CONSULT_PROMOTION,
     SPECULATIVE_PREVIEW_SUPPRESSION,
     TASK_GOAL_ORCHESTRATION,
+    COMPLETION_REPLANNING,
 )
 from .dual_brain_support import (
     _LEFT_HEMISPHERE_KEYWORDS,
@@ -1234,6 +1236,33 @@ class DualBrainController:
             return info
         clarification = PrefrontalCortex.clarification_context(missing(question))
         return info + "\n\n" + clarification if clarification else info
+
+    def _integration_with_replanning(self, question: str, draft: str, info: str) -> str:
+        """Prepare an optional work plan for an already admitted integration."""
+        task, generation = current_task(question), current_generation()
+        if task is not None and task.owner is self.orchestrator:
+            task.pending_replan = None
+        candidate = propose_replan(task.plan if task else None, generation, draft)
+        blocked = ('primary_write_pending' if getattr(self.memory, 'primary_write_pending', False)
+            else 'completion_replanning_unavailable' if (task is None or task.owner is not self.orchestrator
+                or candidate is None or len(task.replans) >= 3 and task.replans[-1] != candidate) else None)
+        replay = getattr(self.memory, 'replay_resolution', None)
+        if blocked is None and callable(replay) and replay(question).requested:
+            blocked = 'outside_scope'
+        gate = self._module_gate(COMPLETION_REPLANNING, qid=task.qid if task else None,
+            facts=GateFacts(eligible=blocked is None, blocked_reason=blocked or 'outside_scope',
+                generation_incomplete=candidate is not None,
+                generation_length_limited=candidate is not None,
+                task_goal_count=len(task.plan.goals) if task else 0,
+                remaining_output_tokens=candidate.remaining_output_tokens if candidate else None))
+        if gate.enabled:
+            plan = self.orchestrator.replan_task(task.qid, candidate)
+            if plan is not None:
+                try:
+                    self.telemetry.log('completion_replanning', qid=task.qid, **plan.summary())
+                except Exception:
+                    pass
+        return self._integration_with_missing_evidence(question, info)
 
     @staticmethod
     def _infer_question_type(
@@ -3844,7 +3873,7 @@ class DualBrainController:
             final_answer = await self.left_model.integrate_info_async(
                 question=question,
                 draft=final_answer,
-                info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
+                info=self._integration_with_replanning(question, final_answer, "\n\n".join(integration_parts)),
                 temperature=max(0.2, min(0.6, decision.temperature)),
                 on_delta=None if stream_final_only else delta_cb,
             )
@@ -4205,7 +4234,7 @@ class DualBrainController:
                 final_answer = await self.left_model.integrate_info_async(
                     question=question,
                     draft=final_answer,
-                    info=self._integration_with_missing_evidence(question, followup_info),
+                    info=self._integration_with_replanning(question, final_answer, followup_info),
                     temperature=followup_temperature,
                     on_delta=None if stream_final_only else delta_cb,
                 )
@@ -4698,7 +4727,7 @@ class DualBrainController:
                     revised = await self.left_model.integrate_info_async(
                         question=question,
                         draft=final_answer,
-                        info=self._integration_with_missing_evidence(question,
+                        info=self._integration_with_replanning(question, final_answer,
                             self.cerebellum.build_internal_notes(micro_result, forecast=cerebellar_forecast)),
                         temperature=max(
                             0.15, min(0.35, float(decision.temperature))
@@ -6290,7 +6319,7 @@ class DualBrainController:
                         final_answer = await self.left_model.integrate_info_async(
                             question=question,
                             draft=draft,
-                            info=self._integration_with_missing_evidence(question, "\n\n".join(integration_parts)),
+                            info=self._integration_with_replanning(question, draft, "\n\n".join(integration_parts)),
                             temperature=integration_temperature,
                             on_delta=None if stream_final_only else delta_cb,
                         )
@@ -6438,7 +6467,7 @@ class DualBrainController:
                             final_answer = await self.left_model.integrate_info_async(
                                 question=question,
                                 draft=draft,
-                                info=self._integration_with_missing_evidence(question,
+                                info=self._integration_with_replanning(question, draft,
                                     "Reasoning critic notes (internal; do not output directly). "
                                     "Revise the draft to address issues and improve correctness. "
                                     "Apply minimal precise edits and avoid introducing new assumptions:\n"

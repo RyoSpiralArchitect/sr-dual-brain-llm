@@ -30,6 +30,7 @@ ACC_TEMPERATURE_ADJUSTMENT = "acc_temperature_adjustment"
 BASAL_CONSULT_PROMOTION = "basal_consult_promotion"
 SPECULATIVE_PREVIEW_SUPPRESSION = "speculative_preview_suppression"
 TASK_GOAL_ORCHESTRATION = "task_goal_orchestration"
+COMPLETION_REPLANNING = "completion_replanning"
 
 
 class GateMode(str, Enum):
@@ -80,6 +81,9 @@ class GateFacts:
     local_controls_ready: bool = False
     record_choice_pending: bool = False
     task_goal_count: int = 0
+    generation_incomplete: bool = False
+    generation_length_limited: bool = False
+    remaining_output_tokens: int | None = None
 
 
 AutoPolicy = Callable[[GateFacts], tuple[bool, str]]
@@ -132,6 +136,7 @@ BLOCKED_REASONS = frozenset({
     "caller_mode_off", "no_reflections", "default_mode_suppressed",
     "followup_not_eligible", "signal_unavailable", "adjustment_zero",
     "turn_deadline_elapsed",
+    "completion_replanning_unavailable",
 })
 AUTO_REASONS = frozenset({
     "no_draft", "trivial_turn", "unknown_signal", "risk_or_uncertainty",
@@ -150,6 +155,7 @@ AUTO_REASONS = frozenset({
     "bounded_record_clarification",
     "record_choice_pending", "preview_context_needed",
     "explicit_task_goals", "task_goals_unavailable",
+    "length_limited_replanning", "replanning_not_needed",
 })
 _CONFIG_SOURCES = frozenset({"default", "canonical", "legacy", "explicit"})
 _MODULE_ID = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
@@ -349,7 +355,21 @@ def _auto_task_goals(facts: GateFacts) -> tuple[bool, str]:
     return False, "task_goals_unavailable"
 
 
+def _auto_completion_replanning(facts: GateFacts) -> tuple[bool, str]:
+    if (facts.generation_incomplete is True and facts.generation_length_limited is True
+            and type(facts.task_goal_count) is int and 2 <= facts.task_goal_count <= 4
+            and type(facts.remaining_output_tokens) is int and facts.remaining_output_tokens > 0):
+        return True, 'length_limited_replanning'
+    return False, 'replanning_not_needed'
+
+
 DEFAULT_REGISTRY: Mapping[str, ModuleSpec] = MappingProxyType({
+    COMPLETION_REPLANNING: ModuleSpec(
+        module_id=COMPLETION_REPLANNING, phase='integration',
+        policy_version='completion_replanning_v1',
+        mode_env='DUALBRAIN_MODULE_COMPLETION_REPLANNING_MODE', legacy_env=None,
+        default_mode=GateMode.OFF, auto_policy=_auto_completion_replanning,
+    ),
     TASK_GOAL_ORCHESTRATION: ModuleSpec(
         module_id=TASK_GOAL_ORCHESTRATION,
         phase="pre_draft", policy_version="explicit_task_goals_v1",
@@ -533,4 +553,5 @@ __all__ = [
     "BASAL_CONSULT_PROMOTION",
     "SPECULATIVE_PREVIEW_SUPPRESSION",
     "TASK_GOAL_ORCHESTRATION",
+    "COMPLETION_REPLANNING",
 ]
