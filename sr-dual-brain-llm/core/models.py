@@ -25,7 +25,10 @@ from .detail_contract import detail_result
 from .task_goals import current_task, goal_review
 from .answer_generation import Generation, generate, record_generation, current_generation, reasoning_profile
 from .source_completion import source_completion_required
-from .review_budget import bounded_critic_review, configured_review_seconds, review_timeout_seconds
+from .review_budget import (
+    bounded_critic_review,configured_review_seconds,review_timeout_seconds,
+    review_io_timeout_seconds,ReviewBudgetExhausted,
+)
 
 _SYSTEM_GUARDRAILS = (
     "Answer the user's question directly.\n"
@@ -622,9 +625,12 @@ class RightBrainModel:
                         system=system,
                         temperature=temperature,
                         max_output_tokens=max_tokens,
-                        timeout_seconds=remaining,
+                        timeout_seconds=review_io_timeout_seconds(timeout_seconds),
                         require_complete=True,
                     )
+                except ReviewBudgetExhausted as exc:
+                    status,error_type='deadline_exhausted',type(exc).__name__
+                    break
                 except CompletionValidationError as exc:
                     # A returned response with invalid completion is not a
                     # transport retry candidate, even if its text looks clean.
@@ -679,9 +685,11 @@ class RightBrainModel:
                         system=system,
                         temperature=max(0.0, float(temperature) * 0.6),
                         max_output_tokens=max_tokens,
-                        timeout_seconds=review_timeout_seconds(min(timeout_seconds, 18.)),
+                        timeout_seconds=review_io_timeout_seconds(min(timeout_seconds, 18.)),
                         require_complete=True,
                     )
+                except ReviewBudgetExhausted as exc:
+                    status,error_type='deadline_exhausted',type(exc).__name__
                 except CompletionValidationError as exc:
                     status, error_type = exc.reason, type(exc).__name__
                 except Exception as exc:

@@ -143,15 +143,18 @@ async def test_real_bus_deadline_overrides_forged_packet_and_clears_after_operat
 
 
 @pytest.mark.asyncio
-async def test_owner_abandonment_stops_repair_even_when_client_swallows_cancellation(monkeypatch):
+@pytest.mark.parametrize('abandon',['cancel','deadline'])
+async def test_owner_abandonment_stops_repair_even_when_client_swallows_cancellation(monkeypatch,abandon):
     monkeypatch.setenv('DUALBRAIN_CRITIC_MICRO_FALLBACK','0')
+    monkeypatch.setenv('DUALBRAIN_CRITIC_TIMEOUT_SECONDS','24')
     bus = Callosum(slot_ms=0)
     model = RightBrainModel(LLMConfig('openai','offline-critic','NO_CREDENTIAL'))
     started = asyncio.Event()
-    calls, remaining_after_cancel = [], []
+    calls, remaining_after_cancel, admitted_remaining = [], [], []
     class Client:
         async def complete(self,*args,**kwargs):
             calls.append(kwargs)
+            admitted_remaining.append(remaining_consultation_ms())
             if len(calls)==1:
                 started.set()
                 try: await asyncio.Event().wait()
@@ -162,14 +165,19 @@ async def test_owner_abandonment_stops_repair_even_when_client_swallows_cancella
     model._llm_client = Client()
     worker = asyncio.create_task(right_worker(bus,SharedMemory(),model))
     request = {'qid':'abandoned','type':'ASK_CRITIC','question':QUESTION,'draft':DRAFT}
-    caller = asyncio.create_task(bus.ask_detail(request,timeout_ms=500))
+    owner_ms=50 if abandon=='deadline' else 500
+    caller = asyncio.create_task(bus.ask_detail(request,timeout_ms=owner_ms))
     try:
         await asyncio.wait_for(started.wait(),1.)
-        caller.cancel()
-        with pytest.raises(asyncio.CancelledError): await caller
+        if abandon=='cancel':
+            caller.cancel()
+            with pytest.raises(asyncio.CancelledError): await caller
+        else:
+            with pytest.raises(asyncio.TimeoutError): await caller
         await bus.wait_idle()
         assert remaining_after_cancel==[0.] and len(calls)==1
-        assert 0 < calls[0]['timeout_seconds'] <= .5
+        assert 0 < calls[0]['timeout_seconds'] <= 24.
+        assert 0 < admitted_remaining[0] <= owner_ms
         result = await bus.ask_detail(request | {'qid':'next'},timeout_ms=1000)
         assert result['critic_external_review_valid'] and len(calls)==2
         assert remaining_consultation_ms() is None
@@ -177,3 +185,49 @@ async def test_owner_abandonment_stops_repair_even_when_client_swallows_cancella
     finally:
         await bus.close()
         await worker
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('short_owner',[True,False])
+async def test_http_does_not_compete_with_owner_and_local_window_failure_stays_typed(monkeypatch,short_owner):
+    monkeypatch.setenv('DUALBRAIN_CRITIC_MICRO_FALLBACK','0')
+    config=LLMConfig('openai','offline-critic','NO_CREDENTIAL',timeout_seconds=.5 if short_owner else .05)
+    model=RightBrainModel(config)
+    bus=Callosum(slot_ms=0)
+    timeouts,owners,cancelled=[],[],[]
+    class Reply:
+        status=200
+        def __init__(self,total):self.total=total
+        async def __aenter__(self):return self
+        async def __aexit__(self,*args):pass
+        async def json(self,**kwargs):
+            try:
+                await asyncio.wait_for(asyncio.sleep(.15),self.total)
+            except asyncio.CancelledError:
+                cancelled.append(True)
+                raise
+            return response()
+    class Session:
+        def __init__(self,*,timeout,**kwargs):
+            self.total=timeout.total;timeouts.append(self.total);owners.append(remaining_consultation_ms())
+        async def __aenter__(self):return self
+        async def __aexit__(self,*args):pass
+        def post(self,*args,**kwargs):return Reply(self.total)
+    monkeypatch.setattr('core.llm_client.aiohttp.ClientSession',Session)
+    worker=asyncio.create_task(right_worker(bus,SharedMemory(),model))
+    request={'qid':'ownership','type':'ASK_CRITIC','question':QUESTION,'draft':DRAFT}
+    try:
+        if short_owner:
+            with pytest.raises(asyncio.TimeoutError):await bus.ask_detail(request,timeout_ms=50)
+            await bus.wait_idle()
+            assert .1<timeouts[0]<=.5 and 0<owners[0]<=50
+            assert cancelled==[True] and bus.snapshot()['expired']==1
+        else:
+            result=await bus.ask_detail(request,timeout_ms=500)
+            assert result['critic_status']=='deadline_exhausted'
+            assert result['critic_validation']['initial']['error_type']=='ReviewBudgetExhausted'
+            assert not result['critic_external_review_valid'] and bus.snapshot()['expired']==0
+            assert 0<timeouts[0]<=.05
+    finally:
+        await bus.close();await worker
+    assert budget.review_timeout_seconds(60.)==60.

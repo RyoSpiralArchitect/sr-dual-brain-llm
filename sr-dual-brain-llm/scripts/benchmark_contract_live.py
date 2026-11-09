@@ -29,13 +29,15 @@ import benchmark_memory_review as profile
 import benchmark_module_gating as bench
 from offline_provider_guard import forbid_provider_network
 from core.llm_client import LLMClient, LLMConfig, load_llm_config
+from core.review_budget import ReviewBudgetExhausted
 from core.postgres_state_store import PostgresStateStore
 from core.shared_memory import MemoryTrace
 
 base = bench.base
 CALL_LIMIT = 128
 REPLAY_ERRORS = {'CancelledError': asyncio.CancelledError, 'TimeoutError': TimeoutError,
-                 'RuntimeError': RuntimeError, 'ValueError': ValueError, 'OSError': OSError}
+                 'RuntimeError': RuntimeError, 'ValueError': ValueError, 'OSError': OSError,
+                 'ReviewBudgetExhausted':ReviewBudgetExhausted}
 STAGE = ContextVar('live_contract_stage', default=None)
 FIXTURE = base.ROOT / 'examples/contract_live_verification.json'
 IDS = ('caller_scope', 'period_missing', 'rate_missing', 'bare_retention',
@@ -87,6 +89,8 @@ class RawJournal:
                     raise ValueError('Corrupt raw HTTP occurrence')
                 if row.get('error_type') and row['error_type'] not in REPLAY_ERRORS:
                     raise ValueError('Unsupported transport exception replay')
+                if row.get('error_type')=='ReviewBudgetExhausted' and type(row.get('http_attempted')) is not bool:
+                    raise ValueError('Missing local-budget HTTP admission provenance')
 
     @staticmethod
     def row_digest(row):
@@ -151,13 +155,17 @@ class RawJournal:
         except BaseException as exc:
             # Preserve the original safe receipt when a replay wrapper differs.
             row.setdefault('error_type', type(exc).__name__)
+            if isinstance(exc,ReviewBudgetExhausted):
+                row.setdefault('http_attempted',exc.http_attempted)
+                if not self.frozen and row['http_attempted'] is False:
+                    self.calls-=1  # Admission/reservation stays charged; no HTTP was opened.
             if not self.frozen and not isinstance(exc, (asyncio.CancelledError, AdmissionError)):
                 row['retry_marker'] = next((marker for marker in ('rate limit', 'rate_limited', '429', 'timeout')
                                             if marker in str(exc).lower()), None)
                 status = re.search(r' returned (\d{3}):', str(exc))
                 if status:
                     row['http_status'] = int(status.group(1))
-            if not isinstance(exc, (asyncio.CancelledError, AdmissionError)):
+            if not isinstance(exc, (asyncio.CancelledError, AdmissionError,ReviewBudgetExhausted)):
                 self.blocked = True
             raise
         finally:
@@ -169,8 +177,12 @@ class RawJournal:
             for field, key in (('input_tokens', 'prompt_tokens'), ('output_tokens', 'completion_tokens')):
                 value = usage.get(key)
                 event[field] = value if type(value) is int and value >= 0 else None
+                if row.get('http_attempted') is False:
+                    event[field]=0
             event.update(error_type=row.get('error_type'),
                          served_model=response.get('model') if isinstance(response, dict) else None)
+            if 'http_attempted' in row:
+                event['http_attempted']=row['http_attempted']
             self._transport_finished(index, row)
             self.checkpoint()
 
@@ -218,7 +230,9 @@ async def make_session(sid, store, config, journal, clock, *, seed=False):
 
 class StageClient(base.RecordedClient):
     def __init__(self, config, journal, role):
-        super().__init__(config, journal, role)
+        # Requested caps are already bounded by the study ledger. The legacy
+        # adapter's silent2048 clamp would invalidate larger declared profiles.
+        super().__init__(config, journal, role,request_token_limit=None)
         async def post(url, payload, headers, **kwargs):
             stage = STAGE.get() or role
             if stage == 'critic' and payload['messages'][-1]['content'].startswith('Your previous response'):

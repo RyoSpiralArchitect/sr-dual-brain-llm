@@ -57,7 +57,13 @@ backoff, the optional single reformat and explicitly configured continuation.
 Every JSON HTTP request rechecks the remainder. Normal non-critic requests keep
 their existing timeouts. No timeout or output ceiling is automatically enlarged.
 
-The remainder is clipped by the RPC turn and actual callosum-owned lifetime.
+Admission, retry and late-result checks clip the remainder by the RPC turn and
+actual callosum-owned lifetime. HTTP itself uses only the local/client remainder:
+the RPC/callosum owner cancels work at its own unchanged deadline, without a
+second HTTP timer racing that same boundary. A shorter local/client window
+still bounds direct review HTTP. `ReviewBudgetExhausted` distinguishes proven
+local review-window expiry (including whether HTTP was attempted) from generic
+transport/auth/quota failure; it never makes an external review valid.
 `remaining_consultation_ms()` reads the pending request in operation-local context,
 ignores packet deadline edits, returns zero after abandonment, and resets after
 the operation. Even a custom provider swallowing cancellation cannot use its

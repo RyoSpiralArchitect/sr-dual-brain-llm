@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "selection": "first_two_unexposed_per_domain_in_original_order",
+  "parent_report_sha256": "5750a2e8976fe97fcc9c4c21c3f80cb4ed036a5b603ba14fe9784cf6ca77df35",
+  "parent_journal_sha256": "27ad3ad8b176171512e2aebd6ea53f3d82098310720202387ff0b3bbe86839f1",
+  "parent_report_json_sha256": "ab5c2e0fb4f90df10f704bdba58cf0c7e48f81b00c751505a29adfa95193e457",
+  "parent_journal_json_sha256": "81dc357cef5fe31fcc8582c8c5a9a1abc17b6068f3ea977431a3be0eca38a7ae",
+  "parent_canonical_sha256": "980449312aad4ed99fd53063a0ef04e15e5c9ad6def34c51840e25f440817b41",
+  "parent_admissions": 12,
+  "parent_fixture_sha256": "b458907bd72d890269da441aa65ed1b394089bd354cd7f00cd1d59f5bba7342b",
+  "fixture_sha256": "c533f2b8831c26f33ddf53605ade955c691f3b4d28b2a9371fe88b8c84b0b4a7",
+  "excluded_case_ids": [
+    "main:0:logic",
+    "main:0:sql"
+  ],
+  "selected_case_ids": [
+    "main:0:events",
+    "main:0:evidence",
+    "main:1:logic",
+    "main:1:sql",
+    "main:1:events",
+    "main:1:evidence",
+    "confirmation:1:logic",
+    "confirmation:1:sql"
+  ],
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "candidate_code_sha256": "5359d9350cff494d6c55c2e58e09642c575a15c514780a95daeb1c28f40b04e2",
+  "phase_call_limit": 96,
+  "global_call_limit": 128,
+  "maximum_campaign_admissions": 108
+}

@@ -33,7 +33,9 @@ from .source_completion import record_completed_answer, source_completion_requir
 from .answer_generation import (
     record_completion, record_stream_text, capturing_completion, requested_reasoning_effort, record_request_effort,
 )
-from .review_budget import review_http_timeout_seconds
+from .review_budget import (
+    review_http_timeout_seconds,review_io_timeout_seconds,review_budget_active,ReviewBudgetExhausted,
+)
 
 PromptInput = str | list[dict[str, Any]]
 
@@ -176,12 +178,17 @@ class LLMClient:
     ) -> Dict[str, object]:
         seconds = review_http_timeout_seconds(timeout_seconds or self.config.timeout_seconds)
         timeout = aiohttp.ClientTimeout(total=seconds)
-        async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
-            async with session.post(url, json=payload, headers=headers) as resp:
-                data = await resp.json(content_type=None)
-                if resp.status >= 400:
-                    raise RuntimeError(f"{self.config.provider} returned {resp.status}: {data}")
-                return data
+        try:
+            async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+                async with session.post(url, json=payload, headers=headers) as resp:
+                    data = await resp.json(content_type=None)
+                    if resp.status >= 400:
+                        raise RuntimeError(f"{self.config.provider} returned {resp.status}: {data}")
+                    return data
+        except (TimeoutError,asyncio.TimeoutError):
+            if review_budget_active() and review_io_timeout_seconds(seconds)<=0:
+                raise ReviewBudgetExhausted('Critic local window elapsed during HTTP',http_attempted=True) from None
+            raise
 
     async def complete(
         self,

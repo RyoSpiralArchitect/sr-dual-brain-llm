@@ -1,5 +1,18 @@
 # Reasoning frontier — 2026-11-09 (Asia/Tokyo)
 
+**Cap erratum (2026-11-09, #111):** native draft/integration requests actually
+serialized **2048**, despite configured/requested generation caps and ordinary
+reservations of4096. An inherited benchmark adapter silently clamped them.
+The original holdout journal contains16 drafts and7 integrations with this
+2048 cap; self-review's8 initial generations actually requested4096. The scores,
+raw tapes and frozen metrics below remain unchanged, but this comparison did
+not offer matched actual generation request caps. Native logical failures
+occurred at2048, so the earlier claim of native failure at4096 is withdrawn.
+The observed6/8 versus5/8 counts remain descriptive results under these unequal
+caps and do not establish a fair per-request resource comparison. #111 fixes
+the adapter, asserts actual serialized caps and uses never-sent tasks in a
+[separate experiment](replanning-corrected-protocol.md).
+
 **Manual dual ON returned 6/8 exact answers, self-review 5/8, and dual AUTO 5/8.**
 ON gained one event-state task. AUTO gained that task but lost a SQL task; its
 mean item score was slightly lower. Both logical-entailment tasks exhausted
@@ -36,7 +49,9 @@ without changing its return value and graded only after the turn.
 
 All three conditions have the same **12,288 offered output-ceiling allowance**
 per task, including every provider request and failed/cancelled work, with no
-refunds. Generation cap is 4096, critic cap 2048, ordinary-left allocation 8192;
+refunds. Configured generation cap/ordinary reservations were4096, but actual
+native generation requests were2048 (see erratum); critic cap2048 and
+ordinary-left allocation8192;
 native bounded schema repair/fallback remains active and counted. Input tokens,
 actual work, prompts, request counts and deadlines are not matched. Self-review
 has a 60s client limit; native critic/consultation owner deadlines stay native.
@@ -156,7 +171,7 @@ Native AUTO recovered one incomplete initial answer to an exact final answer
 (level-5 events); ON recovered two (events at both levels). Among pairs with both
 native snapshots complete, all final item scores were unchanged: no semantic
 repair or regression was observed. Logical drafts and integrations exhausted
-4096-token generation ceilings in both native modes. Their critics reported
+their actual2048-token request ceilings in both native modes. Their critics reported
 issues, but the subsequent generation still failed to finish. Additional native
 work did not solve those two tasks within this envelope.
 

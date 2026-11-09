@@ -117,8 +117,11 @@ class SkipConsult:
 
 class RecordedClient:
     """Use the production nonstream client with its complete-source checks intact."""
-    def __init__(self, config, journal, role):
+    def __init__(self, config, journal, role, *, request_token_limit=2048):
+        if request_token_limit is not None and (type(request_token_limit) is not int or request_token_limit<1):
+            raise ValueError('Invalid recorded-client ceiling')
         self.config, self.journal, self.role = config, journal, role
+        self.request_token_limit=request_token_limit
         self.client = LLMClient(config)
         self.failed = 0
         self.failure_types = []
@@ -127,7 +130,15 @@ class RecordedClient:
         self.client._post_json = post
 
     async def complete(self, *args, **kwargs):
-        kwargs['max_output_tokens'] = min(2048, int(kwargs.get('max_output_tokens') or 2048))
+        if self.request_token_limit is None:
+            cap=kwargs.get('max_output_tokens')
+            cap=self.config.max_output_tokens if cap is None else cap
+            if type(cap) is not int or cap<1:
+                raise ValueError('A positive explicit/configured request ceiling is required')
+            kwargs['max_output_tokens']=cap
+        else:
+            # Preserve the historical adapter contract for legacy studies.
+            kwargs['max_output_tokens'] = min(self.request_token_limit, int(kwargs.get('max_output_tokens') or 2048))
         try:
             return await self.client.complete(*args, **kwargs)
         except BaseException as exc:
