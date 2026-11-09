@@ -3,7 +3,9 @@
 The [frontier study](benchmarks/reasoning-frontier-2026-11-09.md) separated
 completion recovery, semantic error and review availability. This prototype
 carries those distinct states into existing stages. Offline tests demonstrate
-contracts; answer-quality and critic-completion-rate gains remain unmeasured.
+contracts. The [first fresh hard-task measurement](benchmarks/replanning-stress-2026-11-09.md)
+found no initial-to-final score gain or completion recovery; useful critic
+availability and intermediate work handoff remain limitations.
 The previous study's outputs and scores remain unchanged.
 
 ## Optional reconstruction
@@ -91,4 +93,5 @@ Before claiming gains, freeze fresh cross-domain questions, repeats/order, arms,
 actual-attempt/output ceilings and exact replay criteria. Report semantic repair,
 completion recovery, regression, review availability and actual/unknown usage
 separately. These development examples and old paid outputs are not confirmation
-data.
+data. The first frozen measurement and its original cap/replay failure are
+reported separately from the corrected fresh eight-task experiment linked above.
