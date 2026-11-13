@@ -436,3 +436,13 @@ async def test_primary_source_write_cannot_acquire_a_recovery_plan_even_forced_o
     assert result['ok']
     assert not any('Completion recovery work plan' in p['messages'][0]['content'] for _,p in provider.inputs)
     assert not any('Task goal assignments' in p['messages'][0]['content'] for _,p in provider.inputs)
+
+
+@pytest.mark.asyncio
+async def test_source_turn_without_ordinary_receipt_keeps_legacy_verification(tmp_path,monkeypatch):
+    monkeypatch.setattr('core.dual_brain.remaining_turn_ms',lambda: 7000.)
+    result,provider,_=await run_turn(tmp_path,*CASES[0],primary=True,initial='complete',
+        candidate_aware=True)
+    assert result['ok']
+    assert [role for role,_ in provider.inputs]==['draft','critic','integration','critic']
+    assert result['result']['metrics']['system2']['attempted_rounds']==[1,2]

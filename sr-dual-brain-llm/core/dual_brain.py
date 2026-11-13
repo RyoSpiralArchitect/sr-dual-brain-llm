@@ -3983,6 +3983,7 @@ class DualBrainController:
             critic_sum=decision.state.get("critic_sum"),
         )
         if (_env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
+                and self._ordinary_candidate_status(draft) == 'complete'
                 and payload.get('draft') != draft):
             system2_resolved, resolution_basis = False, 'review_snapshot_truncated'
         if system2_critic_unhealthy:
@@ -4000,14 +4001,18 @@ class DualBrainController:
 
         completion_aware = _env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
         candidate_status = self._ordinary_candidate_status(final_answer)
+        deferred_initial = decision.state.get('critic_deferred_reason') == 'incomplete_candidate'
+        requires_complete = completion_aware and (deferred_initial
+            or candidate_status in {'partial', 'empty', 'complete'})
+        needs_time_reserve = completion_aware and (deferred_initial or candidate_status == 'complete')
         time_left = remaining_turn_ms()
         should_verify = bool(
-            (critic_needs_revision or decision.state.get('critic_deferred_reason') == 'incomplete_candidate')
+            (critic_needs_revision or deferred_initial)
             and system2_round_target >= 2
             and final_answer
             and final_answer.strip()
-            and (not completion_aware or candidate_status == 'complete')
-            and (not completion_aware or time_left is None or time_left >= 8000)
+            and (not requires_complete or candidate_status == 'complete')
+            and (not needs_time_reserve or time_left is None or time_left >= 8000)
         )
         if not should_verify:
             self._module_gate(SYSTEM2_STALLED_FOLLOWUP, decision=decision,
@@ -4044,7 +4049,7 @@ class DualBrainController:
                     float(verify_timeout_ms_base) * float(timeout_multiplier),
                 )
             )
-            if completion_aware:
+            if completion_aware and candidate_status == 'complete':
                 verify_timeout_ms = candidate_review_timeout_ms(verify_timeout_ms,
                     timeout_max_ms,
                     getattr(self.right_model, 'llm_config', None), remaining_turn_ms())
@@ -4191,7 +4196,7 @@ class DualBrainController:
                 critic_kind=verify_kind,
                 critic_sum=verify_detail,
             )
-            if completion_aware and verify_payload['draft'] != final_answer:
+            if completion_aware and candidate_status == 'complete' and verify_payload['draft'] != final_answer:
                 verify_resolved, verify_basis = False, 'review_snapshot_truncated'
             if (completion_aware and decision.state.get('critic_deferred_reason') == 'incomplete_candidate'
                     and decision.state.get('system2_verify_critic_review_valid') is True):
