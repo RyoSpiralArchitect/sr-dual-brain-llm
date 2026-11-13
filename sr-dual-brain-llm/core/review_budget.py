@@ -36,6 +36,19 @@ def configured_review_seconds(config):
     return min(client, max(1., min(requested, 120.))) if math.isfinite(client) and client > 0 else 0.
 
 
+def candidate_review_timeout_ms(base_ms, maximum_ms, config, remaining_ms):
+    """Give a complete candidate one local review window within its turn owner.
+
+    Keep five seconds for finalization. A zero return means no useful owner
+    window remains; this does not report anything about provider health.
+    """
+    available = int(maximum_ms) if remaining_ms is None else max(0, int(remaining_ms)-5000)
+    if available < 3000:
+        return 0
+    target = int(math.ceil(configured_review_seconds(config)*1000))+500
+    return max(0, min(int(maximum_ms), available, max(int(base_ms), target)))
+
+
 def review_timeout_seconds(limit):
     """Leave other requests alone; a critic cannot restart a consumed deadline."""
     deadline = _deadline.get()

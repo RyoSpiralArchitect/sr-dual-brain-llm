@@ -394,6 +394,8 @@ def _extract_metrics(events: list[dict[str, Any]]) -> dict[str, Any]:
             if generation_ev is not None else None),
         'task_goals': ({key: task_goals_ev.get(key) for key in
             ('version', 'goal_count', 'review_status', 'review_snapshot_matches_answer', 'verified_complete', 'goals', 'replanning')}
+            | ({'work_products': task_goals_ev['work_products']}
+               if 'work_products' in task_goals_ev else {})
             if task_goals_ev is not None else None),
         'preview': ({key: preview_ev.get(key) for key in
                      ('version', 'requested', 'admitted', 'started', 'available', 'outcome')}

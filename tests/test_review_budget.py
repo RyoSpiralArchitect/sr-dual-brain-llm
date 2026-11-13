@@ -7,6 +7,7 @@ import pytest
 from core.callosum import Callosum, remaining_consultation_ms
 from core.llm_client import LLMConfig
 from core.models import RightBrainModel
+from core.review_budget import candidate_review_timeout_ms
 from core.right_worker import right_worker
 from core.shared_memory import SharedMemory
 import core.review_budget as budget
@@ -17,6 +18,14 @@ DRAFT,QUESTION = 'The supplied records differ.','Compare these supplied project 
 
 def response(content=CLEAN,reason='stop'):
     return {'choices':[{'message':{'content':content},'finish_reason':reason}]}
+
+
+def test_candidate_review_uses_only_available_owner_time():
+    config=LLMConfig('openai','offline-critic','NO_CREDENTIAL',timeout_seconds=60)
+    assert candidate_review_timeout_ms(12000,80000,config,None)==24500
+    assert candidate_review_timeout_ms(12000,80000,config,30000)==24500
+    assert candidate_review_timeout_ms(12000,80000,config,20000)==15000
+    assert candidate_review_timeout_ms(12000,80000,config,7000)==0
 
 
 def assert_unusable(result,status):

@@ -155,6 +155,15 @@ class TaskState:
         self.latest = None
         self.replans = []
         self.pending_replan = None
+        self.work_product = None
+        self.work_product_receipts = []
+
+    def record_work_product(self, plan, product, status, cap):
+        self.work_product_receipts.append({'version': 'completion_work_product_v1',
+            'goal_id': plan.goals[0].goal_id, 'status': status, 'max_output_tokens': cap,
+            'handed_to_integration': product is not None, 'verified_complete': False})
+        if product is not None:
+            self.work_product = product
 
     def accept_replan(self, plan):
         if self.replans and self.replans[-1] == plan:
@@ -190,7 +199,7 @@ class TaskState:
     def summary(self, answer, *, generation_complete=None):
         current = bool(self.latest and self.latest['snapshot_sha256'] == text_digest(answer))
         reports = {f['goal_id']: 'reported_' + f['status'] for f in (self.latest or {}).get('findings', [])}
-        return {'version': VERSION, 'goal_count': len(self.plan.goals),
+        summary = {'version': VERSION, 'goal_count': len(self.plan.goals),
             'replanning': [plan.summary() for plan in self.replans],
             'review_status': (self.latest or {}).get('status', 'not_reviewed'),
             'review_snapshot_matches_answer': current, 'verified_complete': False,
@@ -198,6 +207,9 @@ class TaskState:
                 'status': 'unconfirmed_generation' if current and generation_complete is False and reports.get(g.goal_id) == 'reported_addressed'
                     else reports.get(g.goal_id, 'unreviewed') if current else 'unreviewed_answer' if self.latest else 'unreviewed',
                 'last_report': reports.get(g.goal_id, 'unknown')} for g in self.plan.goals]}
+        if self.work_product_receipts:
+            summary['work_products'] = list(self.work_product_receipts)
+        return summary
 
     def prompt(self, role, *, draft=None):
         assignments = {

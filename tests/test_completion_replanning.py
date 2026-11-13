@@ -10,8 +10,8 @@ import pytest
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'sr-dual-brain-llm/scripts'))
 import benchmark_contract_live as pilot
-from core.answer_generation import AnswerGeneration, Generation, current_generation
-from core.completion_replanning import propose_replan
+from core.answer_generation import AnswerGeneration, Generation, current_generation, record_completion
+from core.completion_replanning import propose_replan, parse_work_product, work_product_cap
 from core.task_goals import current_task, extract_task_plan
 from core.thalamic_reticular_nucleus import (
     COMPLETION_REPLANNING as MODULE, GateConfig, GateFacts, GateMode, ThalamicReticularNucleus,
@@ -76,6 +76,71 @@ def test_replan_cannot_assume_goal_structure_or_reuse_a_changed_generation_snaps
     assert not plan.matches(draft,state)
 
 
+@pytest.mark.parametrize('text,finish,valid', [
+    ('{"goal_id":"g1","work":"A concrete derivation.","unresolved":[]}', 'stop', True),
+    ('{"goal_id":"g2","work":"Wrong goal.","unresolved":[]}', 'stop', False),
+    ('{"goal_id":"g1","work":"A","work":"B","unresolved":[]}', 'stop', False),
+    ('{"goal_id":"g1","work":"A","unresolved":[]}', 'length', False),
+    ('{"goal_id":"g1","work":"A","unresolved":[],"verified":true}', 'stop', False),
+])
+def test_internal_product_requires_bound_complete_strict_json(text,finish,valid):
+    state,draft=generation()
+    plan=propose_replan(extract_task_plan(CASES[0][0]),state,draft)
+    result=Generation(text,'complete' if finish=='stop' else 'partial',finish)
+    product,_=parse_work_product(result,plan)
+    assert (product is not None) is valid
+    if product:
+        assert product.source_sha256==plan.snapshot_sha256
+        assert 'unverified' in product.handoff()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('product_text,expected', [
+    ('{"goal_id":"g1","work":"PRIVATE_DERIVATION","unresolved":["Check the endpoint."]}',True),
+    ('{"goal_id":"g1","work":"PRIVATE_DERIVATION","work":"duplicate","unresolved":[]}',False),
+])
+async def test_work_product_is_bounded_internal_and_handed_to_existing_integration(monkeypatch,product_text,expected):
+    import core.answer_generation as ordinary
+    import core.task_goals as goals
+    from core.models import LeftBrainModel
+    from core.task_goals import TaskState
+    question=CASES[0][0]
+    state,draft=generation(remaining=4096)
+    state.total_cap,state.reserved=8192,4096
+    state.records[0]['max_output_tokens']=4096
+    plan=propose_replan(extract_task_plan(question),state,draft)
+    assert work_product_cap(plan,state,draft,4096,60000)==1024
+    assert work_product_cap(plan,state,draft,4096,10000)==0
+    task=TaskState(extract_task_plan(question))
+    task.accept_replan(plan)
+    monkeypatch.setenv('DUALBRAIN_COMPLETION_WORK_PRODUCTS','1')
+    model=LeftBrainModel(replace(config(),max_output_tokens=4096))
+    calls=[]
+    class Client:
+        async def complete(self,prompt,**kwargs):
+            calls.append((prompt,kwargs))
+            value=product_text if len(calls)==1 else CASES[0][1]
+            record_completion('openai',value,'stop')
+            return value
+    model._llm_client=Client()
+    generation_token=ordinary._turn.set(state)
+    task_token=goals._active.set(task)
+    try:
+        answer=await model.integrate_info_async(question=question,draft=draft,info='Complete the request.')
+    finally:
+        goals._active.reset(task_token)
+        ordinary._turn.reset(generation_token)
+    assert answer==CASES[0][1] and len(calls)==2
+    assert [kwargs['max_output_tokens'] for _,kwargs in calls]==[1024,3072]
+    assert ('PRIVATE_DERIVATION' in calls[1][0]) is expected
+    assert 'PRIVATE_DERIVATION' not in calls[1][1]['system']
+    assert state.summary(answer)['terminal_complete']
+    assert [row['stage'] for row in state.records]==['draft','work_product','integration']
+    receipt=task.summary(answer)['work_products'][0]
+    assert receipt['handed_to_integration'] is expected and not receipt['verified_complete']
+    assert 'PRIVATE_DERIVATION' not in json.dumps(task.summary(answer))
+
+
 def test_gate_auto_uses_typed_completion_and_budget_facts_and_default_is_off():
     trn = ThalamicReticularNucleus()
     assert trn.configure(MODULE,{}).mode is GateMode.OFF
@@ -125,6 +190,7 @@ class Provider:
     def __init__(self,journal,final,initial,revision):
         self.journal,self.final,self.initial,self.revision = journal,final,initial,revision
         self.inputs = []
+        self.critic_owner_ms = []
         self.integration_started = asyncio.Event()
 
     async def _post_json(self,_url,payload,_headers,**kwargs):
@@ -135,6 +201,10 @@ class Provider:
                 'PRIVATE_PARTIAL_CANDIDATE' if self.initial=='partial' else '',
                 'stop' if self.initial=='complete' else 'length')
         if role=='critic':
+            from core.callosum import remaining_consultation_ms
+            self.critic_owner_ms.append(remaining_consultation_ms())
+            if self.revision=='accept_truncated':
+                return response(json.dumps({'verdict':'ok','issues':[],'fixes':[]}))
             reviewed = payload['messages'][-1]['content'].split('Draft answer (review for correctness):\n',1)[1].split('\n\nReturn JSON only.',1)[0]
             finished = reviewed==self.final
             # A first review deliberately exercises ordinary revision even for
@@ -153,6 +223,12 @@ class Provider:
         if role=='detail':
             return response('Use each stated condition when constructing the requested result.')
         if role=='integration':
+            if payload['messages'][0]['content'].startswith('Prepare one internal, bounded work product'):
+                if self.revision=='cancel_product':
+                    self.integration_started.set()
+                    await asyncio.Event().wait()
+                return response(json.dumps({'goal_id':'g1',
+                    'work':'PRIVATE_FINISHED_GOAL_WORK', 'unresolved':[]}))
             self.integration_started.set()
             if self.revision=='cancel': await asyncio.Event().wait()
             return response(self.final if self.revision=='complete' else 'PRIVATE_INCOMPLETE_REVISION',
@@ -161,8 +237,9 @@ class Provider:
 
 
 async def run_turn(tmp_path,question,final,*,module='auto',initial='empty',revision='complete',budget=256,
-                   primary=False,cancel=False,system2='on'):
-    cfg = replace(config(),max_output_tokens=128,auto_continue=False,max_continuations=0)
+                   primary=False,cancel=False,system2='on',candidate_aware=False,stage_cap=128,
+                   work_products=False):
+    cfg = replace(config(),max_output_tokens=stage_cap,auto_continue=False,max_continuations=0)
     journal = ScheduledJournal(cfg,{'test':'completion-replanning'},max_calls=12)
     provider = Provider(journal,final,initial,revision)
     journal.transport = provider
@@ -174,6 +251,8 @@ async def run_turn(tmp_path,question,final,*,module='auto',initial='empty',revis
         'DUALBRAIN_MODULE_ACC_MONITOR_MODE':'off',
         'DUALBRAIN_MODULE_CEREBELLAR_CORRECTION_MODE':'off',
         'DUALBRAIN_MODULE_SYSTEM2_STALLED_FOLLOWUP_MODE':'off',
+        'DUALBRAIN_CRITIC_COMPLETION_AWARE':'1' if candidate_aware else '0',
+        'DUALBRAIN_COMPLETION_WORK_PRODUCTS':'1' if work_products else '0',
     }
     with patch.dict('os.environ',env,clear=True),forbid_provider_network() as audit:
         session,_ = await pilot.make_session('completion-replanning-rpc',None,cfg,journal,[1794009600.])
@@ -233,6 +312,78 @@ async def test_off_retains_existing_recovery_and_never_injects_a_new_plan(tmp_pa
 
 
 @pytest.mark.asyncio
+async def test_incomplete_candidate_is_finished_before_one_actual_critic_review(tmp_path):
+    result,provider,journal=await run_turn(tmp_path,*CASES[0],candidate_aware=True)
+    assert result['ok'] and result['result']['answer']==CASES[0][1]
+    assert [role for role,_ in provider.inputs]==['draft','integration','critic']
+    execution=result['result']['metrics']['system2']
+    assert execution['critic_attempts']==1 and execution['attempted_rounds']==[2]
+    assert execution['external_review_completed'] is True
+    assert result['result']['metrics']['task_goals']['replanning']
+    assert journal.calls==3
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('question,final',CASES)
+async def test_real_rpc_carries_one_terminal_internal_product_across_domains(tmp_path,question,final):
+    result,provider,journal=await run_turn(tmp_path,question,final,candidate_aware=True,
+        stage_cap=1024,budget=2048,work_products=True)
+    assert result['ok'] and result['result']['answer']==final
+    assert [role for role,_ in provider.inputs]==['draft','integration','integration','critic']
+    metrics=result['result']['metrics']
+    assert metrics['task_goals']['work_products'][0]['status']=='available'
+    assert metrics['task_goals']['work_products'][0]['handed_to_integration']
+    assert [row['stage'] for row in metrics['answer_generation']['stages']]==[
+        'draft','work_product','integration']
+    assert [row['max_output_tokens'] for row in metrics['answer_generation']['stages']]==[
+        1024,256,768]
+    assert metrics['answer_generation']['reserved_output_tokens']==2048
+    assert 'PRIVATE_FINISHED_GOAL_WORK' in provider.inputs[2][1]['messages'][-1]['content']
+    assert 'PRIVATE_FINISHED_GOAL_WORK' not in provider.inputs[2][1]['messages'][0]['content']
+    assert 'PRIVATE_FINISHED_GOAL_WORK' not in json.dumps(metrics)
+    assert journal.calls==4
+
+
+@pytest.mark.asyncio
+async def test_unfinished_revision_is_never_sent_for_semantic_review(tmp_path):
+    result,provider,_=await run_turn(tmp_path,*CASES[0],candidate_aware=True,revision='partial')
+    assert result['ok']
+    assert [role for role,_ in provider.inputs]==['draft','integration']
+    assert not result['result']['metrics']['system2']['used']
+    assert result['result']['metrics']['answer_generation']['terminal_complete'] is False
+
+
+@pytest.mark.asyncio
+async def test_complete_candidate_gets_a_review_owner_window_without_extra_calls(tmp_path):
+    result,provider,_=await run_turn(tmp_path,*CASES[0],candidate_aware=True,initial='complete')
+    assert result['ok'] and provider.critic_owner_ms
+    assert provider.critic_owner_ms[0] > 20000
+    assert [role for role,_ in provider.inputs].count('critic')==2
+
+
+@pytest.mark.asyncio
+async def test_no_turn_window_retains_complete_candidate_without_provider_review(tmp_path,monkeypatch):
+    monkeypatch.setattr('core.dual_brain.remaining_turn_ms',lambda: 7000.)
+    result,provider,_=await run_turn(tmp_path,*CASES[0],candidate_aware=True,initial='complete')
+    assert result['ok'] and result['result']['answer']==CASES[0][1]
+    assert [role for role,_ in provider.inputs]==['draft']
+    system2=result['result']['metrics']['system2']
+    assert not system2['used'] and system2['critic_status']=='turn_budget_unavailable'
+
+
+@pytest.mark.asyncio
+async def test_review_of_trimmed_complete_candidate_cannot_resolve_full_answer(tmp_path):
+    final=('A complete but deliberately long candidate. ' + 'evidence boundary. '*170).strip()
+    result,provider,_=await run_turn(tmp_path,CASES[0][0],final,candidate_aware=True,
+        initial='complete',revision='accept_truncated')
+    assert result['ok'] and result['result']['answer']==final
+    assert [role for role,_ in provider.inputs]==['draft','critic']
+    system2=result['result']['metrics']['system2']
+    assert system2['external_review_completed'] is True
+    assert not system2['resolved'] and system2['resolution_basis']=='review_snapshot_truncated'
+
+
+@pytest.mark.asyncio
 async def test_complete_draft_survives_a_failed_integration_even_when_replanning_forced_on(tmp_path):
     result,provider,_ = await run_turn(tmp_path,*CASES[0],module='on',initial='complete',revision='partial')
     assert result['ok'] and result['result']['answer']==CASES[0][1]
@@ -263,6 +414,14 @@ async def test_cancellation_clears_active_replan_and_preserves_owned_stage_cance
 
 
 @pytest.mark.asyncio
+async def test_cancelled_internal_product_cannot_be_handed_to_a_later_stage(tmp_path):
+    result,provider,journal=await run_turn(tmp_path,*CASES[0],candidate_aware=True,
+        stage_cap=1024,budget=2048,work_products=True,revision='cancel_product',cancel=True)
+    assert result is None and [role for role,_ in provider.inputs]==['draft','integration']
+    assert journal.data['occurrences'][-1].get('error_type')=='CancelledError'
+
+
+@pytest.mark.asyncio
 async def test_manual_system2_off_keeps_ordinary_detail_and_never_adds_a_critic(tmp_path):
     result,provider,_ = await run_turn(tmp_path,*CASES[0],system2='off')
     assert result['ok']
@@ -277,3 +436,13 @@ async def test_primary_source_write_cannot_acquire_a_recovery_plan_even_forced_o
     assert result['ok']
     assert not any('Completion recovery work plan' in p['messages'][0]['content'] for _,p in provider.inputs)
     assert not any('Task goal assignments' in p['messages'][0]['content'] for _,p in provider.inputs)
+
+
+@pytest.mark.asyncio
+async def test_source_turn_without_ordinary_receipt_keeps_legacy_verification(tmp_path,monkeypatch):
+    monkeypatch.setattr('core.dual_brain.remaining_turn_ms',lambda: 7000.)
+    result,provider,_=await run_turn(tmp_path,*CASES[0],primary=True,initial='complete',
+        candidate_aware=True)
+    assert result['ok']
+    assert [role for role,_ in provider.inputs]==['draft','critic','integration','critic']
+    assert result['result']['metrics']['system2']['attempted_rounds']==[1,2]

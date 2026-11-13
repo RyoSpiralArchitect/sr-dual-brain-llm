@@ -108,15 +108,19 @@ class AnswerGeneration:
         return available
 
     def record(self, stage, result, returned, cap, *, preserve_existing=False):
-        self.records.append({'stage': stage, 'status': result.status,
-            'finish_reason': result.finish_reason, 'nonempty_text': bool(result.text.strip()),
-            'error_type': result.error_type, 'max_output_tokens': cap,
-            'request_reasoning_effort': result.request_reasoning_effort})
+        self.record_internal(stage, result, cap)
         # An unsuccessful integration returning a known good draft cannot
         # erase its provenance. Actual new output always gets its own status.
         key = fingerprint(returned)
         if not preserve_existing or key not in self.answers:
             self.answers[key] = result.status if returned == result.text or not returned else 'unverified'
+
+    def record_internal(self, stage, result, cap):
+        """Account for an internal generation without making it an answer."""
+        self.records.append({'stage': stage, 'status': result.status,
+            'finish_reason': result.finish_reason, 'nonempty_text': bool(result.text.strip()),
+            'error_type': result.error_type, 'max_output_tokens': cap,
+            'request_reasoning_effort': result.request_reasoning_effort})
 
     def observed(self, text):
         return fingerprint(text) in self.answers
@@ -172,7 +176,8 @@ def guard_answer_generation(method):
     return guarded
 
 
-async def generate(client, config, stage, prompt, *, system, temperature, on_delta=None):
+async def generate(client, config, stage, prompt, *, system, temperature, on_delta=None,
+                   output_cap=None):
     """One ordinary request, no continuation or retry; propagate cancellation."""
     state = current_generation()
     if client is None:
@@ -180,6 +185,10 @@ async def generate(client, config, stage, prompt, *, system, temperature, on_del
     cap = getattr(config, 'max_output_tokens', 1024)
     if type(cap) is not int or cap < 1:
         return Generation(status='failed', error_type='ValueError'), 0
+    if output_cap is not None:
+        if type(output_cap) is not int or output_cap < 1:
+            return Generation(status='failed', error_type='ValueError'), 0
+        cap = min(cap, output_cap)
     cap = state.reserve(cap) if state is not None else cap
     remaining = remaining_turn_ms()
     if not cap or remaining is not None and remaining <= 0:
@@ -212,8 +221,12 @@ async def generate(client, config, stage, prompt, *, system, temperature, on_del
     except asyncio.CancelledError:
         if state is not None:
             partial = capture.get('result')
-            state.record(stage, Generation(text=partial.text if partial else '', status='cancelled',
-                request_reasoning_effort=capture.get('effort')), '', cap)
+            cancelled = Generation(text=partial.text if partial else '', status='cancelled',
+                request_reasoning_effort=capture.get('effort'))
+            if stage == 'work_product':
+                state.record_internal(stage, cancelled, cap)
+            else:
+                state.record(stage, cancelled, '', cap)
         raise
     except Exception as exc:
         result = capture.get('result')

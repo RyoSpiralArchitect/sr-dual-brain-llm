@@ -359,15 +359,19 @@ completion failures, and an explicitly amended calibration rule; all 152 request
 Its cap erratum records that native requests actually used2048 despite a4096
 configuration; the original scores and frozen metrics remain unchanged.
 The default-OFF [completion-replanning prototype](docs/completion-replanning.md)
-uses goal dependencies and remaining allocation in existing integrations. Critic
-reviews share a local window across retries and schema repair; actual owners
-retain cancellation without a duplicate HTTP timer at the same deadline.
+uses goal dependencies and remaining allocation. Its subsequent bounded internal
+work product can hand one terminally completed, unverified subgoal note into an
+existing integration. The separate default-OFF completion-aware critic route
+defers review of an unfinished candidate and allocates a bounded owner window
+for completed candidates. Neither path has a measured quality gain yet.
+Critic reviews share a local window across retries and schema repair; actual
+owners retain cancellation without a duplicate HTTP timer at the same deadline.
 The [fresh hard-task study](docs/benchmarks/replanning-stress-2026-11-09.md), with
 corrected actual4096 generation caps, found self-review6/8, replanning OFF5/8 and
 AUTO6/8, with no initial-to-final score gains or completion recovery. Its60
 requests replay exactly; the separately stopped12-call parent and failed replay
-remain retained. Intermediate work handoff and useful critic availability remain
-the next measured bottlenecks.
+remain retained. Those historical results are development evidence for the
+new mechanisms, not a measurement of them.
 
 Treat “brains” as **roles** with strict I/O contracts:
 

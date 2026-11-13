@@ -34,6 +34,7 @@ from .constraint_checks import (
 from .callosum import drain_consultation
 from .answer_generation import guard_answer_generation, current_generation
 from .completion_replanning import propose_replan
+from .review_budget import candidate_review_timeout_ms
 from .psychoid_attention import PsychoidAttentionAdapter, PsychoidAttentionProjection
 from .coherence_resonator import (
     CoherenceResonator,
@@ -465,6 +466,12 @@ class DualBrainController:
         except Exception:  # Optional observability cannot change module admission.
             pass
         return gate
+
+    @staticmethod
+    def _ordinary_candidate_status(candidate: str) -> str | None:
+        generation = current_generation()
+        return (generation.status(candidate) if generation is not None
+                and generation.observed(candidate) else None)
 
     def _advisor_event(self, event, *, qid, **payload):
         try:
@@ -3517,6 +3524,12 @@ class DualBrainController:
                 float(timeout_ms_base) * float(timeout_multiplier),
             )
         )
+        candidate_status = self._ordinary_candidate_status(draft) if system2_active else None
+        completion_aware = system2_active and _env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
+        if completion_aware and candidate_status == 'complete':
+            timeout_ms = candidate_review_timeout_ms(timeout_ms,
+                timeout_max_ms,
+                getattr(self.right_model, 'llm_config', None), remaining_turn_ms())
 
         request_meta = {
             "temperature": round(decision.temperature, 3),
@@ -3532,6 +3545,10 @@ class DualBrainController:
             "psychoid_bias": bool(payload.get("psychoid_attention_bias")),
             "default_mode_refs": len(payload.get("default_mode_reflections", [])),
         }
+        if completion_aware:
+            request_meta['candidate_status'] = candidate_status or 'unobserved'
+            request_meta['review_route'] = ('complete_candidate' if candidate_status == 'complete'
+                else 'defer_incomplete' if candidate_status in {'partial', 'empty'} else 'legacy')
         return ConsultRequestPlan(
             payload=payload,
             request_meta=request_meta,
@@ -3566,11 +3583,46 @@ class DualBrainController:
                 destination="right_consult_request", status="attempted",
             )
         consult_started = time.perf_counter()
-        response = await ask_callosum_with_timeout(
-            payload,
-            timeout_ms=consult_plan.timeout_ms,
-        )
-        response_source = "callosum"
+        candidate_status = self._ordinary_candidate_status(draft) if system2_active else None
+        completion_aware = system2_active and _env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
+        review_timeout_ms = consult_plan.timeout_ms
+        if completion_aware and candidate_status == 'complete':
+            review_timeout_ms = candidate_review_timeout_ms(review_timeout_ms,
+                consult_plan.timeout_max_ms, getattr(self.right_model, 'llm_config', None),
+                remaining_turn_ms())
+        deferred = ('incomplete_candidate' if completion_aware and candidate_status in {'partial', 'empty'}
+            else 'turn_budget_unavailable' if completion_aware and candidate_status == 'complete'
+                and review_timeout_ms <= 0 else None)
+        if completion_aware:
+            try:
+                self.telemetry.log('critic_review_route', qid=decision.qid,
+                    candidate_status=candidate_status or 'unobserved',
+                    deferred_reason=deferred, owner_timeout_ms=review_timeout_ms,
+                    review_requested=deferred is None)
+            except Exception:
+                pass
+        if deferred:
+            # No review request was made. The candidate's transport status is
+            # not a verdict about its semantics or the external critic.
+            response = {'verdict': 'unavailable', 'issues': [], 'fixes': [],
+                'critic_sum': ('Candidate lacks terminal completion; review deferred.'
+                    if deferred == 'incomplete_candidate' else 'No turn time remains for critic review.'),
+                'confidence_r': 0., 'critic_kind': 'deferred_' + deferred,
+                'critic_status': deferred, 'critic_review_valid': False,
+                'critic_external_review_valid': False,
+                'critic_validation': {'initial': {'status': 'not_requested', 'error_type': None},
+                    'repair': None}}
+            decision.state['critic_deferred_reason'] = deferred
+            task = current_task(question)
+            if task is not None:
+                task.observe(None, draft)
+            response_source = 'candidate_gate'
+        else:
+            response = await ask_callosum_with_timeout(
+                payload,
+                timeout_ms=review_timeout_ms,
+            )
+            response_source = "callosum"
         detail_notes: Optional[str]
         critic_verdict: Optional[str] = None
         critic_issues: List[str] = []
@@ -3930,6 +3982,10 @@ class DualBrainController:
             critic_kind=decision.state.get("critic_kind"),
             critic_sum=decision.state.get("critic_sum"),
         )
+        if (_env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
+                and self._ordinary_candidate_status(draft) == 'complete'
+                and payload.get('draft') != draft):
+            system2_resolved, resolution_basis = False, 'review_snapshot_truncated'
         if system2_critic_unhealthy:
             system2_resolved, resolution_basis = False, "critic_unhealthy"
         system2_followup_revision = False
@@ -3943,11 +3999,20 @@ class DualBrainController:
             system2_truncation_signal
         )
 
+        completion_aware = _env_flag('DUALBRAIN_CRITIC_COMPLETION_AWARE', False)
+        candidate_status = self._ordinary_candidate_status(final_answer)
+        deferred_initial = decision.state.get('critic_deferred_reason') == 'incomplete_candidate'
+        requires_complete = completion_aware and (deferred_initial
+            or candidate_status in {'partial', 'empty', 'complete'})
+        needs_time_reserve = completion_aware and (deferred_initial or candidate_status == 'complete')
+        time_left = remaining_turn_ms()
         should_verify = bool(
-            critic_needs_revision
+            (critic_needs_revision or deferred_initial)
             and system2_round_target >= 2
             and final_answer
             and final_answer.strip()
+            and (not requires_complete or candidate_status == 'complete')
+            and (not needs_time_reserve or time_left is None or time_left >= 8000)
         )
         if not should_verify:
             self._module_gate(SYSTEM2_STALLED_FOLLOWUP, decision=decision,
@@ -3984,17 +4049,28 @@ class DualBrainController:
                     float(verify_timeout_ms_base) * float(timeout_multiplier),
                 )
             )
+            if completion_aware and candidate_status == 'complete':
+                verify_timeout_ms = candidate_review_timeout_ms(verify_timeout_ms,
+                    timeout_max_ms,
+                    getattr(self.right_model, 'llm_config', None), remaining_turn_ms())
             verify_call_error = False
             verify_fallback_used = False
             verify_response: Dict[str, Any] = {}
-            try:
-                verify_response = await ask_callosum_with_timeout(
-                    verify_payload,
-                    timeout_ms=verify_timeout_ms,
-                )
-            except Exception:
-                verify_call_error = True
-                verify_response = {}
+            if verify_timeout_ms <= 0:
+                verify_response = {'verdict': 'unavailable', 'issues': [], 'fixes': [],
+                    'critic_sum': 'No turn time remains for critic review.',
+                    'critic_kind': 'deferred_turn_budget_unavailable',
+                    'critic_status': 'turn_budget_unavailable',
+                    'critic_review_valid': False, 'critic_external_review_valid': False}
+            else:
+                try:
+                    verify_response = await ask_callosum_with_timeout(
+                        verify_payload,
+                        timeout_ms=verify_timeout_ms,
+                    )
+                except Exception:
+                    verify_call_error = True
+                    verify_response = {}
 
             self._retain_critic_validation(decision, verify_response, prefix="system2_verify_critic")
 
@@ -4120,6 +4196,14 @@ class DualBrainController:
                 critic_kind=verify_kind,
                 critic_sum=verify_detail,
             )
+            if completion_aware and candidate_status == 'complete' and verify_payload['draft'] != final_answer:
+                verify_resolved, verify_basis = False, 'review_snapshot_truncated'
+            if (completion_aware and decision.state.get('critic_deferred_reason') == 'incomplete_candidate'
+                    and decision.state.get('system2_verify_critic_review_valid') is True):
+                system2_critic_unhealthy = False
+                system2_critic_unhealthy_reason = None
+                decision.state['system2_critic_unhealthy'] = False
+                decision.state['system2_critic_unhealthy_reason'] = None
             if verify_issues_raw_for_resolution or verify_resolved:
                 system2_final_issue_count = verify_issue_count_calibrated
             else:
@@ -6216,8 +6300,11 @@ class DualBrainController:
                         previous_round_target = int(system2_round_target)
                         if previous_round_target > 1:
                             decision.state["system2_round_target_requested"] = previous_round_target
-                        system2_round_target = 1
-                        decision.state["system2_round_target"] = 1
+                        # A missing initial candidate may receive its first
+                        # actual review after an integration completes it.
+                        system2_round_target = (2 if decision.state.get('critic_deferred_reason')
+                            == 'incomplete_candidate' else 1)
+                        decision.state["system2_round_target"] = system2_round_target
                         decision.state["system2_critic_unhealthy_reason"] = (
                             system2_critic_unhealthy_reason
                         )
@@ -6257,6 +6344,11 @@ class DualBrainController:
                 integration_parts: List[str] = []
                 has_right_material = False
                 has_mix_in_material = False
+                if decision.state.get('critic_deferred_reason') == 'incomplete_candidate':
+                    integration_parts.append('The draft lacks terminal completion. Finish the '
+                        'original request within the remaining allocation. Treat the prior '
+                        'partial text as unverified; retain explicit unknowns and output shape.')
+                    has_right_material = True
                 if integrated_detail:
                     if system2_active:
                         integration_parts.append(
