@@ -658,6 +658,8 @@ _SYSTEM2_CRITIC_UNHEALTHY_MARKERS = (
 
 _SYSTEM2_CRITIC_UNHEALTHY_KINDS = {
     "disabled",
+    "deferred_incomplete_candidate",
+    "deferred_turn_budget_unavailable",
 }
 
 
