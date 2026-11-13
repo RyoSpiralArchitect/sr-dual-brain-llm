@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_completion_mechanisms_v1",
+  "fixture_sha256": "fc4e84a1d2aca65da14cf7c134e8f4f661087ec1795a36a2b9405510129ca024",
+  "candidate_code_sha256": "031434126632d0913ce572bb032301a31a8d66ef4f6db911ac1725b1e35831c4",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "9d9fb897db055909c407f483fd3331616b96433a7483f8d2ae1dd06cce7b49f4",
+  "case_ids": [
+    "logic_a",
+    "logic_b",
+    "sql",
+    "events",
+    "evidence"
+  ],
+  "arms": [
+    "off",
+    "work_product",
+    "critic_aware",
+    "both"
+  ],
+  "order": [
+    [
+      "off",
+      "work_product",
+      "critic_aware",
+      "both"
+    ],
+    [
+      "work_product",
+      "critic_aware",
+      "both",
+      "off"
+    ],
+    [
+      "critic_aware",
+      "both",
+      "off",
+      "work_product"
+    ],
+    [
+      "both",
+      "off",
+      "work_product",
+      "critic_aware"
+    ],
+    [
+      "both",
+      "critic_aware",
+      "work_product",
+      "off"
+    ]
+  ],
+  "call_limit": 80,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "serialized_request_caps": {
+    "draft": 4096,
+    "integration": 4096,
+    "integration_after_work_product": 3072,
+    "work_product": 1024,
+    "critic": 2048,
+    "critic_repair": 2048
+  }
+}
