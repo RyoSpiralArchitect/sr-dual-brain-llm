@@ -6,7 +6,10 @@ import pytest
 from test_replanning_stress import cfg
 from test_benchmark_contract_live import response
 from offline_provider_guard import forbid_provider_network
-import benchmark_completion_mechanisms as study
+import benchmark_completion_certified as certified
+
+certified.configure()
+study = certified.study
 
 
 class Provider:
@@ -40,8 +43,10 @@ async def test_four_arms_and_exact_replay_without_provider(tmp_path):
     manifest = study.base.pilot.bench.read_json(study.MANIFEST)
     study.validate_fixture(fixture)
     assert manifest == study.expected_manifest(fixture)
-    old = study.base.pilot.bench.read_json(study.stress.FIXTURE)
-    assert not {c['question'] for c in fixture['cases']} & {c['question'] for c in old['cases']}
+    old_stress = study.base.pilot.bench.read_json(study.stress.FIXTURE)
+    old_stopped = study.base.pilot.bench.read_json(study.ROOT/'sr-dual-brain-llm/examples/completion_mechanisms.json')
+    for old in (old_stress, old_stopped):
+        assert not {c['question'] for c in fixture['cases']} & {c['question'] for c in old['cases']}
     live_dir, replay_dir = tmp_path/'live', tmp_path/'replay'
     live_dir.mkdir(); replay_dir.mkdir()
     with forbid_provider_network() as audit:

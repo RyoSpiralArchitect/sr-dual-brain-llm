@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_completion_mechanisms_certified_v1",
+  "fixture_sha256": "c0a0bdff96c272790b5022a92ca385041c59c511b7e2f4d75c63fea46af5eb11",
+  "candidate_code_sha256": "152afec8bbfb6b57d8e328b40b5e3072dc873a607fec2542091752e75fc0ad22",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "422214c03c360c538a26ae7c976e188ba46d0e83179ce41bc3a3de13894c4e63",
+  "case_ids": [
+    "logic_a",
+    "logic_b",
+    "sql",
+    "events",
+    "evidence"
+  ],
+  "arms": [
+    "off",
+    "work_product",
+    "critic_aware",
+    "both"
+  ],
+  "order": [
+    [
+      "off",
+      "work_product",
+      "critic_aware",
+      "both"
+    ],
+    [
+      "work_product",
+      "critic_aware",
+      "both",
+      "off"
+    ],
+    [
+      "critic_aware",
+      "both",
+      "off",
+      "work_product"
+    ],
+    [
+      "both",
+      "off",
+      "work_product",
+      "critic_aware"
+    ],
+    [
+      "both",
+      "critic_aware",
+      "work_product",
+      "off"
+    ]
+  ],
+  "call_limit": 80,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "serialized_request_caps": {
+    "draft": 4096,
+    "integration": 4096,
+    "integration_after_work_product": 3072,
+    "work_product": 1024,
+    "critic": 2048,
+    "critic_repair": 2048
+  },
+  "parent_source": "a970d0844db77e16011197d5f85f10ca4596e510",
+  "parent_report_sha256": "e889935662b546d65f8ddf6efbbc0c0e5534f41799b50845f36c2fa43e4c067b",
+  "parent_journal_sha256": "df46b895484373890f82e4ba07e45ee67663aff1e20945e941e8f4826e0900be",
+  "parent_replay_failure_sha256": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+  "parent_canonical_sha256": "f2cd03de45063e9c8903c1217f153cf199ac8ac17664766a06f50a34b39d25f6",
+  "ca_preflight": "SSL_CERT_FILE=certifi.where, nonempty default context"
+}
