@@ -1,0 +1,930 @@
+{
+  "schema_version": 1,
+  "authority": "descriptive_five_authored_tasks_independent_provider_samples",
+  "stopped_parent": {
+    "source_revision": "a970d0844db77e16011197d5f85f10ca4596e510",
+    "outcome": "transport_blocked",
+    "requests": 1,
+    "error_type": "ClientConnectorCertificateError",
+    "usage": {
+      "calls": 1,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "unknown_usage_calls": 1,
+      "cancelled_calls": 0,
+      "failed_calls": 1
+    },
+    "replay_verified": false,
+    "replay_failure_type": "ValueError"
+  },
+  "corrected_study": {
+    "source_revision": "00d0eba9cefa00086504da92d26d5f8be6fad2ed",
+    "requested_model": "gpt-6-luna",
+    "outcome": "comparisons_complete",
+    "fixture_sha256": "c0a0bdff96c272790b5022a92ca385041c59c511b7e2f4d75c63fea46af5eb11",
+    "manifest_sha256": "febffa6767e7ca3089eb9c554f0d537ce91e9101ed71509d6241197ad9945d42",
+    "protocol_sha256": "422214c03c360c538a26ae7c976e188ba46d0e83179ce41bc3a3de13894c4e63",
+    "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+    "canonical_sha256": "3e53bbe152388b3a509d3e85a5c98b53a5c567b88c0dcdc554c0da28d6390a2f",
+    "usage": {
+      "calls": 51,
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 105398,
+      "known_output_tokens": 99167,
+      "unknown_usage_calls": 5,
+      "cancelled_calls": 5,
+      "failed_calls": 0
+    },
+    "phase_receipt": {
+      "requests": 51,
+      "events": 102,
+      "transport_events_sha256": "0bc511921bd4303fb13314a4c672443a7bffe98c3550abd8c2fd54285fea0901",
+      "denied": []
+    },
+    "request_caps": [
+      {
+        "role": "critic",
+        "cap": 2048,
+        "admissions": 17
+      },
+      {
+        "role": "critic_repair",
+        "cap": 2048,
+        "admissions": 1
+      },
+      {
+        "role": "draft",
+        "cap": 4096,
+        "admissions": 20
+      },
+      {
+        "role": "integration",
+        "cap": 3072,
+        "admissions": 4
+      },
+      {
+        "role": "integration",
+        "cap": 4096,
+        "admissions": 5
+      },
+      {
+        "role": "work_product",
+        "cap": 1024,
+        "admissions": 4
+      }
+    ],
+    "summary": {
+      "authority": "descriptive_five_fresh_tasks_independent_samples_no_isolated_causal_claim",
+      "arms": {
+        "off": {
+          "trials": 5,
+          "exact": 3,
+          "complete": 3,
+          "workflow_valid": 0,
+          "schema_valid": 3,
+          "mean_item_accuracy": 0.6,
+          "initial_complete": 3,
+          "work_products_attempted": 0,
+          "work_products_available": 0,
+          "external_review_completed": 2,
+          "critic_attempts": 5
+        },
+        "work_product": {
+          "trials": 5,
+          "exact": 3,
+          "complete": 3,
+          "workflow_valid": 1,
+          "schema_valid": 3,
+          "mean_item_accuracy": 0.6,
+          "initial_complete": 3,
+          "work_products_attempted": 2,
+          "work_products_available": 1,
+          "external_review_completed": 3,
+          "critic_attempts": 5
+        },
+        "critic_aware": {
+          "trials": 5,
+          "exact": 3,
+          "complete": 3,
+          "workflow_valid": 2,
+          "schema_valid": 3,
+          "mean_item_accuracy": 0.6,
+          "initial_complete": 3,
+          "work_products_attempted": 0,
+          "work_products_available": 0,
+          "external_review_completed": 2,
+          "critic_attempts": 4
+        },
+        "both": {
+          "trials": 5,
+          "exact": 3,
+          "complete": 3,
+          "workflow_valid": 1,
+          "schema_valid": 3,
+          "mean_item_accuracy": 0.6,
+          "initial_complete": 3,
+          "work_products_attempted": 2,
+          "work_products_available": 0,
+          "external_review_completed": 1,
+          "critic_attempts": 3
+        }
+      },
+      "pairs": [
+        {
+          "case": "logic_a",
+          "reference": "off",
+          "candidate": "work_product",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_a",
+          "reference": "off",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_a",
+          "reference": "off",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_a",
+          "reference": "work_product",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_a",
+          "reference": "work_product",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_a",
+          "reference": "critic_aware",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "off",
+          "candidate": "work_product",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "off",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "off",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "work_product",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "work_product",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "logic_b",
+          "reference": "critic_aware",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "off",
+          "candidate": "work_product",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "off",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "off",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "work_product",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "work_product",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "sql",
+          "reference": "critic_aware",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "off",
+          "candidate": "work_product",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "off",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "off",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "work_product",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "work_product",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "events",
+          "reference": "critic_aware",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "evidence",
+          "reference": "off",
+          "candidate": "work_product",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "evidence",
+          "reference": "off",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "evidence",
+          "reference": "off",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": false
+        },
+        {
+          "case": "evidence",
+          "reference": "work_product",
+          "candidate": "critic_aware",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": true
+        },
+        {
+          "case": "evidence",
+          "reference": "work_product",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": true
+        },
+        {
+          "case": "evidence",
+          "reference": "critic_aware",
+          "candidate": "both",
+          "delta": 0.0,
+          "outcome": "same",
+          "both_workflows_valid": true
+        }
+      ],
+      "transitions": {
+        "off": {
+          "both_unavailable": 2,
+          "unchanged_complete": 3
+        },
+        "work_product": {
+          "both_unavailable": 2,
+          "unchanged_complete": 3
+        },
+        "critic_aware": {
+          "both_unavailable": 2,
+          "unchanged_complete": 3
+        },
+        "both": {
+          "both_unavailable": 2,
+          "unchanged_complete": 3
+        }
+      }
+    },
+    "by_arm_usage": {
+      "off": {
+        "calls": 12,
+        "known_input_tokens": 19747,
+        "known_output_tokens": 21440,
+        "unknown_usage_calls": 3,
+        "input_tokens": null,
+        "output_tokens": null,
+        "output_reserved": 38912
+      },
+      "work_product": {
+        "calls": 14,
+        "known_input_tokens": 26189,
+        "known_output_tokens": 22926,
+        "unknown_usage_calls": 2,
+        "input_tokens": null,
+        "output_tokens": null,
+        "output_reserved": 38912
+      },
+      "critic_aware": {
+        "calls": 12,
+        "known_input_tokens": 30888,
+        "known_output_tokens": 28837,
+        "unknown_usage_calls": 0,
+        "input_tokens": 30888,
+        "output_tokens": 28837,
+        "output_reserved": 40960
+      },
+      "both": {
+        "calls": 13,
+        "known_input_tokens": 28574,
+        "known_output_tokens": 25964,
+        "unknown_usage_calls": 0,
+        "input_tokens": 28574,
+        "output_tokens": 25964,
+        "output_reserved": 36864
+      }
+    },
+    "transport_outcomes": {
+      "error:CancelledError": 5,
+      "finish:length": 21,
+      "finish:stop": 25
+    },
+    "rows": [
+      {
+        "case": "logic_a",
+        "domain": "logic",
+        "arm": "off",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 3,
+        "unknown_usage_calls": 0,
+        "output_reserved": 10240,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1,
+          "integration": 1
+        },
+        "work_products": [],
+        "replans": 1,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "logic_a",
+        "domain": "logic",
+        "arm": "work_product",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 4,
+        "unknown_usage_calls": 0,
+        "output_reserved": 10240,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1,
+          "work_product": 1,
+          "integration": 1
+        },
+        "work_products": [
+          {
+            "status": "available",
+            "handed_to_integration": true
+          }
+        ],
+        "replans": 1,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "logic_a",
+        "domain": "logic",
+        "arm": "critic_aware",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 8192,
+        "calls_by_role": {
+          "draft": 1,
+          "integration": 1
+        },
+        "work_products": [],
+        "replans": 1,
+        "critic_attempts": 0,
+        "external_review_completed": false
+      },
+      {
+        "case": "logic_a",
+        "domain": "logic",
+        "arm": "both",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 3,
+        "unknown_usage_calls": 0,
+        "output_reserved": 8192,
+        "calls_by_role": {
+          "draft": 1,
+          "work_product": 1,
+          "integration": 1
+        },
+        "work_products": [
+          {
+            "status": "incomplete_generation",
+            "handed_to_integration": false
+          }
+        ],
+        "replans": 1,
+        "critic_attempts": 0,
+        "external_review_completed": false
+      },
+      {
+        "case": "logic_b",
+        "domain": "logic",
+        "arm": "work_product",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 4,
+        "unknown_usage_calls": 0,
+        "output_reserved": 10240,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1,
+          "work_product": 1,
+          "integration": 1
+        },
+        "work_products": [
+          {
+            "status": "incomplete_generation",
+            "handed_to_integration": false
+          }
+        ],
+        "replans": 1,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "logic_b",
+        "domain": "logic",
+        "arm": "critic_aware",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 8192,
+        "calls_by_role": {
+          "draft": 1,
+          "integration": 1
+        },
+        "work_products": [],
+        "replans": 1,
+        "critic_attempts": 0,
+        "external_review_completed": false
+      },
+      {
+        "case": "logic_b",
+        "domain": "logic",
+        "arm": "both",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 3,
+        "unknown_usage_calls": 0,
+        "output_reserved": 8192,
+        "calls_by_role": {
+          "draft": 1,
+          "work_product": 1,
+          "integration": 1
+        },
+        "work_products": [
+          {
+            "status": "incomplete_generation",
+            "handed_to_integration": false
+          }
+        ],
+        "replans": 1,
+        "critic_attempts": 0,
+        "external_review_completed": false
+      },
+      {
+        "case": "logic_b",
+        "domain": "logic",
+        "arm": "off",
+        "initial_complete": false,
+        "answer_complete": false,
+        "schema_valid": false,
+        "exact": false,
+        "item_accuracy": 0.0,
+        "workflow_valid": false,
+        "calls": 3,
+        "unknown_usage_calls": 0,
+        "output_reserved": 10240,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1,
+          "integration": 1
+        },
+        "work_products": [],
+        "replans": 1,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "sql",
+        "domain": "sql",
+        "arm": "critic_aware",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": true,
+        "calls": 4,
+        "unknown_usage_calls": 0,
+        "output_reserved": 12288,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 2,
+          "integration": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 2,
+        "external_review_completed": true
+      },
+      {
+        "case": "sql",
+        "domain": "sql",
+        "arm": "both",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 3,
+        "unknown_usage_calls": 0,
+        "output_reserved": 8192,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1,
+          "critic_repair": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "sql",
+        "domain": "sql",
+        "arm": "off",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 1,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "sql",
+        "domain": "sql",
+        "arm": "work_product",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 1,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "events",
+        "domain": "events",
+        "arm": "both",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "events",
+        "domain": "events",
+        "arm": "off",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 1,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "events",
+        "domain": "events",
+        "arm": "work_product",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 1,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "events",
+        "domain": "events",
+        "arm": "critic_aware",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      },
+      {
+        "case": "evidence",
+        "domain": "evidence",
+        "arm": "both",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": true,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "evidence",
+        "domain": "evidence",
+        "arm": "critic_aware",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": true,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "evidence",
+        "domain": "evidence",
+        "arm": "work_product",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": true,
+        "calls": 2,
+        "unknown_usage_calls": 0,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": true
+      },
+      {
+        "case": "evidence",
+        "domain": "evidence",
+        "arm": "off",
+        "initial_complete": true,
+        "answer_complete": true,
+        "schema_valid": true,
+        "exact": true,
+        "item_accuracy": 1.0,
+        "workflow_valid": false,
+        "calls": 2,
+        "unknown_usage_calls": 1,
+        "output_reserved": 6144,
+        "calls_by_role": {
+          "draft": 1,
+          "critic": 1
+        },
+        "work_products": [],
+        "replans": 0,
+        "critic_attempts": 1,
+        "external_review_completed": false
+      }
+    ]
+  },
+  "exact_replay": {
+    "verified": true,
+    "canonical_sha256": "3e53bbe152388b3a509d3e85a5c98b53a5c567b88c0dcdc554c0da28d6390a2f",
+    "provider_calls": 0,
+    "unexpected_blocked_http_attempts": 0,
+    "request_coverage": 51,
+    "transport_event_coverage": 102,
+    "journal_sha256_identical": true
+  },
+  "private_artifact_sha256": {
+    "task-goals-completion-2026-11-13-live/report.json": "e889935662b546d65f8ddf6efbbc0c0e5534f41799b50845f36c2fa43e4c067b",
+    "task-goals-completion-2026-11-13-live/journal.json": "df46b895484373890f82e4ba07e45ee67663aff1e20945e941e8f4826e0900be",
+    "task-goals-completion-2026-11-13-replay/failure.json": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf",
+    "task-goals-completion-2026-11-13-certified-live/report.json": "bf7fc519310e6347b3ee126595fe6d185d2e1c5182d19d080f9dbc631bd3ef21",
+    "task-goals-completion-2026-11-13-certified-live/journal.json": "f4871fa5629f92967c7a678e9b23c100eccd9f76c5d95eeb69df980ae3d8ac98",
+    "task-goals-completion-2026-11-13-certified-replay/report.json": "cffba6876cb830e04e98170c28e8de80f2fcaa5cf13515da25213002c34e1b5f",
+    "task-goals-completion-2026-11-13-certified-replay/journal.json": "f4871fa5629f92967c7a678e9b23c100eccd9f76c5d95eeb69df980ae3d8ac98"
+  }
+}
