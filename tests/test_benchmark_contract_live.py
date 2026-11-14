@@ -102,6 +102,36 @@ async def test_transport_failure_closes_paid_admission_and_usage_stays_unknown()
 
 
 @pytest.mark.asyncio
+async def test_recorded_aiohttp_oserror_replays_as_sticky_transport_failure():
+    import aiohttp
+    journal = pilot.RawJournal(config(), {'test': 'aiohttp_oserror'})
+    journal.transport = Transport([aiohttp.ClientOSError(1, 'PRIVATE_NETWORK_ERROR')])
+    with forbid_provider_network():
+        with pytest.raises(aiohttp.ClientOSError):
+            await journal.post('draft', 'https://fake.invalid', {'stage': 'draft'}, {})
+    journal.finish()
+    assert journal.data['occurrences'][0]['error_type'] == 'ClientOSError'
+    replay = pilot.RawJournal(config(), {'test': 'aiohttp_oserror'}, frozen=deepcopy(journal.data))
+    with forbid_provider_network() as audit:
+        with pytest.raises(OSError):
+            await replay.post('draft', 'https://fake.invalid', {'stage': 'draft'}, {})
+    replay.finish()
+    assert audit.blocked_requests == 0
+    assert replay.data['occurrences'][0]['error_type'] == 'ClientOSError'
+    assert replay.data['occurrences'][0]['sha256'] == journal.data['occurrences'][0]['sha256']
+    divergent = pilot.RawJournal(config(), {'test': 'aiohttp_oserror'}, frozen=deepcopy(journal.data))
+    with forbid_provider_network():
+        with pytest.raises(OSError):
+            await divergent.post('draft', 'https://fake.invalid', {'stage': 'draft'}, {})
+        with pytest.raises(pilot.AdmissionError):
+            await divergent.post('draft', 'https://fake.invalid', {'stage': 'draft'}, {})
+    # The second request was not present on the live tape, so exact replay
+    # correctly rejects its extra denial instead of claiming coverage.
+    with pytest.raises(ValueError, match='coverage'):
+        divergent.finish()
+
+
+@pytest.mark.asyncio
 async def test_replay_rejects_tampering_order_changes_and_unused_occurrences():
     journal = pilot.RawJournal(config(), {'test': 'integrity'})
     journal.transport = Transport([response('first'), response('second')])

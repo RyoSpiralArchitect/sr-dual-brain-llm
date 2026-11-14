@@ -38,9 +38,12 @@ class Provider:
 @pytest.mark.asyncio
 async def test_four_arms_caps_budget_and_exact_replay(tmp_path):
     fixture = study.base.pilot.bench.read_json(study.FIXTURE)
-    manifest = study.base.pilot.bench.read_json(study.MANIFEST)
+    frozen_manifest = study.base.pilot.bench.read_json(study.MANIFEST)
     study.validate_fixture(fixture)
-    assert manifest == study.expected_manifest(fixture)
+    assert frozen_manifest['fixture_sha256'] == study.base.pilot.bench.digest(fixture)
+    # The stopped paid study stays pinned to its original source commit. This
+    # synthetic check exercises the same runner against the current code hash.
+    manifest = study.expected_manifest(fixture)
     for old_path in ('completion_mechanisms.json', 'completion_mechanisms_certified.json',
                      'replanning_corrected.json'):
         old = study.base.pilot.bench.read_json(study.ROOT/'sr-dual-brain-llm/examples'/old_path)
