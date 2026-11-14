@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_frontloaded_generation_development_v1",
+  "fixture_sha256": "e3c719670e04f6f5c62b29fddb1ead830be896d18cf5ce6df1a77e66c62ecd53",
+  "candidate_code_sha256": "4984089da94b7d712f3437a865d2d90ef750b7eb4ccb93234fa0cd1037c4ce65",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "c2493ab5911da0b9713e31de90014ea3811b20fffdf29365a746338a477f853c",
+  "case_ids": [
+    "logic_a",
+    "logic_b",
+    "sql",
+    "events",
+    "evidence"
+  ],
+  "arms": [
+    "native_4096",
+    "frontload_8192",
+    "frontload_8192_aware",
+    "self_review"
+  ],
+  "order": [
+    [
+      "native_4096",
+      "frontload_8192",
+      "frontload_8192_aware",
+      "self_review"
+    ],
+    [
+      "frontload_8192",
+      "frontload_8192_aware",
+      "self_review",
+      "native_4096"
+    ],
+    [
+      "frontload_8192_aware",
+      "self_review",
+      "native_4096",
+      "frontload_8192"
+    ],
+    [
+      "self_review",
+      "native_4096",
+      "frontload_8192",
+      "frontload_8192_aware"
+    ],
+    [
+      "self_review",
+      "frontload_8192_aware",
+      "frontload_8192",
+      "native_4096"
+    ]
+  ],
+  "call_limit": 80,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "caps_by_arm": {
+    "native_4096": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "frontload_8192": {
+      "draft": 8192,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "frontload_8192_aware": {
+      "draft": 8192,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "self_review": {
+      "self_initial": 4096,
+      "self_critique": 2048,
+      "self_revision": 4096,
+      "self_audit": 2048
+    }
+  },
+  "native_client_timeout_seconds": 120,
+  "self_review_stage_timeout_seconds": 60,
+  "reasoning_effort": "provider_default",
+  "ca_preflight": "SSL_CERT_FILE=certifi.where, nonempty default context"
+}

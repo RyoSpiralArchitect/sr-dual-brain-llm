@@ -37,6 +37,9 @@ base = bench.base
 CALL_LIMIT = 128
 REPLAY_ERRORS = {'CancelledError': asyncio.CancelledError, 'TimeoutError': TimeoutError,
                  'RuntimeError': RuntimeError, 'ValueError': ValueError, 'OSError': OSError,
+                 # Preserve the recorded aiohttp subtype in the journal while
+                 # replaying the same generic transport-failure boundary.
+                 'ClientOSError': OSError, 'ClientConnectorCertificateError': OSError,
                  'ReviewBudgetExhausted':ReviewBudgetExhausted}
 STAGE = ContextVar('live_contract_stage', default=None)
 FIXTURE = base.ROOT / 'examples/contract_live_verification.json'

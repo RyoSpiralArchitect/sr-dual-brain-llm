@@ -82,8 +82,11 @@ class CampaignBudget:
 
 class PhaseJournal(prior.ScheduledJournal):
     """An all-provider output-ceiling ledger, including failed/cancelled calls."""
-    def __init__(self, *args, campaign, **kwargs):
+    def __init__(self, *args, campaign, max_request_cap=4096, **kwargs):
+        if type(max_request_cap) is not int or not 1 <= max_request_cap <= 8192:
+            raise ValueError('Invalid per-request ceiling')
         self.campaign = campaign
+        self.max_request_cap = max_request_cap
         self.reserved = 0
         self.trial_denied = False
         super().__init__(*args, **kwargs)
@@ -97,7 +100,7 @@ class PhaseJournal(prior.ScheduledJournal):
         if self.blocked or len(self.events) >= self.max_calls:
             return await super().post(role, url, payload, headers, **kwargs)
         cap = payload.get('max_completion_tokens', payload.get('max_tokens'))
-        if type(cap) is not int or not 1 <= cap <= 4096:
+        if type(cap) is not int or not 1 <= cap <= self.max_request_cap:
             raise ValueError('Every provider request requires a bounded output ceiling')
         reason = ('global_call_cap' if self.campaign.admissions >= GLOBAL_CALL_LIMIT else
                   'trial_output_cap' if self.reserved+cap > OUTPUT_ALLOWANCE else None)

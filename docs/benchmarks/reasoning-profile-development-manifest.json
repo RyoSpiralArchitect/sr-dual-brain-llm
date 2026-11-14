@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_ordinary_reasoning_profile_development_v1",
+  "fixture_sha256": "b787c2830c9390b156a02cdb8543c2ef4ab98ccf39a98b797e24652b37da60da",
+  "candidate_code_sha256": "5bd61365ece044ab845cb819e7875557ab0f3ec1679016b1e3571cb0ac9a442e",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "9d681069aa5d8593ef691b236eb8fa2459f3f5bc9f59140a46802a3d447a92df",
+  "case_ids": [
+    "logic_a",
+    "logic_b",
+    "sql",
+    "events",
+    "evidence"
+  ],
+  "arms": [
+    "default_off",
+    "default_aware",
+    "medium_aware",
+    "low_aware",
+    "self_review"
+  ],
+  "order": [
+    [
+      "default_off",
+      "default_aware",
+      "medium_aware",
+      "low_aware",
+      "self_review"
+    ],
+    [
+      "default_aware",
+      "medium_aware",
+      "low_aware",
+      "self_review",
+      "default_off"
+    ],
+    [
+      "medium_aware",
+      "low_aware",
+      "self_review",
+      "default_off",
+      "default_aware"
+    ],
+    [
+      "low_aware",
+      "self_review",
+      "default_off",
+      "default_aware",
+      "medium_aware"
+    ],
+    [
+      "self_review",
+      "default_off",
+      "default_aware",
+      "medium_aware",
+      "low_aware"
+    ]
+  ],
+  "call_limit": 96,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "caps_by_arm": {
+    "default_off": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "default_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "medium_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "low_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "self_review": {
+      "self_initial": 4096,
+      "self_critique": 2048,
+      "self_revision": 4096,
+      "self_audit": 2048
+    }
+  },
+  "native_client_timeout_seconds": 120,
+  "self_review_stage_timeout_seconds": 60,
+  "reasoning_effort": "per_arm_default_medium_low",
+  "ca_preflight": "SSL_CERT_FILE=certifi.where, nonempty default context",
+  "profiles": {
+    "default_off": {
+      "effort": "provider_default",
+      "critic_aware": false
+    },
+    "default_aware": {
+      "effort": "provider_default",
+      "critic_aware": true
+    },
+    "medium_aware": {
+      "effort": "medium",
+      "critic_aware": true
+    },
+    "low_aware": {
+      "effort": "low",
+      "critic_aware": true
+    },
+    "self_review": {
+      "effort": "provider_default",
+      "critic_aware": false
+    }
+  },
+  "parent_source": "d1b79f887d71d0e5418b69fb8d9c9959ba53cb11",
+  "parent_report_sha256": "e486484288afc1f8fcf315fa8c795a8682123cfd612ebf61e4bd6c0962f3ffd0",
+  "parent_journal_sha256": "8f36c332b3a0a3611d033dff00e4109c7471e66127746432f73556ba3cfcc30c",
+  "parent_replay_failure_sha256": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf"
+}

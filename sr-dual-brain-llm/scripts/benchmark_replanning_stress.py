@@ -64,11 +64,14 @@ def metadata(fixture,config,phase,prior,plan=None):
 
 
 class Journal(base.PhaseJournal):
-    def __init__(self,*args,**kwargs):
+    def __init__(self,*args,max_recorded_latency_ms=75000,**kwargs):
+        if type(max_recorded_latency_ms) is not int or not 1 <= max_recorded_latency_ms <= 150000:
+            raise ValueError('Invalid recorded duration bound')
+        self.max_recorded_latency_ms=max_recorded_latency_ms
         self.starts={}
         super().__init__(*args,**kwargs)
         if self.frozen and any(type(r.get('latency_ms')) not in (float,int)
-                or not math.isfinite(r['latency_ms']) or not 0<=r['latency_ms']<=75000
+                or not math.isfinite(r['latency_ms']) or not 0<=r['latency_ms']<=self.max_recorded_latency_ms
                 for r in self.frozen['occurrences']):
             raise ValueError('Recorded duration exceeds the frozen replay bound')
 

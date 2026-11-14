@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_critic_cap_recovery_development_v1",
+  "fixture_sha256": "6d61e0084de343bcb4cfa212de7855ff926eb882ce98ad6861760ac30e6661f1",
+  "candidate_code_sha256": "9be290f166555681244757d6af2bac52cbe2d49240fb7424d8086a0b536eafc8",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "d1db0b3d3e8caea7d80ffc9df91188c3a928979f14400a81dffd14873e0f0a0b",
+  "case_ids": [
+    "logic_a",
+    "logic_b",
+    "sql",
+    "events",
+    "evidence"
+  ],
+  "arms": [
+    "default_off",
+    "default_aware",
+    "low_aware",
+    "low_critic4096"
+  ],
+  "order": [
+    [
+      "default_off",
+      "default_aware",
+      "low_aware",
+      "low_critic4096"
+    ],
+    [
+      "default_aware",
+      "low_aware",
+      "low_critic4096",
+      "default_off"
+    ],
+    [
+      "low_aware",
+      "low_critic4096",
+      "default_off",
+      "default_aware"
+    ],
+    [
+      "low_critic4096",
+      "default_off",
+      "default_aware",
+      "low_aware"
+    ],
+    [
+      "default_off",
+      "default_aware",
+      "low_aware",
+      "low_critic4096"
+    ]
+  ],
+  "call_limit": 80,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "caps_by_arm": {
+    "default_off": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "default_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "low_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "low_critic4096": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 4096,
+      "critic_repair": 4096
+    }
+  },
+  "native_client_timeout_seconds": 120,
+  "self_review_stage_timeout_seconds": 60,
+  "reasoning_effort": "per_arm_default_or_low",
+  "ca_preflight": "SSL_CERT_FILE=certifi.where, nonempty default context",
+  "profiles": {
+    "default_off": {
+      "effort": "provider_default",
+      "critic_aware": false,
+      "critic_cap": 2048
+    },
+    "default_aware": {
+      "effort": "provider_default",
+      "critic_aware": true,
+      "critic_cap": 2048
+    },
+    "low_aware": {
+      "effort": "low",
+      "critic_aware": true,
+      "critic_cap": 2048
+    },
+    "low_critic4096": {
+      "effort": "low",
+      "critic_aware": true,
+      "critic_cap": 4096
+    }
+  },
+  "adaptive_from_stopped_profile_screen": true,
+  "parent_source": "98f77d35bd4278c77952af0a57d3b470d8b4a53b",
+  "parent_report_sha256": "192d11b35aa9903bfe10f79f64992b8ccfca9a3d9fa21b32c0b1b6efd1d75d97",
+  "parent_journal_sha256": "1c0150eec419385320f02babd02ca3711f0f13e4d8192cdfc7c2384507e85858",
+  "parent_replay_report_sha256": "ba873d557c84af0d35cbc548792cd505ad23fcdc234454e2f8c89025cbb213aa",
+  "parent_replay_failure_sha256": "3c1222d95add4c543c9507d17c3fbe7fbc30fdae4a6f8b0ff36887b1626cd0cf"
+}
