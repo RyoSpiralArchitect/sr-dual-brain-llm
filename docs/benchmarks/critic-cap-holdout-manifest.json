@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_critic_cap_holdout_v1",
+  "fixture_sha256": "da2c82257d4377681a1e8755bdfed20d35f5b62bc649f1f78a8fcd13e687e646",
+  "candidate_code_sha256": "47344bda375e408d1de76a7716c145c7f079f19b17242cbde8b82d91d370b21c",
+  "grader_sha256": "60412cd1fe75949c852e01825b05571111e91e33da304b8703cf35fcc7c2c446",
+  "protocol_sha256": "3162b5230ae1e1e3daf1db7d1fb539160ef90b0e43f23792609867facd3d9e52",
+  "case_ids": [
+    "logic_a",
+    "sql_a",
+    "events_a",
+    "evidence_a",
+    "logic_b",
+    "sql_b",
+    "events_b",
+    "evidence_b"
+  ],
+  "arms": [
+    "default_off",
+    "low_aware",
+    "low_critic4096"
+  ],
+  "order": [
+    [
+      "default_off",
+      "low_aware",
+      "low_critic4096"
+    ],
+    [
+      "low_aware",
+      "low_critic4096",
+      "default_off"
+    ],
+    [
+      "low_critic4096",
+      "default_off",
+      "low_aware"
+    ],
+    [
+      "default_off",
+      "low_aware",
+      "low_critic4096"
+    ],
+    [
+      "low_aware",
+      "low_critic4096",
+      "default_off"
+    ],
+    [
+      "low_critic4096",
+      "default_off",
+      "low_aware"
+    ],
+    [
+      "default_off",
+      "low_aware",
+      "low_critic4096"
+    ],
+    [
+      "low_aware",
+      "low_critic4096",
+      "default_off"
+    ]
+  ],
+  "call_limit": 80,
+  "output_ceiling_per_trial": 12288,
+  "ordinary_left_allocation": 8192,
+  "caps_by_arm": {
+    "default_off": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "low_aware": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 2048,
+      "critic_repair": 2048
+    },
+    "low_critic4096": {
+      "draft": 4096,
+      "integration": 4096,
+      "critic": 4096,
+      "critic_repair": 4096
+    }
+  },
+  "native_client_timeout_seconds": 120,
+  "self_review_stage_timeout_seconds": 60,
+  "reasoning_effort": "per_arm_default_or_low",
+  "ca_preflight": "SSL_CERT_FILE=certifi.where, nonempty default context",
+  "profiles": {
+    "default_off": {
+      "effort": "provider_default",
+      "critic_aware": false,
+      "critic_cap": 2048
+    },
+    "low_aware": {
+      "effort": "low",
+      "critic_aware": true,
+      "critic_cap": 2048
+    },
+    "low_critic4096": {
+      "effort": "low",
+      "critic_aware": true,
+      "critic_cap": 4096
+    }
+  },
+  "phase": "untouched_holdout_after_adaptive_development",
+  "selected_candidate": "low_critic4096",
+  "parent_source": "f9507dde60672ba9c99b5d11336012cbd30ad22c",
+  "parent_report_sha256": "b3b5ee9135d1a56d1a799e0c56ec53d79c501302f72576a221d20f9e664fe3b0",
+  "parent_journal_sha256": "8ca16cc3394246aaaeb47d5c24d59e13c0d6074ea15eb4157a33969ac74e209d",
+  "parent_replay_report_sha256": "855736ede9a24ae514c94bb3d2837db95b14437659771bcc950532b7143f3cba",
+  "parent_replay_journal_sha256": "8ca16cc3394246aaaeb47d5c24d59e13c0d6074ea15eb4157a33969ac74e209d"
+}

@@ -26,6 +26,7 @@ ARMS = ('native_4096', 'frontload_8192', 'frontload_8192_aware', 'self_review')
 ORDERS = (ARMS, ARMS[1:]+ARMS[:1], ARMS[2:]+ARMS[:2],
           ARMS[3:]+ARMS[:3], tuple(reversed(ARMS)))
 CALL_LIMIT = 80
+PHASE = 'development'
 CAPS = {'native_4096': {'draft': 4096, 'integration': 4096,
                         'critic': 2048, 'critic_repair': 2048},
         'frontload_8192': {'draft': 8192, 'critic': 2048,
@@ -157,7 +158,7 @@ async def run(output_dir, fixture, manifest, config, *, frozen=None, transport_f
     base.pilot.base.enforce_runtime()
     budget = base.CampaignBudget()
     metadata = base.pilot.metadata(fixture, config) | {
-        'experiment': tasks.ORIGIN, 'phase': 'development', 'call_limit': CALL_LIMIT,
+        'experiment': tasks.ORIGIN, 'phase': PHASE, 'call_limit': CALL_LIMIT,
         'protocol_sha256': manifest['protocol_sha256'],
         'manifest_sha256': base.pilot.bench.digest(manifest), 'arms': list(ARMS),
         'order': [list(o) for o in ORDERS], 'caps_by_arm': CAPS,

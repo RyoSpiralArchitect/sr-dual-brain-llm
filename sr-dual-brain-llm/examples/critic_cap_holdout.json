@@ -1,0 +1,4386 @@
+{
+  "schema_version": 1,
+  "origin": "prospective_critic_cap_holdout_v1",
+  "clock": 1794960000,
+  "cases": [
+    {
+      "id": "logic_a",
+      "partition": "holdout",
+      "level": 4,
+      "domain": "logic",
+      "data": {
+        "variables": [
+          "v00",
+          "v01",
+          "v02",
+          "v03",
+          "v04",
+          "v05",
+          "v06",
+          "v07",
+          "v08",
+          "v09",
+          "v10",
+          "v11"
+        ],
+        "clauses": [
+          [
+            -12,
+            -11,
+            -5
+          ],
+          [
+            -12,
+            -10,
+            -6
+          ],
+          [
+            -12,
+            -8,
+            3
+          ],
+          [
+            -12,
+            -4,
+            6
+          ],
+          [
+            -12,
+            -3,
+            11
+          ],
+          [
+            -12,
+            8,
+            11
+          ],
+          [
+            -11,
+            -10,
+            4
+          ],
+          [
+            -11,
+            -9,
+            -7
+          ],
+          [
+            -11,
+            -9,
+            -6
+          ],
+          [
+            -11,
+            -6,
+            2
+          ],
+          [
+            -11,
+            -3,
+            9
+          ],
+          [
+            -11,
+            -3,
+            10
+          ],
+          [
+            -11,
+            -2,
+            4
+          ],
+          [
+            -11,
+            -1,
+            6
+          ],
+          [
+            -11,
+            3,
+            6
+          ],
+          [
+            -10,
+            -7,
+            8
+          ],
+          [
+            -10,
+            -6,
+            1
+          ],
+          [
+            -10,
+            -3,
+            4
+          ],
+          [
+            -10,
+            2,
+            5
+          ],
+          [
+            -10,
+            2,
+            7
+          ],
+          [
+            -10,
+            2,
+            9
+          ],
+          [
+            -9,
+            -8,
+            -4
+          ],
+          [
+            -9,
+            -7,
+            -1
+          ],
+          [
+            -9,
+            -3,
+            8
+          ],
+          [
+            -9,
+            6,
+            8
+          ],
+          [
+            -8,
+            -7,
+            3
+          ],
+          [
+            -8,
+            -6,
+            -3
+          ],
+          [
+            -8,
+            -6,
+            10
+          ],
+          [
+            -8,
+            1,
+            4
+          ],
+          [
+            -7,
+            -5,
+            -2
+          ],
+          [
+            -7,
+            2,
+            9
+          ],
+          [
+            -7,
+            2,
+            12
+          ],
+          [
+            -6,
+            -5,
+            -1
+          ],
+          [
+            -6,
+            -5,
+            3
+          ],
+          [
+            -6,
+            -4,
+            10
+          ],
+          [
+            -6,
+            -3,
+            -2
+          ],
+          [
+            -6,
+            -1,
+            2
+          ],
+          [
+            -6,
+            1,
+            9
+          ],
+          [
+            -5,
+            -4,
+            2
+          ],
+          [
+            -5,
+            -4,
+            8
+          ],
+          [
+            -5,
+            -4,
+            9
+          ],
+          [
+            -5,
+            -2,
+            6
+          ],
+          [
+            -5,
+            -2,
+            10
+          ],
+          [
+            -5,
+            -1,
+            7
+          ],
+          [
+            -5,
+            -1,
+            12
+          ],
+          [
+            -5,
+            2,
+            6
+          ],
+          [
+            -5,
+            7,
+            9
+          ],
+          [
+            -4,
+            -2,
+            6
+          ],
+          [
+            -4,
+            2,
+            9
+          ],
+          [
+            -4,
+            3,
+            6
+          ],
+          [
+            -3,
+            1,
+            9
+          ],
+          [
+            -3,
+            8,
+            12
+          ],
+          [
+            -2,
+            1,
+            10
+          ],
+          [
+            -2,
+            6,
+            12
+          ],
+          [
+            1,
+            6,
+            12
+          ],
+          [
+            1,
+            9,
+            10
+          ],
+          [
+            2,
+            8,
+            9
+          ],
+          [
+            3,
+            6,
+            7
+          ],
+          [
+            5,
+            6,
+            9
+          ],
+          [
+            5,
+            7,
+            9
+          ]
+        ]
+      },
+      "question": "This is a satisfiable Boolean constraint system. A clause is an OR of its terms; every clause must hold. A ~ prefix means NOT. Classify a variable as entailed_true when it is true in every satisfying assignment, entailed_false when false in every satisfying assignment, and undetermined when both values occur. Do not select a single satisfying assignment as if it proved entailment.\nVariables: [\"v00\", \"v01\", \"v02\", \"v03\", \"v04\", \"v05\", \"v06\", \"v07\", \"v08\", \"v09\", \"v10\", \"v11\"]\nClauses: [[\"~v11\",\"~v10\",\"~v04\"],[\"~v11\",\"~v09\",\"~v05\"],[\"~v11\",\"~v07\",\"v02\"],[\"~v11\",\"~v03\",\"v05\"],[\"~v11\",\"~v02\",\"v10\"],[\"~v11\",\"v07\",\"v10\"],[\"~v10\",\"~v09\",\"v03\"],[\"~v10\",\"~v08\",\"~v06\"],[\"~v10\",\"~v08\",\"~v05\"],[\"~v10\",\"~v05\",\"v01\"],[\"~v10\",\"~v02\",\"v08\"],[\"~v10\",\"~v02\",\"v09\"],[\"~v10\",\"~v01\",\"v03\"],[\"~v10\",\"~v00\",\"v05\"],[\"~v10\",\"v02\",\"v05\"],[\"~v09\",\"~v06\",\"v07\"],[\"~v09\",\"~v05\",\"v00\"],[\"~v09\",\"~v02\",\"v03\"],[\"~v09\",\"v01\",\"v04\"],[\"~v09\",\"v01\",\"v06\"],[\"~v09\",\"v01\",\"v08\"],[\"~v08\",\"~v07\",\"~v03\"],[\"~v08\",\"~v06\",\"~v00\"],[\"~v08\",\"~v02\",\"v07\"],[\"~v08\",\"v05\",\"v07\"],[\"~v07\",\"~v06\",\"v02\"],[\"~v07\",\"~v05\",\"~v02\"],[\"~v07\",\"~v05\",\"v09\"],[\"~v07\",\"v00\",\"v03\"],[\"~v06\",\"~v04\",\"~v01\"],[\"~v06\",\"v01\",\"v08\"],[\"~v06\",\"v01\",\"v11\"],[\"~v05\",\"~v04\",\"~v00\"],[\"~v05\",\"~v04\",\"v02\"],[\"~v05\",\"~v03\",\"v09\"],[\"~v05\",\"~v02\",\"~v01\"],[\"~v05\",\"~v00\",\"v01\"],[\"~v05\",\"v00\",\"v08\"],[\"~v04\",\"~v03\",\"v01\"],[\"~v04\",\"~v03\",\"v07\"],[\"~v04\",\"~v03\",\"v08\"],[\"~v04\",\"~v01\",\"v05\"],[\"~v04\",\"~v01\",\"v09\"],[\"~v04\",\"~v00\",\"v06\"],[\"~v04\",\"~v00\",\"v11\"],[\"~v04\",\"v01\",\"v05\"],[\"~v04\",\"v06\",\"v08\"],[\"~v03\",\"~v01\",\"v05\"],[\"~v03\",\"v01\",\"v08\"],[\"~v03\",\"v02\",\"v05\"],[\"~v02\",\"v00\",\"v08\"],[\"~v02\",\"v07\",\"v11\"],[\"~v01\",\"v00\",\"v09\"],[\"~v01\",\"v05\",\"v11\"],[\"v00\",\"v05\",\"v11\"],[\"v00\",\"v08\",\"v09\"],[\"v01\",\"v07\",\"v08\"],[\"v02\",\"v05\",\"v06\"],[\"v04\",\"v05\",\"v08\"],[\"v04\",\"v06\",\"v08\"]]\nRequirements:\n1. Find the satisfying assignments using every supplied clause; a single satisfying assignment does not establish entailment.\n2. Classify every variable across all satisfying assignments, retaining undetermined values when both possibilities occur.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"status\":{\"v00\":\"entailed_true|entailed_false|undetermined\",...}}",
+      "expected": {
+        "status": {
+          "v00": "undetermined",
+          "v01": "undetermined",
+          "v02": "undetermined",
+          "v03": "undetermined",
+          "v04": "entailed_false",
+          "v05": "undetermined",
+          "v06": "undetermined",
+          "v07": "undetermined",
+          "v08": "undetermined",
+          "v09": "undetermined",
+          "v10": "entailed_false",
+          "v11": "entailed_false"
+        }
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "sql_a",
+      "partition": "holdout",
+      "level": 7,
+      "domain": "sql",
+      "data": {
+        "cutoff": 5,
+        "accounts": [
+          [
+            "acct_00"
+          ],
+          [
+            "acct_01"
+          ],
+          [
+            "acct_02"
+          ],
+          [
+            "acct_03"
+          ],
+          [
+            "acct_04"
+          ],
+          [
+            "acct_05"
+          ],
+          [
+            "acct_06"
+          ],
+          [
+            "acct_07"
+          ],
+          [
+            "acct_08"
+          ]
+        ],
+        "events": [
+          [
+            31,
+            "acct_00",
+            5,
+            "void",
+            0
+          ],
+          [
+            32,
+            "acct_03",
+            2,
+            "credit",
+            9
+          ],
+          [
+            33,
+            "acct_03",
+            7,
+            "credit",
+            3
+          ],
+          [
+            34,
+            "acct_04",
+            4,
+            "credit",
+            0
+          ],
+          [
+            35,
+            "acct_04",
+            2,
+            "debit",
+            null
+          ],
+          [
+            36,
+            "acct_04",
+            3,
+            "debit",
+            9
+          ],
+          [
+            37,
+            "acct_04",
+            6,
+            "credit",
+            9
+          ],
+          [
+            38,
+            "acct_04",
+            4,
+            "credit",
+            -2
+          ],
+          [
+            39,
+            "acct_05",
+            6,
+            "debit",
+            -2
+          ],
+          [
+            40,
+            "acct_05",
+            5,
+            "debit",
+            7
+          ],
+          [
+            41,
+            "acct_05",
+            3,
+            "credit",
+            7
+          ],
+          [
+            42,
+            "acct_05",
+            5,
+            "void",
+            null
+          ],
+          [
+            43,
+            "acct_07",
+            3,
+            "credit",
+            9
+          ],
+          [
+            44,
+            "acct_07",
+            4,
+            "credit",
+            7
+          ],
+          [
+            45,
+            "acct_07",
+            5,
+            "debit",
+            3
+          ],
+          [
+            46,
+            "acct_07",
+            7,
+            "debit",
+            null
+          ],
+          [
+            47,
+            "acct_08",
+            5,
+            "void",
+            7
+          ],
+          [
+            48,
+            "acct_08",
+            6,
+            "credit",
+            null
+          ],
+          [
+            49,
+            "acct_08",
+            2,
+            "credit",
+            3
+          ],
+          [
+            50,
+            "acct_08",
+            3,
+            "credit",
+            0
+          ],
+          [
+            51,
+            "acct_08",
+            5,
+            "debit",
+            -2
+          ],
+          [
+            52,
+            "acct_08",
+            4,
+            "debit",
+            3
+          ],
+          [
+            53,
+            "acct_08",
+            2,
+            "credit",
+            9
+          ],
+          [
+            54,
+            "acct_08",
+            6,
+            "void",
+            7
+          ],
+          [
+            901,
+            "acct_00",
+            5,
+            "credit",
+            3
+          ],
+          [
+            902,
+            "acct_00",
+            5,
+            "void",
+            null
+          ]
+        ],
+        "tags": [
+          [
+            "acct_00",
+            "active"
+          ],
+          [
+            "acct_00",
+            "active"
+          ],
+          [
+            "acct_02",
+            null
+          ],
+          [
+            "acct_02",
+            "blue"
+          ],
+          [
+            "acct_04",
+            "active"
+          ],
+          [
+            "acct_04",
+            "active"
+          ],
+          [
+            "acct_06",
+            "active"
+          ],
+          [
+            "acct_06",
+            "active"
+          ],
+          [
+            "acct_08",
+            "active"
+          ],
+          [
+            "acct_00",
+            "active"
+          ],
+          [
+            "acct_00",
+            "active"
+          ]
+        ],
+        "bans": [
+          [
+            "acct_02",
+            7,
+            8,
+            "hold"
+          ],
+          [
+            "acct_03",
+            3,
+            5,
+            "note"
+          ],
+          [
+            "acct_04",
+            4,
+            5,
+            "note"
+          ],
+          [
+            "acct_05",
+            4,
+            5,
+            "note"
+          ],
+          [
+            "acct_06",
+            5,
+            4,
+            "note"
+          ]
+        ]
+      },
+      "question": "Evaluate the following SQLite 3 query exactly using bag semantics and SQL NULL rules. Tables contain only the supplied rows; cutoff is a bound parameter. Do not execute tools or claim execution. Return the query result, not a corrected query.\nSchemas:\nCREATE TABLE accounts(id TEXT);\nCREATE TABLE events(id INTEGER,account_id TEXT,ts INTEGER,kind TEXT,amount INTEGER);\nCREATE TABLE tags(account_id TEXT,label TEXT);\nCREATE TABLE bans(account_id TEXT,since INTEGER,until INTEGER,reason TEXT);\nData: {\"cutoff\":5,\"accounts\":[[\"acct_00\"],[\"acct_01\"],[\"acct_02\"],[\"acct_03\"],[\"acct_04\"],[\"acct_05\"],[\"acct_06\"],[\"acct_07\"],[\"acct_08\"]],\"events\":[[31,\"acct_00\",5,\"void\",0],[32,\"acct_03\",2,\"credit\",9],[33,\"acct_03\",7,\"credit\",3],[34,\"acct_04\",4,\"credit\",0],[35,\"acct_04\",2,\"debit\",null],[36,\"acct_04\",3,\"debit\",9],[37,\"acct_04\",6,\"credit\",9],[38,\"acct_04\",4,\"credit\",-2],[39,\"acct_05\",6,\"debit\",-2],[40,\"acct_05\",5,\"debit\",7],[41,\"acct_05\",3,\"credit\",7],[42,\"acct_05\",5,\"void\",null],[43,\"acct_07\",3,\"credit\",9],[44,\"acct_07\",4,\"credit\",7],[45,\"acct_07\",5,\"debit\",3],[46,\"acct_07\",7,\"debit\",null],[47,\"acct_08\",5,\"void\",7],[48,\"acct_08\",6,\"credit\",null],[49,\"acct_08\",2,\"credit\",3],[50,\"acct_08\",3,\"credit\",0],[51,\"acct_08\",5,\"debit\",-2],[52,\"acct_08\",4,\"debit\",3],[53,\"acct_08\",2,\"credit\",9],[54,\"acct_08\",6,\"void\",7],[901,\"acct_00\",5,\"credit\",3],[902,\"acct_00\",5,\"void\",null]],\"tags\":[[\"acct_00\",\"active\"],[\"acct_00\",\"active\"],[\"acct_02\",null],[\"acct_02\",\"blue\"],[\"acct_04\",\"active\"],[\"acct_04\",\"active\"],[\"acct_06\",\"active\"],[\"acct_06\",\"active\"],[\"acct_08\",\"active\"],[\"acct_00\",\"active\"],[\"acct_00\",\"active\"]],\"bans\":[[\"acct_02\",7,8,\"hold\"],[\"acct_03\",3,5,\"note\"],[\"acct_04\",4,5,\"note\"],[\"acct_05\",4,5,\"note\"],[\"acct_06\",5,4,\"note\"]]}\nQuery:\nWITH ranked AS (\n SELECT id,account_id,kind,\n ROW_NUMBER() OVER(PARTITION BY account_id ORDER BY ts DESC,id DESC) AS rn\n FROM events WHERE ts<=:cutoff AND kind<>'void'\n)\nSELECT a.id AS account,\n COALESCE(SUM(CASE WHEN t.label='active' AND e.kind='credit' THEN e.amount ELSE 0 END),0) AS credit_total,\n COUNT(e.id) AS joined_events, COUNT(DISTINCT t.label) AS tag_kinds,\n r.id AS latest_event, r.kind AS latest_kind\nFROM accounts a\nLEFT JOIN events e ON e.account_id=a.id AND e.ts<=:cutoff\nLEFT JOIN tags t ON t.account_id=a.id\nLEFT JOIN ranked r ON r.account_id=a.id AND r.rn=1\nWHERE NOT EXISTS (\n SELECT 1 FROM bans b WHERE b.account_id=a.id AND b.reason='hold'\n AND b.since<=:cutoff AND (b.until IS NULL OR b.until>:cutoff)\n)\nGROUP BY a.id,r.id,r.kind ORDER BY a.id\nRequirements:\n1. Determine account eligibility and the latest eligible event per account, respecting the cutoff, ban reason, exclusive endpoints and ordering ties.\n2. Evaluate the joins and aggregates with bag multiplicities and SQL NULL semantics; combine every eligible account into the result.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"rows\":[{\"account\":\"...\",\"credit_total\":0,\"joined_events\":0,\"tag_kinds\":0,\"latest_event\":null,\"latest_kind\":null},...]}",
+      "expected": {
+        "rows": [
+          {
+            "account": "acct_00",
+            "credit_total": 12,
+            "joined_events": 12,
+            "tag_kinds": 1,
+            "latest_event": 901,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_01",
+            "credit_total": 0,
+            "joined_events": 0,
+            "tag_kinds": 0,
+            "latest_event": null,
+            "latest_kind": null
+          },
+          {
+            "account": "acct_02",
+            "credit_total": 0,
+            "joined_events": 0,
+            "tag_kinds": 1,
+            "latest_event": null,
+            "latest_kind": null
+          },
+          {
+            "account": "acct_03",
+            "credit_total": 0,
+            "joined_events": 1,
+            "tag_kinds": 0,
+            "latest_event": 32,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_04",
+            "credit_total": -4,
+            "joined_events": 8,
+            "tag_kinds": 1,
+            "latest_event": 38,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_05",
+            "credit_total": 0,
+            "joined_events": 3,
+            "tag_kinds": 0,
+            "latest_event": 40,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_06",
+            "credit_total": 0,
+            "joined_events": 0,
+            "tag_kinds": 1,
+            "latest_event": null,
+            "latest_kind": null
+          },
+          {
+            "account": "acct_07",
+            "credit_total": 0,
+            "joined_events": 3,
+            "tag_kinds": 0,
+            "latest_event": 45,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_08",
+            "credit_total": 12,
+            "joined_events": 6,
+            "tag_kinds": 1,
+            "latest_event": 51,
+            "latest_kind": "debit"
+          }
+        ]
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "events_a",
+      "partition": "holdout",
+      "level": 6,
+      "domain": "events",
+      "data": {
+        "jobs": [
+          "job_00",
+          "job_01",
+          "job_02",
+          "job_03",
+          "job_04",
+          "job_05",
+          "job_06",
+          "job_07"
+        ],
+        "events": [
+          [
+            "submit",
+            "job_02",
+            1
+          ],
+          [
+            "submit",
+            "job_00",
+            1
+          ],
+          [
+            "submit",
+            "job_05",
+            1
+          ],
+          [
+            "submit",
+            "job_01",
+            1
+          ],
+          [
+            "submit",
+            "job_07",
+            1
+          ],
+          [
+            "claim",
+            "job_02",
+            1,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_04",
+            1
+          ],
+          [
+            "cancel",
+            "job_02",
+            1
+          ],
+          [
+            "claim",
+            "job_00",
+            1,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_00",
+            1
+          ],
+          [
+            "submit",
+            "job_06",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            1,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_04",
+            1,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_04",
+            1
+          ],
+          [
+            "claim",
+            "job_05",
+            1,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_02",
+            1,
+            "amber",
+            "old"
+          ],
+          [
+            "submit",
+            "job_03",
+            1
+          ],
+          [
+            "claim",
+            "job_01",
+            1,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_03",
+            1,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            1,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_06",
+            1,
+            "birch"
+          ],
+          [
+            "cancel",
+            "job_01",
+            1
+          ],
+          [
+            "cancel",
+            "job_06",
+            1
+          ],
+          [
+            "finish",
+            "job_04",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "cancel",
+            "job_03",
+            1
+          ],
+          [
+            "finish",
+            "job_01",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "finish",
+            "job_00",
+            1,
+            "amber",
+            "old"
+          ],
+          [
+            "finish",
+            "job_06",
+            1,
+            "birch",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_03",
+            1,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_03",
+            1,
+            "amber",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            1,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_02",
+            2
+          ],
+          [
+            "claim",
+            "job_07",
+            1,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_04",
+            2
+          ],
+          [
+            "claim",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_01",
+            2
+          ],
+          [
+            "finish",
+            "job_02",
+            1,
+            "amber",
+            "late"
+          ],
+          [
+            "cancel",
+            "job_07",
+            1
+          ],
+          [
+            "claim",
+            "job_01",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_03",
+            2
+          ],
+          [
+            "submit",
+            "job_00",
+            2
+          ],
+          [
+            "claim",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_03",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_01",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "finish",
+            "job_04",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_07",
+            1,
+            "amber",
+            "old"
+          ],
+          [
+            "cancel",
+            "job_05",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_03",
+            1,
+            "amber",
+            "late"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            1,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_05",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_02",
+            2,
+            "amber"
+          ],
+          [
+            "transfer",
+            "job_02",
+            2,
+            "birch",
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            1,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_01",
+            2,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_00",
+            1,
+            "amber",
+            "late"
+          ],
+          [
+            "submit",
+            "job_07",
+            2
+          ],
+          [
+            "submit",
+            "job_05",
+            2
+          ],
+          [
+            "claim",
+            "job_07",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_07",
+            1,
+            "amber",
+            "late"
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "transfer",
+            "job_01",
+            2,
+            "birch",
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_02",
+            2
+          ],
+          [
+            "ack_cancel",
+            "job_03",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_05",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "claim",
+            "job_04",
+            2,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_06",
+            2
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_06",
+            2,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_06",
+            1,
+            "birch",
+            "late"
+          ],
+          [
+            "cancel",
+            "job_01",
+            2
+          ],
+          [
+            "claim",
+            "job_07",
+            2,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_05",
+            2,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_03",
+            2,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_07",
+            2
+          ],
+          [
+            "cancel",
+            "job_04",
+            2
+          ],
+          [
+            "transfer",
+            "job_03",
+            2,
+            "birch",
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_06",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_00",
+            2,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_03",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_01",
+            2,
+            "birch",
+            "new"
+          ],
+          [
+            "submit",
+            "job_04",
+            1
+          ],
+          [
+            "transfer",
+            "job_05",
+            2,
+            "amber",
+            "coral"
+          ],
+          [
+            "submit",
+            "job_02",
+            1
+          ],
+          [
+            "transfer",
+            "job_00",
+            2,
+            "birch",
+            "amber"
+          ],
+          [
+            "submit",
+            "job_01",
+            1
+          ],
+          [
+            "submit",
+            "job_04",
+            3
+          ],
+          [
+            "transfer",
+            "job_06",
+            2,
+            "amber",
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_07",
+            2,
+            "birch",
+            "new"
+          ],
+          [
+            "submit",
+            "job_02",
+            3
+          ],
+          [
+            "submit",
+            "job_01",
+            3
+          ],
+          [
+            "finish",
+            "job_06",
+            2,
+            "amber",
+            "new"
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_07",
+            1
+          ],
+          [
+            "submit",
+            "job_06",
+            1
+          ],
+          [
+            "cancel",
+            "job_05",
+            2
+          ],
+          [
+            "submit",
+            "job_06",
+            3
+          ],
+          [
+            "submit",
+            "job_05",
+            1
+          ],
+          [
+            "claim",
+            "job_02",
+            3,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_02",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_05",
+            3
+          ],
+          [
+            "claim",
+            "job_01",
+            3,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_01",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            3,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            3,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_07",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            3,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_05",
+            3,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_07",
+            3,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_06",
+            3,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_04",
+            3,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_05",
+            3
+          ],
+          [
+            "cancel",
+            "job_06",
+            3
+          ],
+          [
+            "cancel",
+            "job_07",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            3,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            3,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            3,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            3,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_04",
+            3
+          ],
+          [
+            "finish",
+            "job_06",
+            3,
+            "birch",
+            "third"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            3,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_04",
+            3,
+            "coral",
+            "third"
+          ]
+        ]
+      },
+      "question": "Apply this closed-world async job-state specification. No external observations are needed.\nRules: Each job starts at epoch 0, state absent, owner null, result null. Events apply in supplied order. submit(job,v): only v greater than the current epoch resets the job to queued at epoch v, owner/result null; otherwise ignore. claim(job,v,w): only the current epoch in queued state becomes running with owner w. transfer(job,v,from,to): only current epoch, running state, and matching from owner replaces the owner with to; otherwise ignore. cancel(job,v): only current epoch; queued becomes cancelled, running becomes cancel_requested; all other states are unchanged. finish(job,v,w,value): only current epoch, matching owner, and state running or cancel_requested commits the value and changes state to committed, owner null. A request without its acknowledgement does not prevent finish. ack_cancel(job,v,w): only current epoch, matching owner, and state cancel_requested becomes cancelled, owner/result null. Other events are ignored. Terminal states ignore claim/cancel/finish/ack_cancel; a later higher-epoch submit can reset them. A stale epoch, wrong owner, duplicate submit or unsolicited acknowledgement grants no authority.\nInput: {\"jobs\":[\"job_00\",\"job_01\",\"job_02\",\"job_03\",\"job_04\",\"job_05\",\"job_06\",\"job_07\"],\"events\":[[\"submit\",\"job_02\",1],[\"submit\",\"job_00\",1],[\"submit\",\"job_05\",1],[\"submit\",\"job_01\",1],[\"submit\",\"job_07\",1],[\"claim\",\"job_02\",1,\"amber\"],[\"submit\",\"job_04\",1],[\"cancel\",\"job_02\",1],[\"claim\",\"job_00\",1,\"amber\"],[\"cancel\",\"job_00\",1],[\"submit\",\"job_06\",1],[\"ack_cancel\",\"job_00\",1,\"amber\"],[\"claim\",\"job_04\",1,\"coral\"],[\"cancel\",\"job_04\",1],[\"claim\",\"job_05\",1,\"coral\"],[\"ack_cancel\",\"job_04\",1,\"coral\"],[\"finish\",\"job_02\",1,\"amber\",\"old\"],[\"submit\",\"job_03\",1],[\"claim\",\"job_01\",1,\"coral\"],[\"claim\",\"job_03\",1,\"amber\"],[\"ack_cancel\",\"job_02\",1,\"amber\"],[\"claim\",\"job_06\",1,\"birch\"],[\"cancel\",\"job_01\",1],[\"cancel\",\"job_06\",1],[\"finish\",\"job_04\",1,\"coral\",\"old\"],[\"cancel\",\"job_03\",1],[\"finish\",\"job_01\",1,\"coral\",\"old\"],[\"finish\",\"job_00\",1,\"amber\",\"old\"],[\"finish\",\"job_06\",1,\"birch\",\"old\"],[\"ack_cancel\",\"job_03\",1,\"amber\"],[\"finish\",\"job_03\",1,\"amber\",\"old\"],[\"ack_cancel\",\"job_01\",1,\"coral\"],[\"submit\",\"job_02\",2],[\"claim\",\"job_07\",1,\"amber\"],[\"submit\",\"job_04\",2],[\"claim\",\"job_02\",2,\"birch\"],[\"submit\",\"job_01\",2],[\"finish\",\"job_02\",1,\"amber\",\"late\"],[\"cancel\",\"job_07\",1],[\"claim\",\"job_01\",2,\"birch\"],[\"submit\",\"job_03\",2],[\"submit\",\"job_00\",2],[\"claim\",\"job_00\",2,\"birch\"],[\"claim\",\"job_03\",2,\"birch\"],[\"claim\",\"job_04\",2,\"amber\"],[\"finish\",\"job_01\",1,\"coral\",\"late\"],[\"finish\",\"job_04\",1,\"coral\",\"late\"],[\"ack_cancel\",\"job_02\",2,\"birch\"],[\"finish\",\"job_07\",1,\"amber\",\"old\"],[\"cancel\",\"job_05\",1],[\"ack_cancel\",\"job_05\",1,\"coral\"],[\"finish\",\"job_03\",1,\"amber\",\"late\"],[\"ack_cancel\",\"job_06\",1,\"birch\"],[\"finish\",\"job_05\",1,\"coral\",\"old\"],[\"ack_cancel\",\"job_01\",2,\"birch\"],[\"ack_cancel\",\"job_04\",2,\"amber\"],[\"claim\",\"job_02\",2,\"amber\"],[\"transfer\",\"job_02\",2,\"birch\",\"amber\"],[\"ack_cancel\",\"job_07\",1,\"amber\"],[\"claim\",\"job_01\",2,\"coral\"],[\"finish\",\"job_00\",1,\"amber\",\"late\"],[\"submit\",\"job_07\",2],[\"submit\",\"job_05\",2],[\"claim\",\"job_07\",2,\"birch\"],[\"finish\",\"job_07\",1,\"amber\",\"late\"],[\"ack_cancel\",\"job_00\",2,\"birch\"],[\"transfer\",\"job_01\",2,\"birch\",\"coral\"],[\"cancel\",\"job_02\",2],[\"ack_cancel\",\"job_03\",2,\"birch\"],[\"claim\",\"job_05\",2,\"amber\"],[\"finish\",\"job_05\",1,\"coral\",\"late\"],[\"claim\",\"job_04\",2,\"coral\"],[\"submit\",\"job_06\",2],[\"ack_cancel\",\"job_07\",2,\"birch\"],[\"claim\",\"job_06\",2,\"amber\"],[\"ack_cancel\",\"job_05\",2,\"amber\"],[\"finish\",\"job_06\",1,\"birch\",\"late\"],[\"cancel\",\"job_01\",2],[\"claim\",\"job_07\",2,\"amber\"],[\"ack_cancel\",\"job_01\",2,\"birch\"],[\"ack_cancel\",\"job_06\",2,\"amber\"],[\"claim\",\"job_05\",2,\"coral\"],[\"claim\",\"job_03\",2,\"amber\"],[\"cancel\",\"job_07\",2],[\"cancel\",\"job_04\",2],[\"transfer\",\"job_03\",2,\"birch\",\"amber\"],[\"ack_cancel\",\"job_04\",2,\"amber\"],[\"claim\",\"job_06\",2,\"birch\"],[\"claim\",\"job_00\",2,\"amber\"],[\"ack_cancel\",\"job_03\",2,\"birch\"],[\"finish\",\"job_01\",2,\"birch\",\"new\"],[\"submit\",\"job_04\",1],[\"transfer\",\"job_05\",2,\"amber\",\"coral\"],[\"submit\",\"job_02\",1],[\"transfer\",\"job_00\",2,\"birch\",\"amber\"],[\"submit\",\"job_01\",1],[\"submit\",\"job_04\",3],[\"transfer\",\"job_06\",2,\"amber\",\"birch\"],[\"ack_cancel\",\"job_06\",2,\"amber\"],[\"finish\",\"job_07\",2,\"birch\",\"new\"],[\"submit\",\"job_02\",3],[\"submit\",\"job_01\",3],[\"finish\",\"job_06\",2,\"amber\",\"new\"],[\"ack_cancel\",\"job_02\",2,\"birch\"],[\"submit\",\"job_07\",1],[\"submit\",\"job_06\",1],[\"cancel\",\"job_05\",2],[\"submit\",\"job_06\",3],[\"submit\",\"job_05\",1],[\"claim\",\"job_02\",3,\"amber\"],[\"cancel\",\"job_02\",3],[\"ack_cancel\",\"job_01\",2,\"birch\"],[\"submit\",\"job_05\",3],[\"claim\",\"job_01\",3,\"coral\"],[\"cancel\",\"job_01\",3],[\"ack_cancel\",\"job_02\",3,\"birch\"],[\"ack_cancel\",\"job_01\",3,\"birch\"],[\"ack_cancel\",\"job_04\",2,\"amber\"],[\"submit\",\"job_07\",3],[\"ack_cancel\",\"job_02\",3,\"amber\"],[\"ack_cancel\",\"job_05\",2,\"amber\"],[\"claim\",\"job_05\",3,\"coral\"],[\"ack_cancel\",\"job_07\",2,\"birch\"],[\"claim\",\"job_07\",3,\"amber\"],[\"ack_cancel\",\"job_06\",2,\"amber\"],[\"claim\",\"job_06\",3,\"birch\"],[\"claim\",\"job_04\",3,\"coral\"],[\"cancel\",\"job_05\",3],[\"cancel\",\"job_06\",3],[\"cancel\",\"job_07\",3],[\"ack_cancel\",\"job_05\",3,\"amber\"],[\"ack_cancel\",\"job_01\",3,\"coral\"],[\"ack_cancel\",\"job_07\",3,\"birch\"],[\"ack_cancel\",\"job_06\",3,\"amber\"],[\"cancel\",\"job_04\",3],[\"finish\",\"job_06\",3,\"birch\",\"third\"],[\"ack_cancel\",\"job_04\",3,\"amber\"],[\"finish\",\"job_04\",3,\"coral\",\"third\"]]}\nRequirements:\n1. Replay each job epoch and terminal-state transition in the given global event order; preserve version resets and ignore stale events.\n2. Track current ownership through transfers, cancellation and finish races; apply only events authorized by the exact state and owner.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"jobs\":{\"job_00\":{\"epoch\":0,\"state\":\"...\",\"owner\":null,\"result\":null},...}}",
+      "expected": {
+        "jobs": {
+          "job_00": {
+            "epoch": 2,
+            "state": "running",
+            "owner": "amber",
+            "result": null
+          },
+          "job_01": {
+            "epoch": 3,
+            "state": "cancelled",
+            "owner": null,
+            "result": null
+          },
+          "job_02": {
+            "epoch": 3,
+            "state": "cancelled",
+            "owner": null,
+            "result": null
+          },
+          "job_03": {
+            "epoch": 2,
+            "state": "running",
+            "owner": "amber",
+            "result": null
+          },
+          "job_04": {
+            "epoch": 3,
+            "state": "committed",
+            "owner": null,
+            "result": "third"
+          },
+          "job_05": {
+            "epoch": 3,
+            "state": "cancel_requested",
+            "owner": "coral",
+            "result": null
+          },
+          "job_06": {
+            "epoch": 3,
+            "state": "committed",
+            "owner": null,
+            "result": "third"
+          },
+          "job_07": {
+            "epoch": 3,
+            "state": "cancel_requested",
+            "owner": "amber",
+            "result": null
+          }
+        }
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "evidence_a",
+      "partition": "holdout",
+      "level": 6,
+      "domain": "evidence",
+      "data": {
+        "sources": [
+          {
+            "id": "q05a",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q04d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q04a",
+              "q04b"
+            ]
+          },
+          {
+            "id": "q04b",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": 4,
+            "supersedes": []
+          },
+          {
+            "id": "q01c",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": [
+              "q01b"
+            ]
+          },
+          {
+            "id": "q01a",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q04c",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q04b"
+            ]
+          },
+          {
+            "id": "q03a",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q00b",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": null,
+            "revoked_at": 4,
+            "supersedes": [
+              "q00a"
+            ]
+          },
+          {
+            "id": "q07a",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q02b",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": 4,
+            "supersedes": [
+              "q02a"
+            ]
+          },
+          {
+            "id": "q00c",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": 6,
+            "supersedes": [
+              "q00b"
+            ]
+          },
+          {
+            "id": "q06b",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q05b",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": null,
+            "revoked_at": 4,
+            "supersedes": []
+          },
+          {
+            "id": "q06c",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q06b"
+            ]
+          },
+          {
+            "id": "q01d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q01a",
+              "q01b"
+            ]
+          },
+          {
+            "id": "q05d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q05a",
+              "q05b"
+            ]
+          },
+          {
+            "id": "q04a",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q07c",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q07b"
+            ]
+          },
+          {
+            "id": "q02d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q02a",
+              "q02b"
+            ]
+          },
+          {
+            "id": "q03c",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": 6,
+            "supersedes": [
+              "q03b"
+            ]
+          },
+          {
+            "id": "q07b",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q02c",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q02b"
+            ]
+          },
+          {
+            "id": "q05c",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q05b"
+            ]
+          },
+          {
+            "id": "q00a",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q06d",
+            "scope": "unrelated",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q06a",
+              "q06b"
+            ]
+          },
+          {
+            "id": "q06a",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q03b",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "derived",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 4,
+            "supersedes": []
+          },
+          {
+            "id": "q00d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q00a",
+              "q00b"
+            ]
+          },
+          {
+            "id": "q03d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q03a",
+              "q03b"
+            ]
+          },
+          {
+            "id": "q07d",
+            "scope": "unrelated",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q07a",
+              "q07b"
+            ]
+          },
+          {
+            "id": "q02a",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q01b",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "derived",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": 4,
+            "supersedes": []
+          }
+        ],
+        "queries": [
+          {
+            "id": "q00",
+            "scope": "project_0",
+            "topic": "field_0",
+            "time": 3
+          },
+          {
+            "id": "q01",
+            "scope": "project_1",
+            "topic": "field_0",
+            "time": 4
+          },
+          {
+            "id": "q02",
+            "scope": "project_2",
+            "topic": "field_0",
+            "time": 3
+          },
+          {
+            "id": "q03",
+            "scope": "project_0",
+            "topic": "field_1",
+            "time": 4
+          },
+          {
+            "id": "q04",
+            "scope": "project_1",
+            "topic": "field_1",
+            "time": 6
+          },
+          {
+            "id": "q05",
+            "scope": "project_2",
+            "topic": "field_1",
+            "time": 6
+          },
+          {
+            "id": "q06",
+            "scope": "project_0",
+            "topic": "field_2",
+            "time": 6
+          },
+          {
+            "id": "q07",
+            "scope": "project_1",
+            "topic": "field_2",
+            "time": 3
+          }
+        ]
+      },
+      "question": "This is a closed-world source-selection exercise under explicit symbolic rules, not a request to retrieve or certify real-world facts.\nRules: Select sources separately for each query scope/topic/time. A record is a candidate only if kind is primary, scope and topic exactly match, issued_at<=time, valid_from<=time, and time<valid_to when valid_to is non-null. It must also satisfy time<expires_at and time<revoked_at for each non-null bound. Endpoints are exclusive. A primary record permanently supersedes the IDs in its supersedes list from its issued_at onward, but only targets with the same scope AND topic. Its own later expiry/revocation does not resurrect superseded sources. Derived records cannot supersede or provide primary support; cross-scope/topic links have no effect. A supersession need not have an otherwise active replacement. Among surviving candidates: no source means unknown/value null/IDs []; one distinct value means supported with that value and all surviving source IDs; multiple distinct values mean conflict/value null with all surviving source IDs. Recency alone never resolves a conflict. Return source_ids sorted lexicographically.\nInput: {\"sources\":[{\"id\":\"q05a\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q04d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q04a\",\"q04b\"]},{\"id\":\"q04b\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":4,\"supersedes\":[]},{\"id\":\"q01c\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[\"q01b\"]},{\"id\":\"q01a\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q04c\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q04b\"]},{\"id\":\"q03a\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q00b\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":null,\"revoked_at\":4,\"supersedes\":[\"q00a\"]},{\"id\":\"q07a\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q02b\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":4,\"supersedes\":[\"q02a\"]},{\"id\":\"q00c\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":6,\"supersedes\":[\"q00b\"]},{\"id\":\"q06b\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q05b\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":null,\"revoked_at\":4,\"supersedes\":[]},{\"id\":\"q06c\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q06b\"]},{\"id\":\"q01d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q01a\",\"q01b\"]},{\"id\":\"q05d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q05a\",\"q05b\"]},{\"id\":\"q04a\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q07c\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q07b\"]},{\"id\":\"q02d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q02a\",\"q02b\"]},{\"id\":\"q03c\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":6,\"supersedes\":[\"q03b\"]},{\"id\":\"q07b\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q02c\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q02b\"]},{\"id\":\"q05c\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q05b\"]},{\"id\":\"q00a\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q06d\",\"scope\":\"unrelated\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q06a\",\"q06b\"]},{\"id\":\"q06a\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q03b\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"derived\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":4,\"supersedes\":[]},{\"id\":\"q00d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q00a\",\"q00b\"]},{\"id\":\"q03d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q03a\",\"q03b\"]},{\"id\":\"q07d\",\"scope\":\"unrelated\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q07a\",\"q07b\"]},{\"id\":\"q02a\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q01b\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"derived\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":4,\"supersedes\":[]}],\"queries\":[{\"id\":\"q00\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"time\":3},{\"id\":\"q01\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"time\":4},{\"id\":\"q02\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"time\":3},{\"id\":\"q03\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"time\":4},{\"id\":\"q04\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"time\":6},{\"id\":\"q05\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"time\":6},{\"id\":\"q06\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"time\":6},{\"id\":\"q07\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"time\":3}]}\nRequirements:\n1. Evaluate each query independently using matching primary scope/topic, issuance, validity, expiry and revocation at its exact time.\n2. Apply permanent authorized supersession before resolving values and all surviving IDs; retain unknowns and conflicts without using recency as authority.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"queries\":{\"q00\":{\"status\":\"supported|conflict|unknown\",\"value\":null,\"source_ids\":[]},...}}",
+      "expected": {
+        "queries": {
+          "q00": {
+            "status": "supported",
+            "value": "birch",
+            "source_ids": [
+              "q00b"
+            ]
+          },
+          "q01": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q01a",
+              "q01c"
+            ]
+          },
+          "q02": {
+            "status": "supported",
+            "value": "amber",
+            "source_ids": [
+              "q02b"
+            ]
+          },
+          "q03": {
+            "status": "conflict",
+            "value": null,
+            "source_ids": [
+              "q03a",
+              "q03c"
+            ]
+          },
+          "q04": {
+            "status": "supported",
+            "value": "birch",
+            "source_ids": [
+              "q04a"
+            ]
+          },
+          "q05": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q05a"
+            ]
+          },
+          "q06": {
+            "status": "supported",
+            "value": "amber",
+            "source_ids": [
+              "q06a"
+            ]
+          },
+          "q07": {
+            "status": "supported",
+            "value": "amber",
+            "source_ids": [
+              "q07a"
+            ]
+          }
+        }
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "logic_b",
+      "partition": "holdout",
+      "level": 4,
+      "domain": "logic",
+      "data": {
+        "variables": [
+          "v00",
+          "v01",
+          "v02",
+          "v03",
+          "v04",
+          "v05",
+          "v06",
+          "v07",
+          "v08",
+          "v09",
+          "v10",
+          "v11"
+        ],
+        "clauses": [
+          [
+            -12,
+            -11,
+            2
+          ],
+          [
+            -12,
+            -10,
+            5
+          ],
+          [
+            -12,
+            -9,
+            1
+          ],
+          [
+            -12,
+            -6,
+            10
+          ],
+          [
+            -12,
+            -4,
+            5
+          ],
+          [
+            -12,
+            -4,
+            10
+          ],
+          [
+            -12,
+            -4,
+            11
+          ],
+          [
+            -12,
+            -3,
+            4
+          ],
+          [
+            -12,
+            3,
+            11
+          ],
+          [
+            -11,
+            -10,
+            -8
+          ],
+          [
+            -11,
+            -5,
+            -1
+          ],
+          [
+            -11,
+            -5,
+            9
+          ],
+          [
+            -11,
+            -3,
+            2
+          ],
+          [
+            -11,
+            -3,
+            7
+          ],
+          [
+            -11,
+            -3,
+            9
+          ],
+          [
+            -11,
+            3,
+            7
+          ],
+          [
+            -11,
+            7,
+            10
+          ],
+          [
+            -10,
+            -9,
+            4
+          ],
+          [
+            -10,
+            -6,
+            12
+          ],
+          [
+            -10,
+            -2,
+            7
+          ],
+          [
+            -10,
+            -1,
+            2
+          ],
+          [
+            -10,
+            3,
+            7
+          ],
+          [
+            -10,
+            4,
+            12
+          ],
+          [
+            -10,
+            8,
+            9
+          ],
+          [
+            -10,
+            8,
+            12
+          ],
+          [
+            -9,
+            -6,
+            -1
+          ],
+          [
+            -9,
+            -4,
+            8
+          ],
+          [
+            -9,
+            -1,
+            8
+          ],
+          [
+            -9,
+            4,
+            6
+          ],
+          [
+            -9,
+            10,
+            12
+          ],
+          [
+            -8,
+            -6,
+            -3
+          ],
+          [
+            -8,
+            -5,
+            -2
+          ],
+          [
+            -8,
+            -4,
+            5
+          ],
+          [
+            -8,
+            5,
+            11
+          ],
+          [
+            -7,
+            -6,
+            1
+          ],
+          [
+            -7,
+            -5,
+            -3
+          ],
+          [
+            -7,
+            -2,
+            4
+          ],
+          [
+            -7,
+            3,
+            10
+          ],
+          [
+            -7,
+            9,
+            12
+          ],
+          [
+            -7,
+            11,
+            12
+          ],
+          [
+            -6,
+            -2,
+            3
+          ],
+          [
+            -6,
+            -1,
+            2
+          ],
+          [
+            -6,
+            -1,
+            11
+          ],
+          [
+            -6,
+            3,
+            5
+          ],
+          [
+            -6,
+            10,
+            12
+          ],
+          [
+            -3,
+            -2,
+            1
+          ],
+          [
+            -3,
+            1,
+            8
+          ],
+          [
+            -3,
+            7,
+            12
+          ],
+          [
+            -2,
+            3,
+            11
+          ],
+          [
+            -2,
+            4,
+            11
+          ],
+          [
+            -2,
+            5,
+            10
+          ],
+          [
+            -1,
+            2,
+            8
+          ],
+          [
+            -1,
+            3,
+            10
+          ],
+          [
+            1,
+            4,
+            6
+          ],
+          [
+            1,
+            5,
+            12
+          ],
+          [
+            3,
+            4,
+            10
+          ],
+          [
+            3,
+            5,
+            10
+          ],
+          [
+            4,
+            10,
+            11
+          ],
+          [
+            5,
+            11,
+            12
+          ],
+          [
+            8,
+            9,
+            12
+          ]
+        ]
+      },
+      "question": "This is a satisfiable Boolean constraint system. A clause is an OR of its terms; every clause must hold. A ~ prefix means NOT. Classify a variable as entailed_true when it is true in every satisfying assignment, entailed_false when false in every satisfying assignment, and undetermined when both values occur. Do not select a single satisfying assignment as if it proved entailment.\nVariables: [\"v00\", \"v01\", \"v02\", \"v03\", \"v04\", \"v05\", \"v06\", \"v07\", \"v08\", \"v09\", \"v10\", \"v11\"]\nClauses: [[\"~v11\",\"~v10\",\"v01\"],[\"~v11\",\"~v09\",\"v04\"],[\"~v11\",\"~v08\",\"v00\"],[\"~v11\",\"~v05\",\"v09\"],[\"~v11\",\"~v03\",\"v04\"],[\"~v11\",\"~v03\",\"v09\"],[\"~v11\",\"~v03\",\"v10\"],[\"~v11\",\"~v02\",\"v03\"],[\"~v11\",\"v02\",\"v10\"],[\"~v10\",\"~v09\",\"~v07\"],[\"~v10\",\"~v04\",\"~v00\"],[\"~v10\",\"~v04\",\"v08\"],[\"~v10\",\"~v02\",\"v01\"],[\"~v10\",\"~v02\",\"v06\"],[\"~v10\",\"~v02\",\"v08\"],[\"~v10\",\"v02\",\"v06\"],[\"~v10\",\"v06\",\"v09\"],[\"~v09\",\"~v08\",\"v03\"],[\"~v09\",\"~v05\",\"v11\"],[\"~v09\",\"~v01\",\"v06\"],[\"~v09\",\"~v00\",\"v01\"],[\"~v09\",\"v02\",\"v06\"],[\"~v09\",\"v03\",\"v11\"],[\"~v09\",\"v07\",\"v08\"],[\"~v09\",\"v07\",\"v11\"],[\"~v08\",\"~v05\",\"~v00\"],[\"~v08\",\"~v03\",\"v07\"],[\"~v08\",\"~v00\",\"v07\"],[\"~v08\",\"v03\",\"v05\"],[\"~v08\",\"v09\",\"v11\"],[\"~v07\",\"~v05\",\"~v02\"],[\"~v07\",\"~v04\",\"~v01\"],[\"~v07\",\"~v03\",\"v04\"],[\"~v07\",\"v04\",\"v10\"],[\"~v06\",\"~v05\",\"v00\"],[\"~v06\",\"~v04\",\"~v02\"],[\"~v06\",\"~v01\",\"v03\"],[\"~v06\",\"v02\",\"v09\"],[\"~v06\",\"v08\",\"v11\"],[\"~v06\",\"v10\",\"v11\"],[\"~v05\",\"~v01\",\"v02\"],[\"~v05\",\"~v00\",\"v01\"],[\"~v05\",\"~v00\",\"v10\"],[\"~v05\",\"v02\",\"v04\"],[\"~v05\",\"v09\",\"v11\"],[\"~v02\",\"~v01\",\"v00\"],[\"~v02\",\"v00\",\"v07\"],[\"~v02\",\"v06\",\"v11\"],[\"~v01\",\"v02\",\"v10\"],[\"~v01\",\"v03\",\"v10\"],[\"~v01\",\"v04\",\"v09\"],[\"~v00\",\"v01\",\"v07\"],[\"~v00\",\"v02\",\"v09\"],[\"v00\",\"v03\",\"v05\"],[\"v00\",\"v04\",\"v11\"],[\"v02\",\"v03\",\"v09\"],[\"v02\",\"v04\",\"v09\"],[\"v03\",\"v09\",\"v10\"],[\"v04\",\"v10\",\"v11\"],[\"v07\",\"v08\",\"v11\"]]\nRequirements:\n1. Find the satisfying assignments using every supplied clause; a single satisfying assignment does not establish entailment.\n2. Classify every variable across all satisfying assignments, retaining undetermined values when both possibilities occur.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"status\":{\"v00\":\"entailed_true|entailed_false|undetermined\",...}}",
+      "expected": {
+        "status": {
+          "v00": "entailed_false",
+          "v01": "entailed_false",
+          "v02": "entailed_false",
+          "v03": "entailed_true",
+          "v04": "entailed_true",
+          "v05": "entailed_false",
+          "v06": "entailed_false",
+          "v07": "entailed_true",
+          "v08": "entailed_false",
+          "v09": "entailed_false",
+          "v10": "entailed_false",
+          "v11": "entailed_false"
+        }
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "sql_b",
+      "partition": "holdout",
+      "level": 7,
+      "domain": "sql",
+      "data": {
+        "cutoff": 5,
+        "accounts": [
+          [
+            "acct_00"
+          ],
+          [
+            "acct_01"
+          ],
+          [
+            "acct_02"
+          ],
+          [
+            "acct_03"
+          ],
+          [
+            "acct_04"
+          ],
+          [
+            "acct_05"
+          ],
+          [
+            "acct_06"
+          ],
+          [
+            "acct_07"
+          ],
+          [
+            "acct_08"
+          ]
+        ],
+        "events": [
+          [
+            31,
+            "acct_00",
+            3,
+            "void",
+            0
+          ],
+          [
+            32,
+            "acct_00",
+            6,
+            "debit",
+            9
+          ],
+          [
+            33,
+            "acct_00",
+            2,
+            "credit",
+            0
+          ],
+          [
+            34,
+            "acct_00",
+            7,
+            "void",
+            9
+          ],
+          [
+            35,
+            "acct_00",
+            2,
+            "credit",
+            0
+          ],
+          [
+            36,
+            "acct_00",
+            5,
+            "void",
+            9
+          ],
+          [
+            37,
+            "acct_01",
+            4,
+            "debit",
+            -2
+          ],
+          [
+            38,
+            "acct_02",
+            7,
+            "void",
+            7
+          ],
+          [
+            39,
+            "acct_02",
+            5,
+            "credit",
+            null
+          ],
+          [
+            40,
+            "acct_02",
+            6,
+            "credit",
+            -2
+          ],
+          [
+            41,
+            "acct_03",
+            5,
+            "debit",
+            9
+          ],
+          [
+            42,
+            "acct_03",
+            2,
+            "credit",
+            null
+          ],
+          [
+            43,
+            "acct_04",
+            4,
+            "credit",
+            3
+          ],
+          [
+            44,
+            "acct_04",
+            5,
+            "void",
+            null
+          ],
+          [
+            45,
+            "acct_04",
+            4,
+            "debit",
+            7
+          ],
+          [
+            46,
+            "acct_04",
+            2,
+            "credit",
+            -2
+          ],
+          [
+            47,
+            "acct_04",
+            6,
+            "credit",
+            0
+          ],
+          [
+            48,
+            "acct_05",
+            3,
+            "credit",
+            0
+          ],
+          [
+            49,
+            "acct_06",
+            7,
+            "credit",
+            0
+          ],
+          [
+            50,
+            "acct_06",
+            6,
+            "debit",
+            3
+          ],
+          [
+            51,
+            "acct_06",
+            2,
+            "credit",
+            null
+          ],
+          [
+            52,
+            "acct_06",
+            2,
+            "void",
+            3
+          ],
+          [
+            53,
+            "acct_06",
+            2,
+            "void",
+            null
+          ],
+          [
+            54,
+            "acct_06",
+            4,
+            "void",
+            0
+          ],
+          [
+            55,
+            "acct_06",
+            3,
+            "debit",
+            7
+          ],
+          [
+            56,
+            "acct_07",
+            6,
+            "void",
+            null
+          ],
+          [
+            57,
+            "acct_07",
+            4,
+            "debit",
+            -2
+          ],
+          [
+            58,
+            "acct_07",
+            6,
+            "credit",
+            -2
+          ],
+          [
+            59,
+            "acct_07",
+            2,
+            "void",
+            3
+          ],
+          [
+            60,
+            "acct_08",
+            6,
+            "void",
+            -2
+          ],
+          [
+            61,
+            "acct_08",
+            6,
+            "void",
+            null
+          ],
+          [
+            62,
+            "acct_08",
+            6,
+            "credit",
+            0
+          ],
+          [
+            63,
+            "acct_08",
+            6,
+            "credit",
+            9
+          ],
+          [
+            64,
+            "acct_08",
+            6,
+            "credit",
+            9
+          ],
+          [
+            901,
+            "acct_00",
+            5,
+            "credit",
+            3
+          ],
+          [
+            902,
+            "acct_00",
+            5,
+            "void",
+            null
+          ]
+        ],
+        "tags": [
+          [
+            "acct_01",
+            "active"
+          ],
+          [
+            "acct_01",
+            "active"
+          ],
+          [
+            "acct_02",
+            "active"
+          ],
+          [
+            "acct_02",
+            "active"
+          ],
+          [
+            "acct_03",
+            "active"
+          ],
+          [
+            "acct_04",
+            "blue"
+          ],
+          [
+            "acct_04",
+            "blue"
+          ],
+          [
+            "acct_04",
+            "blue"
+          ],
+          [
+            "acct_05",
+            "active"
+          ],
+          [
+            "acct_05",
+            "blue"
+          ],
+          [
+            "acct_06",
+            "blue"
+          ],
+          [
+            "acct_06",
+            "active"
+          ],
+          [
+            "acct_08",
+            null
+          ],
+          [
+            "acct_08",
+            "blue"
+          ],
+          [
+            "acct_00",
+            "active"
+          ],
+          [
+            "acct_00",
+            "active"
+          ]
+        ],
+        "bans": [
+          [
+            "acct_01",
+            5,
+            4,
+            "hold"
+          ],
+          [
+            "acct_02",
+            5,
+            5,
+            "hold"
+          ],
+          [
+            "acct_04",
+            6,
+            8,
+            "note"
+          ],
+          [
+            "acct_07",
+            5,
+            5,
+            "hold"
+          ],
+          [
+            "acct_08",
+            6,
+            null,
+            "hold"
+          ]
+        ]
+      },
+      "question": "Evaluate the following SQLite 3 query exactly using bag semantics and SQL NULL rules. Tables contain only the supplied rows; cutoff is a bound parameter. Do not execute tools or claim execution. Return the query result, not a corrected query.\nSchemas:\nCREATE TABLE accounts(id TEXT);\nCREATE TABLE events(id INTEGER,account_id TEXT,ts INTEGER,kind TEXT,amount INTEGER);\nCREATE TABLE tags(account_id TEXT,label TEXT);\nCREATE TABLE bans(account_id TEXT,since INTEGER,until INTEGER,reason TEXT);\nData: {\"cutoff\":5,\"accounts\":[[\"acct_00\"],[\"acct_01\"],[\"acct_02\"],[\"acct_03\"],[\"acct_04\"],[\"acct_05\"],[\"acct_06\"],[\"acct_07\"],[\"acct_08\"]],\"events\":[[31,\"acct_00\",3,\"void\",0],[32,\"acct_00\",6,\"debit\",9],[33,\"acct_00\",2,\"credit\",0],[34,\"acct_00\",7,\"void\",9],[35,\"acct_00\",2,\"credit\",0],[36,\"acct_00\",5,\"void\",9],[37,\"acct_01\",4,\"debit\",-2],[38,\"acct_02\",7,\"void\",7],[39,\"acct_02\",5,\"credit\",null],[40,\"acct_02\",6,\"credit\",-2],[41,\"acct_03\",5,\"debit\",9],[42,\"acct_03\",2,\"credit\",null],[43,\"acct_04\",4,\"credit\",3],[44,\"acct_04\",5,\"void\",null],[45,\"acct_04\",4,\"debit\",7],[46,\"acct_04\",2,\"credit\",-2],[47,\"acct_04\",6,\"credit\",0],[48,\"acct_05\",3,\"credit\",0],[49,\"acct_06\",7,\"credit\",0],[50,\"acct_06\",6,\"debit\",3],[51,\"acct_06\",2,\"credit\",null],[52,\"acct_06\",2,\"void\",3],[53,\"acct_06\",2,\"void\",null],[54,\"acct_06\",4,\"void\",0],[55,\"acct_06\",3,\"debit\",7],[56,\"acct_07\",6,\"void\",null],[57,\"acct_07\",4,\"debit\",-2],[58,\"acct_07\",6,\"credit\",-2],[59,\"acct_07\",2,\"void\",3],[60,\"acct_08\",6,\"void\",-2],[61,\"acct_08\",6,\"void\",null],[62,\"acct_08\",6,\"credit\",0],[63,\"acct_08\",6,\"credit\",9],[64,\"acct_08\",6,\"credit\",9],[901,\"acct_00\",5,\"credit\",3],[902,\"acct_00\",5,\"void\",null]],\"tags\":[[\"acct_01\",\"active\"],[\"acct_01\",\"active\"],[\"acct_02\",\"active\"],[\"acct_02\",\"active\"],[\"acct_03\",\"active\"],[\"acct_04\",\"blue\"],[\"acct_04\",\"blue\"],[\"acct_04\",\"blue\"],[\"acct_05\",\"active\"],[\"acct_05\",\"blue\"],[\"acct_06\",\"blue\"],[\"acct_06\",\"active\"],[\"acct_08\",null],[\"acct_08\",\"blue\"],[\"acct_00\",\"active\"],[\"acct_00\",\"active\"]],\"bans\":[[\"acct_01\",5,4,\"hold\"],[\"acct_02\",5,5,\"hold\"],[\"acct_04\",6,8,\"note\"],[\"acct_07\",5,5,\"hold\"],[\"acct_08\",6,null,\"hold\"]]}\nQuery:\nWITH ranked AS (\n SELECT id,account_id,kind,\n ROW_NUMBER() OVER(PARTITION BY account_id ORDER BY ts DESC,id DESC) AS rn\n FROM events WHERE ts<=:cutoff AND kind<>'void'\n)\nSELECT a.id AS account,\n COALESCE(SUM(CASE WHEN t.label='active' AND e.kind='credit' THEN e.amount ELSE 0 END),0) AS credit_total,\n COUNT(e.id) AS joined_events, COUNT(DISTINCT t.label) AS tag_kinds,\n r.id AS latest_event, r.kind AS latest_kind\nFROM accounts a\nLEFT JOIN events e ON e.account_id=a.id AND e.ts<=:cutoff\nLEFT JOIN tags t ON t.account_id=a.id\nLEFT JOIN ranked r ON r.account_id=a.id AND r.rn=1\nWHERE NOT EXISTS (\n SELECT 1 FROM bans b WHERE b.account_id=a.id AND b.reason='hold'\n AND b.since<=:cutoff AND (b.until IS NULL OR b.until>:cutoff)\n)\nGROUP BY a.id,r.id,r.kind ORDER BY a.id\nRequirements:\n1. Determine account eligibility and the latest eligible event per account, respecting the cutoff, ban reason, exclusive endpoints and ordering ties.\n2. Evaluate the joins and aggregates with bag multiplicities and SQL NULL semantics; combine every eligible account into the result.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"rows\":[{\"account\":\"...\",\"credit_total\":0,\"joined_events\":0,\"tag_kinds\":0,\"latest_event\":null,\"latest_kind\":null},...]}",
+      "expected": {
+        "rows": [
+          {
+            "account": "acct_00",
+            "credit_total": 6,
+            "joined_events": 12,
+            "tag_kinds": 1,
+            "latest_event": 901,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_01",
+            "credit_total": 0,
+            "joined_events": 2,
+            "tag_kinds": 1,
+            "latest_event": 37,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_02",
+            "credit_total": 0,
+            "joined_events": 2,
+            "tag_kinds": 1,
+            "latest_event": 39,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_03",
+            "credit_total": 0,
+            "joined_events": 2,
+            "tag_kinds": 1,
+            "latest_event": 41,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_04",
+            "credit_total": 0,
+            "joined_events": 12,
+            "tag_kinds": 1,
+            "latest_event": 45,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_05",
+            "credit_total": 0,
+            "joined_events": 2,
+            "tag_kinds": 2,
+            "latest_event": 48,
+            "latest_kind": "credit"
+          },
+          {
+            "account": "acct_06",
+            "credit_total": 0,
+            "joined_events": 10,
+            "tag_kinds": 2,
+            "latest_event": 55,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_07",
+            "credit_total": 0,
+            "joined_events": 2,
+            "tag_kinds": 0,
+            "latest_event": 57,
+            "latest_kind": "debit"
+          },
+          {
+            "account": "acct_08",
+            "credit_total": 0,
+            "joined_events": 0,
+            "tag_kinds": 1,
+            "latest_event": null,
+            "latest_kind": null
+          }
+        ]
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "events_b",
+      "partition": "holdout",
+      "level": 6,
+      "domain": "events",
+      "data": {
+        "jobs": [
+          "job_00",
+          "job_01",
+          "job_02",
+          "job_03",
+          "job_04",
+          "job_05",
+          "job_06",
+          "job_07"
+        ],
+        "events": [
+          [
+            "submit",
+            "job_03",
+            1
+          ],
+          [
+            "submit",
+            "job_00",
+            1
+          ],
+          [
+            "claim",
+            "job_03",
+            1,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_05",
+            1
+          ],
+          [
+            "claim",
+            "job_00",
+            1,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_05",
+            1,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_06",
+            1
+          ],
+          [
+            "claim",
+            "job_06",
+            1,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_01",
+            1
+          ],
+          [
+            "submit",
+            "job_04",
+            1
+          ],
+          [
+            "claim",
+            "job_04",
+            1,
+            "birch"
+          ],
+          [
+            "cancel",
+            "job_00",
+            1
+          ],
+          [
+            "submit",
+            "job_07",
+            1
+          ],
+          [
+            "cancel",
+            "job_04",
+            1
+          ],
+          [
+            "cancel",
+            "job_05",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_00",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "cancel",
+            "job_06",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_04",
+            1,
+            "birch",
+            "old"
+          ],
+          [
+            "finish",
+            "job_05",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "submit",
+            "job_00",
+            2
+          ],
+          [
+            "submit",
+            "job_02",
+            1
+          ],
+          [
+            "cancel",
+            "job_03",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_03",
+            1,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_03",
+            1,
+            "birch",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            1,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_00",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "submit",
+            "job_03",
+            2
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_02",
+            1,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_03",
+            2,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_04",
+            2
+          ],
+          [
+            "claim",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_02",
+            1
+          ],
+          [
+            "finish",
+            "job_04",
+            1,
+            "birch",
+            "late"
+          ],
+          [
+            "finish",
+            "job_06",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "claim",
+            "job_07",
+            1,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_01",
+            1,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_07",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_04",
+            2,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_05",
+            2
+          ],
+          [
+            "claim",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_03",
+            1,
+            "birch",
+            "late"
+          ],
+          [
+            "claim",
+            "job_00",
+            2,
+            "coral"
+          ],
+          [
+            "transfer",
+            "job_00",
+            2,
+            "birch",
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_01",
+            1
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            1,
+            "coral"
+          ],
+          [
+            "finish",
+            "job_07",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            1,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_06",
+            2
+          ],
+          [
+            "submit",
+            "job_07",
+            2
+          ],
+          [
+            "finish",
+            "job_05",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "claim",
+            "job_06",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_01",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "claim",
+            "job_04",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_03",
+            2,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_00",
+            2
+          ],
+          [
+            "claim",
+            "job_07",
+            2,
+            "amber"
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_07",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "submit",
+            "job_00",
+            1
+          ],
+          [
+            "submit",
+            "job_00",
+            3
+          ],
+          [
+            "finish",
+            "job_02",
+            1,
+            "coral",
+            "old"
+          ],
+          [
+            "ack_cancel",
+            "job_07",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_07",
+            2,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            1,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_05",
+            2,
+            "coral"
+          ],
+          [
+            "claim",
+            "job_03",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_02",
+            2
+          ],
+          [
+            "submit",
+            "job_01",
+            2
+          ],
+          [
+            "claim",
+            "job_01",
+            2,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_07",
+            2
+          ],
+          [
+            "finish",
+            "job_01",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "finish",
+            "job_06",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "cancel",
+            "job_03",
+            2
+          ],
+          [
+            "claim",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "finish",
+            "job_02",
+            1,
+            "coral",
+            "late"
+          ],
+          [
+            "submit",
+            "job_05",
+            1
+          ],
+          [
+            "claim",
+            "job_00",
+            3,
+            "coral"
+          ],
+          [
+            "submit",
+            "job_05",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_07",
+            2,
+            "amber",
+            "new"
+          ],
+          [
+            "claim",
+            "job_05",
+            3,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            2,
+            "amber"
+          ],
+          [
+            "claim",
+            "job_01",
+            2,
+            "coral"
+          ],
+          [
+            "transfer",
+            "job_01",
+            2,
+            "amber",
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_05",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_06",
+            2,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_06",
+            2
+          ],
+          [
+            "cancel",
+            "job_00",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_00",
+            3,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_02",
+            2,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_01",
+            2
+          ],
+          [
+            "ack_cancel",
+            "job_05",
+            3,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_05",
+            3,
+            "coral",
+            "third"
+          ],
+          [
+            "ack_cancel",
+            "job_01",
+            2,
+            "amber"
+          ],
+          [
+            "finish",
+            "job_00",
+            3,
+            "coral",
+            "third"
+          ],
+          [
+            "finish",
+            "job_01",
+            2,
+            "amber",
+            "new"
+          ],
+          [
+            "finish",
+            "job_06",
+            2,
+            "birch",
+            "new"
+          ],
+          [
+            "transfer",
+            "job_02",
+            2,
+            "birch",
+            "coral"
+          ],
+          [
+            "submit",
+            "job_06",
+            1
+          ],
+          [
+            "submit",
+            "job_06",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_06",
+            3,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_06",
+            3
+          ],
+          [
+            "cancel",
+            "job_02",
+            2
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            3,
+            "birch"
+          ],
+          [
+            "ack_cancel",
+            "job_06",
+            3,
+            "coral"
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "submit",
+            "job_02",
+            1
+          ],
+          [
+            "submit",
+            "job_02",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            2,
+            "birch"
+          ],
+          [
+            "claim",
+            "job_02",
+            3,
+            "coral"
+          ],
+          [
+            "cancel",
+            "job_02",
+            3
+          ],
+          [
+            "ack_cancel",
+            "job_02",
+            3,
+            "birch"
+          ]
+        ]
+      },
+      "question": "Apply this closed-world async job-state specification. No external observations are needed.\nRules: Each job starts at epoch 0, state absent, owner null, result null. Events apply in supplied order. submit(job,v): only v greater than the current epoch resets the job to queued at epoch v, owner/result null; otherwise ignore. claim(job,v,w): only the current epoch in queued state becomes running with owner w. transfer(job,v,from,to): only current epoch, running state, and matching from owner replaces the owner with to; otherwise ignore. cancel(job,v): only current epoch; queued becomes cancelled, running becomes cancel_requested; all other states are unchanged. finish(job,v,w,value): only current epoch, matching owner, and state running or cancel_requested commits the value and changes state to committed, owner null. A request without its acknowledgement does not prevent finish. ack_cancel(job,v,w): only current epoch, matching owner, and state cancel_requested becomes cancelled, owner/result null. Other events are ignored. Terminal states ignore claim/cancel/finish/ack_cancel; a later higher-epoch submit can reset them. A stale epoch, wrong owner, duplicate submit or unsolicited acknowledgement grants no authority.\nInput: {\"jobs\":[\"job_00\",\"job_01\",\"job_02\",\"job_03\",\"job_04\",\"job_05\",\"job_06\",\"job_07\"],\"events\":[[\"submit\",\"job_03\",1],[\"submit\",\"job_00\",1],[\"claim\",\"job_03\",1,\"birch\"],[\"submit\",\"job_05\",1],[\"claim\",\"job_00\",1,\"coral\"],[\"claim\",\"job_05\",1,\"coral\"],[\"submit\",\"job_06\",1],[\"claim\",\"job_06\",1,\"coral\"],[\"submit\",\"job_01\",1],[\"submit\",\"job_04\",1],[\"claim\",\"job_04\",1,\"birch\"],[\"cancel\",\"job_00\",1],[\"submit\",\"job_07\",1],[\"cancel\",\"job_04\",1],[\"cancel\",\"job_05\",1],[\"ack_cancel\",\"job_00\",1,\"coral\"],[\"finish\",\"job_00\",1,\"coral\",\"old\"],[\"cancel\",\"job_06\",1],[\"ack_cancel\",\"job_05\",1,\"coral\"],[\"finish\",\"job_04\",1,\"birch\",\"old\"],[\"finish\",\"job_05\",1,\"coral\",\"old\"],[\"submit\",\"job_00\",2],[\"submit\",\"job_02\",1],[\"cancel\",\"job_03\",1],[\"ack_cancel\",\"job_03\",1,\"birch\"],[\"claim\",\"job_00\",2,\"birch\"],[\"finish\",\"job_03\",1,\"birch\",\"old\"],[\"ack_cancel\",\"job_04\",1,\"birch\"],[\"finish\",\"job_00\",1,\"coral\",\"late\"],[\"submit\",\"job_03\",2],[\"ack_cancel\",\"job_00\",2,\"birch\"],[\"claim\",\"job_02\",1,\"coral\"],[\"claim\",\"job_03\",2,\"amber\"],[\"submit\",\"job_04\",2],[\"claim\",\"job_04\",2,\"amber\"],[\"cancel\",\"job_02\",1],[\"finish\",\"job_04\",1,\"birch\",\"late\"],[\"finish\",\"job_06\",1,\"coral\",\"old\"],[\"claim\",\"job_07\",1,\"coral\"],[\"claim\",\"job_01\",1,\"coral\"],[\"cancel\",\"job_07\",1],[\"ack_cancel\",\"job_04\",2,\"amber\"],[\"submit\",\"job_05\",2],[\"claim\",\"job_05\",2,\"amber\"],[\"ack_cancel\",\"job_07\",1,\"coral\"],[\"finish\",\"job_03\",1,\"birch\",\"late\"],[\"claim\",\"job_00\",2,\"coral\"],[\"transfer\",\"job_00\",2,\"birch\",\"coral\"],[\"cancel\",\"job_01\",1],[\"ack_cancel\",\"job_02\",1,\"coral\"],[\"finish\",\"job_07\",1,\"coral\",\"old\"],[\"ack_cancel\",\"job_06\",1,\"coral\"],[\"submit\",\"job_06\",2],[\"submit\",\"job_07\",2],[\"finish\",\"job_05\",1,\"coral\",\"late\"],[\"claim\",\"job_06\",2,\"birch\"],[\"finish\",\"job_01\",1,\"coral\",\"old\"],[\"claim\",\"job_04\",2,\"birch\"],[\"ack_cancel\",\"job_03\",2,\"amber\"],[\"cancel\",\"job_00\",2],[\"claim\",\"job_07\",2,\"amber\"],[\"ack_cancel\",\"job_00\",2,\"birch\"],[\"finish\",\"job_07\",1,\"coral\",\"late\"],[\"ack_cancel\",\"job_05\",2,\"amber\"],[\"submit\",\"job_00\",1],[\"submit\",\"job_00\",3],[\"finish\",\"job_02\",1,\"coral\",\"old\"],[\"ack_cancel\",\"job_07\",2,\"amber\"],[\"claim\",\"job_07\",2,\"coral\"],[\"ack_cancel\",\"job_00\",2,\"birch\"],[\"ack_cancel\",\"job_01\",1,\"coral\"],[\"claim\",\"job_05\",2,\"coral\"],[\"claim\",\"job_03\",2,\"birch\"],[\"submit\",\"job_02\",2],[\"submit\",\"job_01\",2],[\"claim\",\"job_01\",2,\"amber\"],[\"cancel\",\"job_07\",2],[\"finish\",\"job_01\",1,\"coral\",\"late\"],[\"finish\",\"job_06\",1,\"coral\",\"late\"],[\"ack_cancel\",\"job_05\",2,\"amber\"],[\"cancel\",\"job_03\",2],[\"claim\",\"job_02\",2,\"birch\"],[\"finish\",\"job_02\",1,\"coral\",\"late\"],[\"submit\",\"job_05\",1],[\"claim\",\"job_00\",3,\"coral\"],[\"submit\",\"job_05\",3],[\"ack_cancel\",\"job_05\",2,\"amber\"],[\"finish\",\"job_07\",2,\"amber\",\"new\"],[\"claim\",\"job_05\",3,\"coral\"],[\"ack_cancel\",\"job_01\",2,\"amber\"],[\"claim\",\"job_01\",2,\"coral\"],[\"transfer\",\"job_01\",2,\"amber\",\"coral\"],[\"cancel\",\"job_05\",3],[\"ack_cancel\",\"job_06\",2,\"birch\"],[\"ack_cancel\",\"job_02\",2,\"birch\"],[\"claim\",\"job_06\",2,\"coral\"],[\"cancel\",\"job_06\",2],[\"cancel\",\"job_00\",3],[\"ack_cancel\",\"job_06\",2,\"birch\"],[\"ack_cancel\",\"job_00\",3,\"birch\"],[\"claim\",\"job_02\",2,\"coral\"],[\"cancel\",\"job_01\",2],[\"ack_cancel\",\"job_05\",3,\"amber\"],[\"finish\",\"job_05\",3,\"coral\",\"third\"],[\"ack_cancel\",\"job_01\",2,\"amber\"],[\"finish\",\"job_00\",3,\"coral\",\"third\"],[\"finish\",\"job_01\",2,\"amber\",\"new\"],[\"finish\",\"job_06\",2,\"birch\",\"new\"],[\"transfer\",\"job_02\",2,\"birch\",\"coral\"],[\"submit\",\"job_06\",1],[\"submit\",\"job_06\",3],[\"ack_cancel\",\"job_06\",2,\"birch\"],[\"claim\",\"job_06\",3,\"coral\"],[\"cancel\",\"job_06\",3],[\"cancel\",\"job_02\",2],[\"ack_cancel\",\"job_06\",3,\"birch\"],[\"ack_cancel\",\"job_06\",3,\"coral\"],[\"ack_cancel\",\"job_02\",2,\"birch\"],[\"submit\",\"job_02\",1],[\"submit\",\"job_02\",3],[\"ack_cancel\",\"job_02\",2,\"birch\"],[\"claim\",\"job_02\",3,\"coral\"],[\"cancel\",\"job_02\",3],[\"ack_cancel\",\"job_02\",3,\"birch\"]]}\nRequirements:\n1. Replay each job epoch and terminal-state transition in the given global event order; preserve version resets and ignore stale events.\n2. Track current ownership through transfers, cancellation and finish races; apply only events authorized by the exact state and owner.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"jobs\":{\"job_00\":{\"epoch\":0,\"state\":\"...\",\"owner\":null,\"result\":null},...}}",
+      "expected": {
+        "jobs": {
+          "job_00": {
+            "epoch": 3,
+            "state": "committed",
+            "owner": null,
+            "result": "third"
+          },
+          "job_01": {
+            "epoch": 2,
+            "state": "cancel_requested",
+            "owner": "coral",
+            "result": null
+          },
+          "job_02": {
+            "epoch": 3,
+            "state": "cancel_requested",
+            "owner": "coral",
+            "result": null
+          },
+          "job_03": {
+            "epoch": 2,
+            "state": "cancel_requested",
+            "owner": "amber",
+            "result": null
+          },
+          "job_04": {
+            "epoch": 2,
+            "state": "running",
+            "owner": "amber",
+            "result": null
+          },
+          "job_05": {
+            "epoch": 3,
+            "state": "committed",
+            "owner": null,
+            "result": "third"
+          },
+          "job_06": {
+            "epoch": 3,
+            "state": "cancelled",
+            "owner": null,
+            "result": null
+          },
+          "job_07": {
+            "epoch": 2,
+            "state": "committed",
+            "owner": null,
+            "result": "new"
+          }
+        }
+      },
+      "tier": "fresh"
+    },
+    {
+      "id": "evidence_b",
+      "partition": "holdout",
+      "level": 6,
+      "domain": "evidence",
+      "data": {
+        "sources": [
+          {
+            "id": "q01a",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q00c",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q00b"
+            ]
+          },
+          {
+            "id": "q07d",
+            "scope": "unrelated",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q07a",
+              "q07b"
+            ]
+          },
+          {
+            "id": "q01b",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "derived",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": [
+              "q01a"
+            ]
+          },
+          {
+            "id": "q04a",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q00b",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q07a",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q05b",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "derived",
+            "value": "amber",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q05a"
+            ]
+          },
+          {
+            "id": "q04c",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": [
+              "q04b"
+            ]
+          },
+          {
+            "id": "q04b",
+            "scope": "project_1",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q04a"
+            ]
+          },
+          {
+            "id": "q00a",
+            "scope": "project_0",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q06b",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": 4,
+            "supersedes": []
+          },
+          {
+            "id": "q02c",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q02b"
+            ]
+          },
+          {
+            "id": "q02a",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q01c",
+            "scope": "project_1",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q01b"
+            ]
+          },
+          {
+            "id": "q02b",
+            "scope": "project_2",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": 5,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q03a",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q07b",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": 6,
+            "expires_at": null,
+            "revoked_at": 4,
+            "supersedes": []
+          },
+          {
+            "id": "q06c",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q06b"
+            ]
+          },
+          {
+            "id": "q05d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q05a",
+              "q05b"
+            ]
+          },
+          {
+            "id": "q04d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q04a",
+              "q04b"
+            ]
+          },
+          {
+            "id": "q03d",
+            "scope": "unrelated",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q03a",
+              "q03b"
+            ]
+          },
+          {
+            "id": "q00d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q00a",
+              "q00b"
+            ]
+          },
+          {
+            "id": "q05c",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": 6,
+            "supersedes": [
+              "q05b"
+            ]
+          },
+          {
+            "id": "q06d",
+            "scope": "unrelated",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q06a",
+              "q06b"
+            ]
+          },
+          {
+            "id": "q06a",
+            "scope": "project_0",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "amber",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q01d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q01a",
+              "q01b"
+            ]
+          },
+          {
+            "id": "q07c",
+            "scope": "project_1",
+            "topic": "field_2",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": 5,
+            "revoked_at": 6,
+            "supersedes": [
+              "q07b"
+            ]
+          },
+          {
+            "id": "q05a",
+            "scope": "project_2",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "coral",
+            "issued_at": 1,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          },
+          {
+            "id": "q03c",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "primary",
+            "value": "birch",
+            "issued_at": 4,
+            "valid_from": 4,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q03b"
+            ]
+          },
+          {
+            "id": "q02d",
+            "scope": "unrelated",
+            "topic": "field_0",
+            "kind": "primary",
+            "value": "foreign",
+            "issued_at": 2,
+            "valid_from": 1,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": [
+              "q02a",
+              "q02b"
+            ]
+          },
+          {
+            "id": "q03b",
+            "scope": "project_0",
+            "topic": "field_1",
+            "kind": "derived",
+            "value": "birch",
+            "issued_at": 3,
+            "valid_from": 2,
+            "valid_to": null,
+            "expires_at": null,
+            "revoked_at": null,
+            "supersedes": []
+          }
+        ],
+        "queries": [
+          {
+            "id": "q00",
+            "scope": "project_0",
+            "topic": "field_0",
+            "time": 5
+          },
+          {
+            "id": "q01",
+            "scope": "project_1",
+            "topic": "field_0",
+            "time": 3
+          },
+          {
+            "id": "q02",
+            "scope": "project_2",
+            "topic": "field_0",
+            "time": 5
+          },
+          {
+            "id": "q03",
+            "scope": "project_0",
+            "topic": "field_1",
+            "time": 4
+          },
+          {
+            "id": "q04",
+            "scope": "project_1",
+            "topic": "field_1",
+            "time": 6
+          },
+          {
+            "id": "q05",
+            "scope": "project_2",
+            "topic": "field_1",
+            "time": 3
+          },
+          {
+            "id": "q06",
+            "scope": "project_0",
+            "topic": "field_2",
+            "time": 5
+          },
+          {
+            "id": "q07",
+            "scope": "project_1",
+            "topic": "field_2",
+            "time": 5
+          }
+        ]
+      },
+      "question": "This is a closed-world source-selection exercise under explicit symbolic rules, not a request to retrieve or certify real-world facts.\nRules: Select sources separately for each query scope/topic/time. A record is a candidate only if kind is primary, scope and topic exactly match, issued_at<=time, valid_from<=time, and time<valid_to when valid_to is non-null. It must also satisfy time<expires_at and time<revoked_at for each non-null bound. Endpoints are exclusive. A primary record permanently supersedes the IDs in its supersedes list from its issued_at onward, but only targets with the same scope AND topic. Its own later expiry/revocation does not resurrect superseded sources. Derived records cannot supersede or provide primary support; cross-scope/topic links have no effect. A supersession need not have an otherwise active replacement. Among surviving candidates: no source means unknown/value null/IDs []; one distinct value means supported with that value and all surviving source IDs; multiple distinct values mean conflict/value null with all surviving source IDs. Recency alone never resolves a conflict. Return source_ids sorted lexicographically.\nInput: {\"sources\":[{\"id\":\"q01a\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q00c\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q00b\"]},{\"id\":\"q07d\",\"scope\":\"unrelated\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q07a\",\"q07b\"]},{\"id\":\"q01b\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"derived\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[\"q01a\"]},{\"id\":\"q04a\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q00b\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q07a\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q05b\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"derived\",\"value\":\"amber\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q05a\"]},{\"id\":\"q04c\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[\"q04b\"]},{\"id\":\"q04b\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q04a\"]},{\"id\":\"q00a\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q06b\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":4,\"supersedes\":[]},{\"id\":\"q02c\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q02b\"]},{\"id\":\"q02a\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q01c\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q01b\"]},{\"id\":\"q02b\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":5,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q03a\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q07b\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":6,\"expires_at\":null,\"revoked_at\":4,\"supersedes\":[]},{\"id\":\"q06c\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q06b\"]},{\"id\":\"q05d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q05a\",\"q05b\"]},{\"id\":\"q04d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q04a\",\"q04b\"]},{\"id\":\"q03d\",\"scope\":\"unrelated\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q03a\",\"q03b\"]},{\"id\":\"q00d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q00a\",\"q00b\"]},{\"id\":\"q05c\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":6,\"supersedes\":[\"q05b\"]},{\"id\":\"q06d\",\"scope\":\"unrelated\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q06a\",\"q06b\"]},{\"id\":\"q06a\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"amber\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q01d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q01a\",\"q01b\"]},{\"id\":\"q07c\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":5,\"revoked_at\":6,\"supersedes\":[\"q07b\"]},{\"id\":\"q05a\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"coral\",\"issued_at\":1,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]},{\"id\":\"q03c\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"primary\",\"value\":\"birch\",\"issued_at\":4,\"valid_from\":4,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q03b\"]},{\"id\":\"q02d\",\"scope\":\"unrelated\",\"topic\":\"field_0\",\"kind\":\"primary\",\"value\":\"foreign\",\"issued_at\":2,\"valid_from\":1,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[\"q02a\",\"q02b\"]},{\"id\":\"q03b\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"kind\":\"derived\",\"value\":\"birch\",\"issued_at\":3,\"valid_from\":2,\"valid_to\":null,\"expires_at\":null,\"revoked_at\":null,\"supersedes\":[]}],\"queries\":[{\"id\":\"q00\",\"scope\":\"project_0\",\"topic\":\"field_0\",\"time\":5},{\"id\":\"q01\",\"scope\":\"project_1\",\"topic\":\"field_0\",\"time\":3},{\"id\":\"q02\",\"scope\":\"project_2\",\"topic\":\"field_0\",\"time\":5},{\"id\":\"q03\",\"scope\":\"project_0\",\"topic\":\"field_1\",\"time\":4},{\"id\":\"q04\",\"scope\":\"project_1\",\"topic\":\"field_1\",\"time\":6},{\"id\":\"q05\",\"scope\":\"project_2\",\"topic\":\"field_1\",\"time\":3},{\"id\":\"q06\",\"scope\":\"project_0\",\"topic\":\"field_2\",\"time\":5},{\"id\":\"q07\",\"scope\":\"project_1\",\"topic\":\"field_2\",\"time\":5}]}\nRequirements:\n1. Evaluate each query independently using matching primary scope/topic, issuance, validity, expiry and revocation at its exact time.\n2. Apply permanent authorized supersession before resolving values and all surviving IDs; retain unknowns and conflicts without using recency as authority.\n3. Using steps 1 and 2, return only the complete JSON answer, without Markdown, explanations, omitted items or extra fields. Use JSON integers and nulls where required. Shape: {\"queries\":{\"q00\":{\"status\":\"supported|conflict|unknown\",\"value\":null,\"source_ids\":[]},...}}",
+      "expected": {
+        "queries": {
+          "q00": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q00a"
+            ]
+          },
+          "q01": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q01a"
+            ]
+          },
+          "q02": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q02a"
+            ]
+          },
+          "q03": {
+            "status": "conflict",
+            "value": null,
+            "source_ids": [
+              "q03a",
+              "q03c"
+            ]
+          },
+          "q04": {
+            "status": "unknown",
+            "value": null,
+            "source_ids": []
+          },
+          "q05": {
+            "status": "supported",
+            "value": "coral",
+            "source_ids": [
+              "q05a"
+            ]
+          },
+          "q06": {
+            "status": "supported",
+            "value": "amber",
+            "source_ids": [
+              "q06a"
+            ]
+          },
+          "q07": {
+            "status": "supported",
+            "value": "birch",
+            "source_ids": [
+              "q07a"
+            ]
+          }
+        }
+      },
+      "tier": "fresh"
+    }
+  ]
+}
