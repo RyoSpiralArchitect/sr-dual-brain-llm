@@ -1,0 +1,169 @@
+{
+  "cases": [
+    {
+      "id": "logic_knot_groups",
+      "domain": "boolean",
+      "question": "The variables A, B, C, D, E, F, G, H are Boolean. Use the usual meaning of Python-style Boolean expressions. '!=' is exclusive-or for Boolean operands. In a sum, True counts as 1. Keep precisely the assignments that make every constraint below true.\n- sum([A,B,C,D]) == 2\n- sum([D,E,F,G,H]) == 2\n- E == (A != D)\n- F == (B and not C)\n- not H or C\n- not G or (A or B)\n- not (D and H)\n\nClassify each probe below over all assignments that survive. 'always' means true in every one, 'never' means false in every one, and 'sometimes' means true in some and false in some.\ngroup: B or D\nedge: A and H\njoin: A and D and E\npivot: not F or A\npath: (A and not C) or H\ntails: B and F\n\nUse JSON strings 'always', 'never', or 'sometimes' as the field values.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: group, edge, join, pivot, path, tails.",
+      "expected": {
+        "group": "sometimes",
+        "edge": "sometimes",
+        "join": "never",
+        "pivot": "always",
+        "path": "sometimes",
+        "tails": "sometimes"
+      },
+      "oracle_rationale": "Enumerated 256 truth assignments, found 6 valid assignments, and counted true probes {'group': 4, 'edge': 1, 'join': 0, 'pivot': 6, 'path': 4, 'tails': 1}. Satisfying assignments as 0/1 vectors in order A,B,C,D,E,F,G,H: 00111000, 01100011, 10010010, 10101001, 10101010, 11001100."
+    },
+    {
+      "id": "logic_interlock",
+      "domain": "boolean",
+      "question": "The variables K, L, M, N, O, P, Q, R, S are Boolean. Use the usual meaning of Python-style Boolean expressions. '!=' is exclusive-or for Boolean operands. In a sum, True counts as 1. Keep precisely the assignments that make every constraint below true.\n- sum([K,L,M,N,O]) == 3\n- sum([O,P,Q,R,S]) == 3\n- M == (K and not O)\n- P == (L != N)\n- Q == (K == S)\n- not N or R\n- not (O and S)\n- not R or (L or S)\n\nClassify each probe below over all assignments that survive. 'always' means true in every one, 'never' means false in every one, and 'sometimes' means true in some and false in some.\narc: K and O\ncross: L or Q\nfork: not R or S\ngate: O and P\nlink: M == (not S)\ntail: not (N and P)\n\nUse JSON strings 'always', 'never', or 'sometimes' as the field values.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: arc, cross, fork, gate, link, tail.",
+      "expected": {
+        "arc": "sometimes",
+        "cross": "always",
+        "fork": "sometimes",
+        "gate": "sometimes",
+        "link": "never",
+        "tail": "always"
+      },
+      "oracle_rationale": "Enumerated 512 truth assignments, found 3 valid assignments, and counted true probes {'arc': 1, 'cross': 3, 'fork': 1, 'gate': 1, 'link': 0, 'tail': 3}. Satisfying assignments as 0/1 vectors in order K,L,M,N,O,P,Q,R,S: 010110110, 110011010, 111001101."
+    },
+    {
+      "id": "logic_counterweave",
+      "domain": "boolean",
+      "question": "The variables U, V, W, X, Y, Z, A, B are Boolean. Use the usual meaning of Python-style Boolean expressions. '!=' is exclusive-or for Boolean operands. In a sum, True counts as 1. Keep precisely the assignments that make every constraint below true.\n- sum([U,V,W,X,Y,Z,A,B]) == 4\n- W == (U != V)\n- Y == (X and Z)\n- not A or (U and not Z)\n- B == (V != Z)\n- not (X and A)\n- not Z or (V or X)\n\nClassify each probe below over all assignments that survive. 'always' means true in every one, 'never' means false in every one, and 'sometimes' means true in some and false in some.\njoint: U and Y\ncrossing: V != A\nclosure: W or Z\nclamp: not A or X\ndegree: sum([U,W,X,B]) >= 2\ntail: A and B\n\nUse JSON strings 'always', 'never', or 'sometimes' as the field values.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: joint, crossing, closure, clamp, degree, tail.",
+      "expected": {
+        "joint": "never",
+        "crossing": "sometimes",
+        "closure": "sometimes",
+        "clamp": "sometimes",
+        "degree": "always",
+        "tail": "sometimes"
+      },
+      "oracle_rationale": "Enumerated 256 truth assignments, found 4 valid assignments, and counted true probes {'joint': 0, 'crossing': 2, 'closure': 2, 'clamp': 3, 'degree': 4, 'tail': 1}. Satisfying assignments as 0/1 vectors in order U,V,W,X,Y,Z,A,B: 00011101, 01110001, 11000011, 11010001."
+    },
+    {
+      "id": "sqlite_layered_returns",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query on exactly the inline data. Report the values of all columns in its sole result row.\n\nWITH\norders(oid,grp,n) AS (\n  VALUES (1,'p',3),(2,'p',NULL),(3,'q',7),(4,'q',7),(5,'r',1),(6,'r',2)\n),\nreturns(oid,v) AS (\n  VALUES (1,2),(1,2),(2,NULL),(2,0),(3,4),(5,NULL),(NULL,9)\n),\nledger AS (\n  SELECT orders.oid, grp, n, v,\n    count(v) OVER (PARTITION BY grp) AS seen,\n    sum(v) OVER (PARTITION BY orders.oid) AS net\n  FROM orders LEFT JOIN returns ON orders.oid = returns.oid\n),\neligible AS (\n  SELECT * FROM ledger WHERE n IS NOT net\n)\nSELECT\n  count(*) FILTER (WHERE seen=2) AS kept_with_two,\n  sum(coalesce(net,n)) FILTER (WHERE grp='p') AS p_total,\n  sum(coalesce(net,n)) FILTER (WHERE net IS NULL) AS missing_net,\n  count(DISTINCT CASE WHEN n IS NULL THEN oid END) AS null_orders,\n  sum(v) FILTER (WHERE seen=0) AS no_values\nFROM eligible;\n\nUse JSON integers, strings, or null as appropriate. A SQL NULL is JSON null.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: kept_with_two, p_total, missing_net, null_orders, no_values.",
+      "expected": {
+        "kept_with_two": 0,
+        "p_total": 8,
+        "missing_net": 10,
+        "null_orders": 1,
+        "no_values": null
+      },
+      "oracle_rationale": "Executed the full query with SQLite 3.45.3; column names ['kept_with_two', 'p_total', 'missing_net', 'null_orders', 'no_values'], single row (0, 8, 10, 1, None)."
+    },
+    {
+      "id": "sqlite_filtered_peers",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query on exactly the inline data. Report the values of all columns in its sole result row.\n\nWITH\nsamples(id,g,t,v) AS (\n  VALUES (1,'a',1,3),(2,'a',1,NULL),(3,'a',2,4),(4,'a',3,8),(5,'a',3,4),\n         (6,'b',1,1),(7,'b',2,5),(8,'b',2,9),(9,'b',4,NULL),(10,'c',2,2)\n),\nscored AS (\n  SELECT *,\n    sum(v) FILTER (WHERE v%2=0) OVER (\n      PARTITION BY g ORDER BY t GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE GROUP\n    ) AS away,\n    dense_rank() OVER (PARTITION BY g ORDER BY v DESC) AS dr\n  FROM samples\n),\npicked AS (\n  SELECT * FROM scored WHERE away IS NOT NULL OR dr=1\n)\nSELECT\n  sum(away) FILTER (WHERE g='a') AS a_away,\n  sum(id) FILTER (WHERE dr<=2) AS leading_ids,\n  count(DISTINCT away) FILTER (WHERE g='b') AS b_unique,\n  sum(v) FILTER (WHERE away=v) AS matching,\n  count(*) FILTER (WHERE away IS NULL) AS no_away\nFROM picked;\n\nUse JSON integers, strings, or null as appropriate. A SQL NULL is JSON null.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: a_away, leading_ids, b_unique, matching, no_away.",
+      "expected": {
+        "a_away": 28,
+        "leading_ids": 30,
+        "b_unique": 0,
+        "matching": 4,
+        "no_away": 2
+      },
+      "oracle_rationale": "Executed the full query with SQLite 3.45.3; column names ['a_away', 'leading_ids', 'b_unique', 'matching', 'no_away'], single row (28, 30, 0, 4, 2)."
+    },
+    {
+      "id": "sqlite_competing_observations",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query on exactly the inline data. Report the values of all columns in its sole result row.\n\nWITH\nlefts(k,v,src) AS (\n  VALUES ('a',NULL,'u'),('a',2,'u'),('a',2,'v'),('b',1,'v'),('c',3,'u'),(NULL,7,'u')\n),\nrights(k,v,src) AS (\n  VALUES ('a',NULL,'w'),('a',2,'w'),('a',5,'w'),('b',NULL,'u'),('b',1,'v'),(NULL,7,'u')\n),\ncandidates AS (\n  SELECT k,v,src,1 AS side FROM lefts\n  UNION ALL\n  SELECT k,v,src,2 AS side FROM rights\n),\npairs AS (\n  SELECT k,v,count(*) AS n,count(DISTINCT src) AS ns,min(side) AS min_side,max(side) AS max_side\n  FROM candidates GROUP BY k,v\n),\nselected AS (\n  SELECT *, row_number() OVER (PARTITION BY k ORDER BY ns DESC,n DESC,v DESC) AS rn\n  FROM pairs\n)\nSELECT\n  sum(n) FILTER (WHERE rn=1) AS lead_count,\n  sum(ns) FILTER (WHERE min_side<max_side) AS cross_sources,\n  count(*) FILTER (WHERE rn=1 AND v IS NULL) AS null_leads,\n  sum(v) FILTER (WHERE rn=2 AND k IS NOT NULL) AS second_sum,\n  sum(n) FILTER (WHERE k IS NULL AND rn=1) AS null_key_size\nFROM selected;\n\nUse JSON integers, strings, or null as appropriate. A SQL NULL is JSON null.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: lead_count, cross_sources, null_leads, second_sum, null_key_size.",
+      "expected": {
+        "lead_count": 8,
+        "cross_sources": 7,
+        "null_leads": 0,
+        "second_sum": null,
+        "null_key_size": 2
+      },
+      "oracle_rationale": "Executed the full query with SQLite 3.45.3; column names ['lead_count', 'cross_sources', 'null_leads', 'second_sum', 'null_key_size'], single row (8, 7, 0, None, 2)."
+    },
+    {
+      "id": "event_reservation_ledger",
+      "domain": "event",
+      "question": "A counter ledger has bins A=7, B=4 and C=2. Initially no claims or settled IDs exist.\nApply the events below in written order.\n- HOLD(id,source,n) reserves n from the source if its free amount is at least n and the ID is neither active nor settled. Free amount is balance minus active reservations against the bin. A hold does not change balances.\n- DROP(id) removes an active hold. Its ID may be reused if it was never settled.\n- PAY(id,target) requires an active hold. Remove the hold, transfer its reserved amount from source to target, mark the ID settled permanently and increment paid by 1.\n- MOVE(source,target,n) transfers n only if the source has that much free.\nA failed event changes no balances, holds or settled IDs and adds 1 to refused. Counters start at zero.\nAt the end give free amounts free_a, free_b and free_c, the number held of active holds, paid and refused.\n\nHOLD(j,A,5)\nMOVE(A,B,3)\nHOLD(k,B,3)\nPAY(j,B)\nHOLD(j,C,2)\nMOVE(B,C,6)\nDROP(k)\nHOLD(k,B,4)\nHOLD(m,C,7)\nPAY(m,A)\nPAY(k,C)\nMOVE(C,A,2)\nHOLD(n,C,4)\nDROP(k)\nHOLD(p,A,3)\nPAY(p,A)\nHOLD(q,A,5)\n\nUse JSON integers for all six values.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: free_a, free_b, free_c, held, paid, refused.",
+      "expected": {
+        "free_a": 4,
+        "free_b": 3,
+        "free_c": 1,
+        "held": 1,
+        "paid": 3,
+        "refused": 7
+      },
+      "oracle_rationale": "Ledger simulator ended with balances {'A': 9, 'B': 3, 'C': 1}, holds {'q': ('A', 5)}, settled IDs ['j', 'm', 'p'], and paid/refused counts 3/7."
+    },
+    {
+      "id": "event_priority_queue",
+      "domain": "event",
+      "question": "A work queue starts empty. Process the events in written order, including events with the same time.\nBefore each event discard all jobs with deadline strictly less than the event time.\nADD(id,priority,deadline) inserts only if its deadline is at least the current time and no earlier successful ADD used the ID. IDs from a successful ADD are permanently used even after removal or expiry.\nBOOST(id,delta) changes a pending job's priority by delta, without affecting its original creation time. A failed ADD or BOOST adds 1 to invalid. \nTAKE removes and reports the highest priority pending job. Break ties by earliest creation time, then ID in ascending alphabetical order. When the queue is empty TAKE reports NONE and does not add to invalid.\nReturn pick1 through pick4 for the four TAKE calls, left for the number of pending jobs after the last event and invalid.\n\n1: ADD(b,2,5)\n1: ADD(a,2,3)\n1: ADD(c,1,9)\n2: BOOST(c,1)\n2: TAKE()\n3: BOOST(b,-1)\n3: ADD(a,7,9)\n4: ADD(d,2,4)\n4: TAKE()\n5: BOOST(d,9)\n5: ADD(d,6,8)\n5: TAKE()\n6: ADD(e,2,6)\n6: ADD(f,1,7)\n7: BOOST(e,1)\n7: ADD(g,1,7)\n7: TAKE()\n8: ADD(h,1,8)\n\nUse ID strings or 'NONE' for picks and integers for left and invalid.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: pick1, pick2, pick3, pick4, left, invalid.",
+      "expected": {
+        "pick1": "a",
+        "pick2": "c",
+        "pick3": "b",
+        "pick4": "f",
+        "left": 1,
+        "invalid": 4
+      },
+      "oracle_rationale": "Queue simulation reported picks ['a', 'c', 'b', 'f'], pending {'h': (1, 8, 8)}, used IDs ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] and 4 invalid operations."
+    },
+    {
+      "id": "event_mailbox_ends",
+      "domain": "event",
+      "question": "Mailboxes A and B start empty and each has a running total of zero.\nProcess these commands in written order.\nPUT(id,box,value) appends to the back of the box if the ID has never been put. IDs stay used permanently. A repeated ID increments dropped.\nRELAY(source,dest) moves the front message of source to the back of dest. On an empty source it increments dropped. A move is not a new PUT.\nDRAIN(box,n) removes up to n messages from the back, adds their signed values to the total of that box, and increments drained by the number removed.\nReport the final total_a, total_b, number of messages remaining as left_a and left_b, and the global drained and dropped counters.\n\nPUT(x,A,6)\nPUT(y,A,4)\nPUT(z,B,8)\nRELAY(A,B)\nPUT(x,A,7)\nDRAIN(B,1)\nPUT(u,A,-3)\nRELAY(A,B)\nRELAY(B,A)\nDRAIN(A,2)\nRELAY(A,B)\nPUT(v,B,-6)\nPUT(w,B,9)\nRELAY(B,A)\nDRAIN(B,1)\nPUT(y,A,2)\nPUT(t,B,12)\nRELAY(A,B)\nDRAIN(B,2)\nPUT(s,A,5)\n\nUse JSON integers for all six values.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: total_a, total_b, left_a, left_b, drained, dropped.",
+      "expected": {
+        "total_a": 5,
+        "total_b": 31,
+        "left_a": 1,
+        "left_b": 1,
+        "drained": 6,
+        "dropped": 3
+      },
+      "oracle_rationale": "Mailbox simulation ended with inboxes {'A': [('s', 5)], 'B': [('v', -6)]}, totals {'A': 5, 'B': 31}, 6 drained messages and 3 rejected commands."
+    },
+    {
+      "id": "source_approval_precedence",
+      "domain": "evidence",
+      "question": "Choose the authoritative reading for each request.\nEach source registration has source, tier, approval day, scope (a group of site letters). A reading lists ID, source, issue day, site or '*' (all sites in source scope), feature, confidence.\nA reading is eligible when the requested site is in its source scope and matches its site (or '*'), the feature matches, its confidence is at least 2, and BOTH issue day and source approval day are at or before the request's as-of day.\nAmong eligible readings, first prefer an explicit matching site over '*', then higher tier, then later issue day. If multiple readings tie at the top after all three comparisons, report CONFLICT. If none is eligible, report NONE. No other ordering applies.\nSource registrations:\nM 2 3 ABC\nN 4 7 AB\nP 4 6 ABC\nQ 1 1 BC\n\nReadings:\nR1 M 3 * speed 4\nR2 M 4 A speed 2\nR3 P 4 * speed 4\nR4 N 5 A speed 4\nR5 P 5 A speed 4\nR6 N 6 A speed 1\nR7 Q 5 C speed 3\nR8 N 7 C speed 3\nR9 P 6 B depth 2\nR10 M 3 B depth 2\n\nRequests (site, feature, as-of day):\np1: A, speed, 5\np2: A, speed, 6\np3: A, speed, 7\np4: C, speed, 9\np5: C, depth, 9\np6: B, depth, 5\n\nUse uppercase reading ID strings, 'CONFLICT', or 'NONE'.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: p1, p2, p3, p4, p5, p6.",
+      "expected": {
+        "p1": "R2",
+        "p2": "R5",
+        "p3": "CONFLICT",
+        "p4": "R7",
+        "p5": "NONE",
+        "p6": "R10"
+      },
+      "oracle_rationale": "Computed eligible readings independently for each query and ranked by (site specificity, tier, issue day). The selection map was {'p1': 'R2', 'p2': 'R5', 'p3': 'CONFLICT', 'p4': 'R7', 'p5': 'NONE', 'p6': 'R10'}."
+    },
+    {
+      "id": "source_revision_authority",
+      "domain": "evidence",
+      "question": "Resolve which checkpoint is authoritative for each query.\nEach row lists checkpoint ID, document, topic, speaker role, numeric version, release day, action.\nFor a requested document and topic, consider only owner rows released at or before the as-of day. Among those, use the greatest version number, regardless of release order. A greatest-version row with action withdraw leaves the topic without an authoritative checkpoint. Never fall back to an older version in that situation. A greatest-version row with action adopt is authoritative. Rows for another topic and reviewer rows have no force.\nRows:\nA1 K ratio owner 1 2 adopt\nA2 K ratio owner 2 9 adopt\nA3 K ratio owner 3 7 withdraw\nA4 K ratio owner 4 12 adopt\nX1 K ratio reviewer 5 6 adopt\nB1 K width owner 1 5 adopt\nB2 K width owner 2 15 withdraw\nX2 K width reviewer 8 3 withdraw\nC1 L ratio owner 1 4 adopt\nC2 L ratio owner 2 8 withdraw\nC3 L ratio owner 3 13 adopt\nX3 L ratio reviewer 4 10 adopt\nD1 L width owner 1 11 adopt\n\nQueries (document, topic, as-of day):\nq1: K, ratio, 8\nq2: K, ratio, 10\nq3: K, ratio, 12\nq4: K, width, 14\nq5: L, ratio, 10\nq6: L, width, 9\n\nUse uppercase checkpoint ID strings or 'NONE'.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "NONE",
+        "q2": "NONE",
+        "q3": "A4",
+        "q4": "B1",
+        "q5": "NONE",
+        "q6": "NONE"
+      },
+      "oracle_rationale": "Independently filtered by document, topic, owner and release day, then selected greatest numeric version and applied withdrawal. Results {'q1': 'NONE', 'q2': 'NONE', 'q3': 'A4', 'q4': 'B1', 'q5': 'NONE', 'q6': 'NONE'}."
+    },
+    {
+      "id": "source_group_inheritance",
+      "domain": "evidence",
+      "question": "Find the document that controls each query in a group inheritance system.\nThe parent relations are: B -> A; C -> B; D -> B; E -> C. Groups without a listed parent are roots.\nStart at the requested group. At that group, use only signed records for the requested field whose inclusive start/end range contains the query day. Pick the eligible record with greatest start day. If there is no eligible record, move to the parent. If the picked record has action inherit, move to the parent without considering any older record at the same group. If it has action block, the answer is NONE and the search ends. If it has action set, return its ID and stop. If the search leaves the root, answer NONE.\nRecords (ID, group, field, signature, start, end, action):\nA1 A cool signed 1 30 set\nA2 A warm signed 1 30 set\nB1 B cool signed 4 20 set\nB2 B cool signed 9 15 block\nB3 B cool unsigned 11 23 set\nB4 B warm signed 8 14 block\nC1 C cool signed 8 18 set\nC2 C cool signed 10 13 inherit\nC3 C warm signed 9 12 inherit\nD1 D cool signed 11 16 inherit\nE1 E cool signed 5 14 block\nE2 E cool signed 12 14 inherit\n\nQueries (group, field, day):\nz1: E, cool, 11\nz2: E, cool, 12\nz3: E, cool, 14\nz4: D, cool, 16\nz5: C, warm, 12\nz6: C, warm, 15\n\nUse uppercase record ID strings or 'NONE'.\nReturn only one JSON object, without Markdown or explanation. Include exactly these keys: z1, z2, z3, z4, z5, z6.",
+      "expected": {
+        "z1": "NONE",
+        "z2": "NONE",
+        "z3": "C1",
+        "z4": "B1",
+        "z5": "NONE",
+        "z6": "A2"
+      },
+      "oracle_rationale": "Ran inheritance walk independently per query with signed inclusive dates and local latest-start priority. Results {'z1': 'NONE', 'z2': 'NONE', 'z3': 'C1', 'z4': 'B1', 'z5': 'NONE', 'z6': 'A2'}."
+    }
+  ]
+}
