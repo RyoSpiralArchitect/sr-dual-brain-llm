@@ -1,0 +1,166 @@
+{
+  "cases": [
+    {
+      "id": "entail_switch_matrix",
+      "domain": "boolean",
+      "question": "A, B, C, D, E, F, G, H are Boolean. The constraints are:\nExactly four variables are true. If A then D. If B then not E. C is true iff exactly one of A and F is true. If H then G. Exactly one of D and G is true. If E then F. If not B then H.\nClassify the following Boolean expressions over ALL satisfying assignments. \"true\" means true in every satisfying assignment, \"false\" means false in every satisfying assignment, and \"mixed\" means true in some and false in others. Implication is material.\nq1: B or C\nq2: A and H\nq3: If F then B\nq4: If A then not F\nq5: not E\nq6: C and G\nUse JSON strings \"true\", \"false\", or \"mixed\" for every value.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "true",
+        "q2": "false",
+        "q3": "mixed",
+        "q4": "mixed",
+        "q5": "true",
+        "q6": "mixed"
+      },
+      "oracle_rationale": "Enumerated 256 assignments; 5 satisfy the constraints. True counts by field: {'q1': 5, 'q2': 0, 'q3': 4, 'q4': 4, 'q5': 5, 'q6': 2}."
+    },
+    {
+      "id": "entail_pivot_count",
+      "domain": "boolean",
+      "question": "A, B, C, D, E, F, G, H are Boolean. The constraints are:\nExactly three among A, B, C, D, E are true. Exactly two among D, E, F, G, H are true. A is true iff B and F are both true. If C then not G. If H then E. If not D then A or G. Exactly one of B and H is true.\nClassify the following Boolean expressions over ALL satisfying assignments. \"true\" means true in every satisfying assignment, \"false\" means false in every satisfying assignment, and \"mixed\" means true in some and false in others. Implication is material.\nq1: D\nq2: C and H\nq3: Exactly one of A and H is true\nq4: If G then F\nq5: B or E\nq6: F and G\nUse JSON strings \"true\", \"false\", or \"mixed\" for every value.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "mixed",
+        "q2": "false",
+        "q3": "mixed",
+        "q4": "true",
+        "q5": "true",
+        "q6": "false"
+      },
+      "oracle_rationale": "Enumerated 256 assignments; 3 satisfy the constraints. True counts by field: {'q1': 2, 'q2': 0, 'q3': 2, 'q4': 3, 'q5': 3, 'q6': 0}."
+    },
+    {
+      "id": "entail_coupled_parity",
+      "domain": "boolean",
+      "question": "A, B, C, D, E, F, G, H are Boolean. The constraints are:\nExactly five of the eight variables are true. At least one of A or B is true. Exactly one of C and D is true. E is true iff A and C have the same value. F is true iff B and D have different values. If not E then G. If G and H are both true, then D is true. If F then H.\nClassify the following Boolean expressions over ALL satisfying assignments. \"true\" means true in every satisfying assignment, \"false\" means false in every satisfying assignment, and \"mixed\" means true in some and false in others. Implication is material.\nq1: A and B\nq2: E or D\nq3: F and G\nq4: G or H\nq5: If C then E\nq6: If D then H\nUse JSON strings \"true\", \"false\", or \"mixed\" for every value.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "mixed",
+        "q2": "true",
+        "q3": "mixed",
+        "q4": "true",
+        "q5": "true",
+        "q6": "true"
+      },
+      "oracle_rationale": "Enumerated 256 assignments; 3 satisfy the constraints. True counts by field: {'q1': 1, 'q2': 3, 'q3': 1, 'q4': 3, 'q5': 3, 'q6': 3}."
+    },
+    {
+      "id": "sql_peer_promotion",
+      "domain": "sql",
+      "question": "Evaluate this exact SQLite query on its inline data. Determine the values in its single output row.\n\nWITH\n  sales(id,g,ts,n) AS (\n    VALUES (1,'a',1,4),(2,'a',1,NULL),(3,'a',2,4),(4,'a',2,8),(5,'a',3,9),\n           (6,'b',1,5),(7,'b',2,5),(8,'b',2,-2),(9,'b',3,NULL),(10,'c',1,6)\n  ),\n  bonus(g,m) AS (VALUES ('a',2),('a',2),('b',NULL),('b',1),('d',5)),\n  k AS (\n    SELECT id, sales.g, ts, n+coalesce(m,0) AS v\n    FROM sales LEFT JOIN bonus USING(g)\n  ),\n  w AS (\n    SELECT *, count(v) OVER(PARTITION BY g ORDER BY ts GROUPS BETWEEN 1 PRECEDING AND CURRENT ROW) AS peers,\n       row_number() OVER(PARTITION BY g ORDER BY v DESC, id) AS pos\n    FROM k\n  )\nSELECT sum(peers) FILTER (WHERE pos<=2) AS top_peer_sum,\n       sum(v) FILTER (WHERE peers>=4 AND g='a') AS a_sum,\n       count(*) FILTER (WHERE v IS NULL AND peers=3) AS null_peer_rows,\n       sum(v) FILTER (WHERE g='q') AS missing_sum,\n       sum(id) FILTER (WHERE pos=3) AS third_ids\nFROM w;\nFor each named output column return an integer, string, or JSON null as appropriate. Do not substitute 0 for NULL.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: top_peer_sum, a_sum, null_peer_rows, missing_sum, third_ids.",
+      "expected": {
+        "top_peer_sum": 21,
+        "a_sum": 54,
+        "null_peer_rows": 0,
+        "missing_sum": null,
+        "third_ids": 10
+      },
+      "oracle_rationale": "Executed the exact query in SQLite 3.45.3; the sole row is {'top_peer_sum': 21, 'a_sum': 54, 'null_peer_rows': 0, 'missing_sum': None, 'third_ids': 10}."
+    },
+    {
+      "id": "sql_range_restore",
+      "domain": "sql",
+      "question": "Evaluate this exact SQLite query on its inline data. Determine the values in its single output row.\n\nWITH\n  t(id,c,ts,v) AS (\n    VALUES (1,'p',1,8),(2,'p',2,4),(3,'p',2,7),(4,'p',4,13),\n           (5,'q',1,5),(6,'q',3,NULL),(7,'q',3,12),(8,'q',5,3),\n           (9,NULL,1,10),(10,NULL,2,NULL)\n  ),\n  bans(c,v) AS (VALUES ('p',4),('q',12),('q',NULL),(NULL,NULL)),\n  z AS (\n    SELECT *, sum(v) OVER (PARTITION BY c ORDER BY ts RANGE BETWEEN 2 PRECEDING AND CURRENT ROW EXCLUDE TIES) AS s\n    FROM t\n  ),\n  eligible AS (\n    SELECT * FROM z WHERE NOT EXISTS (SELECT 1 FROM bans WHERE bans.c IS z.c AND bans.v IS z.v)\n  )\nSELECT sum(s) FILTER (WHERE c='p') AS p_sum,\n       sum(s) FILTER (WHERE c='q') AS q_sum,\n       count(*) FILTER (WHERE s IS NULL) AS null_windows,\n       count(DISTINCT c) AS class_count,\n       min(id) FILTER (WHERE s IS NULL) AS first_null\nFROM eligible;\nFor each named output column return an integer, string, or JSON null as appropriate. Do not substitute 0 for NULL.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: p_sum, q_sum, null_windows, class_count, first_null.",
+      "expected": {
+        "p_sum": 47,
+        "q_sum": 20,
+        "null_windows": 0,
+        "class_count": 2,
+        "first_null": null
+      },
+      "oracle_rationale": "Executed the exact query in SQLite 3.45.3; the sole row is {'p_sum': 47, 'q_sum': 20, 'null_windows': 0, 'class_count': 2, 'first_null': None}."
+    },
+    {
+      "id": "sql_null_treasury",
+      "domain": "sql",
+      "question": "Evaluate this exact SQLite query on its inline data. Determine the values in its single output row.\n\nWITH\n  jobs(id,k,x) AS (VALUES (1,'a',1),(2,'a',2),(3,'a',NULL),(4,'b',NULL),(5,'b',2),(6,'c',1),(7,NULL,2),(8,NULL,NULL)),\n  factors(k,x,w) AS (\n    VALUES ('a',1,2),('a',1,2),('a',2,NULL),('a',NULL,5),('b',2,7),(NULL,2,9),('d',1,10)\n  ),\n  expanded AS (\n    SELECT j.id,j.k,j.x,f.w FROM jobs j LEFT JOIN factors f ON j.k IS f.k AND j.x IS f.x\n  ),\n  groups AS (\n    SELECT k, count(*) AS n, count(w) AS nw, sum(w) AS sw, count(DISTINCT x) AS nx FROM expanded GROUP BY k\n  ),\n  ranked AS (\n    SELECT *, dense_rank() OVER (ORDER BY sw DESC NULLS LAST) AS r,\n              lead(n,1,0) OVER (ORDER BY sw DESC NULLS LAST, k) AS next_n\n    FROM groups\n  )\nSELECT sum(n*(r+next_n)) AS weighted,\n       sum(nw) FILTER (WHERE r<=2) AS supported,\n       (SELECT count(*) FROM jobs j WHERE j.x NOT IN (SELECT f.x FROM factors f WHERE f.k IS j.k)) AS not_in_count,\n       (SELECT count(*) FROM jobs j WHERE NOT EXISTS(SELECT 1 FROM factors f WHERE f.k IS j.k AND f.x IS j.x)) AS anti_count,\n       min(nx) FILTER (WHERE sw IS NULL) AS unweighted_x\nFROM ranked;\nFor each named output column return an integer, string, or JSON null as appropriate. Do not substitute 0 for NULL.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: weighted, supported, not_in_count, anti_count, unweighted_x.",
+      "expected": {
+        "weighted": 31,
+        "supported": 5,
+        "not_in_count": 1,
+        "anti_count": 3,
+        "unweighted_x": 1
+      },
+      "oracle_rationale": "Executed the exact query in SQLite 3.45.3; the sole row is {'weighted': 31, 'supported': 5, 'not_in_count': 1, 'anti_count': 3, 'unweighted_x': 1}."
+    },
+    {
+      "id": "event_slots_1",
+      "domain": "event",
+      "question": "A fictional slot machine has two slots A and B, initially empty, a balance of 0, and counters accepted=0 and ignored=0. Process events sorted by time, then kind at equal times (EXPIRE before SET before MOVE before APPLY), then written order within equal time/kind. Before processing the first event at any time t, expire every slot whose end is strictly less than t (no counters change). An end is inclusive. A slot holds (id, signed amount, end). The used-ID set is global and initially empty.\n- SET(slot,id,amount,end) always replaces the slot and does not change counters or forget used IDs.\n- EXPIRE(slot,id) empties that slot only when it currently holds that ID. It never changes counters.\n- MOVE(src,dst,id) if the source holds that ID and destination is empty, transfer the entire entry including end. Otherwise do nothing. No counters change.\n- APPLY(slot,id) succeeds iff that slot currently holds that ID and the ID has never been successfully applied. On success add the signed amount to balance, increment accepted, record the ID in used set, and empty the slot. On failure increment ignored without changing slots or balance.\nImmediately after the last listed time, report balance, accepted, ignored, and slot_a/slot_b (the recorded ID or \"empty\").\n\nEvents (the initial number is t):\n1 SET(A, m, 7, 4)\n1 SET(B, n, -3, 5)\n3 APPLY(B, m)\n3 MOVE(A, B, m)\n3 EXPIRE(B, n)\n4 SET(A, m, 10, 7)\n4 APPLY(A, m)\n5 SET(B, q, 5, 5)\n5 APPLY(B, q)\n5 MOVE(B, A, q)\n6 APPLY(B, q)\n7 APPLY(A, m)\n7 SET(B, r, -8, 7)\n7 MOVE(B, A, r)\n7 APPLY(B, r)\n8 SET(A, z, 2, 8)\n8 MOVE(A, B, z)\nUse integers for balance, accepted, ignored and strings for slot_a and slot_b.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: balance, accepted, ignored, slot_a, slot_b.",
+      "expected": {
+        "balance": 4,
+        "accepted": 3,
+        "ignored": 3,
+        "slot_a": "empty",
+        "slot_b": "z"
+      },
+      "oracle_rationale": "Independent event simulator successful (t,id,cumulative balance) trace: [(3, 'm', 7), (5, 'q', 12), (7, 'r', 4)]. Failed APPLY count=3; final slots={'B': ('z', 2, 8)}."
+    },
+    {
+      "id": "event_slots_2",
+      "domain": "event",
+      "question": "A fictional slot machine has two slots A and B, initially empty, a balance of 0, and counters accepted=0 and ignored=0. Process events sorted by time, then kind at equal times (EXPIRE before SET before MOVE before APPLY), then written order within equal time/kind. Before processing the first event at any time t, expire every slot whose end is strictly less than t (no counters change). An end is inclusive. A slot holds (id, signed amount, end). The used-ID set is global and initially empty.\n- SET(slot,id,amount,end) always replaces the slot and does not change counters or forget used IDs.\n- EXPIRE(slot,id) empties that slot only when it currently holds that ID. It never changes counters.\n- MOVE(src,dst,id) if the source holds that ID and destination is empty, transfer the entire entry including end. Otherwise do nothing. No counters change.\n- APPLY(slot,id) succeeds iff that slot currently holds that ID and the ID has never been successfully applied. On success add the signed amount to balance, increment accepted, record the ID in used set, and empty the slot. On failure increment ignored without changing slots or balance.\nImmediately after the last listed time, report balance, accepted, ignored, and slot_a/slot_b (the recorded ID or \"empty\").\n\nEvents (the initial number is t):\n1 SET(A, u, 6, 2)\n1 SET(B, v, 9, 7)\n2 APPLY(A, v)\n2 MOVE(B, A, v)\n2 EXPIRE(A, u)\n2 SET(B, w, 3, 6)\n3 APPLY(A, u)\n3 APPLY(B, w)\n4 MOVE(A, B, v)\n4 APPLY(B, v)\n4 SET(A, w, -11, 8)\n5 APPLY(A, w)\n5 SET(B, v, 4, 6)\n6 EXPIRE(A, u)\n6 MOVE(B, A, v)\n6 APPLY(B, v)\n7 APPLY(A, w)\n7 SET(B, y, 2, 7)\nUse integers for balance, accepted, ignored and strings for slot_a and slot_b.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: balance, accepted, ignored, slot_a, slot_b.",
+      "expected": {
+        "balance": 7,
+        "accepted": 2,
+        "ignored": 5,
+        "slot_a": "w",
+        "slot_b": "y"
+      },
+      "oracle_rationale": "Independent event simulator successful (t,id,cumulative balance) trace: [(3, 'w', 3), (6, 'v', 7)]. Failed APPLY count=5; final slots={'A': ('w', -11, 8), 'B': ('y', 2, 7)}."
+    },
+    {
+      "id": "event_slots_3",
+      "domain": "event",
+      "question": "A fictional slot machine has two slots A and B, initially empty, a balance of 0, and counters accepted=0 and ignored=0. Process events sorted by time, then kind at equal times (EXPIRE before SET before MOVE before APPLY), then written order within equal time/kind. Before processing the first event at any time t, expire every slot whose end is strictly less than t (no counters change). An end is inclusive. A slot holds (id, signed amount, end). The used-ID set is global and initially empty.\n- SET(slot,id,amount,end) always replaces the slot and does not change counters or forget used IDs.\n- EXPIRE(slot,id) empties that slot only when it currently holds that ID. It never changes counters.\n- MOVE(src,dst,id) if the source holds that ID and destination is empty, transfer the entire entry including end. Otherwise do nothing. No counters change.\n- APPLY(slot,id) succeeds iff that slot currently holds that ID and the ID has never been successfully applied. On success add the signed amount to balance, increment accepted, record the ID in used set, and empty the slot. On failure increment ignored without changing slots or balance.\nImmediately after the last listed time, report balance, accepted, ignored, and slot_a/slot_b (the recorded ID or \"empty\").\n\nEvents (the initial number is t):\n1 SET(B, a, -5, 3)\n2 SET(A, b, 17, 5)\n3 APPLY(B, a)\n3 MOVE(B, A, a)\n3 EXPIRE(A, b)\n3 APPLY(A, a)\n4 SET(B, b, 6, 7)\n5 SET(A, a, 4, 7)\n5 MOVE(B, A, b)\n5 APPLY(B, b)\n6 SET(B, c, 12, 6)\n6 APPLY(B, c)\n6 EXPIRE(A, a)\n6 MOVE(B, A, c)\n7 SET(B, d, 10, 7)\n7 APPLY(A, c)\n8 APPLY(B, d)\n8 SET(A, e, 0, 8)\n8 MOVE(A, B, e)\nUse integers for balance, accepted, ignored and strings for slot_a and slot_b.\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: balance, accepted, ignored, slot_a, slot_b.",
+      "expected": {
+        "balance": 1,
+        "accepted": 2,
+        "ignored": 4,
+        "slot_a": "empty",
+        "slot_b": "e"
+      },
+      "oracle_rationale": "Independent event simulator successful (t,id,cumulative balance) trace: [(3, 'a', -5), (5, 'b', 1)]. Failed APPLY count=4; final slots={'B': ('e', 0, 8)}."
+    },
+    {
+      "id": "evidence_split_time",
+      "domain": "evidence",
+      "question": "Apply this fictional bulletin system independently for each requested (site,event_day,knowledge_day). Consider only records published at or before knowledge_day and where site is listed and event_day is in the inclusive [start,end] interval. Among those, filter out any SET which has a VOID naming its record ID that was published at or before knowledge_day and applies to that site and event_day. A VOID acts only on SET entries and only for the exact same tier as its target; its own site/interval determine where it acts. A VOID does not set a status. The controlling record is the remaining SET with lexicographically greatest (tier,published_day,serial), all numeric, in that order. Higher values win. A later SET in the same tier is independently eligible even if a different SET was voided. Void records never cancel other voids. Return the controlling SET record ID, or \"NONE\" when none exists.\nThe rows have: id kind tier published_day serial sites start end [target for VOID]. Site groups are concatenated as letters, e.g. AB means sites A and B.\n\nF1 SET 1 1 1 ABC 1 30\nG1 SET 2 2 2 AB 4 20\nG2 SET 2 4 1 BC 7 15\nH1 SET 3 4 1 ABC 8 12\nH2 SET 3 4 2 AC 8 12\nV1 VOID 2 5 1 ABC 8 10 H2\nV2 VOID 3 5 2 A 8 10 H2\nV3 VOID 3 6 1 AC 9 12 H1\nV4 VOID 3 8 1 C 10 11 H2\nV5 VOID 2 7 1 BC 9 14 G2\nG3 SET 2 8 1 AB 8 17\n\nQueries (site,event_day,knowledge_day):\nq1: A,9,5\nq2: A,9,6\nq3: B,13,7\nq4: C,10,7\nq5: C,10,8\nq6: A,13,8\nUse uppercase record ID strings, or \"NONE\".\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "H1",
+        "q2": "G1",
+        "q3": "G1",
+        "q4": "H2",
+        "q5": "F1",
+        "q6": "G3"
+      },
+      "oracle_rationale": "Deterministic filter and lexicographic sort; audit listing surviving SET IDs and applicable (tier:target) VOID keys: {'q1': {'allowed': ['F1', 'G1', 'H1'], 'voided': ['2:H2', '3:H2']}, 'q2': {'allowed': ['F1', 'G1'], 'voided': ['2:H2', '3:H1', '3:H2']}, 'q3': {'allowed': ['F1', 'G1'], 'voided': ['2:G2']}, 'q4': {'allowed': ['F1', 'H2'], 'voided': ['2:G2', '2:H2', '3:H1']}, 'q5': {'allowed': ['F1'], 'voided': ['2:G2', '2:H2', '3:H1', '3:H2']}, 'q6': {'allowed': ['F1', 'G1', 'G3'], 'voided': []}}."
+    },
+    {
+      "id": "evidence_scope_restore",
+      "domain": "evidence",
+      "question": "Apply this fictional bulletin system independently for each requested (site,event_day,knowledge_day). Consider only records published at or before knowledge_day and where site is listed and event_day is in the inclusive [start,end] interval. Among those, filter out any SET which has a VOID naming its record ID that was published at or before knowledge_day and applies to that site and event_day. A VOID acts only on SET entries and only for the exact same tier as its target; its own site/interval determine where it acts. A VOID does not set a status. The controlling record is the remaining SET with lexicographically greatest (tier,published_day,serial), all numeric, in that order. Higher values win. A later SET in the same tier is independently eligible even if a different SET was voided. Void records never cancel other voids. Return the controlling SET record ID, or \"NONE\" when none exists.\nThe rows have: id kind tier published_day serial sites start end [target for VOID]. Site groups are concatenated as letters, e.g. AB means sites A and B.\n\nJ1 SET 1 0 1 A 1 14\nK1 SET 2 2 1 AB 3 15\nK2 SET 2 5 1 BC 5 16\nK3 SET 2 5 4 BC 5 13\nL1 SET 3 7 1 BC 6 10\nJ2 SET 1 9 2 C 6 20\nP1 VOID 3 8 1 B 6 8 L1\nP2 VOID 2 8 2 B 6 8 K3\nP3 VOID 3 9 1 C 10 10 L1\nP4 VOID 2 9 2 C 10 10 K3\nP5 VOID 2 9 3 C 10 10 K2\nP6 VOID 3 10 1 B 9 10 L1\nM1 SET 4 12 1 AB 9 12\n\nQueries (site,event_day,knowledge_day):\nq1: B,7,7\nq2: B,7,8\nq3: B,9,8\nq4: C,10,9\nq5: B,10,11\nq6: A,10,12\nUse uppercase record ID strings, or \"NONE\".\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "L1",
+        "q2": "K2",
+        "q3": "L1",
+        "q4": "J2",
+        "q5": "K3",
+        "q6": "M1"
+      },
+      "oracle_rationale": "Deterministic filter and lexicographic sort; audit listing surviving SET IDs and applicable (tier:target) VOID keys: {'q1': {'allowed': ['K1', 'K2', 'K3', 'L1'], 'voided': []}, 'q2': {'allowed': ['K1', 'K2'], 'voided': ['2:K3', '3:L1']}, 'q3': {'allowed': ['K1', 'K2', 'K3', 'L1'], 'voided': []}, 'q4': {'allowed': ['J2'], 'voided': ['2:K2', '2:K3', '3:L1']}, 'q5': {'allowed': ['K1', 'K2', 'K3'], 'voided': ['3:L1']}, 'q6': {'allowed': ['J1', 'K1', 'M1'], 'voided': []}}."
+    },
+    {
+      "id": "evidence_void_fallthrough",
+      "domain": "evidence",
+      "question": "Apply this fictional bulletin system independently for each requested (site,event_day,knowledge_day). Consider only records published at or before knowledge_day and where site is listed and event_day is in the inclusive [start,end] interval. Among those, filter out any SET which has a VOID naming its record ID that was published at or before knowledge_day and applies to that site and event_day. A VOID acts only on SET entries and only for the exact same tier as its target; its own site/interval determine where it acts. A VOID does not set a status. The controlling record is the remaining SET with lexicographically greatest (tier,published_day,serial), all numeric, in that order. Higher values win. A later SET in the same tier is independently eligible even if a different SET was voided. Void records never cancel other voids. Return the controlling SET record ID, or \"NONE\" when none exists.\nThe rows have: id kind tier published_day serial sites start end [target for VOID]. Site groups are concatenated as letters, e.g. AB means sites A and B.\n\nS0 SET 1 2 3 AB 1 10\nS1 SET 3 3 1 AC 3 7\nS2 SET 3 3 4 AC 5 10\nS3 SET 3 4 1 BC 2 8\nS4 SET 2 7 1 ABC 5 10\nS5 SET 3 8 6 AB 6 10\nZ1 VOID 3 4 1 ABC 4 6 S1\nZ2 VOID 3 5 1 C 6 8 S3\nZ3 VOID 3 6 1 C 6 8 S2\nZ4 VOID 4 8 1 AB 6 10 S5\nZ5 VOID 3 9 1 B 6 7 S5\nZ6 VOID 2 10 1 A 10 10 S4\nZ7 VOID 3 10 2 A 10 10 S5\nZ8 VOID 3 10 3 A 10 10 S2\n\nQueries (site,event_day,knowledge_day):\nq1: C,6,5\nq2: C,6,6\nq3: A,6,8\nq4: B,7,9\nq5: A,10,10\nq6: C,1,12\nUse uppercase record ID strings, or \"NONE\".\nReturn only a JSON object, with no surrounding text or Markdown and exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "expected": {
+        "q1": "S2",
+        "q2": "NONE",
+        "q3": "S5",
+        "q4": "S3",
+        "q5": "S0",
+        "q6": "NONE"
+      },
+      "oracle_rationale": "Deterministic filter and lexicographic sort; audit listing surviving SET IDs and applicable (tier:target) VOID keys: {'q1': {'allowed': ['S2'], 'voided': ['3:S1', '3:S3']}, 'q2': {'allowed': [], 'voided': ['3:S1', '3:S2', '3:S3']}, 'q3': {'allowed': ['S0', 'S2', 'S4', 'S5'], 'voided': ['3:S1', '4:S5']}, 'q4': {'allowed': ['S0', 'S3', 'S4'], 'voided': ['3:S5', '4:S5']}, 'q5': {'allowed': ['S0'], 'voided': ['2:S4', '3:S2', '3:S5', '4:S5']}, 'q6': {'allowed': [], 'voided': []}}."
+    }
+  ]
+}

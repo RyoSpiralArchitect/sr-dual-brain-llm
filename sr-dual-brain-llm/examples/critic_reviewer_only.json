@@ -1,0 +1,160 @@
+{
+  "cases": [
+    {
+      "id": "bool_disjunction",
+      "domain": "boolean",
+      "question": "Use classical Boolean logic with variables A, B, C, D. Exactly one of A and B is true. If A then C. If B then not C. If C then D.\nX = (A and not D). Y = (B or D). Z = (B and D).\nLabel each proposition ENTAILED if true in every model satisfying the constraints, CONTRADICTED if false in every such model, and CONTINGENT otherwise.\nReturn the following fields with one value each: X, Y, Z.",
+      "correct_candidate": "X: CONTRADICTED\nY: ENTAILED\nZ: CONTINGENT",
+      "wrong_candidate": "X: CONTINGENT\nY: ENTAILED\nZ: CONTINGENT",
+      "defect": {
+        "field": "X",
+        "wrong": "CONTINGENT",
+        "correct": "CONTRADICTED",
+        "rationale": "A forces C, and C forces D. Thus A and not D is false in every model."
+      }
+    },
+    {
+      "id": "bool_cardinality",
+      "domain": "boolean",
+      "question": "Use classical Boolean logic with variables A, B, C, D. Exactly two of A, B, C, D are true. A implies B. C and D cannot both be true. D implies not B.\nX = D. Y = B. Z = A.\nLabel each proposition ENTAILED if true in every model satisfying the constraints, CONTRADICTED if false in every such model, and CONTINGENT otherwise.\nReturn the following fields with one value each: X, Y, Z.",
+      "correct_candidate": "X: CONTRADICTED\nY: ENTAILED\nZ: CONTINGENT",
+      "wrong_candidate": "X: CONTRADICTED\nY: CONTINGENT\nZ: CONTINGENT",
+      "defect": {
+        "field": "Y",
+        "wrong": "CONTINGENT",
+        "correct": "ENTAILED",
+        "rationale": "The only true pairs are A,B and B,C. B is true in both."
+      }
+    },
+    {
+      "id": "bool_xor",
+      "domain": "boolean",
+      "question": "Use classical Boolean logic with variables A, B, C, D. A is true exactly when precisely one of B and C is true. D implies A. C implies not D. At least one of B and C is true.\nX = (A or C). Y = (B and C). Z = (C and D).\nLabel each proposition ENTAILED if true in every model satisfying the constraints, CONTRADICTED if false in every such model, and CONTINGENT otherwise.\nReturn the following fields with one value each: X, Y, Z.",
+      "correct_candidate": "X: ENTAILED\nY: CONTINGENT\nZ: CONTRADICTED",
+      "wrong_candidate": "X: ENTAILED\nY: CONTINGENT\nZ: CONTINGENT",
+      "defect": {
+        "field": "Z",
+        "wrong": "CONTINGENT",
+        "correct": "CONTRADICTED",
+        "rationale": "C implies not D, so C and D is false in every model."
+      }
+    },
+    {
+      "id": "sql_distinct",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query exactly. Use each row key as the field and its integer value as the result. No explanation is needed.\nWITH readings(g,v) AS (\n  VALUES ('P',NULL),('P',4),('P',4),('Q',NULL),('Q',NULL),('R',7),('R',8),('R',8)\n)\nSELECT g, COUNT(DISTINCT v) FROM readings GROUP BY g ORDER BY g;\nReturn the following fields with one value each: P, Q, R.",
+      "correct_candidate": "P: 1\nQ: 0\nR: 2",
+      "wrong_candidate": "P: 1\nQ: 1\nR: 2",
+      "defect": {
+        "field": "Q",
+        "wrong": "1",
+        "correct": "0",
+        "rationale": "COUNT(DISTINCT v) excludes NULL, even when NULL is the only value in a group."
+      }
+    },
+    {
+      "id": "sql_join",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query exactly. Use each row key as the field and its integer value as the result. No explanation is needed.\nWITH lhs(g,k) AS (VALUES ('P',1),('P',1),('Q',2),('R',3)),\nrhs(k,v) AS (VALUES (1,4),(1,4),(1,NULL),(2,9),(2,NULL),(NULL,5))\nSELECT lhs.g, COUNT(rhs.v)\nFROM lhs LEFT JOIN rhs ON lhs.k = rhs.k\nGROUP BY lhs.g ORDER BY lhs.g;\nReturn the following fields with one value each: P, Q, R.",
+      "correct_candidate": "P: 4\nQ: 1\nR: 0",
+      "wrong_candidate": "P: 2\nQ: 1\nR: 0",
+      "defect": {
+        "field": "P",
+        "wrong": "2",
+        "correct": "4",
+        "rationale": "Each of the two lhs rows in P matches both non-NULL rhs rows. The four rows count separately."
+      }
+    },
+    {
+      "id": "sql_window",
+      "domain": "sql",
+      "question": "Evaluate the following SQLite query exactly. Use each row key as the field and its integer value as the result. No explanation is needed.\nWITH items(g,seq,t,v) AS (\n  VALUES ('P',11,9,4),('P',12,9,8),('P',13,8,3),\n         ('Q',21,4,6),('Q',22,5,9),('Q',23,5,1),\n         ('R',31,2,7),('R',32,2,2),('R',33,1,3)\n), eligible AS (\n  SELECT * FROM items WHERE v >= 3\n), ranked AS (\n  SELECT g, seq, ROW_NUMBER() OVER (PARTITION BY g ORDER BY t DESC, seq DESC) AS rn\n  FROM eligible\n)\nSELECT g, seq FROM ranked WHERE rn = 1 ORDER BY g;\nReturn the following fields with one value each: P, Q, R.",
+      "correct_candidate": "P: 12\nQ: 22\nR: 31",
+      "wrong_candidate": "P: 12\nQ: 22\nR: 32",
+      "defect": {
+        "field": "R",
+        "wrong": "32",
+        "correct": "31",
+        "rationale": "Seq 32 has v=2 and is filtered out before ranking. Seq 31 is the highest eligible t for R."
+      }
+    },
+    {
+      "id": "event_order",
+      "domain": "event",
+      "question": "Start with counter=0 and completed=0. Process listed events by increasing time. At a tie, process CANCEL before RUN, regardless of their written order. A cancellation removes only a pending job with that ID. RUN on a pending job adds its payload to the counter, finishes the job, and increments completed. Ignore a RUN for a missing job. Pending IDs do not expire.\nEvents: t=1 SUBMIT u(+4); t=2 SUBMIT v(+7); t=3 RUN u; t=3 CANCEL u; t=4 RUN v; t=4 RUN v; t=5 SUBMIT w(+2).\nReturn Counter, Completed, and the number Pending after all events.\nReturn the following fields with one value each: Counter, Completed, Pending.",
+      "correct_candidate": "Counter: 7\nCompleted: 1\nPending: 1",
+      "wrong_candidate": "Counter: 7\nCompleted: 2\nPending: 1",
+      "defect": {
+        "field": "Completed",
+        "wrong": "2",
+        "correct": "1",
+        "rationale": "Cancellation precedes the first RUN; the second RUN of v is ignored after v finishes. Only v completes."
+      }
+    },
+    {
+      "id": "event_revision",
+      "domain": "event",
+      "question": "A record begins at value=\"gray\", revision=2. Each WRITE carries a request ID, expected revision, and value. For a previously accepted ID, ignore the request entirely. Otherwise, reject a mismatched revision without recording its request ID. If the revision matches, store the value, increment revision by one, and remember the ID. Rejected counts only revision mismatches, not ignored duplicates.\nProcess these WRITE tuples in order (id, expected, value): (u,1,red), (u,2,blue), (v,2,green), (u,3,black), (v,3,white).\nReturn the final Value, Revision and Rejected count.\nReturn the following fields with one value each: Value, Revision, Rejected.",
+      "correct_candidate": "Value: white\nRevision: 4\nRejected: 2",
+      "wrong_candidate": "Value: blue\nRevision: 4\nRejected: 2",
+      "defect": {
+        "field": "Value",
+        "wrong": "blue",
+        "correct": "white",
+        "rationale": "v was rejected at revision 3, leaving its ID reusable. Its retry expecting revision 3 is accepted and writes white."
+      }
+    },
+    {
+      "id": "event_late",
+      "domain": "event",
+      "question": "A scheduler starts empty. START(id,end) creates an active operation with the given inclusive end time and replaces any previous active operation. DONE(id) is accepted only if it matches the current active operation and its time is at most end. An accepted DONE adds 1 to Accepted and clears the active operation. All other DONEs add 1 to Ignored and leave the active operation as-is. Expired operations stay recorded until replaced, but cannot accept DONE. The Active value is the recorded ID, or NONE if cleared.\nEvents in time order: (1, START p end=5), (2, START q end=4), (3, DONE p), (4, DONE q), (5, DONE q), (6, START r end=7), (8, DONE r).\nReturn Accepted, Ignored and Active at t=8.\nReturn the following fields with one value each: Accepted, Ignored, Active.",
+      "correct_candidate": "Accepted: 1\nIgnored: 3\nActive: r",
+      "wrong_candidate": "Accepted: 1\nIgnored: 3\nActive: NONE",
+      "defect": {
+        "field": "Active",
+        "wrong": "NONE",
+        "correct": "r",
+        "rationale": "A late DONE r is ignored at time 8, so r remains the recorded active ID."
+      }
+    },
+    {
+      "id": "evidence_date",
+      "domain": "evidence",
+      "question": "Select the controlling official rate for each facility as of June 12. A bulletin is controlling only if signed and already effective on that date. A later effective date supersedes an earlier one for the same facility. An unsigned draft and a visitor log are not official bulletins. All dates are inclusive in the same year.\nB1: signed June 1, effective June 4: P=12, Q=20, R=30. B2: signed June 10, effective June 14: Q=22. B3: signed June 9, effective June 11: P=15. B4: unsigned draft, labeled effective June 12: R=32. Visitor log dated June 12 says R=33.\nReturn the three rates as integers.\nReturn the following fields with one value each: P, Q, R.",
+      "correct_candidate": "P: 15\nQ: 20\nR: 30",
+      "wrong_candidate": "P: 12\nQ: 20\nR: 30",
+      "defect": {
+        "field": "P",
+        "wrong": "12",
+        "correct": "15",
+        "rationale": "B3 is signed, took effect on June 11, and changes P under the supersession rule."
+      }
+    },
+    {
+      "id": "evidence_support",
+      "domain": "evidence",
+      "question": "Determine which quoted source controls each requested claim. Prefer the source with direct designated authority for that claim. Ignore a source for a claim outside its designated scope. Use the exact source codes CAL, COUNT, REPORT, or NONE if none is in scope.\nCAL (calibration certificate, authority for the sensor offset only): “The offset is +0.4.” COUNT (signed tally, authority for accepted sample count): “18 samples passed screening.” REPORT (lab memo without a designated authority): “We used 20 samples and expect a 5% relative improvement.”\nOffset asks for the official sensor offset. Samples asks for the official accepted sample count. Improvement asks for an authorized finding that 5% improvement was observed.\nReturn the following fields with one value each: Offset, Samples, Improvement.",
+      "correct_candidate": "Offset: CAL\nSamples: COUNT\nImprovement: NONE",
+      "wrong_candidate": "Offset: CAL\nSamples: COUNT\nImprovement: REPORT",
+      "defect": {
+        "field": "Improvement",
+        "wrong": "REPORT",
+        "correct": "NONE",
+        "rationale": "The REPORT has no designated authority and describes an expectation, not an observed finding."
+      }
+    },
+    {
+      "id": "evidence_scope",
+      "domain": "evidence",
+      "question": "Report the official bus statuses at 07:30. A published dispatcher notice for the bus and time is controlling, including an explicitly restored segment. Among notices that apply to the given time and bus, use the latest issue time. A notice published after 07:30 is unavailable. A passenger message has no authority. Allowed statuses: OPEN or CLOSED.\nN1 dispatcher, issued 06:00: routes P,Q,R are OPEN all day. N2 dispatcher, issued 06:45: P,Q are CLOSED from 07:00 through 08:00. N3 dispatcher, issued 07:10: Q is OPEN from 07:20 onward. N4 dispatcher, issued 07:40: R is CLOSED from 07:30 onward. A passenger message at 07:22 says P is open.\nReturn the following fields with one value each: P, Q, R.",
+      "correct_candidate": "P: CLOSED\nQ: OPEN\nR: OPEN",
+      "wrong_candidate": "P: CLOSED\nQ: CLOSED\nR: OPEN",
+      "defect": {
+        "field": "Q",
+        "wrong": "CLOSED",
+        "correct": "OPEN",
+        "rationale": "The 07:10 restoration notice explicitly opens Q at 07:20 and supersedes the 06:45 notice at 07:30."
+      }
+    }
+  ]
+}

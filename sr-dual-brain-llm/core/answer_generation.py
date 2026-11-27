@@ -73,8 +73,11 @@ def capturing_completion():
 
 
 @contextmanager
-def reasoning_profile():
-    value = os.environ.get('DUALBRAIN_ANSWER_REASONING_EFFORT', 'provider_default').strip().lower()
+def reasoning_profile(value: str | None = None):
+    """Apply an explicit request profile or the configured ordinary profile."""
+    if value is None:
+        value = os.environ.get('DUALBRAIN_ANSWER_REASONING_EFFORT', 'provider_default')
+    value = value.strip().lower()
     if value not in {'provider_default', 'low', 'medium', 'high'}:
         raise ValueError('Invalid ordinary reasoning profile')
     token = _effort.set(None if value == 'provider_default' else value)
