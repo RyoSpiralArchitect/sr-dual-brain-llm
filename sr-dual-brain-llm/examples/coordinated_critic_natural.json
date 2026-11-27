@@ -1,0 +1,168 @@
+{
+  "cases": [
+    {
+      "id": "natural_logic_mirror_caps",
+      "domain": "boolean",
+      "question": "A through H are Boolean variables. Consider only assignments obeying all these rules:\nExactly four variables are true. A is true iff exactly one of B and C is true. D is true iff B and E have the same value. If F then C. If G then not B. Exactly one of F and H is true. If A and G are both true then E is true. If H and E are both true then D is false.\n\nFor each expression below, report the string \"always\" if it is true in every allowed assignment, \"never\" if false in every allowed assignment, or \"sometimes\" otherwise. All implications are material. Each line names one output field.\nmirror: D or E\nthread: If H then B\ncrossing: Exactly one of C and G is true\nclash: F and D\npulse: If F then not E\nring: If G then A\n\nReturn only one JSON object. Use exactly these keys in any order: mirror, thread, crossing, clash, pulse, ring. No explanation or Markdown.",
+      "expected": {
+        "mirror": "always",
+        "thread": "sometimes",
+        "crossing": "always",
+        "clash": "sometimes",
+        "pulse": "sometimes",
+        "ring": "always"
+      },
+      "oracle_rationale": "Enumerate all 256 assignments and keep 4. True counts: {'mirror': 4, 'thread': 2, 'crossing': 4, 'clash': 1, 'pulse': 3, 'ring': 4}."
+    },
+    {
+      "id": "natural_logic_two_locks",
+      "domain": "boolean",
+      "question": "A through H are Boolean variables. Consider only assignments obeying all these rules:\nExactly two of A,B,C,D are true. Exactly three of C,D,E,F,G,H are true. A is true iff E is true and F is false. D is true iff C and G differ. If B then H. If F then not G. If E and H are both true then C is false. At least one of A or F is true.\n\nFor each expression below, report the string \"always\" if it is true in every allowed assignment, \"never\" if false in every allowed assignment, or \"sometimes\" otherwise. All implications are material. Each line names one output field.\nthrough: B or E\nside: A and H\nlatched: C and F\nbranch: If D then G\nbypass: If A then D\ntrip: If H then not C\n\nReturn only one JSON object. Use exactly these keys in any order: through, side, latched, branch, bypass, trip. No explanation or Markdown.",
+      "expected": {
+        "through": "sometimes",
+        "side": "never",
+        "latched": "sometimes",
+        "branch": "sometimes",
+        "bypass": "sometimes",
+        "trip": "always"
+      },
+      "oracle_rationale": "Enumerate all 256 assignments and keep 3. True counts: {'through': 2, 'side': 0, 'latched': 1, 'branch': 2, 'bypass': 2, 'trip': 3}."
+    },
+    {
+      "id": "natural_logic_threshold_toggle",
+      "domain": "boolean",
+      "question": "A through H are Boolean variables. Consider only assignments obeying all these rules:\nExactly five of A through H are true. A and B differ. C is true iff at least two of D, E and F are true. G is true iff exactly one of B and E is true. If H then F. If D then A. If C and H are both true then G is false. If neither G nor H is true then E is false.\n\nFor each expression below, report the string \"always\" if it is true in every allowed assignment, \"never\" if false in every allowed assignment, or \"sometimes\" otherwise. All implications are material. Each line names one output field.\neven: B and D\nbypass: If G then D\nquorum: C or F\nrestore: If E then A\nmirror: Exactly one of D and H is true\nready: If C then H\n\nReturn only one JSON object. Use exactly these keys in any order: even, bypass, quorum, restore, mirror, ready. No explanation or Markdown.",
+      "expected": {
+        "even": "never",
+        "bypass": "sometimes",
+        "quorum": "always",
+        "restore": "sometimes",
+        "mirror": "sometimes",
+        "ready": "sometimes"
+      },
+      "oracle_rationale": "Enumerate all 256 assignments and keep 4. True counts: {'even': 0, 'bypass': 3, 'quorum': 4, 'restore': 3, 'mirror': 2, 'ready': 2}."
+    },
+    {
+      "id": "natural_sql_banded_distinct",
+      "domain": "sql",
+      "question": "Evaluate exactly this SQLite query on its inline data. It returns one row; map each named output column to its value. Use JSON null for SQL NULL and use integers or strings for the other values.\n\nWITH\n  raw(id,k,t,v) AS (\n    VALUES (1,'X',1,4),(2,'X',1,4),(3,'X',2,NULL),(4,'X',3,1),\n           (5,'Y',1,5),(6,'Y',3,-1),(7,NULL,1,9),(8,NULL,2,3),(9,'Z',1,NULL)\n  ),\n  adjustments(k,a) AS (VALUES ('X',2),('X',2),('X',NULL),('Y',-1),(NULL,3),(NULL,NULL)),\n  joined AS (\n    SELECT DISTINCT id,raw.k,t,v+a AS w\n    FROM raw LEFT JOIN adjustments ON raw.k IS adjustments.k\n  ),\n  framed AS (\n    SELECT *, SUM(w) OVER (\n      PARTITION BY k ORDER BY t GROUPS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE GROUP\n    ) AS seen,\n    COUNT(w) OVER (PARTITION BY k ORDER BY t RANGE BETWEEN 1 PRECEDING AND CURRENT ROW) AS band\n    FROM joined\n  )\nSELECT SUM(seen) FILTER(WHERE k='X') AS x_seen,\n       SUM(band) FILTER(WHERE k IS NULL) AS null_band,\n       COUNT(*) FILTER(WHERE seen IS NULL) AS unseen,\n       SUM(w) FILTER(WHERE band=0) AS empty_sum,\n       COUNT(DISTINCT w) FILTER(WHERE t=1) AS initial_values\nFROM framed;\n\nReturn only one JSON object. Use exactly these keys in any order: x_seen, null_band, unseen, empty_sum, initial_values. No explanation or Markdown.",
+      "expected": {
+        "x_seen": 36,
+        "null_band": 6,
+        "unseen": 8,
+        "empty_sum": null,
+        "initial_values": 3
+      },
+      "oracle_rationale": "SQLite 3.45.3 executed the exact query; the sole row was {'x_seen': 36, 'null_band': 6, 'unseen': 8, 'empty_sum': None, 'initial_values': 3}."
+    },
+    {
+      "id": "natural_sql_window_compact",
+      "domain": "sql",
+      "question": "Evaluate exactly this SQLite query on its inline data. It returns one row; map each named output column to its value. Use JSON null for SQL NULL and use integers or strings for the other values.\n\nWITH\n  events(id,team,t,score) AS (\n    VALUES (1,'A',1,2),(2,'A',2,6),(3,'A',2,NULL),(4,'A',3,2),(5,'A',4,8),\n           (6,'B',1,NULL),(7,'B',2,4),(8,'B',2,5),(9,'B',2,5),(10,'B',4,1)\n  ),\n  flags(team,t) AS (VALUES ('A',2),('B',2),('B',2),('B',3)),\n  a AS (\n    SELECT *, MAX(score) OVER (\n      PARTITION BY team ORDER BY t GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE TIES\n    ) AS mx,\n    LEAD(score,2,99) OVER (PARTITION BY team ORDER BY t,id) AS future\n    FROM events\n  ),\n  b AS (\n    SELECT id,team,score,mx,future,COUNT(flags.t) AS flagged\n    FROM a LEFT JOIN flags USING(team,t)\n    GROUP BY id,team,score,mx,future\n  )\nSELECT SUM(mx) FILTER(WHERE flagged=2) AS doubled,\n       COUNT(future) FILTER(WHERE score IS NULL) AS null_future_count,\n       SUM(future) FILTER(WHERE team='A' AND mx=8) AS later_a,\n       COUNT(*) FILTER(WHERE future=99 AND mx=score) AS exact_tails,\n       SUM(score) FILTER(WHERE flagged=1 AND mx IS NULL) AS no_max\nFROM b;\n\nReturn only one JSON object. Use exactly these keys in any order: doubled, null_future_count, later_a, exact_tails, no_max. No explanation or Markdown.",
+      "expected": {
+        "doubled": 14,
+        "null_future_count": 2,
+        "later_a": 198,
+        "exact_tails": 2,
+        "no_max": null
+      },
+      "oracle_rationale": "SQLite 3.45.3 executed the exact query; the sole row was {'doubled': 14, 'null_future_count': 2, 'later_a': 198, 'exact_tails': 2, 'no_max': None}."
+    },
+    {
+      "id": "natural_sql_bag_except_tiers",
+      "domain": "sql",
+      "question": "Evaluate exactly this SQLite query on its inline data. It returns one row; map each named output column to its value. Use JSON null for SQL NULL and use integers or strings for the other values.\n\nWITH\n  l(k,v) AS (VALUES ('a',1),('a',1),('a',NULL),('b',1),('b',2),('b',2),(NULL,1),(NULL,1)),\n  r(k,v) AS (VALUES ('a',1),('a',NULL),('b',2),('b',2),('b',2),(NULL,NULL),('c',1)),\n  bag AS (\n    SELECT k,v,1 AS side FROM l\n    UNION ALL\n    SELECT k,v,-1 AS side FROM r\n  ),\n  compact AS (\n    SELECT k,v,SUM(side) AS delta,COUNT(*) AS n\n    FROM bag GROUP BY k,v\n  ),\n  only_l AS (SELECT k,v FROM l EXCEPT SELECT k,v FROM r),\n  joined AS (SELECT c.*,o.v AS marker FROM compact c LEFT JOIN only_l o ON c.k IS o.k AND c.v IS o.v)\nSELECT SUM(n) FILTER (WHERE delta=0) AS balanced_mass,\n       SUM(delta) FILTER (WHERE v IS NOT NULL AND marker IS NULL) AS unmarked_delta,\n       COUNT(*) FILTER (WHERE v NOT IN (SELECT v FROM r WHERE k='b')) AS not_in_b,\n       COUNT(*) FILTER (WHERE delta=0 AND k IS NULL) AS absent_balance,\n       SUM(v) FILTER (WHERE delta < 0 AND k='a') AS a_negative,\n       SUM(n) FILTER (WHERE marker IS NOT NULL) AS left_only_mass\nFROM joined;\n\nReturn only one JSON object. Use exactly these keys in any order: balanced_mass, unmarked_delta, not_in_b, absent_balance, a_negative, left_only_mass. No explanation or Markdown.",
+      "expected": {
+        "balanced_mass": 2,
+        "unmarked_delta": -1,
+        "not_in_b": 4,
+        "absent_balance": 0,
+        "a_negative": null,
+        "left_only_mass": 3
+      },
+      "oracle_rationale": "SQLite 3.45.3 executed the exact query; the sole row was {'balanced_mass': 2, 'unmarked_delta': -1, 'not_in_b': 4, 'absent_balance': 0, 'a_negative': None, 'left_only_mass': 3}."
+    },
+    {
+      "id": "natural_event_expiring_allocator",
+      "domain": "event",
+      "question": "A fictional credit allocator starts empty. Process all events in written order, including equal timestamps.\nBefore each event permanently close any active account with expiry strictly below this event's time.\nopen NAME COUNTS EXPIRY creates the account only if its expiry is at least the current time and this name has never successfully opened before.\nmove FROM TO N transfers N credits only if both accounts are active and FROM has at least N credits. Transfer changes neither expiry.\npulse NAME succeeds for any active account, spends min(3, balance) credits, and counts as one successful pulse even for a zero balance.\nfreeze NAME closes an active account immediately. Closing, freezing or expiration does not spend credits.\nA failed event changes nothing and increases the ignored count.\nGive spent credits, ignored events, successful pulses, and each named account's final balance as integer if active or string \"closed\" if closed.\nEvents:\n0 open red 5 3\n0 open blue 8 10\n1 move red blue 2\n2 pulse blue\n2 open green 4 5\n3 move blue red 3\n3 pulse red\n4 freeze red\n4 open red 6 6\n4 move blue red 4\n5 pulse blue\n5 move green blue 3\n5 pulse green\n6 move blue red 3\n6 pulse red\n6 freeze blue\n7 open blue 9 9\n7 pulse blue\n8 move red blue 1\n8 pulse blue\n8 open green 2 10\n8 move green blue 2\n9 pulse green\n\nReturn only one JSON object. Use exactly these keys in any order: spent, ignored, pulses, red, blue, green. No explanation or Markdown.",
+      "expected": {
+        "spent": 10,
+        "ignored": 12,
+        "pulses": 4,
+        "red": "closed",
+        "blue": "closed",
+        "green": "closed"
+      },
+      "oracle_rationale": "Deterministic active account simulation; accepted-event trace with post-event states: [(0, 'open red 5 3', True, {'red': (5, 3)}), (0, 'open blue 8 10', True, {'red': (5, 3), 'blue': (8, 10)}), (1, 'move red blue 2', True, {'red': (3, 3), 'blue': (10, 10)}), (2, 'pulse blue', True, {'red': (3, 3), 'blue': (7, 10)}), (2, 'open green 4 5', True, {'red': (3, 3), 'blue': (7, 10), 'green': (4, 5)}), (3, 'move blue red 3', True, {'red': (6, 3), 'blue': (4, 10), 'green': (4, 5)}), (3, 'pulse red', True, {'red': (3, 3), 'blue': (4, 10), 'green': (4, 5)}), (4, 'freeze red', False, {'blue': (4, 10), 'green': (4, 5)}), (4, 'open red 6 6', False, {'blue': (4, 10), 'green': (4, 5)}), (4, 'move blue red 4', False, {'blue': (4, 10), 'green': (4, 5)}), (5, 'pulse blue', True, {'blue': (1, 10), 'green': (4, 5)}), (5, 'move green blue 3', True, {'blue': (4, 10), 'green': (1, 5)}), (5, 'pulse green', True, {'blue': (4, 10), 'green': (0, 5)}), (6, 'move blue red 3', False, {'blue': (4, 10)}), (6, 'pulse red', False, {'blue': (4, 10)}), (6, 'freeze blue', True, {}), (7, 'open blue 9 9', False, {}), (7, 'pulse blue', False, {}), (8, 'move red blue 1', False, {}), (8, 'pulse blue', False, {}), (8, 'open green 2 10', False, {}), (8, 'move green blue 2', False, {}), (9, 'pulse green', False, {})]."
+    },
+    {
+      "id": "natural_event_epoch_bus",
+      "domain": "event",
+      "question": "A fictional message bus starts with no messages and subscriber clocks A=B=C=0. Process written order.\nsync X E sets X's nondecreasing clock to E if E >= old clock, otherwise fails. regress X E explicitly sets the clock even when E is lower and never erases delivery history.\ncast ID E W adds a persistent message eligible from epoch E with weight W, unless ID was ever successfully cast, even if canceled.\ncancel ID removes a currently active message and increments the cancels count; it neither reverses previous deliveries nor allows reuse of ID. Cancel of a non-active ID fails.\ndrain X delivers EVERY currently active message with epoch <= X's clock which X has never received and adds their weights to X's own total. It does not remove messages. All drain events succeed including empty ones.\nEvery failed event increments ignored. Return A, B, C weighted totals, ignored, and successful cancels as integers.\nEvents:\nsync A 1\nsync B 2\ncast M 3 9\ncast N 2 7\ndrain B\nsync C 2\ndrain C\ndrain A\nsync A 3\ndrain A\ncancel M\ndrain B\ndrain C\ncast O 1 4\nregress C 0\ndrain C\nsync C 3\ndrain C\ndrain A\nsync B 3\ndrain B\ncast M 3 1\ncancel O\ndrain B\n\nReturn only one JSON object. Use exactly these keys in any order: A, B, C, ignored, cancels. No explanation or Markdown.",
+      "expected": {
+        "A": 20,
+        "B": 11,
+        "C": 11,
+        "ignored": 1,
+        "cancels": 2
+      },
+      "oracle_rationale": "Direct simulation using permanent per-subscriber delivery sets and a permanent used-ID set; [('sync A 1', {'A': 0, 'B': 0, 'C': 0}, 0, 0), ('sync B 2', {'A': 0, 'B': 0, 'C': 0}, 0, 0), ('cast M 3 9', {'A': 0, 'B': 0, 'C': 0}, 0, 0), ('cast N 2 7', {'A': 0, 'B': 0, 'C': 0}, 0, 0), ('drain B', {'A': 0, 'B': 7, 'C': 0}, 0, 0), ('sync C 2', {'A': 0, 'B': 7, 'C': 0}, 0, 0), ('drain C', {'A': 0, 'B': 7, 'C': 7}, 0, 0), ('drain A', {'A': 0, 'B': 7, 'C': 7}, 0, 0), ('sync A 3', {'A': 0, 'B': 7, 'C': 7}, 0, 0), ('drain A', {'A': 16, 'B': 7, 'C': 7}, 0, 0), ('cancel M', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('drain B', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('drain C', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('cast O 1 4', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('regress C 0', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('drain C', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('sync C 3', {'A': 16, 'B': 7, 'C': 7}, 0, 1), ('drain C', {'A': 16, 'B': 7, 'C': 11}, 0, 1), ('drain A', {'A': 20, 'B': 7, 'C': 11}, 0, 1), ('sync B 3', {'A': 20, 'B': 7, 'C': 11}, 0, 1), ('drain B', {'A': 20, 'B': 11, 'C': 11}, 0, 1), ('cast M 3 1', {'A': 20, 'B': 11, 'C': 11}, 1, 1), ('cancel O', {'A': 20, 'B': 11, 'C': 11}, 1, 2), ('drain B', {'A': 20, 'B': 11, 'C': 11}, 1, 2)]."
+    },
+    {
+      "id": "natural_event_weighted_ballot",
+      "domain": "event",
+      "question": "A fictional weighted ballot starts empty. All events are in order.\njoin PERSON W adds an inactive person with current weight W. leave removes an active person and deletes that person's vote. bump PERSON D changes an active person's current weight by D. An active member cannot join again and an inactive member cannot leave or bump.\noffer PERSON CANDIDATE permanently registers a new candidate owned by the person, provided the person is active. A candidate is eligible exactly when its owner is currently active. Eligibility can return when that owner rejoins.\nvote PERSON CANDIDATE replaces the person's previous vote if the person is active and the candidate has been registered. Voting for a currently ineligible but registered candidate is allowed. On publish a candidate's score is the sum of the CURRENT weights of its active supporters. Ineligible candidates' scores do not compete. Publish picks the eligible candidate with greatest score, ties by alphabetical candidate name. If there are none, winner is string none and score 0. Publish never fails or changes votes.\nFailed events increase the ignored count, leave all state unchanged.\nLet winners be the seven winner letters concatenated without separators, winner3 be the third published winner, score3 its score, score_last the seventh winner's score, and ignored the number of failures.\nEvents:\njoin A 2\njoin B 3\njoin C 2\noffer A p\noffer B q\nvote A q\nvote B p\nvote C q\npublish\nbump B -1\nvote C p\npublish\nleave A\npublish\njoin A 4\nvote A q\npublish\noffer A r\nvote B r\npublish\nleave C\nleave C\nvote B z\npublish\nbump B 1\nvote A p\npublish\n\nReturn only one JSON object. Use exactly these keys in any order: winners, winner3, score3, score_last, ignored. No explanation or Markdown.",
+      "expected": {
+        "winners": "qpqpqqp",
+        "winner3": "q",
+        "score3": 0,
+        "score_last": 4,
+        "ignored": 2
+      },
+      "oracle_rationale": "Simulate member weights, immutable candidate ownership and current votes; published (winner, score) = [('q', 4), ('p', 4), ('q', 0), ('p', 4), ('q', 4), ('q', 4), ('p', 4)]; failures = 2."
+    },
+    {
+      "id": "natural_source_delegation_paths",
+      "domain": "evidence",
+      "question": "For a fictional repository, each query gives (site, event day, knowledge day). All published-day and event-day boundaries are inclusive.\nA delegation edge is eligible if published at or before the knowledge day, covers the queried site and covers the event day. A writer has authority if reachable from HQ using at most two eligible directed delegation edges. HQ has depth 0. The depth of any other writer is the length of its shortest eligible chain.\nA record is eligible if its writer has authority, it covers the site and event day, and it was published at or before the knowledge day. Among eligible records find one with greatest authority depth, then latest publication day, then alphabetically earliest record ID. If none is eligible return string \"NONE\".\n\nDelegation rows: edge-ID issuer recipient site-set start end published.\nd2 HQ E AX 5 14 1\nd3 E L A 7 12 2\nd4 HQ W BX 2 18 0\nd5 W L AX 9 16 2\nd6 HQ L B 5 16 5\nd7 L E B 6 8 5\nd8 W E B 2 9 6\n\nRecord rows: record-ID writer site-set published start end.\na4 HQ ABX 4 0 20\nb3 E A 6 6 18\nc7 L AX 7 7 16\na2 L AB 8 7 14\nd1 W BX 7 6 15\nc2 E BX 9 6 16\nc1 L BX 9 7 14\na9 R X 12 9 14\na8 HQ X 11 8 12\n\nQueries (site, event day, knowledge day):\nalpha: A,8,8\nbeta: A,13,9\ngamma: X,10,10\ndelta: B,7,10\nepsilon: B,8,6\nzeta: X,11,12\nA site-set such as ABX means sites A, B and X. Return record IDs as strings.\n\nReturn only one JSON object. Use exactly these keys in any order: alpha, beta, gamma, delta, epsilon, zeta. No explanation or Markdown.",
+      "expected": {
+        "alpha": "a2",
+        "beta": "b3",
+        "gamma": "c1",
+        "delta": "c2",
+        "epsilon": "a4",
+        "zeta": "c1"
+      },
+      "oracle_rationale": "Depth and sorted ranking keys computed for each query: {'alpha': {'shortest': {'HQ': 0, 'E': 1, 'L': 2}, 'candidate_keys': [(-2, -8, 'a2'), (-2, -7, 'c7'), (-1, -6, 'b3'), (0, -4, 'a4')]}, 'beta': {'shortest': {'HQ': 0, 'E': 1}, 'candidate_keys': [(-1, -6, 'b3'), (0, -4, 'a4')]}, 'gamma': {'shortest': {'HQ': 0, 'E': 1, 'W': 1, 'L': 2}, 'candidate_keys': [(-2, -9, 'c1'), (-2, -7, 'c7'), (-1, -9, 'c2'), (-1, -7, 'd1'), (0, -4, 'a4')]}, 'delta': {'shortest': {'HQ': 0, 'L': 1, 'W': 1, 'E': 2}, 'candidate_keys': [(-2, -9, 'c2'), (-1, -9, 'c1'), (-1, -8, 'a2'), (-1, -7, 'd1'), (0, -4, 'a4')]}, 'epsilon': {'shortest': {'HQ': 0, 'L': 1, 'W': 1, 'E': 2}, 'candidate_keys': [(0, -4, 'a4')]}, 'zeta': {'shortest': {'HQ': 0, 'E': 1, 'W': 1, 'L': 2}, 'candidate_keys': [(-2, -9, 'c1'), (-2, -7, 'c7'), (-1, -9, 'c2'), (-1, -7, 'd1'), (0, -11, 'a8'), (0, -4, 'a4')]}}."
+    },
+    {
+      "id": "natural_source_quorum_revocation",
+      "domain": "evidence",
+      "question": "Evaluate a fictional approved-rules catalog. For each query know all rows with published day <= knowledge day and all signature events with day <= knowledge day. Signatures are attached to one record permanently by record ID; a later event from the same signer on the same record overwrites their prior event. A seal counts and a revoke does not. A record must currently have seals from at least two different signers to qualify. Never borrow a seal from another record. The state of signatures is independent of the record's event validity interval.\nEligible records apply to the queried site or to '*' wildcard, must be known, must qualify for seals, and cover the event day in inclusive [first,last]. Pick eligible records for that exact site before any wildcard; within the same specificity pick the latest record publication day, then the alphabetically earliest ID. Return the string \"NONE\" if no record is eligible.\n\nRecords: ID site published first last.\na1 A 1 1 9\na2 A 4 2 7\na3 A 5 3 11\na4 A 5 3 11\nb1 B 1 1 14\nb2 B 6 7 12\nu1 * 3 1 20\nu2 * 6 4 10\nSignature events, in time and written order: day ID signer action.\n2 a1 x seal\n2 a1 y seal\n4 u1 x seal\n4 u1 z seal\n4 a2 x seal\n5 a2 y seal\n5 a3 x seal\n6 a3 z seal\n6 a4 x seal\n6 a4 y seal\n6 b2 x seal\n6 u2 x seal\n6 u2 z seal\n7 a3 x revoke\n7 a4 y revoke\n7 a2 x revoke\n7 a2 z seal\n8 a3 y seal\n8 a4 z seal\n8 b2 y seal\n8 b2 x revoke\n9 a1 x revoke\n9 a1 z seal\n9 b1 x seal\n9 b1 z seal\n10 a1 x seal\nQueries (site,event day,knowledge day):\nq1: A,5,6\nq2: A,6,7\nq3: A,6,8\nq4: A,8,10\nq5: B,10,8\nq6: B,10,9\nReturn IDs as strings.\n\nReturn only one JSON object. Use exactly these keys in any order: q1, q2, q3, q4, q5, q6. No explanation or Markdown.",
+      "expected": {
+        "q1": "a3",
+        "q2": "a2",
+        "q3": "a3",
+        "q4": "a3",
+        "q5": "u2",
+        "q6": "b1"
+      },
+      "oracle_rationale": "Reduce each signer's current state at knowledge day, filter, then sort candidates; {'q1': [(-1, -5, 'a3'), (-1, -5, 'a4'), (-1, -4, 'a2'), (-1, -1, 'a1'), (0, -6, 'u2'), (0, -3, 'u1')], 'q2': [(-1, -4, 'a2'), (-1, -1, 'a1'), (0, -6, 'u2'), (0, -3, 'u1')], 'q3': [(-1, -5, 'a3'), (-1, -5, 'a4'), (-1, -4, 'a2'), (-1, -1, 'a1'), (0, -6, 'u2'), (0, -3, 'u1')], 'q4': [(-1, -5, 'a3'), (-1, -5, 'a4'), (-1, -1, 'a1'), (0, -6, 'u2'), (0, -3, 'u1')], 'q5': [(0, -6, 'u2'), (0, -3, 'u1')], 'q6': [(-1, -1, 'b1'), (0, -6, 'u2'), (0, -3, 'u1')]}."
+    },
+    {
+      "id": "natural_source_temporal_aliases",
+      "domain": "evidence",
+      "question": "Resolve a fictional registry query (starting key, event day, knowledge day), all dates inclusive.\nFor each possible alias source separately, consider alias rows published by knowledge day that cover event day in [first,last]. Select the row with latest publication day. All published dates differ within a source's candidate rows. Follow these selected alias edges repeatedly. If you visit the same key twice return string \"CYCLE\". Otherwise use only the terminal key for evidence lookup. If an alias row has an interval that misses event day, it does not hide earlier alias rows.\nA statement qualifies only if it is LAB or LOCAL, its key is the terminal key, it was published by knowledge day, and its validity interval includes event day. Prefer LOCAL over LAB, then latest publication day, then alphabetically earliest ID. Return the chosen statement's value as a JSON integer, or string \"NONE\" if no statement qualifies.\n\nStatements: ID kind key value published first last.\nk1 LAB p 12 1 1 20\nk2 LOCAL p 11 4 2 12\nk3 LAB q 16 2 3 18\nk4 LAB r 19 3 1 18\nk5 LOCAL q 18 4 5 8\nk6 LOCAL q 24 4 5 8\nk7 LOCAL r 21 9 6 15\nk8 DRAFT p 29 8 6 15\nk9 LAB z 22 4 7 10\nAlias rows: published source target first last.\n2 a p 2 20\n3 a q 6 15\n5 q r 7 18\n7 a q 11 16\n8 r a 10 11\n9 r z 12 16\n11 z r 12 16\n8 q p 6 7\nQueries (key,event day,knowledge day):\nj1: a,6,5\nj2: a,7,8\nj3: a,10,8\nj4: a,12,9\nj5: a,12,11\nj6: a,17,10\n\nReturn only one JSON object. Use exactly these keys in any order: j1, j2, j3, j4, j5, j6. No explanation or Markdown.",
+      "expected": {
+        "j1": 18,
+        "j2": 11,
+        "j3": "CYCLE",
+        "j4": "NONE",
+        "j5": "CYCLE",
+        "j6": 12
+      },
+      "oracle_rationale": "Build alias map after both date filters, detect repeated keys, rank eligible statements. Audit: {'j1': ('q', [(False, -4, 'k5', 18), (False, -4, 'k6', 24), (True, -2, 'k3', 16)]), 'j2': ('p', [(False, -4, 'k2', 11), (True, -1, 'k1', 12)]), 'j3': ({'a': 'q', 'q': 'r', 'r': 'a'}, ['a', 'q', 'r']), 'j4': ('z', []), 'j5': ({'a': 'q', 'q': 'r', 'r': 'z', 'z': 'r'}, ['a', 'q', 'r', 'z']), 'j6': ('p', [(True, -1, 'k1', 12)])}."
+    }
+  ]
+}
