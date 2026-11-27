@@ -1,0 +1,718 @@
+{
+  "cases": [
+    {
+      "id": "logic_relay_inventory",
+      "domain": "boolean",
+      "expected": {
+        "alpha": "always",
+        "beta": "never",
+        "gamma": "always",
+        "delta": "sometimes",
+        "epsilon": "always",
+        "zeta": "sometimes"
+      },
+      "draft": {
+        "alpha": "always",
+        "beta": "never",
+        "gamma": "always",
+        "delta": "always",
+        "epsilon": "always",
+        "zeta": "always"
+      },
+      "claims": [
+        {
+          "field": "delta",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "The D=true and G=false branch is compatible with F and makes H false."
+        },
+        {
+          "field": "zeta",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "In the A,C branch without B, G can be the one true member of E,F,G."
+        },
+        {
+          "field": "beta",
+          "found": "never",
+          "replacement": "sometimes",
+          "reason": "Both B and C can hold if the implication triggered by C remains optional."
+        },
+        {
+          "field": "epsilon",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "I may be false, so the disjunction should vary across models."
+        }
+      ],
+      "question": "A through I are Boolean. An implication is material. Apply all these constraints:\n- Exactly two of A, B, C are true.\n- D is true exactly when A and E have different truth values.\n- B implies F. C implies not F or G.\n- Exactly one of E, F, G is true.\n- H is true exactly when both D and G are true.\n- If H is false then I is true.\n- Exactly five variables are true.\nFor each expression classify truth among all satisfying assignments. Use the strings 'always', 'never', or 'sometimes'.\nalpha: A\nbeta: B and C\ngamma: F implies not G\ndelta: D implies H\nepsilon: I or H\nzeta: E if and only if C\nReturn only one JSON object with exactly these keys: alpha, beta, gamma, delta, epsilon, zeta.",
+      "oracle_rationale": "Exhaustive enumeration over 512 assignments. Satisfying assignments (letters stand for true variables): ['ACDGH', 'ABDFI']. True counts by field: {'alpha': 2, 'beta': 0, 'gamma': 2, 'delta': 1, 'epsilon': 2, 'zeta': 1}."
+    },
+    {
+      "id": "logic_five_counterterms",
+      "domain": "boolean",
+      "expected": {
+        "alpha": "always",
+        "beta": "never",
+        "gamma": "sometimes",
+        "delta": "sometimes",
+        "epsilon": "always",
+        "zeta": "sometimes"
+      },
+      "draft": {
+        "alpha": "always",
+        "beta": "never",
+        "gamma": "always",
+        "delta": "sometimes",
+        "epsilon": "always",
+        "zeta": "always"
+      },
+      "claims": [
+        {
+          "field": "beta",
+          "found": "never",
+          "replacement": "sometimes",
+          "reason": "The count condition permits both F and H if the restrictions operate in separate branches."
+        },
+        {
+          "field": "epsilon",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "The alternatives B and I differ across models, so the expression varies."
+        },
+        {
+          "field": "gamma",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "The feasible assignments do not require D and G to have equal values."
+        },
+        {
+          "field": "zeta",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "E and C occur together in only part of the feasible assignments."
+        }
+      ],
+      "question": "A through I are Boolean. An implication is material. Apply all these constraints:\n- Exactly five of A through I are true.\n- D is true exactly when precisely one of A, B, C is true.\n- E is true exactly when A and B have equal truth values.\n- F implies D. G is true exactly when C or F is true.\n- H implies E and not G.\n- Exactly one of B and I is true.\n- If neither F nor H is true, at least one of C and I is true.\nFor each expression classify truth among all satisfying assignments. Use the strings 'always', 'never', or 'sometimes'.\nalpha: A or E\nbeta: F and H\ngamma: D if and only if G\ndelta: I implies C\nepsilon: not (B and I)\nzeta: E and C\nReturn only one JSON object with exactly these keys: alpha, beta, gamma, delta, epsilon, zeta.",
+      "oracle_rationale": "Exhaustive enumeration over 512 assignments. Satisfying assignments (letters stand for true variables): ['CDEGI', 'ADFGI', 'ABCEG']. True counts by field: {'alpha': 3, 'beta': 0, 'gamma': 2, 'delta': 2, 'epsilon': 3, 'zeta': 2}."
+    },
+    {
+      "id": "logic_dual_cardinality",
+      "domain": "boolean",
+      "expected": {
+        "alpha": "sometimes",
+        "beta": "sometimes",
+        "gamma": "never",
+        "delta": "never",
+        "epsilon": "always",
+        "zeta": "never"
+      },
+      "draft": {
+        "alpha": "always",
+        "beta": "sometimes",
+        "gamma": "always",
+        "delta": "never",
+        "epsilon": "always",
+        "zeta": "never"
+      },
+      "claims": [
+        {
+          "field": "alpha",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "Check the feasible assignments with C false even though I is true."
+        },
+        {
+          "field": "gamma",
+          "found": "always",
+          "replacement": "never",
+          "reason": "Any feasible assignment with E false or G false refutes this label."
+        },
+        {
+          "field": "epsilon",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "I can be true even if D is false, so the implication is not forced."
+        }
+      ],
+      "question": "A through I are Boolean. An implication is material. Apply all these constraints:\n- Exactly three of A, B, C, D, E are true.\n- Exactly two of E, F, G, H, I are true.\n- D is true exactly when A and B have different truth values.\n- E implies C. F implies not C. G implies A or F.\n- H is true exactly when B and G are both true.\n- I is true exactly when D or E is true.\nFor each expression classify truth among all satisfying assignments. Use the strings 'always', 'never', or 'sometimes'.\nalpha: C and I\nbeta: B implies D\ngamma: G and E\ndelta: F or E\nepsilon: D implies I\nzeta: A and F\nReturn only one JSON object with exactly these keys: alpha, beta, gamma, delta, epsilon, zeta.",
+      "oracle_rationale": "Exhaustive enumeration over 512 assignments. Satisfying assignments (letters stand for true variables): ['ACDGI', 'ABCGH']. True counts by field: {'alpha': 1, 'beta': 1, 'gamma': 0, 'delta': 0, 'epsilon': 2, 'zeta': 0}."
+    },
+    {
+      "id": "sql_excluded_peer_rollup",
+      "domain": "sql",
+      "expected": {
+        "tail": 30,
+        "near_q": 12,
+        "null_supported": 7,
+        "unsupported_x": 7,
+        "pair_v": 15,
+        "zero_ids": null
+      },
+      "draft": {
+        "tail": 30,
+        "near_q": 12,
+        "null_supported": 7,
+        "unsupported_x": 7,
+        "pair_v": 7,
+        "zero_ids": 0
+      },
+      "claims": [
+        {
+          "field": "near_q",
+          "found": 12,
+          "replacement": 4,
+          "reason": "Use one joined row per source row when summing the window counts."
+        },
+        {
+          "field": "null_supported",
+          "found": 7,
+          "replacement": 0,
+          "reason": "A NULL weighted value prevents any usable support for that joined row."
+        },
+        {
+          "field": "pair_v",
+          "found": 7,
+          "replacement": 15,
+          "reason": "Both distinct weight rows join to id 3 and contribute their weighted values."
+        },
+        {
+          "field": "zero_ids",
+          "found": 0,
+          "replacement": null,
+          "reason": "SUM over zero matching rows yields null, even when the filter is an equality."
+        }
+      ],
+      "question": "Evaluate this query exactly under SQLite semantics. Use JSON integers or null for the values of its single output row, respecting duplicate rows and SQL NULL.\nWITH a(id,g,d,v) AS (\n  VALUES (1,'p',1,4),(2,'p',2,NULL),(3,'p',2,5),(4,'p',4,9),\n         (5,'q',1,4),(6,'q',2,5),(7,'q',2,5),(8,'q',3,NULL),(9,'q',5,8)\n), weight(g,w) AS (VALUES ('p',2),('p',3),('q',-1),('q',NULL)),\nj AS (\n  SELECT id,a.g,d,v+w AS x\n  FROM a LEFT JOIN weight ON weight.g=a.g\n), k AS (\n  SELECT *, SUM(x) OVER (\n    PARTITION BY g ORDER BY d GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING EXCLUDE GROUP\n  ) AS ns,\n  COUNT(x) OVER (PARTITION BY g ORDER BY d RANGE BETWEEN 1 PRECEDING AND CURRENT ROW) AS nn,\n  DENSE_RANK() OVER (PARTITION BY g ORDER BY d DESC) AS pos\n  FROM j\n)\nSELECT SUM(ns) FILTER(WHERE pos=1) AS tail,\n       SUM(nn) FILTER(WHERE d=2 AND g='q') AS near_q,\n       COUNT(*) FILTER(WHERE x IS NULL AND ns IS NOT NULL) AS null_supported,\n       SUM(x) FILTER(WHERE ns IS NULL) AS unsupported_x,\n       SUM(x) FILTER(WHERE id=3) AS pair_v,\n       SUM(id) FILTER(WHERE ns=0) AS zero_ids FROM k;\nReturn only one JSON object with exactly these keys: tail, near_q, null_supported, unsupported_x, pair_v, zero_ids.",
+      "oracle_rationale": "Executed exact query via SQLite 3.45.3: {'tail': 30, 'near_q': 12, 'null_supported': 7, 'unsupported_x': 7, 'pair_v': 15, 'zero_ids': None}."
+    },
+    {
+      "id": "sql_antijoin_lexical_nulls",
+      "domain": "sql",
+      "expected": {
+        "kept": 9,
+        "large_y": 8,
+        "distinct_sum": 3,
+        "not_in_rows": 0,
+        "not_exists_rows": 1,
+        "null_group": null
+      },
+      "draft": {
+        "kept": 9,
+        "large_y": 8,
+        "distinct_sum": 3,
+        "not_in_rows": 0,
+        "not_exists_rows": 2,
+        "null_group": 0
+      },
+      "claims": [
+        {
+          "field": "not_exists_rows",
+          "found": 2,
+          "replacement": 1,
+          "reason": "NULL-safe equality leaves only the unmatched non-null value in q."
+        },
+        {
+          "field": "null_group",
+          "found": 0,
+          "replacement": null,
+          "reason": "The NULL-key join row matches under IS and the equality row is excluded from z."
+        },
+        {
+          "field": "not_in_rows",
+          "found": 0,
+          "replacement": 1,
+          "reason": "The unmatched non-null q value is eligible even though the subquery also contains NULL."
+        },
+        {
+          "field": "distinct_sum",
+          "found": 3,
+          "replacement": 4,
+          "reason": "A NULL value should contribute a distinct category to COUNT(DISTINCT x)."
+        }
+      ],
+      "question": "Evaluate this query exactly under SQLite semantics. Use JSON integers or null for the values of its single output row, respecting duplicate rows and SQL NULL.\nWITH lefts(id,c,x) AS (\n VALUES (1,'p',3),(2,'p',3),(3,'p',NULL),(4,'q',2),(5,'q',5),(6,'r',NULL),(7,NULL,4)\n), righted(c,y) AS (\n VALUES ('p',3),('p',3),('p',NULL),('q',2),('q',NULL),('r',NULL),(NULL,4)\n), j AS (\n SELECT id,l.c,x,y FROM lefts l LEFT JOIN righted r ON l.c IS r.c\n), z AS (\n SELECT * FROM j WHERE y != x OR y IS NULL OR x IS NULL\n), w AS (\n SELECT c,COUNT(*) AS sz,SUM(COALESCE(y,0)) AS ys,COUNT(DISTINCT x) AS dx FROM z GROUP BY c\n)\nSELECT (SELECT SUM(sz) FROM w) AS kept,\n       (SELECT SUM(ys) FROM w WHERE sz>=2) AS large_y,\n       (SELECT SUM(dx) FROM w) AS distinct_sum,\n       (SELECT COUNT(*) FROM lefts WHERE x NOT IN (\n           SELECT y FROM righted WHERE c IS lefts.c\n        )) AS not_in_rows,\n       (SELECT COUNT(*) FROM lefts WHERE NOT EXISTS (\n           SELECT 1 FROM righted WHERE c IS lefts.c AND y IS x\n        )) AS not_exists_rows,\n       (SELECT MAX(ys) FROM w WHERE c IS NULL) AS null_group;\nReturn only one JSON object with exactly these keys: kept, large_y, distinct_sum, not_in_rows, not_exists_rows, null_group.",
+      "oracle_rationale": "Executed exact query via SQLite 3.45.3: {'kept': 9, 'large_y': 8, 'distinct_sum': 3, 'not_in_rows': 0, 'not_exists_rows': 1, 'null_group': None}."
+    },
+    {
+      "id": "sql_calendar_restore_join",
+      "domain": "sql",
+      "expected": {
+        "chosen_near": 14,
+        "a_value": 26,
+        "singleton_ids": 2,
+        "missing_c": null,
+        "null_rows": 2,
+        "small_values": -1
+      },
+      "draft": {
+        "chosen_near": 14,
+        "a_value": 13,
+        "singleton_ids": 2,
+        "missing_c": 0,
+        "null_rows": 2,
+        "small_values": -1
+      },
+      "claims": [
+        {
+          "field": "chosen_near",
+          "found": 14,
+          "replacement": 7,
+          "reason": "Recompute the window after joining to the calendar and collapse repeat calendar matches."
+        },
+        {
+          "field": "null_rows",
+          "found": 2,
+          "replacement": 0,
+          "reason": "The COUNT(x) in the preceding projection excludes null values, as does this count."
+        },
+        {
+          "field": "a_value",
+          "found": 13,
+          "replacement": 26,
+          "reason": "Two matching calendar records duplicate both day-2 rows."
+        },
+        {
+          "field": "missing_c",
+          "found": 0,
+          "replacement": null,
+          "reason": "The inner join removes c, so the aggregate sees no rows."
+        }
+      ],
+      "question": "Evaluate this query exactly under SQLite semantics. Use JSON integers or null for the values of its single output row, respecting duplicate rows and SQL NULL.\nWITH e(id,g,t,x) AS (\n VALUES (1,'a',1,3),(2,'a',2,7),(3,'a',2,6),(4,'a',4,NULL),\n        (5,'b',1,5),(6,'b',3,NULL),(7,'b',3,-1),(8,'b',6,2),(9,'c',2,9)\n), f(g,t) AS (VALUES ('a',2),('a',2),('a',4),('b',1),('b',3),('b',6),('z',1)),\nw AS (\n SELECT id,g,t,x,COUNT(x) OVER(PARTITION BY g ORDER BY t RANGE BETWEEN 2 PRECEDING AND 1 FOLLOWING) AS nx,\n  ROW_NUMBER() OVER(PARTITION BY g ORDER BY x DESC,id DESC) AS rn\n FROM e\n), k AS (\n SELECT * FROM w JOIN f USING(g,t)\n)\nSELECT SUM(nx) FILTER(WHERE rn<=2) AS chosen_near,\n       SUM(x) FILTER(WHERE g='a') AS a_value,\n       COUNT(DISTINCT id) FILTER(WHERE nx=1) AS singleton_ids,\n       SUM(id) FILTER(WHERE g='c') AS missing_c,\n       COUNT(*) FILTER(WHERE x IS NULL) AS null_rows,\n       SUM(x) FILTER(WHERE rn>=3) AS small_values\nFROM k;\nReturn only one JSON object with exactly these keys: chosen_near, a_value, singleton_ids, missing_c, null_rows, small_values.",
+      "oracle_rationale": "Executed exact query via SQLite 3.45.3: {'chosen_near': 14, 'a_value': 26, 'singleton_ids': 2, 'missing_c': None, 'null_rows': 2, 'small_values': -1}."
+    },
+    {
+      "id": "event_locked_batch_shift",
+      "domain": "event",
+      "expected": {
+        "A": 4,
+        "B": 7,
+        "saved_a": 4,
+        "saved_b": 7,
+        "alarms": 4,
+        "packets": 59
+      },
+      "draft": {
+        "A": 4,
+        "B": 7,
+        "saved_a": 4,
+        "saved_b": 7,
+        "alarms": 3,
+        "packets": 46
+      },
+      "claims": [
+        {
+          "field": "alarms",
+          "found": 3,
+          "replacement": 4,
+          "reason": "Count the blocked ADD, both blocked commands touching B, and the self-MOVE."
+        },
+        {
+          "field": "packets",
+          "found": 46,
+          "replacement": 59,
+          "reason": "REPORT observes operations in priority order, including both successful restores."
+        },
+        {
+          "field": "saved_a",
+          "found": 4,
+          "replacement": 7,
+          "reason": "SAVE at time 4 runs after the successful transfer, so include the moved units."
+        },
+        {
+          "field": "B",
+          "found": 7,
+          "replacement": 6,
+          "reason": "The final restore preserves the later addition to B instead of undoing it."
+        }
+      ],
+      "question": "A toy inventory machine starts with counters A=2 and B=5, no locks, no saved snapshot,\nalarms=0, and packets=0. Process increasing timestamps. At equal time apply operation\ntypes in this order: SAVE, LOCK, MOVE, ADD, RESTORE, REPORT. Keep listed order within\none type and timestamp.\nSAVE replaces the snapshot with both current counter values, even while locked.\nLOCK bin duration sets or replaces that bin's lock. A lock created at t includes\ntimestamps t through t+duration, inclusive. This can shorten an active lock.\nMOVE source destination n subtracts n from source and adds n to destination,\nunless endpoints are equal, either is locked, or source has less than n.\nADD bin n adds n to an unlocked bin.\nRESTORE replaces both counters with a copy of the snapshot, unless either bin is\nlocked or the snapshot is absent. It does not unlock bins or consume the snapshot.\nEach failed MOVE, ADD, or RESTORE adds exactly one alarm and otherwise has no effect.\nREPORT u v adds u*A+v*B to packets, even while locked.\nReturn final A, B, saved_a, saved_b, alarms, and packets as integers.\nCommands (timestamp followed by operation):\n0 MOVE A B 2\n0 SAVE\n0 REPORT 1 2\n1 ADD B 3\n1 LOCK B 2\n2 MOVE B A 1\n2 ADD A 4\n3 RESTORE\n3 LOCK B 0\n3 REPORT 2 1\n4 MOVE B A 3\n4 SAVE\n5 MOVE A A 1\n5 REPORT 3 1\n5 RESTORE\n6 ADD B 2\n7 RESTORE\n7 REPORT 1 1\nReturn only one JSON object with exactly these keys: A, B, saved_a, saved_b, alarms, packets.",
+      "oracle_rationale": "Deterministic event-order simulation recorded (time, op, A, B, alarms, packets): [(0, 'SAVE', 2, 5, 0, 0), (0, 'MOVE', 0, 7, 0, 0), (0, 'REPORT', 0, 7, 0, 14), (1, 'LOCK', 0, 7, 0, 14), (1, 'ADD', 0, 7, 1, 14), (2, 'MOVE', 0, 7, 2, 14), (2, 'ADD', 4, 7, 2, 14), (3, 'LOCK', 4, 7, 2, 14), (3, 'RESTORE', 4, 7, 3, 14), (3, 'REPORT', 4, 7, 3, 29), (4, 'SAVE', 4, 7, 3, 29), (4, 'MOVE', 7, 4, 3, 29), (5, 'MOVE', 7, 4, 4, 29), (5, 'RESTORE', 4, 7, 4, 29), (5, 'REPORT', 4, 7, 4, 48), (6, 'ADD', 4, 9, 4, 48), (7, 'RESTORE', 4, 7, 4, 48), (7, 'REPORT', 4, 7, 4, 59)]."
+    },
+    {
+      "id": "event_snapshot_restoration_order",
+      "domain": "event",
+      "expected": {
+        "A": 4,
+        "B": 5,
+        "saved_a": 4,
+        "saved_b": 5,
+        "alarms": 7,
+        "packets": 60
+      },
+      "draft": {
+        "A": 4,
+        "B": 3,
+        "saved_a": 4,
+        "saved_b": 5,
+        "alarms": 6,
+        "packets": 60
+      },
+      "claims": [
+        {
+          "field": "saved_a",
+          "found": 4,
+          "replacement": 6,
+          "reason": "The time-6 snapshot restores the A count from the time-4 SAVE."
+        },
+        {
+          "field": "packets",
+          "found": 60,
+          "replacement": 54,
+          "reason": "The time-8 REPORT precedes RESTORE within that timestamp."
+        },
+        {
+          "field": "alarms",
+          "found": 6,
+          "replacement": 7,
+          "reason": "An inclusive duration-1 lock also blocks both operations at time 7."
+        },
+        {
+          "field": "B",
+          "found": 3,
+          "replacement": 5,
+          "reason": "The final RESTORE follows the successful time-8 MOVE and restores snapshot B."
+        }
+      ],
+      "question": "A toy inventory machine starts with counters A=2 and B=5, no locks, no saved snapshot,\nalarms=0, and packets=0. Process increasing timestamps. At equal time apply operation\ntypes in this order: SAVE, LOCK, MOVE, ADD, RESTORE, REPORT. Keep listed order within\none type and timestamp.\nSAVE replaces the snapshot with both current counter values, even while locked.\nLOCK bin duration sets or replaces that bin's lock. A lock created at t includes\ntimestamps t through t+duration, inclusive. This can shorten an active lock.\nMOVE source destination n subtracts n from source and adds n to destination,\nunless endpoints are equal, either is locked, or source has less than n.\nADD bin n adds n to an unlocked bin.\nRESTORE replaces both counters with a copy of the snapshot, unless either bin is\nlocked or the snapshot is absent. It does not unlock bins or consume the snapshot.\nEach failed MOVE, ADD, or RESTORE adds exactly one alarm and otherwise has no effect.\nREPORT u v adds u*A+v*B to packets, even while locked.\nReturn final A, B, saved_a, saved_b, alarms, and packets as integers.\nCommands (timestamp followed by operation):\n0 RESTORE\n0 MOVE B A 4\n1 SAVE\n1 REPORT 3 1\n2 LOCK A 3\n2 ADD A 8\n2 MOVE B A 1\n3 ADD B 2\n3 REPORT 1 1\n4 LOCK A 0\n4 SAVE\n4 RESTORE\n5 MOVE A B 2\n5 REPORT 2 1\n6 SAVE\n6 LOCK B 1\n6 ADD B 4\n7 MOVE A B 2\n7 RESTORE\n8 REPORT 1 3\n8 MOVE B A 2\n8 RESTORE\nReturn only one JSON object with exactly these keys: A, B, saved_a, saved_b, alarms, packets.",
+      "oracle_rationale": "Deterministic event-order simulation recorded (time, op, A, B, alarms, packets): [(0, 'MOVE', 6, 1, 0, 0), (0, 'RESTORE', 6, 1, 1, 0), (1, 'SAVE', 6, 1, 1, 0), (1, 'REPORT', 6, 1, 1, 19), (2, 'LOCK', 6, 1, 1, 19), (2, 'MOVE', 6, 1, 2, 19), (2, 'ADD', 6, 1, 3, 19), (3, 'ADD', 6, 3, 3, 19), (3, 'REPORT', 6, 3, 3, 28), (4, 'SAVE', 6, 3, 3, 28), (4, 'LOCK', 6, 3, 3, 28), (4, 'RESTORE', 6, 3, 4, 28), (5, 'MOVE', 4, 5, 4, 28), (5, 'REPORT', 4, 5, 4, 41), (6, 'SAVE', 4, 5, 4, 41), (6, 'LOCK', 4, 5, 4, 41), (6, 'ADD', 4, 5, 5, 41), (7, 'MOVE', 4, 5, 6, 41), (7, 'RESTORE', 4, 5, 7, 41), (8, 'MOVE', 6, 3, 7, 41), (8, 'RESTORE', 4, 5, 7, 41), (8, 'REPORT', 4, 5, 7, 60)]."
+    },
+    {
+      "id": "event_lock_replacement_counters",
+      "domain": "event",
+      "expected": {
+        "A": 4,
+        "B": 9,
+        "saved_a": 4,
+        "saved_b": 9,
+        "alarms": 6,
+        "packets": 116
+      },
+      "draft": {
+        "A": 4,
+        "B": 9,
+        "saved_a": 4,
+        "saved_b": 11,
+        "alarms": 6,
+        "packets": 126
+      },
+      "claims": [
+        {
+          "field": "saved_b",
+          "found": 11,
+          "replacement": 9,
+          "reason": "SAVE occurs before the attempted same-time addition and while B is locked."
+        },
+        {
+          "field": "packets",
+          "found": 126,
+          "replacement": 116,
+          "reason": "Include the report at time 7 after restoring the two counters."
+        },
+        {
+          "field": "alarms",
+          "found": 6,
+          "replacement": 8,
+          "reason": "An operation touching two blocked bins should count two separate alarms."
+        },
+        {
+          "field": "A",
+          "found": 4,
+          "replacement": 7,
+          "reason": "The time-7 move changes A before the restore and that change is persistent."
+        }
+      ],
+      "question": "A toy inventory machine starts with counters A=2 and B=5, no locks, no saved snapshot,\nalarms=0, and packets=0. Process increasing timestamps. At equal time apply operation\ntypes in this order: SAVE, LOCK, MOVE, ADD, RESTORE, REPORT. Keep listed order within\none type and timestamp.\nSAVE replaces the snapshot with both current counter values, even while locked.\nLOCK bin duration sets or replaces that bin's lock. A lock created at t includes\ntimestamps t through t+duration, inclusive. This can shorten an active lock.\nMOVE source destination n subtracts n from source and adds n to destination,\nunless endpoints are equal, either is locked, or source has less than n.\nADD bin n adds n to an unlocked bin.\nRESTORE replaces both counters with a copy of the snapshot, unless either bin is\nlocked or the snapshot is absent. It does not unlock bins or consume the snapshot.\nEach failed MOVE, ADD, or RESTORE adds exactly one alarm and otherwise has no effect.\nREPORT u v adds u*A+v*B to packets, even while locked.\nReturn final A, B, saved_a, saved_b, alarms, and packets as integers.\nCommands (timestamp followed by operation):\n0 LOCK A 3\n0 SAVE\n0 MOVE B A 3\n1 ADD B 4\n1 RESTORE\n2 LOCK A 0\n2 REPORT 2 5\n3 MOVE B A 4\n3 LOCK B 2\n4 ADD A 2\n4 MOVE A B 1\n4 REPORT 1 3\n5 LOCK B 0\n5 SAVE\n5 ADD B 2\n6 MOVE B A 8\n6 ADD B 1\n6 REPORT 1 1\n7 MOVE B A 3\n7 RESTORE\n7 REPORT 1 2\nReturn only one JSON object with exactly these keys: A, B, saved_a, saved_b, alarms, packets.",
+      "oracle_rationale": "Deterministic event-order simulation recorded (time, op, A, B, alarms, packets): [(0, 'SAVE', 2, 5, 0, 0), (0, 'LOCK', 2, 5, 0, 0), (0, 'MOVE', 2, 5, 1, 0), (1, 'ADD', 2, 9, 1, 0), (1, 'RESTORE', 2, 9, 2, 0), (2, 'LOCK', 2, 9, 2, 0), (2, 'REPORT', 2, 9, 2, 49), (3, 'LOCK', 2, 9, 2, 49), (3, 'MOVE', 2, 9, 3, 49), (4, 'MOVE', 2, 9, 4, 49), (4, 'ADD', 4, 9, 4, 49), (4, 'REPORT', 4, 9, 4, 80), (5, 'SAVE', 4, 9, 4, 80), (5, 'LOCK', 4, 9, 4, 80), (5, 'ADD', 4, 9, 5, 80), (6, 'MOVE', 12, 1, 5, 80), (6, 'ADD', 12, 2, 5, 80), (6, 'REPORT', 12, 2, 5, 94), (7, 'MOVE', 12, 2, 6, 94), (7, 'RESTORE', 4, 9, 6, 94), (7, 'REPORT', 4, 9, 6, 116)]."
+    },
+    {
+      "id": "source_tier_and_suspension",
+      "domain": "evidence",
+      "expected": {
+        "q1": "K4",
+        "q2": "K0",
+        "q3": "K1",
+        "q4": "K3",
+        "q5": "K0",
+        "q6": "K7"
+      },
+      "draft": {
+        "q1": "K4",
+        "q2": "K1",
+        "q3": "K1",
+        "q4": "K3",
+        "q5": "K0",
+        "q6": "K4"
+      },
+      "claims": [
+        {
+          "field": "q1",
+          "found": "K4",
+          "replacement": "K0",
+          "reason": "The latest broad HIDE action on K4 applies across all its effective days."
+        },
+        {
+          "field": "q5",
+          "found": "K0",
+          "replacement": "K6",
+          "reason": "An explicit SHOW should promote the advisory when the binding C record is hidden."
+        },
+        {
+          "field": "q2",
+          "found": "K1",
+          "replacement": "K0",
+          "reason": "The applicable hide on K1 is still the latest known action at the cutoff."
+        },
+        {
+          "field": "q6",
+          "found": "K4",
+          "replacement": "K7",
+          "reason": "The new narrow record K7 applies at effective day 7, outside its hide interval."
+        }
+      ],
+      "question": "Resolve which record controls each query in a fictional calendar.\nThe query lists a zone, an effective day, and a published-through day.\nOnly records and actions published on or before published-through day, including\nthat day, are known. A row applies if its zone list contains the requested zone\nand its inclusive effective interval contains the effective day.\nOnly records with grade 1 or 2 are candidates. Grade 0 is an advisory.\nFor each candidate record, find the latest applicable known action that targets\nits ID. Choose the greater publication day, then the greater action serial.\nHIDE removes that candidate. SHOW only undoes a HIDE on the same record and\ncannot make any advisory, out-of-range, or unknown record into a candidate.\nRank the remaining candidates by grade descending, then zone-list size\nascending, then publication day descending, then record ID ascending.\nReturn the winning record ID or \"NONE\" if none remain.\nRecord rows: ID zones effective_start effective_end published_day grade.\nAction rows: ID zones effective_start effective_end published_day serial HIDE/SHOW target.\nRecords:\nK0 ABC 1 12 1 1\nK1 AB 1 10 2 2\nK2 A 4 9 3 2\nK3 B 4 9 4 2\nK4 A 4 9 5 2\nK5 C 6 8 6 2\nK6 C 3 10 7 0\nK7 A 4 9 8 2\nActions:\nE1 AB 5 8 5 1 HIDE K1\nE2 A 4 9 5 2 HIDE K4\nE3 A 5 6 6 1 SHOW K4\nE4 A 4 9 6 2 HIDE K2\nE5 A 6 8 7 1 SHOW K1\nE6 C 6 6 7 2 HIDE K5\nE7 C 6 6 7 3 SHOW K6\nE8 A 5 6 8 1 HIDE K7\nQueries, in zone effective_day published_through order:\nq1: A 5 6\nq2: A 7 6\nq3: A 7 7\nq4: B 7 6\nq5: C 6 7\nq6: A 7 8\nReturn only one JSON object with exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "oracle_rationale": "Equivalent computation: apply zone/date/publication and grade filters, choose latest action per candidate, and sort all remaining candidates. Per-field trace: {'q1': {'published_applicable': ['K0', 'K1', 'K2', 'K4'], 'effective_actions': {'K1': (5, 1, 'HIDE'), 'K4': (6, 1, 'SHOW'), 'K2': (6, 2, 'HIDE')}, 'eligible_ranked': ['K4', 'K0']}, 'q2': {'published_applicable': ['K0', 'K1', 'K2', 'K4'], 'effective_actions': {'K1': (5, 1, 'HIDE'), 'K4': (5, 2, 'HIDE'), 'K2': (6, 2, 'HIDE')}, 'eligible_ranked': ['K0']}, 'q3': {'published_applicable': ['K0', 'K1', 'K2', 'K4'], 'effective_actions': {'K1': (7, 1, 'SHOW'), 'K4': (5, 2, 'HIDE'), 'K2': (6, 2, 'HIDE')}, 'eligible_ranked': ['K1', 'K0']}, 'q4': {'published_applicable': ['K0', 'K1', 'K3'], 'effective_actions': {'K1': (5, 1, 'HIDE')}, 'eligible_ranked': ['K3', 'K0']}, 'q5': {'published_applicable': ['K0', 'K5'], 'effective_actions': {'K5': (7, 2, 'HIDE'), 'K6': (7, 3, 'SHOW')}, 'eligible_ranked': ['K0']}, 'q6': {'published_applicable': ['K0', 'K1', 'K2', 'K4', 'K7'], 'effective_actions': {'K1': (7, 1, 'SHOW'), 'K4': (5, 2, 'HIDE'), 'K2': (6, 2, 'HIDE')}, 'eligible_ranked': ['K7', 'K1', 'K0']}}."
+    },
+    {
+      "id": "source_serial_partition",
+      "domain": "evidence",
+      "expected": {
+        "q1": "P2",
+        "q2": "P5",
+        "q3": "P0",
+        "q4": "P3",
+        "q5": "P7",
+        "q6": "P6"
+      },
+      "draft": {
+        "q1": "P4",
+        "q2": "P5",
+        "q3": "P3",
+        "q4": "P3",
+        "q5": "P7",
+        "q6": "P6"
+      },
+      "claims": [
+        {
+          "field": "q1",
+          "found": "P4",
+          "replacement": "P2",
+          "reason": "The HIDE has the greater serial among actions published on day 4; P2 wins the tie over P3."
+        },
+        {
+          "field": "q3",
+          "found": "P3",
+          "replacement": "P0",
+          "reason": "Both tier-two broad candidates and the narrow B candidate are hidden for this query."
+        },
+        {
+          "field": "q2",
+          "found": "P5",
+          "replacement": "P2",
+          "reason": "P5 was hidden and a later SHOW cannot restore it without another full record."
+        },
+        {
+          "field": "q6",
+          "found": "P6",
+          "replacement": "P7",
+          "reason": "The event-day 4 query should use the latest-known narrow record regardless of its effective start."
+        }
+      ],
+      "question": "Resolve which record controls each query in a fictional calendar.\nThe query lists a zone, an effective day, and a published-through day.\nOnly records and actions published on or before published-through day, including\nthat day, are known. A row applies if its zone list contains the requested zone\nand its inclusive effective interval contains the effective day.\nOnly records with grade 1 or 2 are candidates. Grade 0 is an advisory.\nFor each candidate record, find the latest applicable known action that targets\nits ID. Choose the greater publication day, then the greater action serial.\nHIDE removes that candidate. SHOW only undoes a HIDE on the same record and\ncannot make any advisory, out-of-range, or unknown record into a candidate.\nRank the remaining candidates by grade descending, then zone-list size\nascending, then publication day descending, then record ID ascending.\nReturn the winning record ID or \"NONE\" if none remain.\nRecord rows: ID zones effective_start effective_end published_day grade.\nAction rows: ID zones effective_start effective_end published_day serial HIDE/SHOW target.\nRecords:\nP0 ABC 1 12 1 1\nP1 A 1 9 4 1\nP2 AB 2 10 2 2\nP3 AB 3 10 2 2\nP4 A 5 8 3 2\nP5 B 6 9 5 2\nP6 C 4 8 5 2\nP7 C 6 9 6 1\nActions:\nA1 A 5 8 4 2 HIDE P4\nA2 A 5 8 4 1 SHOW P4\nA3 B 6 8 6 1 HIDE P5\nA4 B 8 9 7 3 SHOW P5\nA5 AB 7 7 6 1 HIDE P2\nA6 B 7 7 6 2 HIDE P3\nA7 C 6 8 7 1 HIDE P6\nQueries, in zone effective_day published_through order:\nq1: A 6 4\nq2: B 8 7\nq3: B 7 6\nq4: A 7 6\nq5: C 7 7\nq6: C 4 7\nReturn only one JSON object with exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "oracle_rationale": "Equivalent computation: apply zone/date/publication and grade filters, choose latest action per candidate, and sort all remaining candidates. Per-field trace: {'q1': {'published_applicable': ['P0', 'P1', 'P2', 'P3', 'P4'], 'effective_actions': {'P4': (4, 2, 'HIDE')}, 'eligible_ranked': ['P2', 'P3', 'P1', 'P0']}, 'q2': {'published_applicable': ['P0', 'P2', 'P3', 'P5'], 'effective_actions': {'P5': (7, 3, 'SHOW')}, 'eligible_ranked': ['P5', 'P2', 'P3', 'P0']}, 'q3': {'published_applicable': ['P0', 'P2', 'P3', 'P5'], 'effective_actions': {'P5': (6, 1, 'HIDE'), 'P2': (6, 1, 'HIDE'), 'P3': (6, 2, 'HIDE')}, 'eligible_ranked': ['P0']}, 'q4': {'published_applicable': ['P0', 'P1', 'P2', 'P3', 'P4'], 'effective_actions': {'P4': (4, 2, 'HIDE'), 'P2': (6, 1, 'HIDE')}, 'eligible_ranked': ['P3', 'P1', 'P0']}, 'q5': {'published_applicable': ['P0', 'P6', 'P7'], 'effective_actions': {'P6': (7, 1, 'HIDE')}, 'eligible_ranked': ['P7', 'P0']}, 'q6': {'published_applicable': ['P0', 'P6'], 'effective_actions': {}, 'eligible_ranked': ['P6', 'P0']}}."
+    },
+    {
+      "id": "source_advisory_priorities",
+      "domain": "evidence",
+      "expected": {
+        "q1": "D1",
+        "q2": "D2",
+        "q3": "D1",
+        "q4": "D5",
+        "q5": "D7",
+        "q6": "D6"
+      },
+      "draft": {
+        "q1": "D6",
+        "q2": "D2",
+        "q3": "D1",
+        "q4": "D5",
+        "q5": "D0",
+        "q6": "D6"
+      },
+      "claims": [
+        {
+          "field": "q2",
+          "found": "D2",
+          "replacement": "D1",
+          "reason": "D2 was once hidden, so even SHOW cannot return it to eligibility."
+        },
+        {
+          "field": "q6",
+          "found": "D6",
+          "replacement": "D4",
+          "reason": "The advisory is more local and should outrank the partially applicable broad records."
+        },
+        {
+          "field": "q1",
+          "found": "D6",
+          "replacement": "D1",
+          "reason": "The D6 hide is already known at day 6 and applies at effective day 7."
+        },
+        {
+          "field": "q5",
+          "found": "D0",
+          "replacement": "D7",
+          "reason": "D7 is the more specific grade-one candidate after both higher-grade records are hidden."
+        }
+      ],
+      "question": "Resolve which record controls each query in a fictional calendar.\nThe query lists a zone, an effective day, and a published-through day.\nOnly records and actions published on or before published-through day, including\nthat day, are known. A row applies if its zone list contains the requested zone\nand its inclusive effective interval contains the effective day.\nOnly records with grade 1 or 2 are candidates. Grade 0 is an advisory.\nFor each candidate record, find the latest applicable known action that targets\nits ID. Choose the greater publication day, then the greater action serial.\nHIDE removes that candidate. SHOW only undoes a HIDE on the same record and\ncannot make any advisory, out-of-range, or unknown record into a candidate.\nRank the remaining candidates by grade descending, then zone-list size\nascending, then publication day descending, then record ID ascending.\nReturn the winning record ID or \"NONE\" if none remain.\nRecord rows: ID zones effective_start effective_end published_day grade.\nAction rows: ID zones effective_start effective_end published_day serial HIDE/SHOW target.\nRecords:\nD0 ABC 1 15 1 1\nD1 ABC 3 12 2 2\nD2 A 3 12 2 2\nD3 AB 3 12 3 2\nD4 A 7 9 4 0\nD5 B 9 10 5 2\nD6 AC 7 10 5 2\nD7 C 8 12 6 1\nActions:\nJ1 A 7 9 5 2 HIDE D2\nJ2 AB 7 9 5 1 HIDE D3\nJ3 A 8 8 6 1 SHOW D2\nJ4 AC 7 10 6 2 HIDE D6\nJ5 A 9 9 6 3 SHOW D4\nJ6 C 8 8 7 1 HIDE D1\nJ7 B 9 10 6 1 HIDE D5\nJ8 B 10 10 7 1 SHOW D5\nQueries, in zone effective_day published_through order:\nq1: A 7 6\nq2: A 8 6\nq3: B 9 7\nq4: B 10 7\nq5: C 8 7\nq6: A 9 5\nReturn only one JSON object with exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "oracle_rationale": "Equivalent computation: apply zone/date/publication and grade filters, choose latest action per candidate, and sort all remaining candidates. Per-field trace: {'q1': {'published_applicable': ['D0', 'D1', 'D2', 'D3', 'D6'], 'effective_actions': {'D2': (5, 2, 'HIDE'), 'D3': (5, 1, 'HIDE'), 'D6': (6, 2, 'HIDE')}, 'eligible_ranked': ['D1', 'D0']}, 'q2': {'published_applicable': ['D0', 'D1', 'D2', 'D3', 'D6'], 'effective_actions': {'D2': (6, 1, 'SHOW'), 'D3': (5, 1, 'HIDE'), 'D6': (6, 2, 'HIDE')}, 'eligible_ranked': ['D2', 'D1', 'D0']}, 'q3': {'published_applicable': ['D0', 'D1', 'D3', 'D5'], 'effective_actions': {'D3': (5, 1, 'HIDE'), 'D5': (6, 1, 'HIDE')}, 'eligible_ranked': ['D1', 'D0']}, 'q4': {'published_applicable': ['D0', 'D1', 'D3', 'D5'], 'effective_actions': {'D5': (7, 1, 'SHOW')}, 'eligible_ranked': ['D5', 'D3', 'D1', 'D0']}, 'q5': {'published_applicable': ['D0', 'D1', 'D6', 'D7'], 'effective_actions': {'D6': (6, 2, 'HIDE'), 'D1': (7, 1, 'HIDE')}, 'eligible_ranked': ['D7', 'D0']}, 'q6': {'published_applicable': ['D0', 'D1', 'D2', 'D3', 'D6'], 'effective_actions': {'D2': (5, 2, 'HIDE'), 'D3': (5, 1, 'HIDE')}, 'eligible_ranked': ['D6', 'D1', 'D0']}}."
+    }
+  ],
+  "correct_controls": [
+    {
+      "id": "logic_partition_control",
+      "domain": "boolean",
+      "expected": {
+        "alpha": "never",
+        "beta": "always",
+        "gamma": "never",
+        "delta": "sometimes",
+        "epsilon": "sometimes",
+        "zeta": "always"
+      },
+      "draft": {
+        "alpha": "never",
+        "beta": "always",
+        "gamma": "never",
+        "delta": "sometimes",
+        "epsilon": "sometimes",
+        "zeta": "always"
+      },
+      "claims": [
+        {
+          "field": "beta",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "B is not true in every feasible assignment, so its implication is variable."
+        },
+        {
+          "field": "zeta",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "H occurs only in a subset of satisfying assignments, so its implication varies."
+        }
+      ],
+      "question": "A through I are Boolean. An implication is material. Apply all these constraints:\n- Exactly four of A through I are true.\n- Exactly one of A, B, C is true.\n- D is true exactly when E and F differ.\n- G is true exactly when B or D is true.\n- H implies A and I. I implies not C.\n- Exactly one of F and I is true.\n- If E is false then C or H is true.\nFor each expression classify truth among all satisfying assignments. Use the strings 'always', 'never', or 'sometimes'.\nalpha: A and H\nbeta: B implies G\ngamma: E and I\ndelta: C and F\nepsilon: G implies D\nzeta: H implies not F\nReturn only one JSON object with exactly these keys: alpha, beta, gamma, delta, epsilon, zeta.",
+      "oracle_rationale": "Exhaustive enumeration over 512 assignments. Satisfying assignments (letters stand for true variables): ['CDFG', 'BEFG']. True counts by field: {'alpha': 0, 'beta': 2, 'gamma': 0, 'delta': 1, 'epsilon': 1, 'zeta': 2}."
+    },
+    {
+      "id": "sql_saved_correct_control",
+      "domain": "sql",
+      "expected": {
+        "total": 42,
+        "count_prev": 9,
+        "null_prev": 14,
+        "absent": null,
+        "null_total": 1
+      },
+      "draft": {
+        "total": 42,
+        "count_prev": 9,
+        "null_prev": 14,
+        "absent": null,
+        "null_total": 1
+      },
+      "claims": [
+        {
+          "field": "absent",
+          "found": null,
+          "replacement": 0,
+          "reason": "An empty set of p values should be interpreted as an empty sum with value zero."
+        },
+        {
+          "field": "count_prev",
+          "found": 9,
+          "replacement": 10,
+          "reason": "LAG's supplied default also fills NULL on a preceding row, so every joined row is counted."
+        }
+      ],
+      "question": "Evaluate this query exactly under SQLite semantics. Use JSON integers or null for the values of its single output row, respecting duplicate rows and SQL NULL.\nWITH jobs(id,g,p,v) AS (\n VALUES(1,'a',1,3),(2,'a',1,NULL),(3,'a',2,5),(4,'a',5,7),\n       (5,'b',1,4),(6,'b',3,4),(7,'b',3,NULL),(8,'b',6,9)\n), allowed(g,p) AS (VALUES('a',1),('a',1),('a',2),('b',1),('b',3),('b',3)),\nx AS (\n SELECT *, SUM(v) OVER(PARTITION BY g ORDER BY p GROUPS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE TIES) AS tot,\n        LAG(v,1,-1) OVER(PARTITION BY g ORDER BY p,id) AS prev\n FROM jobs\n)\nSELECT SUM(tot) AS total, COUNT(prev) AS count_prev, SUM(prev) FILTER(WHERE v IS NULL) AS null_prev,\n       SUM(p) FILTER(WHERE g='c') AS absent, COUNT(DISTINCT id) FILTER(WHERE tot IS NULL) AS null_total\nFROM x JOIN allowed USING(g,p);\nReturn only one JSON object with exactly these keys: total, count_prev, null_prev, absent, null_total.",
+      "oracle_rationale": "Executed exact query via SQLite 3.45.3: {'total': 42, 'count_prev': 9, 'null_prev': 14, 'absent': None, 'null_total': 1}."
+    },
+    {
+      "id": "event_lock_window_control",
+      "domain": "event",
+      "expected": {
+        "A": 6,
+        "B": 4,
+        "saved_a": 6,
+        "saved_b": 4,
+        "alarms": 6,
+        "packets": 109
+      },
+      "draft": {
+        "A": 6,
+        "B": 4,
+        "saved_a": 6,
+        "saved_b": 4,
+        "alarms": 6,
+        "packets": 109
+      },
+      "claims": [
+        {
+          "field": "saved_a",
+          "found": 6,
+          "replacement": 10,
+          "reason": "SAVE at time 7 sees the same-time addition because a lock only affects operations on its bin."
+        },
+        {
+          "field": "alarms",
+          "found": 6,
+          "replacement": 5,
+          "reason": "Replacing A's existing lock with duration zero unlocks A for moves at the new start time."
+        }
+      ],
+      "question": "A toy inventory machine starts with counters A=2 and B=5, no locks, no saved snapshot,\nalarms=0, and packets=0. Process increasing timestamps. At equal time apply operation\ntypes in this order: SAVE, LOCK, MOVE, ADD, RESTORE, REPORT. Keep listed order within\none type and timestamp.\nSAVE replaces the snapshot with both current counter values, even while locked.\nLOCK bin duration sets or replaces that bin's lock. A lock created at t includes\ntimestamps t through t+duration, inclusive. This can shorten an active lock.\nMOVE source destination n subtracts n from source and adds n to destination,\nunless endpoints are equal, either is locked, or source has less than n.\nADD bin n adds n to an unlocked bin.\nRESTORE replaces both counters with a copy of the snapshot, unless either bin is\nlocked or the snapshot is absent. It does not unlock bins or consume the snapshot.\nEach failed MOVE, ADD, or RESTORE adds exactly one alarm and otherwise has no effect.\nREPORT u v adds u*A+v*B to packets, even while locked.\nReturn final A, B, saved_a, saved_b, alarms, and packets as integers.\nCommands (timestamp followed by operation):\n0 LOCK B 0\n0 SAVE\n0 MOVE A B 1\n0 REPORT 2 1\n1 ADD B 3\n1 MOVE B A 4\n2 SAVE\n2 MOVE A B 4\n2 REPORT 2 2\n3 LOCK A 1\n3 RESTORE\n3 ADD B 1\n4 LOCK A 0\n4 MOVE B A 2\n4 REPORT 1 2\n5 ADD A 3\n5 RESTORE\n5 REPORT 4 3\n6 MOVE A A 1\n6 LOCK B 2\n6 MOVE A B 2\n7 SAVE\n7 ADD A 4\n7 RESTORE\n8 REPORT 1 1\n9 RESTORE\n9 REPORT 1 1\nReturn only one JSON object with exactly these keys: A, B, saved_a, saved_b, alarms, packets.",
+      "oracle_rationale": "Deterministic event-order simulation recorded (time, op, A, B, alarms, packets): [(0, 'SAVE', 2, 5, 0, 0), (0, 'LOCK', 2, 5, 0, 0), (0, 'MOVE', 2, 5, 1, 0), (0, 'REPORT', 2, 5, 1, 9), (1, 'MOVE', 6, 1, 1, 9), (1, 'ADD', 6, 4, 1, 9), (2, 'SAVE', 6, 4, 1, 9), (2, 'MOVE', 2, 8, 1, 9), (2, 'REPORT', 2, 8, 1, 29), (3, 'LOCK', 2, 8, 1, 29), (3, 'ADD', 2, 9, 1, 29), (3, 'RESTORE', 2, 9, 2, 29), (4, 'LOCK', 2, 9, 2, 29), (4, 'MOVE', 2, 9, 3, 29), (4, 'REPORT', 2, 9, 3, 49), (5, 'ADD', 5, 9, 3, 49), (5, 'RESTORE', 6, 4, 3, 49), (5, 'REPORT', 6, 4, 3, 85), (6, 'LOCK', 6, 4, 3, 85), (6, 'MOVE', 6, 4, 4, 85), (6, 'MOVE', 6, 4, 5, 85), (7, 'SAVE', 6, 4, 5, 85), (7, 'ADD', 10, 4, 5, 85), (7, 'RESTORE', 10, 4, 6, 85), (8, 'REPORT', 10, 4, 6, 99), (9, 'RESTORE', 6, 4, 6, 99), (9, 'REPORT', 6, 4, 6, 109)]."
+    },
+    {
+      "id": "source_reopening_control",
+      "domain": "evidence",
+      "expected": {
+        "q1": "C1",
+        "q2": "C3",
+        "q3": "C1",
+        "q4": "C8",
+        "q5": "C7",
+        "q6": "C5"
+      },
+      "draft": {
+        "q1": "C1",
+        "q2": "C3",
+        "q3": "C1",
+        "q4": "C8",
+        "q5": "C7",
+        "q6": "C5"
+      },
+      "claims": [
+        {
+          "field": "q1",
+          "found": "C1",
+          "replacement": "C2",
+          "reason": "The SHOW appears after the HIDE in the action list, so should be treated as the latest."
+        },
+        {
+          "field": "q4",
+          "found": "C8",
+          "replacement": "C6",
+          "reason": "SHOW makes C6 a candidate and it covers a smaller zone set than C8."
+        }
+      ],
+      "question": "Resolve which record controls each query in a fictional calendar.\nThe query lists a zone, an effective day, and a published-through day.\nOnly records and actions published on or before published-through day, including\nthat day, are known. A row applies if its zone list contains the requested zone\nand its inclusive effective interval contains the effective day.\nOnly records with grade 1 or 2 are candidates. Grade 0 is an advisory.\nFor each candidate record, find the latest applicable known action that targets\nits ID. Choose the greater publication day, then the greater action serial.\nHIDE removes that candidate. SHOW only undoes a HIDE on the same record and\ncannot make any advisory, out-of-range, or unknown record into a candidate.\nRank the remaining candidates by grade descending, then zone-list size\nascending, then publication day descending, then record ID ascending.\nReturn the winning record ID or \"NONE\" if none remain.\nRecord rows: ID zones effective_start effective_end published_day grade.\nAction rows: ID zones effective_start effective_end published_day serial HIDE/SHOW target.\nRecords:\nC0 ABC 1 12 1 1\nC1 AB 3 8 2 2\nC2 A 1 7 3 2\nC3 A 6 9 4 2\nC4 B 6 9 5 2\nC5 B 1 8 2 2\nC6 C 1 9 4 0\nC7 C 7 12 6 2\nC8 AC 4 10 5 1\nActions:\nU1 A 4 7 5 2 HIDE C2\nU2 A 4 7 5 1 SHOW C2\nU3 AB 6 9 6 1 HIDE C3\nU4 A 7 9 7 1 SHOW C3\nU5 B 6 8 6 1 HIDE C4\nU6 B 6 9 7 1 HIDE C5\nU7 C 7 8 7 1 HIDE C7\nU8 C 7 8 7 2 SHOW C6\nQueries, in zone effective_day published_through order:\nq1: A 5 5\nq2: A 7 7\nq3: B 8 7\nq4: C 8 7\nq5: C 9 7\nq6: B 7 6\nReturn only one JSON object with exactly these keys: q1, q2, q3, q4, q5, q6.",
+      "oracle_rationale": "Equivalent computation: apply zone/date/publication and grade filters, choose latest action per candidate, and sort all remaining candidates. Per-field trace: {'q1': {'published_applicable': ['C0', 'C1', 'C2', 'C8'], 'effective_actions': {'C2': (5, 2, 'HIDE')}, 'eligible_ranked': ['C1', 'C8', 'C0']}, 'q2': {'published_applicable': ['C0', 'C1', 'C2', 'C3', 'C8'], 'effective_actions': {'C2': (5, 2, 'HIDE'), 'C3': (7, 1, 'SHOW')}, 'eligible_ranked': ['C3', 'C1', 'C8', 'C0']}, 'q3': {'published_applicable': ['C0', 'C1', 'C4', 'C5'], 'effective_actions': {'C3': (6, 1, 'HIDE'), 'C4': (6, 1, 'HIDE'), 'C5': (7, 1, 'HIDE')}, 'eligible_ranked': ['C1', 'C0']}, 'q4': {'published_applicable': ['C0', 'C7', 'C8'], 'effective_actions': {'C7': (7, 1, 'HIDE'), 'C6': (7, 2, 'SHOW')}, 'eligible_ranked': ['C8', 'C0']}, 'q5': {'published_applicable': ['C0', 'C7', 'C8'], 'effective_actions': {}, 'eligible_ranked': ['C7', 'C8', 'C0']}, 'q6': {'published_applicable': ['C0', 'C1', 'C4', 'C5'], 'effective_actions': {'C3': (6, 1, 'HIDE'), 'C4': (6, 1, 'HIDE')}, 'eligible_ranked': ['C5', 'C1', 'C0']}}."
+    }
+  ]
+}

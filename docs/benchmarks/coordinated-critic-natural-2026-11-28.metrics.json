@@ -1,0 +1,5396 @@
+{
+  "schema": "coordinated-critic-metrics-v1",
+  "cohort": "natural",
+  "source": "a5ae0bfb771ffc06f642c0a5167def32a6fc0288",
+  "fixture_sha256": "39724d26ccaac1f095f8417cc4ee2b36cf9586e273416f7e6ea084e6f2a5f036",
+  "complete": true,
+  "planned_trials": 24,
+  "recorded_trials": 24,
+  "summary": {
+    "trials": 24,
+    "draft_counts": {
+      "semantic_wrong": 6,
+      "exact": 18
+    },
+    "arms": {
+      "unfiltered": {
+        "final_exact": 21,
+        "wrong_to_exact": 5,
+        "wrong_drafts": 6,
+        "exact_to_wrong": 2,
+        "exact_to_nonexact": 2,
+        "exact_drafts": 18,
+        "original_fields_fixed": 7,
+        "original_correct_fields_lost": 5,
+        "transitions": {
+          "exact": {
+            "exact": 16,
+            "semantic_wrong": 2,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "semantic_wrong": {
+            "exact": 5,
+            "semantic_wrong": 1,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_json": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_shape": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "unavailable": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          }
+        }
+      },
+      "verified_regenerate": {
+        "final_exact": 21,
+        "wrong_to_exact": 5,
+        "wrong_drafts": 6,
+        "exact_to_wrong": 2,
+        "exact_to_nonexact": 2,
+        "exact_drafts": 18,
+        "original_fields_fixed": 6,
+        "original_correct_fields_lost": 3,
+        "transitions": {
+          "exact": {
+            "exact": 16,
+            "semantic_wrong": 2,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "semantic_wrong": {
+            "exact": 5,
+            "semantic_wrong": 1,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_json": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_shape": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "unavailable": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          }
+        }
+      },
+      "coordinated": {
+        "final_exact": 23,
+        "wrong_to_exact": 5,
+        "wrong_drafts": 6,
+        "exact_to_wrong": 0,
+        "exact_to_nonexact": 0,
+        "exact_drafts": 18,
+        "original_fields_fixed": 6,
+        "original_correct_fields_lost": 0,
+        "transitions": {
+          "exact": {
+            "exact": 18,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "semantic_wrong": {
+            "exact": 5,
+            "semantic_wrong": 1,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_json": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "invalid_shape": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          },
+          "unavailable": {
+            "exact": 0,
+            "semantic_wrong": 0,
+            "invalid_json": 0,
+            "invalid_shape": 0,
+            "unavailable": 0
+          }
+        }
+      }
+    },
+    "paired_exact": {
+      "unfiltered": {
+        "both_exact": 20,
+        "candidate_only_exact": 3,
+        "baseline_only_exact": 1,
+        "neither_exact": 0
+      },
+      "verified_regenerate": {
+        "both_exact": 21,
+        "candidate_only_exact": 2,
+        "baseline_only_exact": 0,
+        "neither_exact": 1
+      }
+    },
+    "routes": {
+      "retain_confirmed": {
+        "rows": 9,
+        "initial_exact": 9,
+        "paired_verified": {
+          "both_exact": 7,
+          "candidate_only_exact": 2,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        }
+      },
+      "commit_checked": {
+        "rows": 2,
+        "initial_exact": 0,
+        "paired_verified": {
+          "both_exact": 2,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        }
+      },
+      "fallback_regenerate": {
+        "rows": 13,
+        "initial_exact": 9,
+        "paired_verified": {
+          "both_exact": 12,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 1
+        }
+      }
+    },
+    "route_reasons": {
+      "uncovered_discrepancy": 5,
+      "all_fields_confirmed": 9,
+      "verification_incomplete": 8,
+      "verified_claims_cover_all_changes": 2
+    },
+    "claim_counts": {
+      "proposed": 11,
+      "ungradeable": 0,
+      "correct_proposed": 5,
+      "incorrect_proposed": 6,
+      "would_damage_correct_field": 5,
+      "correct_approved": 2,
+      "incorrect_approved": 0,
+      "damaging_approved": 0,
+      "correct_applied": 2,
+      "incorrect_applied": 0,
+      "damaging_applied": 0,
+      "draft_wrong_fields": 7,
+      "draft_wrong_fields_targeted_by_correct_proposal": 5,
+      "field_checks": 136,
+      "usable_checks": 103,
+      "oracle_correct_checks": 98,
+      "oracle_wrong_checks": 5,
+      "check_statuses": {
+        "accepted": 94,
+        "verify_disagrees": 9,
+        "invalid_verifier_response": 27,
+        "invalid_evidence": 6
+      }
+    },
+    "final_calls": {
+      "unfiltered": 24,
+      "verified_regenerate": 24,
+      "coordinated_logical": 15,
+      "avoided": 9,
+      "observed_usage_of_avoided_calls": {
+        "input_tokens": {
+          "known_total": 5926,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 7949,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 7576,
+          "missing_admissions": 0
+        }
+      }
+    }
+  },
+  "qualification": {
+    "estimable": true,
+    "quality_advantage": true,
+    "efficiency_advantage": false,
+    "repairs_delta": 0,
+    "regressions_delta": -2,
+    "final_exact_delta": 2,
+    "matched_exact_losses": 0,
+    "avoided_calls": 9
+  },
+  "by_domain": {
+    "boolean": {
+      "trials": 6,
+      "draft_counts": {
+        "exact": 6
+      },
+      "arms": {
+        "unfiltered": {
+          "final_exact": 6,
+          "wrong_to_exact": 0,
+          "wrong_drafts": 0,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 6,
+          "original_fields_fixed": 0,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 6,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "verified_regenerate": {
+          "final_exact": 5,
+          "wrong_to_exact": 0,
+          "wrong_drafts": 0,
+          "exact_to_wrong": 1,
+          "exact_to_nonexact": 1,
+          "exact_drafts": 6,
+          "original_fields_fixed": 0,
+          "original_correct_fields_lost": 2,
+          "transitions": {
+            "exact": {
+              "exact": 5,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "coordinated": {
+          "final_exact": 6,
+          "wrong_to_exact": 0,
+          "wrong_drafts": 0,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 6,
+          "original_fields_fixed": 0,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 6,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        }
+      },
+      "paired_exact": {
+        "unfiltered": {
+          "both_exact": 6,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        },
+        "verified_regenerate": {
+          "both_exact": 5,
+          "candidate_only_exact": 1,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        }
+      },
+      "routes": {
+        "retain_confirmed": {
+          "rows": 5,
+          "initial_exact": 5,
+          "paired_verified": {
+            "both_exact": 4,
+            "candidate_only_exact": 1,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "commit_checked": {
+          "rows": 0,
+          "initial_exact": 0,
+          "paired_verified": {
+            "both_exact": 0,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "fallback_regenerate": {
+          "rows": 1,
+          "initial_exact": 1,
+          "paired_verified": {
+            "both_exact": 1,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        }
+      },
+      "route_reasons": {
+        "all_fields_confirmed": 5,
+        "uncovered_discrepancy": 1
+      },
+      "claim_counts": {
+        "proposed": 1,
+        "ungradeable": 0,
+        "correct_proposed": 0,
+        "incorrect_proposed": 1,
+        "would_damage_correct_field": 1,
+        "correct_approved": 0,
+        "incorrect_approved": 0,
+        "damaging_approved": 0,
+        "correct_applied": 0,
+        "incorrect_applied": 0,
+        "damaging_applied": 0,
+        "draft_wrong_fields": 0,
+        "draft_wrong_fields_targeted_by_correct_proposal": 0,
+        "field_checks": 36,
+        "usable_checks": 36,
+        "oracle_correct_checks": 35,
+        "oracle_wrong_checks": 1,
+        "check_statuses": {
+          "accepted": 35,
+          "verify_disagrees": 1
+        }
+      },
+      "final_calls": {
+        "unfiltered": 6,
+        "verified_regenerate": 6,
+        "coordinated_logical": 1,
+        "avoided": 5,
+        "observed_usage_of_avoided_calls": {
+          "input_tokens": {
+            "known_total": 2895,
+            "missing_admissions": 0
+          },
+          "output_tokens": {
+            "known_total": 5505,
+            "missing_admissions": 0
+          },
+          "reasoning_tokens": {
+            "known_total": 5289,
+            "missing_admissions": 0
+          }
+        }
+      }
+    },
+    "event": {
+      "trials": 6,
+      "draft_counts": {
+        "semantic_wrong": 3,
+        "exact": 3
+      },
+      "arms": {
+        "unfiltered": {
+          "final_exact": 5,
+          "wrong_to_exact": 3,
+          "wrong_drafts": 3,
+          "exact_to_wrong": 1,
+          "exact_to_nonexact": 1,
+          "exact_drafts": 3,
+          "original_fields_fixed": 3,
+          "original_correct_fields_lost": 3,
+          "transitions": {
+            "exact": {
+              "exact": 2,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 3,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "verified_regenerate": {
+          "final_exact": 5,
+          "wrong_to_exact": 2,
+          "wrong_drafts": 3,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 3,
+          "original_fields_fixed": 2,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 3,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 2,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "coordinated": {
+          "final_exact": 5,
+          "wrong_to_exact": 2,
+          "wrong_drafts": 3,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 3,
+          "original_fields_fixed": 2,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 3,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 2,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        }
+      },
+      "paired_exact": {
+        "unfiltered": {
+          "both_exact": 4,
+          "candidate_only_exact": 1,
+          "baseline_only_exact": 1,
+          "neither_exact": 0
+        },
+        "verified_regenerate": {
+          "both_exact": 5,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 1
+        }
+      },
+      "routes": {
+        "retain_confirmed": {
+          "rows": 2,
+          "initial_exact": 2,
+          "paired_verified": {
+            "both_exact": 2,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "commit_checked": {
+          "rows": 1,
+          "initial_exact": 0,
+          "paired_verified": {
+            "both_exact": 1,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "fallback_regenerate": {
+          "rows": 3,
+          "initial_exact": 1,
+          "paired_verified": {
+            "both_exact": 2,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 1
+          }
+        }
+      },
+      "route_reasons": {
+        "verification_incomplete": 3,
+        "verified_claims_cover_all_changes": 1,
+        "all_fields_confirmed": 2
+      },
+      "claim_counts": {
+        "proposed": 4,
+        "ungradeable": 0,
+        "correct_proposed": 3,
+        "incorrect_proposed": 1,
+        "would_damage_correct_field": 1,
+        "correct_approved": 1,
+        "incorrect_approved": 0,
+        "damaging_approved": 0,
+        "correct_applied": 1,
+        "incorrect_applied": 0,
+        "damaging_applied": 0,
+        "draft_wrong_fields": 3,
+        "draft_wrong_fields_targeted_by_correct_proposal": 3,
+        "field_checks": 32,
+        "usable_checks": 15,
+        "oracle_correct_checks": 15,
+        "oracle_wrong_checks": 0,
+        "check_statuses": {
+          "invalid_verifier_response": 17,
+          "verify_disagrees": 1,
+          "accepted": 14
+        }
+      },
+      "final_calls": {
+        "unfiltered": 6,
+        "verified_regenerate": 6,
+        "coordinated_logical": 4,
+        "avoided": 2,
+        "observed_usage_of_avoided_calls": {
+          "input_tokens": {
+            "known_total": 1447,
+            "missing_admissions": 0
+          },
+          "output_tokens": {
+            "known_total": 656,
+            "missing_admissions": 0
+          },
+          "reasoning_tokens": {
+            "known_total": 587,
+            "missing_admissions": 0
+          }
+        }
+      }
+    },
+    "evidence": {
+      "trials": 6,
+      "draft_counts": {
+        "semantic_wrong": 2,
+        "exact": 4
+      },
+      "arms": {
+        "unfiltered": {
+          "final_exact": 4,
+          "wrong_to_exact": 1,
+          "wrong_drafts": 2,
+          "exact_to_wrong": 1,
+          "exact_to_nonexact": 1,
+          "exact_drafts": 4,
+          "original_fields_fixed": 3,
+          "original_correct_fields_lost": 2,
+          "transitions": {
+            "exact": {
+              "exact": 3,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 1,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "verified_regenerate": {
+          "final_exact": 5,
+          "wrong_to_exact": 2,
+          "wrong_drafts": 2,
+          "exact_to_wrong": 1,
+          "exact_to_nonexact": 1,
+          "exact_drafts": 4,
+          "original_fields_fixed": 3,
+          "original_correct_fields_lost": 1,
+          "transitions": {
+            "exact": {
+              "exact": 3,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 2,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "coordinated": {
+          "final_exact": 6,
+          "wrong_to_exact": 2,
+          "wrong_drafts": 2,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 4,
+          "original_fields_fixed": 3,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 4,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 2,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        }
+      },
+      "paired_exact": {
+        "unfiltered": {
+          "both_exact": 4,
+          "candidate_only_exact": 2,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        },
+        "verified_regenerate": {
+          "both_exact": 5,
+          "candidate_only_exact": 1,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        }
+      },
+      "routes": {
+        "retain_confirmed": {
+          "rows": 1,
+          "initial_exact": 1,
+          "paired_verified": {
+            "both_exact": 0,
+            "candidate_only_exact": 1,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "commit_checked": {
+          "rows": 1,
+          "initial_exact": 0,
+          "paired_verified": {
+            "both_exact": 1,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "fallback_regenerate": {
+          "rows": 4,
+          "initial_exact": 3,
+          "paired_verified": {
+            "both_exact": 4,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        }
+      },
+      "route_reasons": {
+        "uncovered_discrepancy": 4,
+        "verified_claims_cover_all_changes": 1,
+        "all_fields_confirmed": 1
+      },
+      "claim_counts": {
+        "proposed": 4,
+        "ungradeable": 0,
+        "correct_proposed": 1,
+        "incorrect_proposed": 3,
+        "would_damage_correct_field": 2,
+        "correct_approved": 1,
+        "incorrect_approved": 0,
+        "damaging_approved": 0,
+        "correct_applied": 1,
+        "incorrect_applied": 0,
+        "damaging_applied": 0,
+        "draft_wrong_fields": 3,
+        "draft_wrong_fields_targeted_by_correct_proposal": 1,
+        "field_checks": 36,
+        "usable_checks": 36,
+        "oracle_correct_checks": 33,
+        "oracle_wrong_checks": 3,
+        "check_statuses": {
+          "accepted": 30,
+          "verify_disagrees": 6
+        }
+      },
+      "final_calls": {
+        "unfiltered": 6,
+        "verified_regenerate": 6,
+        "coordinated_logical": 5,
+        "avoided": 1,
+        "observed_usage_of_avoided_calls": {
+          "input_tokens": {
+            "known_total": 839,
+            "missing_admissions": 0
+          },
+          "output_tokens": {
+            "known_total": 990,
+            "missing_admissions": 0
+          },
+          "reasoning_tokens": {
+            "known_total": 943,
+            "missing_admissions": 0
+          }
+        }
+      }
+    },
+    "sql": {
+      "trials": 6,
+      "draft_counts": {
+        "exact": 5,
+        "semantic_wrong": 1
+      },
+      "arms": {
+        "unfiltered": {
+          "final_exact": 6,
+          "wrong_to_exact": 1,
+          "wrong_drafts": 1,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 5,
+          "original_fields_fixed": 1,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 5,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 1,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "verified_regenerate": {
+          "final_exact": 6,
+          "wrong_to_exact": 1,
+          "wrong_drafts": 1,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 5,
+          "original_fields_fixed": 1,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 5,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 1,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "coordinated": {
+          "final_exact": 6,
+          "wrong_to_exact": 1,
+          "wrong_drafts": 1,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 5,
+          "original_fields_fixed": 1,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 5,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 1,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        }
+      },
+      "paired_exact": {
+        "unfiltered": {
+          "both_exact": 6,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        },
+        "verified_regenerate": {
+          "both_exact": 6,
+          "candidate_only_exact": 0,
+          "baseline_only_exact": 0,
+          "neither_exact": 0
+        }
+      },
+      "routes": {
+        "retain_confirmed": {
+          "rows": 1,
+          "initial_exact": 1,
+          "paired_verified": {
+            "both_exact": 1,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "commit_checked": {
+          "rows": 0,
+          "initial_exact": 0,
+          "paired_verified": {
+            "both_exact": 0,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "fallback_regenerate": {
+          "rows": 5,
+          "initial_exact": 4,
+          "paired_verified": {
+            "both_exact": 5,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        }
+      },
+      "route_reasons": {
+        "verification_incomplete": 5,
+        "all_fields_confirmed": 1
+      },
+      "claim_counts": {
+        "proposed": 2,
+        "ungradeable": 0,
+        "correct_proposed": 1,
+        "incorrect_proposed": 1,
+        "would_damage_correct_field": 1,
+        "correct_approved": 0,
+        "incorrect_approved": 0,
+        "damaging_approved": 0,
+        "correct_applied": 0,
+        "incorrect_applied": 0,
+        "damaging_applied": 0,
+        "draft_wrong_fields": 1,
+        "draft_wrong_fields_targeted_by_correct_proposal": 1,
+        "field_checks": 32,
+        "usable_checks": 16,
+        "oracle_correct_checks": 15,
+        "oracle_wrong_checks": 1,
+        "check_statuses": {
+          "invalid_verifier_response": 10,
+          "accepted": 15,
+          "invalid_evidence": 6,
+          "verify_disagrees": 1
+        }
+      },
+      "final_calls": {
+        "unfiltered": 6,
+        "verified_regenerate": 6,
+        "coordinated_logical": 5,
+        "avoided": 1,
+        "observed_usage_of_avoided_calls": {
+          "input_tokens": {
+            "known_total": 745,
+            "missing_admissions": 0
+          },
+          "output_tokens": {
+            "known_total": 798,
+            "missing_admissions": 0
+          },
+          "reasoning_tokens": {
+            "known_total": 757,
+            "missing_admissions": 0
+          }
+        }
+      }
+    }
+  },
+  "by_group": {
+    "natural": {
+      "trials": 24,
+      "draft_counts": {
+        "semantic_wrong": 6,
+        "exact": 18
+      },
+      "arms": {
+        "unfiltered": {
+          "final_exact": 21,
+          "wrong_to_exact": 5,
+          "wrong_drafts": 6,
+          "exact_to_wrong": 2,
+          "exact_to_nonexact": 2,
+          "exact_drafts": 18,
+          "original_fields_fixed": 7,
+          "original_correct_fields_lost": 5,
+          "transitions": {
+            "exact": {
+              "exact": 16,
+              "semantic_wrong": 2,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 5,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "verified_regenerate": {
+          "final_exact": 21,
+          "wrong_to_exact": 5,
+          "wrong_drafts": 6,
+          "exact_to_wrong": 2,
+          "exact_to_nonexact": 2,
+          "exact_drafts": 18,
+          "original_fields_fixed": 6,
+          "original_correct_fields_lost": 3,
+          "transitions": {
+            "exact": {
+              "exact": 16,
+              "semantic_wrong": 2,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 5,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        },
+        "coordinated": {
+          "final_exact": 23,
+          "wrong_to_exact": 5,
+          "wrong_drafts": 6,
+          "exact_to_wrong": 0,
+          "exact_to_nonexact": 0,
+          "exact_drafts": 18,
+          "original_fields_fixed": 6,
+          "original_correct_fields_lost": 0,
+          "transitions": {
+            "exact": {
+              "exact": 18,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "semantic_wrong": {
+              "exact": 5,
+              "semantic_wrong": 1,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_json": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "invalid_shape": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            },
+            "unavailable": {
+              "exact": 0,
+              "semantic_wrong": 0,
+              "invalid_json": 0,
+              "invalid_shape": 0,
+              "unavailable": 0
+            }
+          }
+        }
+      },
+      "paired_exact": {
+        "unfiltered": {
+          "both_exact": 20,
+          "candidate_only_exact": 3,
+          "baseline_only_exact": 1,
+          "neither_exact": 0
+        },
+        "verified_regenerate": {
+          "both_exact": 21,
+          "candidate_only_exact": 2,
+          "baseline_only_exact": 0,
+          "neither_exact": 1
+        }
+      },
+      "routes": {
+        "retain_confirmed": {
+          "rows": 9,
+          "initial_exact": 9,
+          "paired_verified": {
+            "both_exact": 7,
+            "candidate_only_exact": 2,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "commit_checked": {
+          "rows": 2,
+          "initial_exact": 0,
+          "paired_verified": {
+            "both_exact": 2,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 0
+          }
+        },
+        "fallback_regenerate": {
+          "rows": 13,
+          "initial_exact": 9,
+          "paired_verified": {
+            "both_exact": 12,
+            "candidate_only_exact": 0,
+            "baseline_only_exact": 0,
+            "neither_exact": 1
+          }
+        }
+      },
+      "route_reasons": {
+        "uncovered_discrepancy": 5,
+        "all_fields_confirmed": 9,
+        "verification_incomplete": 8,
+        "verified_claims_cover_all_changes": 2
+      },
+      "claim_counts": {
+        "proposed": 11,
+        "ungradeable": 0,
+        "correct_proposed": 5,
+        "incorrect_proposed": 6,
+        "would_damage_correct_field": 5,
+        "correct_approved": 2,
+        "incorrect_approved": 0,
+        "damaging_approved": 0,
+        "correct_applied": 2,
+        "incorrect_applied": 0,
+        "damaging_applied": 0,
+        "draft_wrong_fields": 7,
+        "draft_wrong_fields_targeted_by_correct_proposal": 5,
+        "field_checks": 136,
+        "usable_checks": 103,
+        "oracle_correct_checks": 98,
+        "oracle_wrong_checks": 5,
+        "check_statuses": {
+          "accepted": 94,
+          "verify_disagrees": 9,
+          "invalid_verifier_response": 27,
+          "invalid_evidence": 6
+        }
+      },
+      "final_calls": {
+        "unfiltered": 24,
+        "verified_regenerate": 24,
+        "coordinated_logical": 15,
+        "avoided": 9,
+        "observed_usage_of_avoided_calls": {
+          "input_tokens": {
+            "known_total": 5926,
+            "missing_admissions": 0
+          },
+          "output_tokens": {
+            "known_total": 7949,
+            "missing_admissions": 0
+          },
+          "reasoning_tokens": {
+            "known_total": 7576,
+            "missing_admissions": 0
+          }
+        }
+      }
+    }
+  },
+  "stages": {
+    "draft": {
+      "slots": 24,
+      "admissions": 24,
+      "terminal_counts": {
+        "returned": 24
+      },
+      "generation_status_counts": {
+        "complete": 24
+      },
+      "observed_latency_count": 24,
+      "median_latency_ms": 6490.98,
+      "max_latency_ms": 13926.62,
+      "usage": {
+        "input_tokens": {
+          "known_total": 13430,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 18794,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 17737,
+          "missing_admissions": 0
+        }
+      }
+    },
+    "critic": {
+      "slots": 24,
+      "admissions": 24,
+      "terminal_counts": {
+        "returned": 24
+      },
+      "generation_status_counts": {
+        "not_recorded": 24
+      },
+      "observed_latency_count": 24,
+      "median_latency_ms": 6770.24,
+      "max_latency_ms": 10067.69,
+      "usage": {
+        "input_tokens": {
+          "known_total": 21550,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 19261,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 18041,
+          "missing_admissions": 0
+        }
+      }
+    },
+    "verifier": {
+      "slots": 24,
+      "admissions": 24,
+      "terminal_counts": {
+        "returned": 24
+      },
+      "generation_status_counts": {
+        "complete": 24
+      },
+      "observed_latency_count": 24,
+      "median_latency_ms": 15274.17,
+      "max_latency_ms": 20044.13,
+      "usage": {
+        "input_tokens": {
+          "known_total": 19964,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 54631,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 32037,
+          "missing_admissions": 0
+        }
+      }
+    },
+    "unfiltered": {
+      "slots": 24,
+      "admissions": 24,
+      "terminal_counts": {
+        "returned": 24
+      },
+      "generation_status_counts": {
+        "complete": 24
+      },
+      "observed_latency_count": 24,
+      "median_latency_ms": 5368.98,
+      "max_latency_ms": 10412.64,
+      "usage": {
+        "input_tokens": {
+          "known_total": 17895,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 17622,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 16580,
+          "missing_admissions": 0
+        }
+      }
+    },
+    "verified_regenerate": {
+      "slots": 24,
+      "admissions": 24,
+      "terminal_counts": {
+        "returned": 24
+      },
+      "generation_status_counts": {
+        "complete": 24
+      },
+      "observed_latency_count": 24,
+      "median_latency_ms": 5659.9,
+      "max_latency_ms": 12018.01,
+      "usage": {
+        "input_tokens": {
+          "known_total": 17655,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 18656,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 17608,
+          "missing_admissions": 0
+        }
+      }
+    },
+    "coordinated": {
+      "slots": 24,
+      "admissions": 0,
+      "terminal_counts": {
+        "fallback_regenerate": 13,
+        "retain_confirmed": 9,
+        "commit_checked": 2
+      },
+      "generation_status_counts": {
+        "not_attempted": 24
+      },
+      "observed_latency_count": 0,
+      "median_latency_ms": null,
+      "max_latency_ms": null,
+      "usage": {
+        "input_tokens": {
+          "known_total": 0,
+          "missing_admissions": 0
+        },
+        "output_tokens": {
+          "known_total": 0,
+          "missing_admissions": 0
+        },
+        "reasoning_tokens": {
+          "known_total": 0,
+          "missing_admissions": 0
+        }
+      }
+    }
+  },
+  "all_calls": {
+    "slots": 120,
+    "admissions": 120,
+    "terminal_counts": {
+      "returned": 120
+    },
+    "generation_status_counts": {
+      "complete": 96,
+      "not_recorded": 24
+    },
+    "observed_latency_count": 120,
+    "median_latency_ms": 7049.03,
+    "max_latency_ms": 20044.13,
+    "usage": {
+      "input_tokens": {
+        "known_total": 90494,
+        "missing_admissions": 0
+      },
+      "output_tokens": {
+        "known_total": 128964,
+        "missing_admissions": 0
+      },
+      "reasoning_tokens": {
+        "known_total": 102003,
+        "missing_admissions": 0
+      }
+    }
+  },
+  "rows": [
+    {
+      "case_id": "natural_source_delegation_paths",
+      "rep": 1,
+      "domain": "evidence",
+      "route_reason": "uncovered_discrepancy",
+      "claims": [
+        {
+          "field": "gamma",
+          "correct_replacement": false,
+          "would_damage_correct_field": false,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "alpha",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "beta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "gamma",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": false
+        },
+        {
+          "field": "delta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "epsilon",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "zeta",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": false
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7207.01,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 663,
+        "output_tokens": 1049,
+        "reasoning_tokens": 1002,
+        "grade": "semantic_wrong",
+        "matched_fields": 4,
+        "wrong_fields": [
+          "gamma",
+          "zeta"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 8832.94,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1004,
+        "output_tokens": 1303,
+        "reasoning_tokens": 1172
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 19632.54,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 973,
+        "output_tokens": 3335,
+        "reasoning_tokens": 2044
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6512.21,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 872,
+        "output_tokens": 871,
+        "reasoning_tokens": 824,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "delta"
+        ]
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8077.89,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 839,
+        "output_tokens": 1150,
+        "reasoning_tokens": 1097,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_logic_mirror_caps",
+      "rep": 1,
+      "domain": "boolean",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "mirror",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "thread",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "crossing",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "clash",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "pulse",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ring",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 13926.62,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 409,
+        "output_tokens": 1893,
+        "reasoning_tokens": 1838,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 9283.25,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 944,
+        "reasoning_tokens": 916
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 17683.15,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 515,
+        "output_tokens": 2692,
+        "reasoning_tokens": 1841
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7574.37,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 580,
+        "output_tokens": 927,
+        "reasoning_tokens": 885,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8155.87,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 580,
+        "output_tokens": 1042,
+        "reasoning_tokens": 1000,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_source_quorum_revocation",
+      "rep": 1,
+      "domain": "evidence",
+      "route_reason": "uncovered_discrepancy",
+      "claims": [],
+      "checks": [
+        {
+          "field": "q1",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q2",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q4",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q5",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": false,
+          "draft_agreement": false
+        },
+        {
+          "field": "q6",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4953.82,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 734,
+        "output_tokens": 665,
+        "reasoning_tokens": 613,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6295.34,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1080,
+        "output_tokens": 800,
+        "reasoning_tokens": 772
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 14074.01,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1217,
+        "output_tokens": 2376,
+        "reasoning_tokens": 1124
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4991.7,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 915,
+        "output_tokens": 558,
+        "reasoning_tokens": 512,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4496.1,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 915,
+        "output_tokens": 497,
+        "reasoning_tokens": 451,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_logic_two_locks",
+      "rep": 1,
+      "domain": "boolean",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "through",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "side",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "latched",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "branch",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "bypass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "trip",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6234.03,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 406,
+        "output_tokens": 805,
+        "reasoning_tokens": 763,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6964.88,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 742,
+        "output_tokens": 833,
+        "reasoning_tokens": 804
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 14465.33,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 512,
+        "output_tokens": 2185,
+        "reasoning_tokens": 1304
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7727.58,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 577,
+        "output_tokens": 973,
+        "reasoning_tokens": 931,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6707.15,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 577,
+        "output_tokens": 881,
+        "reasoning_tokens": 839,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_weighted_ballot",
+      "rep": 1,
+      "domain": "event",
+      "route_reason": "verification_incomplete",
+      "claims": [
+        {
+          "field": "winners",
+          "correct_replacement": true,
+          "would_damage_correct_field": false,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "winners",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "winner3",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "score3",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "score_last",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "ignored",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3883.93,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 429,
+        "reasoning_tokens": 392,
+        "grade": "semantic_wrong",
+        "matched_fields": 4,
+        "wrong_fields": [
+          "winners"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 4740.42,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 918,
+        "output_tokens": 497,
+        "reasoning_tokens": 430
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 10210.87,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 940,
+        "output_tokens": 1572,
+        "reasoning_tokens": 891
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3615.19,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 791,
+        "output_tokens": 377,
+        "reasoning_tokens": 340,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4343.06,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 753,
+        "output_tokens": 405,
+        "reasoning_tokens": 368,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_window_compact",
+      "rep": 1,
+      "domain": "sql",
+      "route_reason": "verification_incomplete",
+      "claims": [],
+      "checks": [
+        {
+          "field": "doubled",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "null_future_count",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "later_a",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "exact_tails",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "no_max",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6541.79,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 606,
+        "output_tokens": 861,
+        "reasoning_tokens": 817,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 7154.77,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 944,
+        "output_tokens": 887,
+        "reasoning_tokens": 859
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 15948.21,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 891,
+        "output_tokens": 2578,
+        "reasoning_tokens": 1622
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6387.36,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 779,
+        "output_tokens": 718,
+        "reasoning_tokens": 674,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7133.18,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 779,
+        "output_tokens": 848,
+        "reasoning_tokens": 803,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_epoch_bus",
+      "rep": 1,
+      "domain": "event",
+      "route_reason": "verified_claims_cover_all_changes",
+      "claims": [
+        {
+          "field": "A",
+          "correct_replacement": true,
+          "would_damage_correct_field": false,
+          "approved": true,
+          "applied": true
+        }
+      ],
+      "checks": [
+        {
+          "field": "A",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": false
+        },
+        {
+          "field": "B",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "C",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ignored",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "cancels",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3032.88,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 527,
+        "output_tokens": 301,
+        "reasoning_tokens": 269,
+        "grade": "semantic_wrong",
+        "matched_fields": 4,
+        "wrong_fields": [
+          "A"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 3684.89,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 859,
+        "output_tokens": 420,
+        "reasoning_tokens": 352
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8125.84,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 854,
+        "output_tokens": 1167,
+        "reasoning_tokens": 512
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 2693.78,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 725,
+        "output_tokens": 258,
+        "reasoning_tokens": 226,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 2742.43,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 725,
+        "output_tokens": 290,
+        "reasoning_tokens": 258,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "commit_checked",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_source_temporal_aliases",
+      "rep": 1,
+      "domain": "evidence",
+      "route_reason": "uncovered_discrepancy",
+      "claims": [],
+      "checks": [
+        {
+          "field": "j1",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": false,
+          "draft_agreement": false
+        },
+        {
+          "field": "j2",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j4",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j5",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j6",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6166.7,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 674,
+        "output_tokens": 805,
+        "reasoning_tokens": 756,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 5872.29,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1016,
+        "output_tokens": 713,
+        "reasoning_tokens": 685
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 15658.28,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 988,
+        "output_tokens": 2360,
+        "reasoning_tokens": 1249
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4763.54,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 851,
+        "output_tokens": 657,
+        "reasoning_tokens": 609,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5382.34,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 851,
+        "output_tokens": 757,
+        "reasoning_tokens": 709,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_bag_except_tiers",
+      "rep": 1,
+      "domain": "sql",
+      "route_reason": "verification_incomplete",
+      "claims": [],
+      "checks": [
+        {
+          "field": "balanced_mass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "unmarked_delta",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "not_in_b",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "absent_balance",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "a_negative",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "left_only_mass",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5098.48,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 591,
+        "output_tokens": 610,
+        "reasoning_tokens": 559,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 4686.71,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 936,
+        "output_tokens": 594,
+        "reasoning_tokens": 566
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 11591.82,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 849,
+        "output_tokens": 1635,
+        "reasoning_tokens": 859
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4989.38,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 771,
+        "output_tokens": 602,
+        "reasoning_tokens": 551,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4441.31,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 771,
+        "output_tokens": 601,
+        "reasoning_tokens": 550,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_banded_distinct",
+      "rep": 1,
+      "domain": "sql",
+      "route_reason": "verification_incomplete",
+      "claims": [],
+      "checks": [
+        {
+          "field": "x_seen",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "null_band",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "unseen",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "empty_sum",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "initial_values",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7582.13,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 575,
+        "output_tokens": 906,
+        "reasoning_tokens": 865,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 7189.06,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 910,
+        "output_tokens": 842,
+        "reasoning_tokens": 814
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 17586.0,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 846,
+        "output_tokens": 2677,
+        "reasoning_tokens": 1738
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6326.02,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 822,
+        "reasoning_tokens": 780,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5937.45,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 817,
+        "reasoning_tokens": 776,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_expiring_allocator",
+      "rep": 1,
+      "domain": "event",
+      "route_reason": "verification_incomplete",
+      "claims": [
+        {
+          "field": "spent",
+          "correct_replacement": false,
+          "would_damage_correct_field": true,
+          "approved": false,
+          "applied": false
+        },
+        {
+          "field": "ignored",
+          "correct_replacement": true,
+          "would_damage_correct_field": false,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "spent",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "ignored",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "pulses",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "red",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "blue",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "green",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4219.31,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 539,
+        "output_tokens": 472,
+        "reasoning_tokens": 436,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "ignored"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 4769.51,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 875,
+        "output_tokens": 587,
+        "reasoning_tokens": 497
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 12091.88,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 881,
+        "output_tokens": 1950,
+        "reasoning_tokens": 1122
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3595.98,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 753,
+        "output_tokens": 400,
+        "reasoning_tokens": 364,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4906.02,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 710,
+        "output_tokens": 661,
+        "reasoning_tokens": 619,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "ignored"
+        ]
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "ignored"
+        ]
+      }
+    },
+    {
+      "case_id": "natural_logic_threshold_toggle",
+      "rep": 1,
+      "domain": "boolean",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "even",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "bypass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "quorum",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "restore",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "mirror",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ready",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9240.27,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 410,
+        "output_tokens": 1202,
+        "reasoning_tokens": 1154,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 9529.12,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 746,
+        "output_tokens": 1235,
+        "reasoning_tokens": 1201
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 15313.1,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 516,
+        "output_tokens": 2534,
+        "reasoning_tokens": 1427
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9986.55,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 1329,
+        "reasoning_tokens": 1281,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9073.31,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 1046,
+        "reasoning_tokens": 1004,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_expiring_allocator",
+      "rep": 2,
+      "domain": "event",
+      "route_reason": "verification_incomplete",
+      "claims": [],
+      "checks": [
+        {
+          "field": "spent",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "ignored",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "pulses",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "red",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "blue",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "green",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4199.47,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 539,
+        "output_tokens": 479,
+        "reasoning_tokens": 443,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 4473.64,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 875,
+        "output_tokens": 419,
+        "reasoning_tokens": 397
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 10626.71,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 881,
+        "output_tokens": 1504,
+        "reasoning_tokens": 744
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4641.58,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 710,
+        "output_tokens": 489,
+        "reasoning_tokens": 453,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4017.87,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 710,
+        "output_tokens": 487,
+        "reasoning_tokens": 451,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_window_compact",
+      "rep": 2,
+      "domain": "sql",
+      "route_reason": "verification_incomplete",
+      "claims": [
+        {
+          "field": "doubled",
+          "correct_replacement": false,
+          "would_damage_correct_field": true,
+          "approved": false,
+          "applied": false
+        },
+        {
+          "field": "exact_tails",
+          "correct_replacement": true,
+          "would_damage_correct_field": false,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "doubled",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "null_future_count",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "later_a",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "exact_tails",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "no_max",
+          "status": "invalid_verifier_response",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6465.52,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 606,
+        "output_tokens": 778,
+        "reasoning_tokens": 734,
+        "grade": "semantic_wrong",
+        "matched_fields": 4,
+        "wrong_fields": [
+          "exact_tails"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 7589.96,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 944,
+        "output_tokens": 975,
+        "reasoning_tokens": 855
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 12980.23,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 891,
+        "output_tokens": 2111,
+        "reasoning_tokens": 1347
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8744.35,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 826,
+        "output_tokens": 1162,
+        "reasoning_tokens": 1112,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8256.51,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 779,
+        "output_tokens": 1068,
+        "reasoning_tokens": 1024,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_logic_two_locks",
+      "rep": 2,
+      "domain": "boolean",
+      "route_reason": "all_fields_confirmed",
+      "claims": [
+        {
+          "field": "trip",
+          "correct_replacement": false,
+          "would_damage_correct_field": true,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "through",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "side",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "latched",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "branch",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "bypass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "trip",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9735.26,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 406,
+        "output_tokens": 832,
+        "reasoning_tokens": 790,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 8721.84,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 742,
+        "output_tokens": 1099,
+        "reasoning_tokens": 1024
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 15235.25,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 512,
+        "output_tokens": 2417,
+        "reasoning_tokens": 1458
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 10412.64,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 608,
+        "output_tokens": 1297,
+        "reasoning_tokens": 1249,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7646.86,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 577,
+        "output_tokens": 993,
+        "reasoning_tokens": 951,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_source_quorum_revocation",
+      "rep": 2,
+      "domain": "evidence",
+      "route_reason": "verified_claims_cover_all_changes",
+      "claims": [
+        {
+          "field": "q5",
+          "correct_replacement": true,
+          "would_damage_correct_field": false,
+          "approved": true,
+          "applied": true
+        }
+      ],
+      "checks": [
+        {
+          "field": "q1",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q2",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q4",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "q5",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": false
+        },
+        {
+          "field": "q6",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9735.75,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 734,
+        "output_tokens": 740,
+        "reasoning_tokens": 688,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "q5"
+        ]
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6657.17,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1080,
+        "output_tokens": 920,
+        "reasoning_tokens": 828
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 20044.13,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1217,
+        "output_tokens": 3237,
+        "reasoning_tokens": 2048
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4789.44,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 949,
+        "output_tokens": 548,
+        "reasoning_tokens": 502,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5048.64,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 949,
+        "output_tokens": 624,
+        "reasoning_tokens": 571,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "commit_checked",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_weighted_ballot",
+      "rep": 2,
+      "domain": "event",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "winners",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "winner3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "score3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "score_last",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ignored",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4156.11,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 424,
+        "reasoning_tokens": 387,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 3676.64,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 918,
+        "output_tokens": 418,
+        "reasoning_tokens": 396
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 12735.66,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 940,
+        "output_tokens": 1768,
+        "reasoning_tokens": 948
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3509.55,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 753,
+        "output_tokens": 377,
+        "reasoning_tokens": 339,
+        "grade": "semantic_wrong",
+        "matched_fields": 2,
+        "wrong_fields": [
+          "score3",
+          "winner3",
+          "winners"
+        ]
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3526.77,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 753,
+        "output_tokens": 408,
+        "reasoning_tokens": 371,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_source_delegation_paths",
+      "rep": 2,
+      "domain": "evidence",
+      "route_reason": "all_fields_confirmed",
+      "claims": [
+        {
+          "field": "gamma",
+          "correct_replacement": false,
+          "would_damage_correct_field": true,
+          "approved": false,
+          "applied": false
+        },
+        {
+          "field": "zeta",
+          "correct_replacement": false,
+          "would_damage_correct_field": true,
+          "approved": false,
+          "applied": false
+        }
+      ],
+      "checks": [
+        {
+          "field": "alpha",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "beta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "gamma",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "delta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "epsilon",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "zeta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7743.79,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 663,
+        "output_tokens": 1038,
+        "reasoning_tokens": 991,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 10067.69,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1004,
+        "output_tokens": 1495,
+        "reasoning_tokens": 1364
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 18614.84,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 973,
+        "output_tokens": 3167,
+        "reasoning_tokens": 1869
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7592.15,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 887,
+        "output_tokens": 1071,
+        "reasoning_tokens": 1024,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7443.61,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 839,
+        "output_tokens": 990,
+        "reasoning_tokens": 943,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "gamma"
+        ]
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_banded_distinct",
+      "rep": 2,
+      "domain": "sql",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "x_seen",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "null_band",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "unseen",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "empty_sum",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "initial_values",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7332.54,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 575,
+        "output_tokens": 855,
+        "reasoning_tokens": 814,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6629.83,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 910,
+        "output_tokens": 877,
+        "reasoning_tokens": 848
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 16873.58,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 846,
+        "output_tokens": 2675,
+        "reasoning_tokens": 1683
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5741.5,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 663,
+        "reasoning_tokens": 622,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6530.17,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 798,
+        "reasoning_tokens": 757,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_sql_bag_except_tiers",
+      "rep": 2,
+      "domain": "sql",
+      "route_reason": "verification_incomplete",
+      "claims": [],
+      "checks": [
+        {
+          "field": "balanced_mass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "unmarked_delta",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "not_in_b",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": false,
+          "draft_agreement": false
+        },
+        {
+          "field": "absent_balance",
+          "status": "invalid_evidence",
+          "usable": false,
+          "oracle_agreement": null,
+          "draft_agreement": null
+        },
+        {
+          "field": "a_negative",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "left_only_mass",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4870.13,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 591,
+        "output_tokens": 588,
+        "reasoning_tokens": 537,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6883.3,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 936,
+        "output_tokens": 570,
+        "reasoning_tokens": 542
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 10251.26,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 849,
+        "output_tokens": 1595,
+        "reasoning_tokens": 734
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4892.06,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 771,
+        "output_tokens": 606,
+        "reasoning_tokens": 555,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4413.02,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 771,
+        "output_tokens": 573,
+        "reasoning_tokens": 522,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_event_epoch_bus",
+      "rep": 2,
+      "domain": "event",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "A",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "B",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "C",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ignored",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "cancels",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 3266.96,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 527,
+        "output_tokens": 296,
+        "reasoning_tokens": 264,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 3135.83,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 859,
+        "output_tokens": 271,
+        "reasoning_tokens": 249
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7535.63,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 854,
+        "output_tokens": 1117,
+        "reasoning_tokens": 459
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 2450.06,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 694,
+        "output_tokens": 275,
+        "reasoning_tokens": 243,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 2374.04,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 694,
+        "output_tokens": 248,
+        "reasoning_tokens": 216,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 5,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_source_temporal_aliases",
+      "rep": 2,
+      "domain": "evidence",
+      "route_reason": "uncovered_discrepancy",
+      "claims": [],
+      "checks": [
+        {
+          "field": "j1",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": false,
+          "draft_agreement": false
+        },
+        {
+          "field": "j2",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j3",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j4",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j5",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "j6",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6516.44,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 674,
+        "output_tokens": 729,
+        "reasoning_tokens": 680,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 7422.47,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 1016,
+        "output_tokens": 690,
+        "reasoning_tokens": 662
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 15991.92,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 988,
+        "output_tokens": 2573,
+        "reasoning_tokens": 1433
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 4996.45,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 851,
+        "output_tokens": 614,
+        "reasoning_tokens": 566,
+        "grade": "semantic_wrong",
+        "matched_fields": 5,
+        "wrong_fields": [
+          "j1"
+        ]
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 5063.63,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 851,
+        "output_tokens": 716,
+        "reasoning_tokens": 668,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_logic_mirror_caps",
+      "rep": 2,
+      "domain": "boolean",
+      "route_reason": "all_fields_confirmed",
+      "claims": [],
+      "checks": [
+        {
+          "field": "mirror",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "thread",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "crossing",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "clash",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "pulse",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ring",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "unfiltered",
+        "verified_regenerate"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 6928.83,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 409,
+        "output_tokens": 784,
+        "reasoning_tokens": 742,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 6060.94,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 745,
+        "output_tokens": 749,
+        "reasoning_tokens": 720
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 17316.0,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 515,
+        "output_tokens": 2728,
+        "reasoning_tokens": 1895
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 7831.53,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 580,
+        "output_tokens": 876,
+        "reasoning_tokens": 834,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 12018.01,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 580,
+        "output_tokens": 1543,
+        "reasoning_tokens": 1495,
+        "grade": "semantic_wrong",
+        "matched_fields": 4,
+        "wrong_fields": [
+          "crossing",
+          "mirror"
+        ]
+      },
+      "coordinated": {
+        "terminal": "retain_confirmed",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    },
+    {
+      "case_id": "natural_logic_threshold_toggle",
+      "rep": 2,
+      "domain": "boolean",
+      "route_reason": "uncovered_discrepancy",
+      "claims": [],
+      "checks": [
+        {
+          "field": "even",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "bypass",
+          "status": "verify_disagrees",
+          "usable": true,
+          "oracle_agreement": false,
+          "draft_agreement": false
+        },
+        {
+          "field": "quorum",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "restore",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "mirror",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        },
+        {
+          "field": "ready",
+          "status": "accepted",
+          "usable": true,
+          "oracle_agreement": true,
+          "draft_agreement": true
+        }
+      ],
+      "arm_order": [
+        "verified_regenerate",
+        "unfiltered"
+      ],
+      "group": "natural",
+      "draft": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9147.67,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 410,
+        "output_tokens": 1253,
+        "reasoning_tokens": 1203,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "critic": {
+        "terminal": "returned",
+        "generation_status": null,
+        "output_status": "ok",
+        "fatal": null,
+        "latency_ms": 9320.02,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 746,
+        "output_tokens": 1123,
+        "reasoning_tokens": 1088
+      },
+      "verifier": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 16988.25,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 516,
+        "output_tokens": 2678,
+        "reasoning_tokens": 1686
+      },
+      "unfiltered": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 8559.97,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 1152,
+        "reasoning_tokens": 1104,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "verified_regenerate": {
+        "terminal": "returned",
+        "generation_status": "complete",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": 9100.92,
+        "admitted": true,
+        "transport": "returned",
+        "http_status": null,
+        "response_model": "gpt-6-luna",
+        "input_tokens": 581,
+        "output_tokens": 1213,
+        "reasoning_tokens": 1165,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      },
+      "coordinated": {
+        "terminal": "fallback_regenerate",
+        "generation_status": "not_attempted",
+        "output_status": "complete",
+        "fatal": null,
+        "latency_ms": null,
+        "admitted": false,
+        "transport": null,
+        "http_status": null,
+        "response_model": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null,
+        "grade": "exact",
+        "matched_fields": 6,
+        "wrong_fields": []
+      }
+    }
+  ]
+}
