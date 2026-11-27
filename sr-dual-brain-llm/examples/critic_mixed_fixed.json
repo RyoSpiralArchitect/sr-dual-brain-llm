@@ -1,0 +1,488 @@
+{
+  "cases": [
+    {
+      "id": "logic_inverted_chain",
+      "domain": "boolean",
+      "question": "All of A, B, C, D, E, F are Boolean. Constraints: A and B have opposite values. C is true exactly when A and D both hold. If B is true then D is false. E has the opposite value to C. F is true exactly when B or C is true.\nq1: B or E\nq2: F and not D\nq3: C and E\nq4: F or E\nClassify each listed formula independently over all satisfying assignments. Use JSON strings 'always' for true in every satisfying assignment, 'never' for false in every satisfying assignment, and 'sometimes' for any other case.\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "sometimes",
+        "q2": "sometimes",
+        "q3": "never",
+        "q4": "always"
+      },
+      "draft": {
+        "q1": "sometimes",
+        "q2": "sometimes",
+        "q3": "never",
+        "q4": "sometimes"
+      },
+      "claims": [
+        {
+          "field": "q4",
+          "found": "sometimes",
+          "replacement": "always",
+          "reason": "When E is false, C is true, which forces F; hence F or E is always true."
+        },
+        {
+          "field": "q2",
+          "found": "sometimes",
+          "replacement": "never",
+          "reason": "Whenever F is true, its C branch requires D."
+        }
+      ],
+      "oracle_rationale": "Enumerated 64 assignments. 3 are valid. Truth counts: {'q1': 2, 'q2': 1, 'q3': 0, 'q4': 3}."
+    },
+    {
+      "id": "logic_set_cover",
+      "domain": "boolean",
+      "question": "All of J, K, L, M, N are Boolean. Constraints: Exactly two of J, K, L, M are true. K implies L. J and L cannot both be true. N is true exactly when J and M are both true.\nq1: L or M\nq2: K and M\nq3: J or L\nq4: N\nClassify each listed formula independently over all satisfying assignments. Use JSON strings 'always' for true in every satisfying assignment, 'never' for false in every satisfying assignment, and 'sometimes' for any other case.\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "always",
+        "q2": "never",
+        "q3": "always",
+        "q4": "sometimes"
+      },
+      "draft": {
+        "q1": "always",
+        "q2": "sometimes",
+        "q3": "always",
+        "q4": "sometimes"
+      },
+      "claims": [
+        {
+          "field": "q4",
+          "found": "sometimes",
+          "replacement": "never",
+          "reason": "J excludes L, so there is no second true variable available when J is true."
+        },
+        {
+          "field": "q2",
+          "found": "sometimes",
+          "replacement": "never",
+          "reason": "K forces L, so K uses both available slots together with L and rules out M."
+        }
+      ],
+      "oracle_rationale": "Enumerated 32 assignments. 3 are valid. Truth counts: {'q1': 3, 'q2': 0, 'q3': 3, 'q4': 1}."
+    },
+    {
+      "id": "logic_parity_bridge",
+      "domain": "boolean",
+      "question": "All of P, Q, R, S, T, U are Boolean. Constraints: Exactly one of P and Q is true. R is true exactly when Q and S have the same value. T implies S. Exactly two of R, S, T are true. U is true exactly when P and T differ.\nq1: S\nq2: P and Q\nq3: R or T\nq4: U\nClassify each listed formula independently over all satisfying assignments. Use JSON strings 'always' for true in every satisfying assignment, 'never' for false in every satisfying assignment, and 'sometimes' for any other case.\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "always",
+        "q2": "never",
+        "q3": "always",
+        "q4": "never"
+      },
+      "draft": {
+        "q1": "always",
+        "q2": "never",
+        "q3": "always",
+        "q4": "always"
+      },
+      "claims": [
+        {
+          "field": "q4",
+          "found": "always",
+          "replacement": "never",
+          "reason": "S must be true. Then R equals Q, T is its opposite, and P equals T, so U is never true."
+        },
+        {
+          "field": "q1",
+          "found": "always",
+          "replacement": "sometimes",
+          "reason": "R and T can occupy both true slots without S."
+        }
+      ],
+      "oracle_rationale": "Enumerated 64 assignments. 2 are valid. Truth counts: {'q1': 2, 'q2': 0, 'q3': 2, 'q4': 0}."
+    },
+    {
+      "id": "sql_anti_predicate",
+      "domain": "sql",
+      "question": "Run the following SQLite query exactly on its inline tables and report its single row. Use JSON integers for numbers and JSON null for SQL NULL.\nWITH\ns(id,k,n) AS (VALUES (1,'u',4),(2,'u',5),(3,'v',NULL),(4,NULL,8),(5,'w',NULL)),\nb(k) AS (VALUES ('u'),(NULL)),\nr AS (\n SELECT id,n,k NOT IN (SELECT k FROM b) AS ni,\n NOT EXISTS (SELECT 1 FROM b WHERE b.k IS s.k) AS ne\n FROM s\n)\nSELECT COUNT(*) FILTER (WHERE ni) AS not_in_true,\n COUNT(*) FILTER (WHERE ni IS NULL) AS not_in_unknown,\n COUNT(*) FILTER (WHERE ne) AS anti_rows,\n SUM(n) FILTER (WHERE ne) AS anti_sum\nFROM r;\nReturn only a JSON object with exactly these keys: not_in_true, not_in_unknown, anti_rows, anti_sum.",
+      "expected": {
+        "not_in_true": 0,
+        "not_in_unknown": 3,
+        "anti_rows": 2,
+        "anti_sum": null
+      },
+      "draft": {
+        "not_in_true": 0,
+        "not_in_unknown": 2,
+        "anti_rows": 2,
+        "anti_sum": null
+      },
+      "claims": [
+        {
+          "field": "anti_rows",
+          "found": 2,
+          "replacement": 3,
+          "reason": "The outer NULL key cannot match an inner NULL key."
+        },
+        {
+          "field": "not_in_unknown",
+          "found": 2,
+          "replacement": 3,
+          "reason": "The NULL outer key also yields UNKNOWN; the unmatched v and w rows each yield UNKNOWN too."
+        }
+      ],
+      "oracle_rationale": "SQLite executed the exact query. The sole row is {'not_in_true': 0, 'not_in_unknown': 3, 'anti_rows': 2, 'anti_sum': None}."
+    },
+    {
+      "id": "sql_bag_overlap",
+      "domain": "sql",
+      "question": "Run the following SQLite query exactly on its inline tables and report its single row. Use JSON integers for numbers and JSON null for SQL NULL.\nWITH\nl(key,qty) AS (VALUES ('a',3),('a',3),('b',7),('c',NULL)),\nr(key,n) AS (VALUES ('a',1),('a',1),('a',2),('b',NULL),('d',1)),\nj AS (SELECT l.key, l.qty, r.n FROM l LEFT JOIN r ON l.key=r.key)\nSELECT COUNT(*) AS joined_rows, COUNT(n) AS known_right,\n SUM(qty) FILTER (WHERE n=1) AS ones_weight,\n COUNT(DISTINCT qty) FILTER (WHERE n IS NULL) AS distinct_missing\nFROM j;\nReturn only a JSON object with exactly these keys: joined_rows, known_right, ones_weight, distinct_missing.",
+      "expected": {
+        "joined_rows": 8,
+        "known_right": 6,
+        "ones_weight": 12,
+        "distinct_missing": 1
+      },
+      "draft": {
+        "joined_rows": 8,
+        "known_right": 6,
+        "ones_weight": 6,
+        "distinct_missing": 1
+      },
+      "claims": [
+        {
+          "field": "ones_weight",
+          "found": 6,
+          "replacement": 12,
+          "reason": "Both duplicate left rows match both n=1 right rows, giving four occurrences of qty=3."
+        },
+        {
+          "field": "joined_rows",
+          "found": 8,
+          "replacement": 7,
+          "reason": "A LEFT JOIN contributes no output row for c because there is no right match."
+        }
+      ],
+      "oracle_rationale": "SQLite executed the exact query. The sole row is {'joined_rows': 8, 'known_right': 6, 'ones_weight': 12, 'distinct_missing': 1}."
+    },
+    {
+      "id": "sql_window_offsets",
+      "domain": "sql",
+      "question": "Run the following SQLite query exactly on its inline tables and report its single row. Use JSON integers for numbers and JSON null for SQL NULL.\nWITH\na(seq,grp,t,n) AS (VALUES (1,'p',1,3),(2,'p',2,NULL),(3,'p',2,8),(4,'p',3,5),(5,'q',1,7)),\nw AS (\n SELECT seq, grp, n, LAG(n,1,99) OVER (PARTITION BY grp ORDER BY t,seq) AS previous,\n SUM(n) OVER (PARTITION BY grp ORDER BY t GROUPS BETWEEN 1 PRECEDING AND CURRENT ROW EXCLUDE CURRENT ROW) AS peers\n FROM a\n)\nSELECT previous AS third_previous, peers AS third_peers,\n (SELECT peers FROM w WHERE seq=5) AS singleton_peers,\n (SELECT previous FROM w WHERE seq=5) AS singleton_previous\nFROM w WHERE seq=3;\nReturn only a JSON object with exactly these keys: third_previous, third_peers, singleton_peers, singleton_previous.",
+      "expected": {
+        "third_previous": null,
+        "third_peers": 3,
+        "singleton_peers": null,
+        "singleton_previous": 99
+      },
+      "draft": {
+        "third_previous": 99,
+        "third_peers": 3,
+        "singleton_peers": null,
+        "singleton_previous": 99
+      },
+      "claims": [
+        {
+          "field": "third_peers",
+          "found": 3,
+          "replacement": 11,
+          "reason": "EXCLUDE CURRENT ROW removes sequence 2 rather than sequence 3 because both share the same ordering key."
+        },
+        {
+          "field": "third_previous",
+          "found": 99,
+          "replacement": null,
+          "reason": "A previous row exists for sequence 3 and its value is NULL; LAG uses the default only when there is no row."
+        }
+      ],
+      "oracle_rationale": "SQLite executed the exact query. The sole row is {'third_previous': None, 'third_peers': 3, 'singleton_peers': None, 'singleton_previous': 99}."
+    },
+    {
+      "id": "event_snapshot_repeat",
+      "domain": "event",
+      "question": "A two-cell editor starts with A=0 and B=0, no snapshot, and ignored=0. Process commands in written order. SET(cell,value) changes that cell. SWAP exchanges A and B. SAVE replaces the single saved snapshot with current A and B. RESTORE copies the current snapshot into A and B but keeps the snapshot, or counts one ignored command when no snapshot exists. ADD_IF(cell,expected,delta) adds delta to the specified cell only if its current value equals expected; otherwise count one ignored command. Any other listed operation succeeds. Return A and B, ignored, and saved_a (snapshot A, or JSON null if absent).\nSET(A,3)\nSAVE()\nSWAP()\nADD_IF(A,0,4)\nRESTORE()\nSET(B,6)\nRESTORE()\nADD_IF(A,3,-2)\nADD_IF(B,6,2)\nReturn only a JSON object with exactly these keys: A, B, ignored, saved_a.",
+      "expected": {
+        "A": 1,
+        "B": 0,
+        "ignored": 1,
+        "saved_a": 3
+      },
+      "draft": {
+        "A": 1,
+        "B": 6,
+        "ignored": 1,
+        "saved_a": 3
+      },
+      "claims": [
+        {
+          "field": "B",
+          "found": 6,
+          "replacement": 0,
+          "reason": "RESTORE reuses the same saved snapshot and resets B to 0 a second time."
+        },
+        {
+          "field": "ignored",
+          "found": 1,
+          "replacement": 2,
+          "reason": "The second RESTORE counts as another ignored command because the first consumed the snapshot."
+        }
+      ],
+      "oracle_rationale": "Executable state simulation, states (A,B,ignored,saved_a) after each command: [(3, 0, 0, None), (3, 0, 0, 3), (0, 3, 0, 3), (4, 3, 0, 3), (3, 0, 0, 3), (3, 6, 0, 3), (3, 0, 0, 3), (1, 0, 0, 3), (1, 0, 1, 3)]."
+    },
+    {
+      "id": "event_snapshot_overwrite",
+      "domain": "event",
+      "question": "A two-cell editor starts with A=0 and B=0, no snapshot, and ignored=0. Process commands in written order. SET(cell,value) changes that cell. SWAP exchanges A and B. SAVE replaces the single saved snapshot with current A and B. RESTORE copies the current snapshot into A and B but keeps the snapshot, or counts one ignored command when no snapshot exists. ADD_IF(cell,expected,delta) adds delta to the specified cell only if its current value equals expected; otherwise count one ignored command. Any other listed operation succeeds. Return A and B, ignored, and saved_a (snapshot A, or JSON null if absent).\nRESTORE()\nSET(A,2)\nSAVE()\nSWAP()\nADD_IF(B,2,3)\nSAVE()\nSET(A,9)\nRESTORE()\nADD_IF(A,0,7)\nSWAP()\nReturn only a JSON object with exactly these keys: A, B, ignored, saved_a.",
+      "expected": {
+        "A": 5,
+        "B": 7,
+        "ignored": 1,
+        "saved_a": 0
+      },
+      "draft": {
+        "A": 5,
+        "B": 0,
+        "ignored": 1,
+        "saved_a": 0
+      },
+      "claims": [
+        {
+          "field": "saved_a",
+          "found": 0,
+          "replacement": 2,
+          "reason": "SAVE keeps the first snapshot, so the restored snapshot A is 2."
+        },
+        {
+          "field": "B",
+          "found": 0,
+          "replacement": 7,
+          "reason": "After the latest restore, A=0. The conditional add changes it to 7 before the final SWAP."
+        }
+      ],
+      "oracle_rationale": "Executable state simulation, states (A,B,ignored,saved_a) after each command: [(0, 0, 1, None), (2, 0, 1, None), (2, 0, 1, 2), (0, 2, 1, 2), (0, 5, 1, 2), (0, 5, 1, 0), (9, 5, 1, 0), (0, 5, 1, 0), (7, 5, 1, 0), (5, 7, 1, 0)]."
+    },
+    {
+      "id": "event_snapshot_no_alias",
+      "domain": "event",
+      "question": "A two-cell editor starts with A=0 and B=0, no snapshot, and ignored=0. Process commands in written order. SET(cell,value) changes that cell. SWAP exchanges A and B. SAVE replaces the single saved snapshot with current A and B. RESTORE copies the current snapshot into A and B but keeps the snapshot, or counts one ignored command when no snapshot exists. ADD_IF(cell,expected,delta) adds delta to the specified cell only if its current value equals expected; otherwise count one ignored command. Any other listed operation succeeds. Return A and B, ignored, and saved_a (snapshot A, or JSON null if absent).\nADD_IF(A,1,5)\nSET(B,4)\nSAVE()\nSWAP()\nADD_IF(A,4,-1)\nRESTORE()\nADD_IF(B,4,2)\nSET(A,2)\nRESTORE()\nADD_IF(A,2,9)\nReturn only a JSON object with exactly these keys: A, B, ignored, saved_a.",
+      "expected": {
+        "A": 0,
+        "B": 4,
+        "ignored": 2,
+        "saved_a": 0
+      },
+      "draft": {
+        "A": 0,
+        "B": 4,
+        "ignored": 1,
+        "saved_a": 0
+      },
+      "claims": [
+        {
+          "field": "ignored",
+          "found": 1,
+          "replacement": 2,
+          "reason": "After the last RESTORE, A is 0 rather than 2, so that conditional command also fails."
+        },
+        {
+          "field": "B",
+          "found": 4,
+          "replacement": 6,
+          "reason": "B was changed after RESTORE, which also updates the corresponding cached snapshot."
+        }
+      ],
+      "oracle_rationale": "Executable state simulation, states (A,B,ignored,saved_a) after each command: [(0, 0, 1, None), (0, 4, 1, None), (0, 4, 1, 0), (4, 0, 1, 0), (3, 0, 1, 0), (0, 4, 1, 0), (0, 6, 1, 0), (2, 6, 1, 0), (0, 4, 1, 0), (0, 4, 2, 0)]."
+    },
+    {
+      "id": "evidence_publication_window",
+      "domain": "evidence",
+      "question": "A fictional authority ledger stores records with columns id, role, published_day, sites, start, end. Sites are a concatenation of site letters. Each query specifies site, target day and knowledge day. Ignore records published after the knowledge day, outside the inclusive target interval [start,end], or not listing the site. The authorized role is exactly FINAL or EMERGENCY. An eligible EMERGENCY overrides any eligible FINAL; among eligible records with the same role, choose the one with greatest published_day, then the alphabetically smallest id in a tie. Report the chosen ID as a JSON string, or 'NONE' if no authorized record qualifies.\nF1 FINAL 1 ABC 1 12\nF2 FINAL 3 A 4 10\nE1 EMERGENCY 6 AB 5 7\nE2 EMERGENCY 5 B 7 9\nD1 DRAFT 5 C 3 9\nE3 EMERGENCY 6 B 7 9\nQueries (site,target,knowledge):\nq1: A,6,5\nq2: A,6,6\nq3: B,7,6\nq4: C,4,6\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "F2",
+        "q2": "E1",
+        "q3": "E1",
+        "q4": "F1"
+      },
+      "draft": {
+        "q1": "E1",
+        "q2": "E1",
+        "q3": "E1",
+        "q4": "F1"
+      },
+      "claims": [
+        {
+          "field": "q3",
+          "found": "E1",
+          "replacement": "E3",
+          "reason": "Use alphabetically greatest record ID when the most recent emergencies share a published day."
+        },
+        {
+          "field": "q1",
+          "found": "E1",
+          "replacement": "F2",
+          "reason": "E1 was not published as of knowledge day 5, so F2 is controlling."
+        }
+      ],
+      "oracle_rationale": "Executable authority ordering after inclusive filter. Candidate IDs per field: {'q1': ['F1', 'F2'], 'q2': ['F1', 'F2', 'E1'], 'q3': ['F1', 'E1', 'E2', 'E3'], 'q4': ['F1']}."
+    },
+    {
+      "id": "evidence_authority_over_recency",
+      "domain": "evidence",
+      "question": "A fictional authority ledger stores records with columns id, role, published_day, sites, start, end. Sites are a concatenation of site letters. Each query specifies site, target day and knowledge day. Ignore records published after the knowledge day, outside the inclusive target interval [start,end], or not listing the site. The authorized role is exactly FINAL or EMERGENCY. An eligible EMERGENCY overrides any eligible FINAL; among eligible records with the same role, choose the one with greatest published_day, then the alphabetically smallest id in a tie. Report the chosen ID as a JSON string, or 'NONE' if no authorized record qualifies.\nP1 FINAL 1 AB 1 20\nP2 EMERGENCY 4 B 5 6\nP3 FINAL 8 BC 5 20\nP4 EMERGENCY 5 C 5 8\nP5 DRAFT 9 AC 7 12\nP6 FINAL 8 A 8 9\nQueries (site,target,knowledge):\nq1: B,5,8\nq2: C,6,8\nq3: A,7,9\nq4: A,8,9\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "P2",
+        "q2": "P4",
+        "q3": "P1",
+        "q4": "P6"
+      },
+      "draft": {
+        "q1": "P2",
+        "q2": "P3",
+        "q3": "P1",
+        "q4": "P6"
+      },
+      "claims": [
+        {
+          "field": "q2",
+          "found": "P3",
+          "replacement": "P4",
+          "reason": "Eligible P4 is EMERGENCY and outranks the later FINAL P3."
+        },
+        {
+          "field": "q3",
+          "found": "P1",
+          "replacement": "P5",
+          "reason": "The later DRAFT supplants the older FINAL for the same site and date."
+        }
+      ],
+      "oracle_rationale": "Executable authority ordering after inclusive filter. Candidate IDs per field: {'q1': ['P1', 'P2', 'P3'], 'q2': ['P3', 'P4'], 'q3': ['P1'], 'q4': ['P1', 'P6']}."
+    },
+    {
+      "id": "evidence_authority_tiebreak",
+      "domain": "evidence",
+      "question": "A fictional authority ledger stores records with columns id, role, published_day, sites, start, end. Sites are a concatenation of site letters. Each query specifies site, target day and knowledge day. Ignore records published after the knowledge day, outside the inclusive target interval [start,end], or not listing the site. The authorized role is exactly FINAL or EMERGENCY. An eligible EMERGENCY overrides any eligible FINAL; among eligible records with the same role, choose the one with greatest published_day, then the alphabetically smallest id in a tie. Report the chosen ID as a JSON string, or 'NONE' if no authorized record qualifies.\nA8 FINAL 3 AB 6 19\nA3 FINAL 3 A 7 19\nM2 EMERGENCY 5 A 8 10\nM3 EMERGENCY 4 B 7 9\nP1 PREVIEW 8 C 7 19\nM4 EMERGENCY 9 C 8 10\nQueries (site,target,knowledge):\nq1: A,7,3\nq2: A,10,5\nq3: C,9,8\nq4: B,8,4\nReturn only a JSON object with exactly these keys: q1, q2, q3, q4.",
+      "expected": {
+        "q1": "A3",
+        "q2": "M2",
+        "q3": "NONE",
+        "q4": "M3"
+      },
+      "draft": {
+        "q1": "A8",
+        "q2": "M2",
+        "q3": "NONE",
+        "q4": "M3"
+      },
+      "claims": [
+        {
+          "field": "q3",
+          "found": "NONE",
+          "replacement": "P1",
+          "reason": "When no authorized record is available, the most recent preview becomes controlling."
+        },
+        {
+          "field": "q1",
+          "found": "A8",
+          "replacement": "A3",
+          "reason": "A3 and A8 share the same authority and publication day, and A3 wins the alphabetical tie."
+        }
+      ],
+      "oracle_rationale": "Executable authority ordering after inclusive filter. Candidate IDs per field: {'q1': ['A8', 'A3'], 'q2': ['A8', 'A3', 'M2'], 'q3': [], 'q4': ['A8', 'M3']}."
+    }
+  ],
+  "correct_controls": [
+    {
+      "id": "logic_correct_control",
+      "domain": "boolean",
+      "question": "All of W, X, Y, Z are Boolean. Constraints: Exactly one of W and X is true. Y is true exactly when W is true. If X is true then Z is true.\nq1: Y or Z\nq2: W and X\nq3: Z\nClassify each listed formula independently over all satisfying assignments. Use JSON strings 'always' for true in every satisfying assignment, 'never' for false in every satisfying assignment, and 'sometimes' for any other case.\nReturn only a JSON object with exactly these keys: q1, q2, q3.",
+      "expected": {
+        "q1": "always",
+        "q2": "never",
+        "q3": "sometimes"
+      },
+      "draft": {
+        "q1": "always",
+        "q2": "never",
+        "q3": "sometimes"
+      },
+      "claims": [
+        {
+          "field": "q3",
+          "found": "sometimes",
+          "replacement": "always",
+          "reason": "X forces Z, so Z must be true."
+        }
+      ],
+      "oracle_rationale": "Enumerated 16 assignments. 3 are valid. Truth counts: {'q1': 3, 'q2': 0, 'q3': 2}."
+    },
+    {
+      "id": "sql_correct_control",
+      "domain": "sql",
+      "question": "Run the following SQLite query exactly on its inline tables and report its single row. Use JSON integers for numbers and JSON null for SQL NULL.\nWITH a(k,v) AS (VALUES ('x',2),('x',2),('y',NULL),('z',4))\nSELECT COUNT(*) AS all_rows, COUNT(v) AS values_seen, COUNT(DISTINCT v) AS distinct_seen FROM a;\nReturn only a JSON object with exactly these keys: all_rows, values_seen, distinct_seen.",
+      "expected": {
+        "all_rows": 4,
+        "values_seen": 3,
+        "distinct_seen": 2
+      },
+      "draft": {
+        "all_rows": 4,
+        "values_seen": 3,
+        "distinct_seen": 2
+      },
+      "claims": [
+        {
+          "field": "distinct_seen",
+          "found": 2,
+          "replacement": 3,
+          "reason": "DISTINCT should count NULL as a separate value along with 2 and 4."
+        }
+      ],
+      "oracle_rationale": "SQLite executed the exact query. The sole row is {'all_rows': 4, 'values_seen': 3, 'distinct_seen': 2}."
+    },
+    {
+      "id": "event_correct_control",
+      "domain": "event",
+      "question": "A two-cell editor starts with A=0 and B=0, no snapshot, and ignored=0. Process commands in written order. SET(cell,value) changes that cell. SWAP exchanges A and B. SAVE replaces the single saved snapshot with current A and B. RESTORE copies the current snapshot into A and B but keeps the snapshot, or counts one ignored command when no snapshot exists. ADD_IF(cell,expected,delta) adds delta to the specified cell only if its current value equals expected; otherwise count one ignored command. Any other listed operation succeeds. Return A and B, ignored, and saved_a (snapshot A, or JSON null if absent).\nSET(B,7)\nSAVE()\nSWAP()\nADD_IF(B,1,-2)\nRESTORE()\nADD_IF(A,0,1)\nReturn only a JSON object with exactly these keys: A, B, ignored, saved_a.",
+      "expected": {
+        "A": 1,
+        "B": 7,
+        "ignored": 1,
+        "saved_a": 0
+      },
+      "draft": {
+        "A": 1,
+        "B": 7,
+        "ignored": 1,
+        "saved_a": 0
+      },
+      "claims": [
+        {
+          "field": "A",
+          "found": 1,
+          "replacement": 7,
+          "reason": "SWAP makes A=7, so setting a snapshot aside cannot reset A."
+        }
+      ],
+      "oracle_rationale": "Executable state simulation, states (A,B,ignored,saved_a) after each command: [(0, 7, 0, None), (0, 7, 0, 0), (7, 0, 0, 0), (7, 0, 1, 0), (0, 7, 1, 0), (1, 7, 1, 0)]."
+    },
+    {
+      "id": "evidence_correct_control",
+      "domain": "evidence",
+      "question": "A fictional authority ledger stores records with columns id, role, published_day, sites, start, end. Sites are a concatenation of site letters. Each query specifies site, target day and knowledge day. Ignore records published after the knowledge day, outside the inclusive target interval [start,end], or not listing the site. The authorized role is exactly FINAL or EMERGENCY. An eligible EMERGENCY overrides any eligible FINAL; among eligible records with the same role, choose the one with greatest published_day, then the alphabetically smallest id in a tie. Report the chosen ID as a JSON string, or 'NONE' if no authorized record qualifies.\nF0 FINAL 1 AB 1 9\nM1 EMERGENCY 4 A 4 4\nF1 FINAL 5 B 4 10\nQueries (site,target,knowledge):\nq1: A,4,3\nq2: A,4,4\nq3: B,9,5\nReturn only a JSON object with exactly these keys: q1, q2, q3.",
+      "expected": {
+        "q1": "F0",
+        "q2": "M1",
+        "q3": "F1"
+      },
+      "draft": {
+        "q1": "F0",
+        "q2": "M1",
+        "q3": "F1"
+      },
+      "claims": [
+        {
+          "field": "q1",
+          "found": "F0",
+          "replacement": "M1",
+          "reason": "The emergency was issued on the target day, so its authority predates the knowledge cut."
+        }
+      ],
+      "oracle_rationale": "Executable authority ordering after inclusive filter. Candidate IDs per field: {'q1': ['F0'], 'q2': ['F0', 'M1'], 'q3': ['F0', 'F1']}."
+    }
+  ]
+}
